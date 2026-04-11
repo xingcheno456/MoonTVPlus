@@ -8,7 +8,7 @@ import './globals.css';
 import { getConfig } from '@/lib/config';
 import { listEnabledSourceScripts } from '@/lib/source-script';
 
-import { DanmakuCacheCleanup } from '../components/DanmakuCacheCleanup';
+import { StartupCacheCleanup } from '../components/DanmakuCacheCleanup';
 import { DownloadBubble } from '../components/DownloadBubble';
 import { DownloadPanel } from '../components/DownloadPanel';
 import { GlobalErrorIndicator } from '../components/GlobalErrorIndicator';
@@ -259,7 +259,7 @@ export default async function RootLayout({
           <SiteProvider siteName={siteName} announcement={announcement} tmdbApiKey={tmdbApiKey}>
             <WatchRoomProvider>
               <DownloadProvider>
-                <DanmakuCacheCleanup />
+                <StartupCacheCleanup />
                 {children}
                 <GlobalErrorIndicator />
                 <ChatFloatingWindow />

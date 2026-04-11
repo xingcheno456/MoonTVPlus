@@ -47,6 +47,11 @@ import {
 } from '@/lib/db.client';
 import { getDoubanDetail } from '@/lib/douban.client';
 import { getTMDBImageUrl } from '@/lib/tmdb.search';
+import {
+  getRecommendationCache,
+  recommendationCacheKeys,
+  setRecommendationCache,
+} from '@/lib/recommendations/cache';
 import { DanmakuFilterConfig, EpisodeFilterConfig, SearchResult } from '@/lib/types';
 import { base58Decode, getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
 import { useEnableAIComments } from '@/hooks/useEnableAIComments';
@@ -1175,52 +1180,27 @@ function PlayPageClient() {
       }
 
       try {
-        // 检查title到tmdbId的映射缓存（1个月）
-        const mappingCacheKey = `tmdb_title_mapping_${videoTitle}`;
-        const mappingCache = localStorage.getItem(mappingCacheKey);
-        let cachedId: string | null = null;
+        const mappingCacheKey = recommendationCacheKeys.tmdbTitleMapping(videoTitle);
+        const cachedId = getRecommendationCache<string>(mappingCacheKey);
 
-        if (mappingCache) {
-          try {
-            const { tmdbId, timestamp } = JSON.parse(mappingCache);
-            const cacheAge = Date.now() - timestamp;
-            const cacheMaxAge = 30 * 24 * 60 * 60 * 1000; // 1个月
+        if (cachedId) {
+          console.log('使用缓存的TMDB ID映射');
 
-            if (cacheAge < cacheMaxAge && tmdbId) {
-              console.log('使用缓存的TMDB ID映射');
-              cachedId = tmdbId;
+          const detailsCacheKey = recommendationCacheKeys.tmdbDetails(cachedId);
+          const detailsCache = getRecommendationCache<any>(detailsCacheKey);
 
-              // 检查TMDB详情缓存（1天）
-              const detailsCacheKey = `tmdb_details_${tmdbId}`;
-              const detailsCache = localStorage.getItem(detailsCacheKey);
-
-              if (detailsCache) {
-                try {
-                  const { data, timestamp: detTimestamp } = JSON.parse(detailsCache);
-                  const detCacheAge = Date.now() - detTimestamp;
-                  const detCacheMaxAge = 24 * 60 * 60 * 1000; // 1天
-
-                  if (detCacheAge < detCacheMaxAge && data) {
-                    if (data.backdrop) {
-                      setTmdbBackdrop(processImageUrl(data.backdrop));
-                    } else {
-                      setTmdbBackdrop(null);
-                    }
-
-                    // 如果没有豆瓣ID，使用TMDb数据补充
-                    if (!videoDoubanId || videoDoubanId === 0) {
-                      populateDoubanFieldsFromTMDB(data);
-                    }
-                    populatePlayMetadataFromTMDB(data);
-                    return;
-                  }
-                } catch (e) {
-                  console.error('解析详情缓存失败:', e);
-                }
-              }
+          if (detailsCache) {
+            if (detailsCache.backdrop) {
+              setTmdbBackdrop(processImageUrl(detailsCache.backdrop));
+            } else {
+              setTmdbBackdrop(null);
             }
-          } catch (e) {
-            console.error('解析映射缓存失败:', e);
+
+            if (!videoDoubanId || videoDoubanId === 0) {
+              populateDoubanFieldsFromTMDB(detailsCache);
+            }
+            populatePlayMetadataFromTMDB(detailsCache);
+            return;
           }
         }
 
@@ -1253,23 +1233,10 @@ function PlayPageClient() {
         // 保存title到tmdbId的映射到localStorage（1个月）
         if (result.tmdbId) {
           try {
-            localStorage.setItem(
-              mappingCacheKey,
-              JSON.stringify({
-                tmdbId: result.tmdbId,
-                timestamp: Date.now(),
-              })
-            );
+            setRecommendationCache(mappingCacheKey, String(result.tmdbId));
 
-            // 保存TMDB详情数据到localStorage（1天）
-            const detailsCacheKey = `tmdb_details_${result.tmdbId}`;
-            localStorage.setItem(
-              detailsCacheKey,
-              JSON.stringify({
-                data: result,
-                timestamp: Date.now(),
-              })
-            );
+            const detailsCacheKey = recommendationCacheKeys.tmdbDetails(result.tmdbId);
+            setRecommendationCache(detailsCacheKey, result);
           } catch (e) {
             console.error('保存缓存失败:', e);
           }
