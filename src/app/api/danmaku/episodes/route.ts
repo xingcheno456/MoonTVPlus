@@ -1,10 +1,7 @@
-// 获取剧集列表 API 路由
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
-import { getConfig } from '@/lib/config';
-import { getDanmakuApiBaseUrl } from '@/lib/danmaku/config';
+import { getEpisodes } from '@/services/danmaku.service';
 
 export const runtime = 'nodejs';
 
@@ -13,71 +10,13 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const animeId = searchParams.get('animeId');
 
-    if (!animeId) {
-      return apiSuccess({
-          errorCode: -1,
-          success: false,
-          errorMessage: '缺少动漫ID参数',
-          bangumi: {
-            bangumiId: '',
-            animeTitle: '',
-            episodes: [],
-          },
-        }, { status: 400 });
-    }
-
-    // 从数据库读取弹幕配置
-    const config = await getConfig();
-    const baseUrl = getDanmakuApiBaseUrl(config.SiteConfig);
-
-    const apiUrl = `${baseUrl}/api/v2/bangumi/${animeId}`;
-
-    // 添加超时控制和重试机制
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 10秒超时
-
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
-        // 添加 keepalive 避免连接被重置
-        keepalive: true,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      return apiSuccess(data);
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-
-      // 如果是超时错误，返回更友好的错误信息
-      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        throw new Error('弹幕服务器请求超时，请稍后重试');
-      }
-
-      throw fetchError;
-    }
+    const result = await getEpisodes(animeId || '');
+    return apiSuccess(result);
   } catch (error) {
-    console.error('获取剧集列表代理错误:', error);
-    return apiSuccess({
-        errorCode: -1,
-        success: false,
-        errorMessage:
-          error instanceof Error ? error.message : '获取剧集列表失败',
-        bangumi: {
-          bangumiId: '',
-          animeTitle: '',
-          episodes: [],
-        },
-      }, { status: 500 });
+    console.error('获取弹幕剧集列表失败:', error);
+    return apiError(
+      error instanceof Error ? error.message : '获取弹幕剧集列表失败',
+      500,
+    );
   }
 }

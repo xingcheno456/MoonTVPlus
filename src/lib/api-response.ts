@@ -19,14 +19,22 @@ export function apiError(
 }
 
 export async function parseApiResponse<T>(response: Response): Promise<T> {
-  const json = await response.json();
+  let json: unknown;
+  try {
+    json = await response.json();
+  } catch (error) {
+    throw new Error(
+      '解析响应失败: ' + (error instanceof Error ? error.message : '未知错误'),
+    );
+  }
 
-  if (json && typeof json.success === 'boolean') {
-    if (json.success) {
-      return json.data as T;
+  if (json && typeof json === 'object' && 'success' in json && typeof (json as Record<string, unknown>).success === 'boolean') {
+    const result = json as { success: boolean; data?: T; error?: string; code?: string };
+    if (result.success) {
+      return result.data as T;
     }
-    const error = new Error(json.error || '请求失败');
-    if (json.code) (error as Error & { code?: string }).code = json.code;
+    const error = new Error(result.error || '请求失败');
+    if (result.code) (error as Error & { code?: string }).code = result.code;
     throw error;
   }
 

@@ -347,9 +347,9 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('❌ AI聊天API错误:', error);
-    return apiSuccess({
-        error: 'AI聊天请求失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError(
+      'AI聊天请求失败: ' + (error as Error).message,
+      500,
+    );
   }
 }

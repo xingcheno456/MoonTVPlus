@@ -214,9 +214,9 @@ export async function POST(request: NextRequest) {
       });
   } catch (error) {
     console.error('更新AI配置失败:', error);
-    return apiSuccess({
-        error: '更新AI配置失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError(
+      '更新AI配置失败: ' + (error as Error).message,
+      500,
+    );
   }
 }

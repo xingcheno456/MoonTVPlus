@@ -65,7 +65,7 @@ export async function GET() {
       const reverseProxy = config.SiteConfig?.TMDBReverseProxy;
 
       if (!apiKey) {
-        return apiSuccess({ code: 400, message: 'TMDB API Key 未配置' }, { status: 400 });
+        return apiError('TMDB API Key 未配置', 400);
       }
 
       // 获取热门内容
@@ -100,7 +100,10 @@ export async function GET() {
     return apiSuccess(result);
   } catch (error) {
     console.error('获取热门内容失败:', error);
-    return apiSuccess({ code: 500, message: '获取热门内容失败' }, { status: 500 });
+    return apiError(
+      '获取热门内容失败: ' + (error instanceof Error ? error.message : '未知错误'),
+      500,
+    );
   }
 }
 

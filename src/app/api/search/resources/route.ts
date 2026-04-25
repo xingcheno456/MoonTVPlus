@@ -3,25 +3,17 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
-import { getAvailableApiSites } from '@/lib/config';
-import { listEnabledSourceScripts } from '@/lib/source-script';
+import { handleServiceError, validateAuthenticatedUser } from '@/services/auth.service';
+import { getSearchResources } from '@/services/search.service';
 
 export const runtime = 'nodejs';
 
-// OrionTV 兼容接口
 export async function GET(request: NextRequest) {
-  console.log('request', request.url);
   try {
-    const apiSites = await getAvailableApiSites();
-    const scriptSites = (await listEnabledSourceScripts()).map((item) => ({
-      key: item.key,
-      name: item.name,
-      script: true,
-    }));
-
-    return apiSuccess([...apiSites, ...scriptSites]);
+    const username = await validateAuthenticatedUser(request);
+    const resources = await getSearchResources(username);
+    return apiSuccess(resources);
   } catch (error) {
-    return apiError('获取资源失败', 500);
+    return handleServiceError(error);
   }
 }

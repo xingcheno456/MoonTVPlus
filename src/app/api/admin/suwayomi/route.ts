@@ -33,14 +33,14 @@ export async function POST(request: NextRequest) {
     };
 
     if (!ServerURL?.trim()) {
-      return apiSuccess({ success: false, message: '请先填写 Suwayomi 服务地址' }, { status: 400 });
+      return apiError('请先填写 Suwayomi 服务地址', 400);
     }
 
     if (
       (AuthMode === 'basic_auth' || AuthMode === 'simple_login') &&
       (!Username?.trim() || !Password)
     ) {
-      return apiSuccess({ success: false, message: '当前认证方式需要填写用户名和密码' }, { status: 400 });
+      return apiError('当前认证方式需要填写用户名和密码', 400);
     }
 
     const client = new SuwayomiClient({

@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
         return apiSuccess({ message: '连接成功' });
       } catch (error) {
-        return apiSuccess({ success: false, message: (error as Error).message }, { status: 400 });
+        return apiError((error as Error).message, 400);
       }
     }
 

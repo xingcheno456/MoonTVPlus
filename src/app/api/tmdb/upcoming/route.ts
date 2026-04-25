@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const tmdbReverseProxy = config.SiteConfig?.TMDBReverseProxy;
 
     if (!tmdbApiKey) {
-      return apiSuccess({ code: 400, message: 'TMDB API Key 未配置' }, { status: 400 });
+      return apiError('TMDB API Key 未配置', 400);
     }
 
     // 调用TMDB API获取数据
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (result.code !== 200) {
-      return apiSuccess({ code: result.code, message: '获取TMDB数据失败' }, { status: result.code === 401 ? 401 : 500 });
+      return apiError('获取TMDB数据失败', result.code === 401 ? 401 : 500);
     }
 
     // 更新缓存
@@ -61,6 +61,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('获取TMDB即将上映数据失败:', error);
-    return apiSuccess({ code: 500, message: '服务器内部错误' }, { status: 500 });
+    return apiError(
+      '服务器内部错误: ' + (error instanceof Error ? error.message : '未知错误'),
+      500,
+    );
   }
 }

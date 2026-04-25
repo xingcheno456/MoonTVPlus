@@ -1,10 +1,7 @@
-// 自动匹配 API 路由
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
-import { getConfig } from '@/lib/config';
-import { getDanmakuApiBaseUrl } from '@/lib/danmaku/config';
+import { matchAnime } from '@/services/danmaku.service';
 
 export const runtime = 'nodejs';
 
@@ -13,64 +10,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { fileName } = body;
 
-    if (!fileName) {
-      return apiSuccess({
-          errorCode: -1,
-          success: false,
-          errorMessage: '缺少文件名参数',
-          isMatched: false,
-          matches: [],
-        }, { status: 400 });
-    }
-
-    // 从数据库读取弹幕配置
-    const config = await getConfig();
-    const baseUrl = getDanmakuApiBaseUrl(config.SiteConfig);
-
-    const apiUrl = `${baseUrl}/api/v2/match`;
-
-    // 添加超时控制
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 10秒超时
-
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fileName }),
-        signal: controller.signal,
-        keepalive: true,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      return apiSuccess(data);
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-
-      // 如果是超时错误，返回更友好的错误信息
-      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        throw new Error('弹幕服务器请求超时，请稍后重试');
-      }
-
-      throw fetchError;
-    }
+    const result = await matchAnime(fileName || '');
+    return apiSuccess(result);
   } catch (error) {
-    console.error('自动匹配代理错误:', error);
-    return apiSuccess({
-        errorCode: -1,
-        success: false,
-        errorMessage: error instanceof Error ? error.message : '匹配失败',
-        isMatched: false,
-        matches: [],
-      }, { status: 500 });
+    console.error('弹幕匹配失败:', error);
+    return apiError(
+      error instanceof Error ? error.message : '弹幕匹配失败',
+      500,
+    );
   }
 }

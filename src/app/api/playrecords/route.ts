@@ -3,146 +3,60 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-import { getAuthInfoFromCookie } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { PlayRecord } from '@/lib/types';
+import { handleServiceError, validateAuthenticatedUser } from '@/services/auth.service';
+import {
+  deletePlayRecord,
+  getAllPlayRecords,
+  savePlayRecord,
+} from '@/services/playrecord.service';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return apiError('Unauthorized', 401);
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return apiError('用户不存在', 401);
-      }
-      if (userInfoV2.banned) {
-        return apiError('用户已被封禁', 401);
-      }
-
-      if (!userInfoV2.playrecord_migrated) {
-        console.log(
-          `用户 ${authInfo.username} 播放记录未迁移，开始执行迁移...`,
-        );
-        await db.migratePlayRecords(authInfo.username);
-      }
-    } else {
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2 || !userInfoV2.playrecord_migrated) {
-        console.log(
-          `站长 ${authInfo.username} 播放记录未迁移，开始执行迁移...`,
-        );
-        await db.migratePlayRecords(authInfo.username);
-      }
-    }
-
-    const records = await db.getAllPlayRecords(authInfo.username);
+    const username = await validateAuthenticatedUser(request);
+    const records = await getAllPlayRecords(username);
     return apiSuccess(records);
   } catch (err) {
     console.error('获取播放记录失败', err);
-    return apiError('Internal Server Error', 500);
+    return handleServiceError(err);
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return apiError('Unauthorized', 401);
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return apiError('用户不存在', 401);
-      }
-      if (userInfoV2.banned) {
-        return apiError('用户已被封禁', 401);
-      }
-    }
-
+    const username = await validateAuthenticatedUser(request);
     const body = await request.json();
-    const { key, record }: { key: string; record: PlayRecord } = body;
+    const { key, record } = body;
 
     if (!key || !record) {
       return apiError('Missing key or record', 400);
     }
 
-    if (!record.title || !record.source_name || record.index < 1) {
-      return apiError('Invalid record data', 400);
-    }
-
-    const [source, id] = key.split('+');
-    if (!source || !id) {
-      return apiError('Invalid key format', 400);
-    }
-
-    const finalRecord = {
-      ...record,
-      save_time: record.save_time ?? Date.now(),
-    } as PlayRecord;
-
-    await db.savePlayRecord(authInfo.username, source, id, finalRecord);
-
-    (db as any).storage
-      .cleanupOldPlayRecords(authInfo.username)
-      .catch((err: Error) => {
-        console.error('异步清理播放记录失败:', err);
-      });
-
+    await savePlayRecord(username, key, record);
     return apiSuccess(null);
   } catch (err) {
+    if (err instanceof Error && (err.message === 'Invalid key format' || err.message === 'Invalid record data')) {
+      return apiError(err.message, 400);
+    }
     console.error('保存播放记录失败', err);
-    return apiError('Internal Server Error', 500);
+    return handleServiceError(err);
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return apiError('Unauthorized', 401);
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return apiError('用户不存在', 401);
-      }
-      if (userInfoV2.banned) {
-        return apiError('用户已被封禁', 401);
-      }
-    }
-
-    const username = authInfo.username;
+    const username = await validateAuthenticatedUser(request);
     const { searchParams } = new URL(request.url);
     const key = searchParams.get('key');
 
-    if (key) {
-      const [source, id] = key.split('+');
-      if (!source || !id) {
-        return apiError('Invalid key format', 400);
-      }
-
-      await db.deletePlayRecord(username, source, id);
-    } else {
-      const all = await db.getAllPlayRecords(username);
-      await Promise.all(
-        Object.keys(all).map(async (k) => {
-          const [s, i] = k.split('+');
-          if (s && i) await db.deletePlayRecord(username, s, i);
-        }),
-      );
-    }
-
+    await deletePlayRecord(username, key || undefined);
     return apiSuccess(null);
   } catch (err) {
+    if (err instanceof Error && err.message === 'Invalid key format') {
+      return apiError(err.message, 400);
+    }
     console.error('删除播放记录失败', err);
-    return apiError('Internal Server Error', 500);
+    return handleServiceError(err);
   }
 }

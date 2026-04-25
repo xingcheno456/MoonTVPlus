@@ -573,10 +573,10 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error('音乐 API 错误:', error);
-    return apiSuccess({
-        error: '请求失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError(
+      '请求失败: ' + (error as Error).message,
+      500,
+    );
   }
 }
 

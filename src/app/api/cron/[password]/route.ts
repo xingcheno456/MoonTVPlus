@@ -170,7 +170,7 @@ export async function GET(
   const { password } = await params;
   const cronPassword = process.env.CRON_PASSWORD || 'mtvpls';
   if (password !== cronPassword) {
-    return apiSuccess({ success: false, message: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   // 检查冷却时间

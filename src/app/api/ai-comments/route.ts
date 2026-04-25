@@ -86,14 +86,14 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('AI评论生成失败:', error);
 
-    // 返回友好的错误信息
     const errorMessage =
       error instanceof Error ? error.message : 'AI评论生成失败';
 
-    return apiSuccess({
-        error: errorMessage,
-        details:
-          process.env.NODE_ENV === 'development' ? String(error) : undefined,
-      }, { status: 500 });
+    return apiError(
+      process.env.NODE_ENV === 'development'
+        ? errorMessage + ': ' + String(error)
+        : errorMessage,
+      500,
+    );
   }
 }
