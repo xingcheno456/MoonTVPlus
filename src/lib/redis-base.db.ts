@@ -34,54 +34,28 @@ export interface RedisConnectionConfig {
   clientName: string; // 用于日志显示，如 "Redis" 或 "Pika"
 }
 
-// 添加Redis操作重试包装器
-export function createRetryWrapper(
+import { isNetworkError, withRetry } from './retry';
+
+export function createRedisRetryWrapper(
   clientName: string,
   getClient: () => RedisClientType,
 ) {
-  return async function withRetry<T>(
-    operation: () => Promise<T>,
-    maxRetries = 3,
-  ): Promise<T> {
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        return await operation();
-      } catch (err: any) {
-        const isLastAttempt = i === maxRetries - 1;
-        const isConnectionError =
-          err.message?.includes('Connection') ||
-          err.message?.includes('ECONNREFUSED') ||
-          err.message?.includes('ENOTFOUND') ||
-          err.code === 'ECONNRESET' ||
-          err.code === 'EPIPE';
-
-        if (isConnectionError && !isLastAttempt) {
-          console.log(
-            `${clientName} operation failed, retrying... (${i + 1}/${maxRetries})`,
-          );
-          console.error('Error:', err.message);
-
-          // 等待一段时间后重试
-          await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
-
-          // 尝试重新连接
-          try {
-            const client = getClient();
-            if (!client.isOpen) {
-              await client.connect();
-            }
-          } catch (reconnectErr) {
-            console.error('Failed to reconnect:', reconnectErr);
+  return <T>(fn: () => Promise<T>, maxRetries?: number) => {
+    return withRetry(fn, {
+      maxRetries,
+      shouldRetry: isNetworkError,
+      logPrefix: clientName,
+      onRetry: async (attempt, error, delay) => {
+        try {
+          const client = getClient();
+          if (!client.isOpen) {
+            await client.connect();
           }
-
-          continue;
+        } catch (reconnectErr) {
+          console.error('Failed to reconnect:', reconnectErr);
         }
-
-        throw err;
-      }
-    }
-
-    throw new Error('Max retries exceeded');
+      },
+    });
   };
 }
 

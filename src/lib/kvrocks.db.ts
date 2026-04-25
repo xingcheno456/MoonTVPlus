@@ -4,7 +4,7 @@ import { StandardRedisAdapter } from './redis-adapter';
 import {
   BaseRedisStorage,
   createRedisClient,
-  createRetryWrapper,
+  createRedisRetryWrapper,
 } from './redis-base.db';
 
 export class KvrocksStorage extends BaseRedisStorage {
@@ -16,7 +16,7 @@ export class KvrocksStorage extends BaseRedisStorage {
     const globalSymbol = Symbol.for('__MOONTV_KVROCKS_CLIENT__');
     const client = createRedisClient(config, globalSymbol);
     const adapter = new StandardRedisAdapter(client);
-    const withRetry = createRetryWrapper(config.clientName, () => client);
+    const withRetry = createRedisRetryWrapper(config.clientName, () => client);
     super(adapter, withRetry);
   }
 }
