@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     const config = await getSuwayomiConfig();
     const upstreamUrl = resolveUpstreamUrl(config.serverBaseUrl, pathOrUrl);
     const buildHeaders = async (
-      forceRelogin: boolean
+      forceRelogin: boolean,
     ): Promise<HeadersInit | undefined> => {
       if (config.authMode === 'basic_auth') {
         if (!config.username || !config.password) {
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       return NextResponse.json(
         { error: `Suwayomi 图片请求失败: ${response.status}` },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '图片代理失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

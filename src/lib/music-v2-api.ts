@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
 
-export async function getMusicV2Username(request: NextRequest): Promise<string | null> {
+export async function getMusicV2Username(
+  request: NextRequest,
+): Promise<string | null> {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo?.username) return null;
 
@@ -18,16 +20,25 @@ export async function getMusicV2Username(request: NextRequest): Promise<string |
 }
 
 export function unauthorized() {
-  return NextResponse.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 401 });
+  return NextResponse.json(
+    {
+      success: false,
+      error: { code: 'UNAUTHORIZED', message: 'Unauthorized' },
+    },
+    { status: 401 },
+  );
 }
 
 export function badRequest(message: string, code = 'BAD_REQUEST') {
-  return NextResponse.json({ success: false, error: { code, message } }, { status: 400 });
+  return NextResponse.json(
+    { success: false, error: { code, message } },
+    { status: 400 },
+  );
 }
 
 export function internalError(message: string, details?: string) {
   return NextResponse.json(
     { success: false, error: { code: 'INTERNAL_ERROR', message, details } },
-    { status: 500 }
+    { status: 500 },
   );
 }

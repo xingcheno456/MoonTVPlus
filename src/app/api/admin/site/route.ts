@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       {
         error: '不支持本地存储进行管理员配置',
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -149,33 +149,54 @@ export async function POST(request: NextRequest) {
         typeof DanmakuAutoLoadDefault !== 'boolean') ||
       (TMDBApiKey !== undefined && typeof TMDBApiKey !== 'string') ||
       (TMDBProxy !== undefined && typeof TMDBProxy !== 'string') ||
-      (TMDBReverseProxy !== undefined && typeof TMDBReverseProxy !== 'string') ||
-      (BannerDataSource !== undefined && typeof BannerDataSource !== 'string') ||
-      (RecommendationDataSource !== undefined && typeof RecommendationDataSource !== 'string') ||
-      (PansouKeywordBlocklist !== undefined && typeof PansouKeywordBlocklist !== 'string') ||
+      (TMDBReverseProxy !== undefined &&
+        typeof TMDBReverseProxy !== 'string') ||
+      (BannerDataSource !== undefined &&
+        typeof BannerDataSource !== 'string') ||
+      (RecommendationDataSource !== undefined &&
+        typeof RecommendationDataSource !== 'string') ||
+      (PansouKeywordBlocklist !== undefined &&
+        typeof PansouKeywordBlocklist !== 'string') ||
       (MagnetProxy !== undefined && typeof MagnetProxy !== 'string') ||
-      (MagnetMikanReverseProxy !== undefined && typeof MagnetMikanReverseProxy !== 'string') ||
-      (MagnetDmhyReverseProxy !== undefined && typeof MagnetDmhyReverseProxy !== 'string') ||
-      (MagnetAcgripReverseProxy !== undefined && typeof MagnetAcgripReverseProxy !== 'string') ||
+      (MagnetMikanReverseProxy !== undefined &&
+        typeof MagnetMikanReverseProxy !== 'string') ||
+      (MagnetDmhyReverseProxy !== undefined &&
+        typeof MagnetDmhyReverseProxy !== 'string') ||
+      (MagnetAcgripReverseProxy !== undefined &&
+        typeof MagnetAcgripReverseProxy !== 'string') ||
       typeof EnableComments !== 'boolean' ||
-      (CustomAdFilterCode !== undefined && typeof CustomAdFilterCode !== 'string') ||
-      (CustomAdFilterVersion !== undefined && typeof CustomAdFilterVersion !== 'number') ||
-      (EnableRegistration !== undefined && typeof EnableRegistration !== 'boolean') ||
-      (RequireRegistrationInviteCode !== undefined && typeof RequireRegistrationInviteCode !== 'boolean') ||
-      (RegistrationInviteCode !== undefined && typeof RegistrationInviteCode !== 'string') ||
-      (RegistrationRequireTurnstile !== undefined && typeof RegistrationRequireTurnstile !== 'boolean') ||
-      (LoginRequireTurnstile !== undefined && typeof LoginRequireTurnstile !== 'boolean') ||
-      (TurnstileSiteKey !== undefined && typeof TurnstileSiteKey !== 'string') ||
-      (TurnstileSecretKey !== undefined && typeof TurnstileSecretKey !== 'string') ||
+      (CustomAdFilterCode !== undefined &&
+        typeof CustomAdFilterCode !== 'string') ||
+      (CustomAdFilterVersion !== undefined &&
+        typeof CustomAdFilterVersion !== 'number') ||
+      (EnableRegistration !== undefined &&
+        typeof EnableRegistration !== 'boolean') ||
+      (RequireRegistrationInviteCode !== undefined &&
+        typeof RequireRegistrationInviteCode !== 'boolean') ||
+      (RegistrationInviteCode !== undefined &&
+        typeof RegistrationInviteCode !== 'string') ||
+      (RegistrationRequireTurnstile !== undefined &&
+        typeof RegistrationRequireTurnstile !== 'boolean') ||
+      (LoginRequireTurnstile !== undefined &&
+        typeof LoginRequireTurnstile !== 'boolean') ||
+      (TurnstileSiteKey !== undefined &&
+        typeof TurnstileSiteKey !== 'string') ||
+      (TurnstileSecretKey !== undefined &&
+        typeof TurnstileSecretKey !== 'string') ||
       (DefaultUserTags !== undefined && !Array.isArray(DefaultUserTags)) ||
       (EnableOIDCLogin !== undefined && typeof EnableOIDCLogin !== 'boolean') ||
-      (EnableOIDCRegistration !== undefined && typeof EnableOIDCRegistration !== 'boolean') ||
+      (EnableOIDCRegistration !== undefined &&
+        typeof EnableOIDCRegistration !== 'boolean') ||
       (OIDCIssuer !== undefined && typeof OIDCIssuer !== 'string') ||
-      (OIDCAuthorizationEndpoint !== undefined && typeof OIDCAuthorizationEndpoint !== 'string') ||
-      (OIDCTokenEndpoint !== undefined && typeof OIDCTokenEndpoint !== 'string') ||
-      (OIDCUserInfoEndpoint !== undefined && typeof OIDCUserInfoEndpoint !== 'string') ||
+      (OIDCAuthorizationEndpoint !== undefined &&
+        typeof OIDCAuthorizationEndpoint !== 'string') ||
+      (OIDCTokenEndpoint !== undefined &&
+        typeof OIDCTokenEndpoint !== 'string') ||
+      (OIDCUserInfoEndpoint !== undefined &&
+        typeof OIDCUserInfoEndpoint !== 'string') ||
       (OIDCClientId !== undefined && typeof OIDCClientId !== 'string') ||
-      (OIDCClientSecret !== undefined && typeof OIDCClientSecret !== 'string') ||
+      (OIDCClientSecret !== undefined &&
+        typeof OIDCClientSecret !== 'string') ||
       (OIDCButtonText !== undefined && typeof OIDCButtonText !== 'string') ||
       (OIDCMinTrustLevel !== undefined && typeof OIDCMinTrustLevel !== 'number')
     ) {
@@ -253,7 +274,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Cache-Control': 'no-store', // 不缓存结果
         },
-      }
+      },
     );
   } catch (error) {
     console.error('更新站点配置失败:', error);
@@ -262,7 +283,7 @@ export async function POST(request: NextRequest) {
         error: '更新站点配置失败',
         details: (error as Error).message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

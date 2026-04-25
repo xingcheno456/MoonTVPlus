@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
             episodes: [],
           },
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
           episodes: [],
         },
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

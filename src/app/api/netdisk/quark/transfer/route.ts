@@ -22,7 +22,10 @@ export async function POST(request: NextRequest) {
     const quarkConfig = config.NetDiskConfig?.Quark;
 
     if (!quarkConfig?.Enabled || !quarkConfig.Cookie) {
-      return NextResponse.json({ error: '夸克网盘未配置或未启用' }, { status: 400 });
+      return NextResponse.json(
+        { error: '夸克网盘未配置或未启用' },
+        { status: 400 },
+      );
     }
 
     const result = await transferQuarkShare(quarkConfig.Cookie, {
@@ -38,7 +41,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '转存失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

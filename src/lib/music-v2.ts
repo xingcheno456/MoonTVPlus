@@ -24,7 +24,9 @@ export function normalizeMusicSource(source?: string): MusicSource | '' {
   }
 }
 
-export function normalizeMusicQuality(quality?: string): Exclude<MusicQuality, 'flac24bit'> {
+export function normalizeMusicQuality(
+  quality?: string,
+): Exclude<MusicQuality, 'flac24bit'> {
   switch (quality) {
     case '128k':
     case '192k':
@@ -94,53 +96,62 @@ export interface LxServerSong {
   songmid?: string;
 }
 
-export function isMusicSource(source: string | null | undefined): source is MusicSource {
+export function isMusicSource(
+  source: string | null | undefined,
+): source is MusicSource {
   return !!source && ['wy', 'tx', 'kw', 'kg', 'mg'].includes(source);
 }
 
-export function parseDurationTextToSec(durationText?: string): number | undefined {
+export function parseDurationTextToSec(
+  durationText?: string,
+): number | undefined {
   if (!durationText) return undefined;
-  const parts = durationText.split(':').map(part => Number(part));
-  if (parts.length !== 2 || parts.some(num => Number.isNaN(num))) {
+  const parts = durationText.split(':').map((part) => Number(part));
+  if (parts.length !== 2 || parts.some((num) => Number.isNaN(num))) {
     return undefined;
   }
   return parts[0] * 60 + parts[1];
 }
 
-export function normalizeSong(input: Partial<MusicV2Song> & {
-  songId?: string;
-  id?: string;
-  source?: string;
-  name?: string;
-  artist?: string;
-  singer?: string;
-  songmid?: string;
-  album?: string;
-  albumName?: string;
-  cover?: string;
-  pic?: string;
-  img?: string;
-  durationText?: string;
-  interval?: string;
-  durationSec?: number;
-  hash?: string;
-  copyrightId?: string;
-  albumId?: string;
-  lrcUrl?: string;
-  mrcUrl?: string;
-  trcUrl?: string;
-}): MusicV2Song {
+export function normalizeSong(
+  input: Partial<MusicV2Song> & {
+    songId?: string;
+    id?: string;
+    source?: string;
+    name?: string;
+    artist?: string;
+    singer?: string;
+    songmid?: string;
+    album?: string;
+    albumName?: string;
+    cover?: string;
+    pic?: string;
+    img?: string;
+    durationText?: string;
+    interval?: string;
+    durationSec?: number;
+    hash?: string;
+    copyrightId?: string;
+    albumId?: string;
+    lrcUrl?: string;
+    mrcUrl?: string;
+    trcUrl?: string;
+  },
+): MusicV2Song {
   const source = normalizeMusicSource(input.source) as MusicSource;
   const rawSongId = (input.songId || input.id || '').trim();
   const derivedSongmid = String(input.songmid || '').trim();
-  const songId = rawSongId || (source && derivedSongmid ? `${source}_${derivedSongmid}` : '');
+  const songId =
+    rawSongId ||
+    (source && derivedSongmid ? `${source}_${derivedSongmid}` : '');
   const durationText = input.durationText || input.interval;
   const durationSec = input.durationSec ?? parseDurationTextToSec(durationText);
 
   return {
     songId,
     source,
-    songmid: derivedSongmid || songId.split('_').slice(1).join('_') || undefined,
+    songmid:
+      derivedSongmid || songId.split('_').slice(1).join('_') || undefined,
     name: (input.name || '').trim(),
     artist: (input.artist || input.singer || '').trim(),
     album: input.album || input.albumName || undefined,
@@ -183,7 +194,11 @@ export async function getMusicV2Config() {
   const musicConfig = config?.MusicConfig;
 
   const enabled = musicConfig?.Enabled ?? false;
-  const baseUrl = (musicConfig?.BaseUrl || process.env.MUSIC_V2_BASE_URL || '').replace(/\/$/, '');
+  const baseUrl = (
+    musicConfig?.BaseUrl ||
+    process.env.MUSIC_V2_BASE_URL ||
+    ''
+  ).replace(/\/$/, '');
   const token = musicConfig?.Token || process.env.MUSIC_V2_TOKEN || '';
 
   return { enabled, baseUrl, token };
@@ -191,7 +206,11 @@ export async function getMusicV2Config() {
 
 type LxFetchAuthMode = 'auto' | 'required' | 'none';
 
-async function lxFetch(path: string, init: RequestInit = {}, authMode: LxFetchAuthMode = 'auto') {
+async function lxFetch(
+  path: string,
+  init: RequestInit = {},
+  authMode: LxFetchAuthMode = 'auto',
+) {
   const { enabled, baseUrl, token } = await getMusicV2Config();
 
   if (!enabled) {
@@ -222,7 +241,10 @@ async function lxFetch(path: string, init: RequestInit = {}, authMode: LxFetchAu
   return response;
 }
 
-export async function lxGetJson<T>(path: string, authMode: LxFetchAuthMode = 'auto'): Promise<T> {
+export async function lxGetJson<T>(
+  path: string,
+  authMode: LxFetchAuthMode = 'auto',
+): Promise<T> {
   const response = await lxFetch(path, {}, authMode);
   if (!response.ok) {
     const text = await response.text();
@@ -231,11 +253,19 @@ export async function lxGetJson<T>(path: string, authMode: LxFetchAuthMode = 'au
   return response.json() as Promise<T>;
 }
 
-export async function lxPostJson<T>(path: string, body: any, authMode: LxFetchAuthMode = 'auto'): Promise<T> {
-  const response = await lxFetch(path, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  }, authMode);
+export async function lxPostJson<T>(
+  path: string,
+  body: any,
+  authMode: LxFetchAuthMode = 'auto',
+): Promise<T> {
+  const response = await lxFetch(
+    path,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    },
+    authMode,
+  );
   if (!response.ok) {
     const text = await response.text();
     throw new Error(text || `请求失败(${response.status})`);
@@ -249,16 +279,18 @@ export function extractSongmid(song: Pick<MusicV2Song, 'songId' | 'songmid'>) {
 
 function normalizeLyricPayload(payload: any) {
   return {
-    lyric: typeof payload?.lyric === 'string'
-      ? payload.lyric
-      : typeof payload?.lrc === 'string'
-        ? payload.lrc
-        : '',
-    tlyric: typeof payload?.tlyric === 'string'
-      ? payload.tlyric
-      : typeof payload?.trc === 'string'
-        ? payload.trc
-        : '',
+    lyric:
+      typeof payload?.lyric === 'string'
+        ? payload.lyric
+        : typeof payload?.lrc === 'string'
+          ? payload.lrc
+          : '',
+    tlyric:
+      typeof payload?.tlyric === 'string'
+        ? payload.tlyric
+        : typeof payload?.trc === 'string'
+          ? payload.trc
+          : '',
   };
 }
 
@@ -281,27 +313,34 @@ export async function fetchLxLyric(song: MusicV2Song) {
   if (song.trcUrl) query.set('trcUrl', song.trcUrl);
 
   try {
-    const payload = await lxGetJson<any>(`/api/music/lyric?${query.toString()}`, 'none');
+    const payload = await lxGetJson<any>(
+      `/api/music/lyric?${query.toString()}`,
+      'none',
+    );
     return normalizeLyricPayload(payload);
   } catch {
-    const payload = await lxPostJson<any>('/api/music/lyric', {
-      songInfo: {
-        source: song.source,
-        id: song.songId,
-        songId: songmid,
-        songmid,
-        name: song.name,
-        singer: song.artist,
-        artist: song.artist,
-        hash: song.hash,
-        interval: song.durationText,
-        copyrightId: song.copyrightId,
-        albumId: song.albumId,
-        lrcUrl: song.lrcUrl,
-        mrcUrl: song.mrcUrl,
-        trcUrl: song.trcUrl,
+    const payload = await lxPostJson<any>(
+      '/api/music/lyric',
+      {
+        songInfo: {
+          source: song.source,
+          id: song.songId,
+          songId: songmid,
+          songmid,
+          name: song.name,
+          singer: song.artist,
+          artist: song.artist,
+          hash: song.hash,
+          interval: song.durationText,
+          copyrightId: song.copyrightId,
+          albumId: song.albumId,
+          lrcUrl: song.lrcUrl,
+          mrcUrl: song.mrcUrl,
+          trcUrl: song.trcUrl,
+        },
       },
-    }, 'none');
+      'none',
+    );
 
     return normalizeLyricPayload(payload);
   }

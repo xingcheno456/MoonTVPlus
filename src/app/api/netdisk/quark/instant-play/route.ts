@@ -8,10 +8,7 @@ import { base58Encode } from '@/lib/utils';
 export const runtime = 'nodejs';
 
 function joinPath(...parts: string[]) {
-  const joined = parts
-    .filter(Boolean)
-    .join('/')
-    .replace(/\/+/g, '/');
+  const joined = parts.filter(Boolean).join('/').replace(/\/+/g, '/');
   return joined.startsWith('/') ? joined : `/${joined}`;
 }
 
@@ -31,7 +28,10 @@ export async function POST(request: NextRequest) {
     const quarkConfig = config.NetDiskConfig?.Quark;
 
     if (!quarkConfig?.Enabled || !quarkConfig.Cookie) {
-      return NextResponse.json({ error: '夸克网盘未配置或未启用' }, { status: 400 });
+      return NextResponse.json(
+        { error: '夸克网盘未配置或未启用' },
+        { status: 400 },
+      );
     }
 
     const result = await createQuarkInstantPlayFolder(quarkConfig.Cookie, {
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const openlistFolderPath = joinPath(
       quarkConfig.OpenListTempPath,
-      result.folderName
+      result.folderName,
     );
 
     if (
@@ -61,12 +61,17 @@ export async function POST(request: NextRequest) {
         const openListClient = new OpenListClient(
           config.OpenListConfig.URL,
           config.OpenListConfig.Username,
-          config.OpenListConfig.Password
+          config.OpenListConfig.Password,
         );
-        await openListClient.refreshDirectory(quarkConfig.OpenListTempPath || '/');
+        await openListClient.refreshDirectory(
+          quarkConfig.OpenListTempPath || '/',
+        );
         await openListClient.refreshDirectory(openlistFolderPath);
       } catch (refreshError) {
-        console.warn('[quark instant-play] 刷新 OpenList 临时目录失败:', refreshError);
+        console.warn(
+          '[quark instant-play] 刷新 OpenList 临时目录失败:',
+          refreshError,
+        );
       }
     }
 
@@ -81,7 +86,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '立即播放失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

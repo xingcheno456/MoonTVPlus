@@ -11,12 +11,14 @@ export async function GET(request: NextRequest) {
     const source = searchParams.get('source') || 'mg';
     if (!isMusicSource(source)) return badRequest('不支持的音源');
 
-    const list = await lxGetJson<Array<{ name: string; singer?: string; source: string }>>(`/api/music/hotSearch?source=${source}`, 'none');
+    const list = await lxGetJson<
+      Array<{ name: string; singer?: string; source: string }>
+    >(`/api/music/hotSearch?source=${source}`, 'none');
 
     return NextResponse.json({
       success: true,
       data: {
-        list: list.map(item => ({
+        list: list.map((item) => ({
           keyword: item.name,
           name: item.name,
           artist: item.singer || '',

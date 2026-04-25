@@ -1,8 +1,20 @@
+'use client';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-'use client';
 
-import { Blend, Cat, Clover, Container, Film, Globe, Home, Star, Tv, TvMinimalPlay, Users } from 'lucide-react';
+import {
+  Blend,
+  Cat,
+  Clover,
+  Container,
+  Film,
+  Globe,
+  Home,
+  Star,
+  Tv,
+  TvMinimalPlay,
+  Users,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -162,7 +174,7 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
 
   return (
     <nav
-      className='md:hidden fixed left-0 right-0 z-[600] bg-white/90 backdrop-blur-xl border-t border-gray-200/50 overflow-hidden dark:bg-gray-900/80 dark:border-gray-700/50'
+      className='fixed left-0 right-0 z-[600] overflow-hidden border-t border-gray-200/50 bg-white/90 backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-900/80 md:hidden'
       style={{
         /* 紧贴视口底部，同时在内部留出安全区高度 */
         bottom: 0,
@@ -170,7 +182,7 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
         minHeight: 'calc(3.5rem + env(safe-area-inset-bottom))',
       }}
     >
-      <ul className='flex items-center overflow-x-auto scrollbar-hide'>
+      <ul className='scrollbar-hide flex items-center overflow-x-auto'>
         {navItems.map((item) => {
           const active = isActive(item.href);
           return (
@@ -182,13 +194,14 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
               <Link
                 href={item.href}
                 prefetch={false}
-                className='flex flex-col items-center justify-center w-full h-14 gap-1 text-xs'
+                className='flex h-14 w-full flex-col items-center justify-center gap-1 text-xs'
               >
                 <item.icon
-                  className={`h-6 w-6 ${active
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-gray-500 dark:text-gray-400'
-                    }`}
+                  className={`h-6 w-6 ${
+                    active
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-gray-500 dark:text-gray-400'
+                  }`}
                 />
                 <span
                   className={

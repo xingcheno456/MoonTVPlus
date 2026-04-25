@@ -4,7 +4,11 @@ import { Flame, Sparkles } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { deleteMangaShelf, getAllMangaShelf, saveMangaShelf } from '@/lib/db.client';
+import {
+  deleteMangaShelf,
+  getAllMangaShelf,
+  saveMangaShelf,
+} from '@/lib/db.client';
 import {
   MangaRecommendResult,
   MangaRecommendType,
@@ -26,7 +30,9 @@ function MangaCardSkeleton({ withButton = false }: { withButton?: boolean }) {
           <div className='h-3 w-1/2 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
         </div>
       </div>
-      {withButton && <div className='h-9 w-full animate-pulse rounded-2xl bg-gray-200 dark:bg-gray-800' />}
+      {withButton && (
+        <div className='h-9 w-full animate-pulse rounded-2xl bg-gray-200 dark:bg-gray-800' />
+      )}
     </div>
   );
 }
@@ -36,8 +42,12 @@ export default function MangaRecommendPage() {
   const searchParams = useSearchParams();
   const [sources, setSources] = useState<MangaSource[]>([]);
   const [sourceId, setSourceId] = useState('');
-  const [recommendType, setRecommendType] = useState<MangaRecommendType>('POPULAR');
-  const [result, setResult] = useState<MangaRecommendResult>({ mangas: [], hasNextPage: false });
+  const [recommendType, setRecommendType] =
+    useState<MangaRecommendType>('POPULAR');
+  const [result, setResult] = useState<MangaRecommendResult>({
+    mangas: [],
+    hasNextPage: false,
+  });
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -63,44 +73,51 @@ export default function MangaRecommendPage() {
       })
       .catch(() => undefined);
 
-    getAllMangaShelf().then(setShelf).catch(() => undefined);
+    getAllMangaShelf()
+      .then(setShelf)
+      .catch(() => undefined);
   }, []);
 
-  const fetchRecommend = useCallback(async (nextPage: number, append: boolean) => {
-    if (!sourceId) return;
+  const fetchRecommend = useCallback(
+    async (nextPage: number, append: boolean) => {
+      if (!sourceId) return;
 
-    if (append) {
-      setLoadingMore(true);
-    } else {
-      setLoading(true);
-      setError('');
-    }
-
-    try {
-      const params = new URLSearchParams({
-        sourceId,
-        type: recommendType,
-        page: String(nextPage),
-      });
-      const res = await fetch(`/api/manga/recommend?${params.toString()}`);
-      const data = (await res.json()) as MangaRecommendResult & { error?: string };
-      if (!res.ok) throw new Error(data.error || '获取推荐失败');
-
-      setPage(nextPage);
-      setResult((prev) => ({
-        mangas: append ? [...prev.mangas, ...data.mangas] : data.mangas,
-        hasNextPage: data.hasNextPage,
-      }));
-    } catch (err) {
-      setError((err as Error).message);
-      if (!append) {
-        setResult({ mangas: [], hasNextPage: false });
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+        setError('');
       }
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [recommendType, sourceId]);
+
+      try {
+        const params = new URLSearchParams({
+          sourceId,
+          type: recommendType,
+          page: String(nextPage),
+        });
+        const res = await fetch(`/api/manga/recommend?${params.toString()}`);
+        const data = (await res.json()) as MangaRecommendResult & {
+          error?: string;
+        };
+        if (!res.ok) throw new Error(data.error || '获取推荐失败');
+
+        setPage(nextPage);
+        setResult((prev) => ({
+          mangas: append ? [...prev.mangas, ...data.mangas] : data.mangas,
+          hasNextPage: data.hasNextPage,
+        }));
+      } catch (err) {
+        setError((err as Error).message);
+        if (!append) {
+          setResult({ mangas: [], hasNextPage: false });
+        }
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [recommendType, sourceId],
+  );
 
   useEffect(() => {
     if (!sourceId) return;
@@ -114,12 +131,18 @@ export default function MangaRecommendPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        if (!entry?.isIntersecting || loadingMore || loading || !result.hasNextPage) return;
+        if (
+          !entry?.isIntersecting ||
+          loadingMore ||
+          loading ||
+          !result.hasNextPage
+        )
+          return;
         void fetchRecommend(page + 1, true);
       },
       {
         rootMargin: '240px 0px',
-      }
+      },
     );
 
     observer.observe(node);
@@ -132,12 +155,20 @@ export default function MangaRecommendPage() {
         label: source.displayName || source.name,
         value: source.id,
       })),
-    [sources]
+    [sources],
   );
 
   const recommendOptions = [
-    { label: '热门', value: 'POPULAR', icon: <Flame className='h-3.5 w-3.5' /> },
-    { label: '最新', value: 'LATEST', icon: <Sparkles className='h-3.5 w-3.5' /> },
+    {
+      label: '热门',
+      value: 'POPULAR',
+      icon: <Flame className='h-3.5 w-3.5' />,
+    },
+    {
+      label: '最新',
+      value: 'LATEST',
+      icon: <Sparkles className='h-3.5 w-3.5' />,
+    },
   ];
 
   const toggleShelf = async (item: MangaSearchItem) => {
@@ -171,9 +202,16 @@ export default function MangaRecommendPage() {
     <div className='mx-auto max-w-6xl space-y-6'>
       <section className='space-y-4 rounded-3xl border border-gray-200/70 bg-white/80 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950/70 sm:p-5'>
         <div className='space-y-2'>
-          <div className='text-sm font-medium text-gray-700 dark:text-gray-200'>漫画源</div>
+          <div className='text-sm font-medium text-gray-700 dark:text-gray-200'>
+            漫画源
+          </div>
           {sourceOptions.length > 0 ? (
-            <CapsuleSwitch options={sourceOptions} active={sourceId} onChange={setSourceId} className='max-w-full' />
+            <CapsuleSwitch
+              options={sourceOptions}
+              active={sourceId}
+              onChange={setSourceId}
+              className='max-w-full'
+            />
           ) : (
             <div className='rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-500 dark:bg-gray-900 dark:text-gray-400'>
               暂无可用漫画源
@@ -182,7 +220,9 @@ export default function MangaRecommendPage() {
         </div>
 
         <div className='space-y-2'>
-          <div className='text-sm font-medium text-gray-700 dark:text-gray-200'>推荐类型</div>
+          <div className='text-sm font-medium text-gray-700 dark:text-gray-200'>
+            推荐类型
+          </div>
           <CapsuleSwitch
             options={recommendOptions}
             active={recommendType}
@@ -232,8 +272,15 @@ export default function MangaRecommendPage() {
               })}
             </div>
 
-            <div ref={loadMoreRef} className='mt-6 flex min-h-10 items-center justify-center text-sm text-gray-500 dark:text-gray-400'>
-              {loadingMore ? '正在加载更多...' : result.hasNextPage ? '继续下滑加载更多' : '没有更多了'}
+            <div
+              ref={loadMoreRef}
+              className='mt-6 flex min-h-10 items-center justify-center text-sm text-gray-500 dark:text-gray-400'
+            >
+              {loadingMore
+                ? '正在加载更多...'
+                : result.hasNextPage
+                  ? '继续下滑加载更多'
+                  : '没有更多了'}
             </div>
           </>
         )}

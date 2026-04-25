@@ -1,6 +1,6 @@
+'use client';
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
-'use client';
 
 import {
   Bell,
@@ -66,17 +66,20 @@ export const UserMenu: React.FC = () => {
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isSubscribeOpen, setIsSubscribeOpen] = useState(false);
   const [isVersionPanelOpen, setIsVersionPanelOpen] = useState(false);
-  const [isOfflineDownloadPanelOpen, setIsOfflineDownloadPanelOpen] = useState(false);
+  const [isOfflineDownloadPanelOpen, setIsOfflineDownloadPanelOpen] =
+    useState(false);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [isFavoritesPanelOpen, setIsFavoritesPanelOpen] = useState(false);
   const [isEmailSettingsOpen, setIsEmailSettingsOpen] = useState(false);
   const [isDeviceManagementOpen, setIsDeviceManagementOpen] = useState(false);
   const [isEcoAppsOpen, setIsEcoAppsOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [isDownloadManagementOpen, setIsDownloadManagementOpen] = useState(false);
+  const [isDownloadManagementOpen, setIsDownloadManagementOpen] =
+    useState(false);
   const [authInfo, setAuthInfo] = useState<AuthInfo | null>(null);
   const [storageType, setStorageType] = useState<string>('localstorage');
-  const [displayStorageType, setDisplayStorageType] = useState<string>('localstorage');
+  const [displayStorageType, setDisplayStorageType] =
+    useState<string>('localstorage');
   const [mounted, setMounted] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -87,12 +90,25 @@ export const UserMenu: React.FC = () => {
   const [tvboxToken, setTvboxToken] = useState('');
   const [isResettingToken, setIsResettingToken] = useState(false);
   const [isLoadingSubscribeUrl, setIsLoadingSubscribeUrl] = useState(false);
-  const [subscribeAdFilterEnabled, setSubscribeAdFilterEnabled] = useState(false);
-  const [subscribeYellowFilterEnabled, setSubscribeYellowFilterEnabled] = useState(false);
+  const [subscribeAdFilterEnabled, setSubscribeAdFilterEnabled] =
+    useState(false);
+  const [subscribeYellowFilterEnabled, setSubscribeYellowFilterEnabled] =
+    useState(false);
 
   // Body 滚动锁定 - 使用 overflow 方式避免布局问题
   useEffect(() => {
-    if (isProfileCenterOpen || isSettingsOpen || isChangePasswordOpen || isSubscribeOpen || isOfflineDownloadPanelOpen || isEmailSettingsOpen || isDeviceManagementOpen || isEcoAppsOpen || isReportOpen || isDownloadManagementOpen) {
+    if (
+      isProfileCenterOpen ||
+      isSettingsOpen ||
+      isChangePasswordOpen ||
+      isSubscribeOpen ||
+      isOfflineDownloadPanelOpen ||
+      isEmailSettingsOpen ||
+      isDeviceManagementOpen ||
+      isEcoAppsOpen ||
+      isReportOpen ||
+      isDownloadManagementOpen
+    ) {
       const body = document.body;
       const html = document.documentElement;
 
@@ -105,13 +121,23 @@ export const UserMenu: React.FC = () => {
       html.style.overflow = 'hidden';
 
       return () => {
-
         // 恢复所有原始样式
         body.style.overflow = originalBodyOverflow;
         html.style.overflow = originalHtmlOverflow;
       };
     }
-  }, [isProfileCenterOpen, isSettingsOpen, isChangePasswordOpen, isSubscribeOpen, isOfflineDownloadPanelOpen, isEmailSettingsOpen, isDeviceManagementOpen, isEcoAppsOpen, isReportOpen, isDownloadManagementOpen]);
+  }, [
+    isProfileCenterOpen,
+    isSettingsOpen,
+    isChangePasswordOpen,
+    isSubscribeOpen,
+    isOfflineDownloadPanelOpen,
+    isEmailSettingsOpen,
+    isDeviceManagementOpen,
+    isEcoAppsOpen,
+    isReportOpen,
+    isDownloadManagementOpen,
+  ]);
 
   // 设置相关状态
   const [defaultAggregateSearch, setDefaultAggregateSearch] = useState(true);
@@ -121,30 +147,44 @@ export const UserMenu: React.FC = () => {
   const [fluidSearch, setFluidSearch] = useState(true);
   const [tmdbBackdropDisabled, setTmdbBackdropDisabled] = useState(false);
   const [enableTrailers, setEnableTrailers] = useState(false);
-  const [doubanDataSource, setDoubanDataSource] = useState('cmliussss-cdn-tencent');
-  const [doubanDataSourceBackup, setDoubanDataSourceBackup] = useState('direct');
-  const [doubanImageProxyType, setDoubanImageProxyType] = useState('cmliussss-cdn-tencent');
-  const [doubanImageProxyTypeBackup, setDoubanImageProxyTypeBackup] = useState('server');
+  const [doubanDataSource, setDoubanDataSource] = useState(
+    'cmliussss-cdn-tencent',
+  );
+  const [doubanDataSourceBackup, setDoubanDataSourceBackup] =
+    useState('direct');
+  const [doubanImageProxyType, setDoubanImageProxyType] = useState(
+    'cmliussss-cdn-tencent',
+  );
+  const [doubanImageProxyTypeBackup, setDoubanImageProxyTypeBackup] =
+    useState('server');
   const [doubanImageProxyUrl, setDoubanImageProxyUrl] = useState('');
   const [doubanProxyUrlBackup, setDoubanProxyUrlBackup] = useState('');
-  const [doubanImageProxyUrlBackup, setDoubanImageProxyUrlBackup] = useState('');
+  const [doubanImageProxyUrlBackup, setDoubanImageProxyUrlBackup] =
+    useState('');
   const [isDoubanDropdownOpen, setIsDoubanDropdownOpen] = useState(false);
-  const [isDoubanBackupDropdownOpen, setIsDoubanBackupDropdownOpen] = useState(false);
+  const [isDoubanBackupDropdownOpen, setIsDoubanBackupDropdownOpen] =
+    useState(false);
   const [isDoubanImageProxyDropdownOpen, setIsDoubanImageProxyDropdownOpen] =
     useState(false);
-  const [isDoubanImageProxyBackupDropdownOpen, setIsDoubanImageProxyBackupDropdownOpen] =
-    useState(false);
+  const [
+    isDoubanImageProxyBackupDropdownOpen,
+    setIsDoubanImageProxyBackupDropdownOpen,
+  ] = useState(false);
   const [bufferStrategy, setBufferStrategy] = useState('medium');
   const [nextEpisodePreCache, setNextEpisodePreCache] = useState(true);
-  const [nextEpisodeDanmakuPreload, setNextEpisodeDanmakuPreload] = useState(true);
+  const [nextEpisodeDanmakuPreload, setNextEpisodeDanmakuPreload] =
+    useState(true);
   const [disableAutoLoadDanmaku, setDisableAutoLoadDanmaku] = useState(false);
   const [danmakuMaxCount, setDanmakuMaxCount] = useState(0);
   const [danmakuHeatmapDisabled, setDanmakuHeatmapDisabled] = useState(false);
-  const [searchTraditionalToSimplified, setSearchTraditionalToSimplified] = useState(false);
+  const [searchTraditionalToSimplified, setSearchTraditionalToSimplified] =
+    useState(false);
   const [exactSearch, setExactSearch] = useState(true);
   const [maxConcurrentDownloads, setMaxConcurrentDownloads] = useState(6);
   const [downloadThreadsPerTask, setDownloadThreadsPerTask] = useState(6);
-  const [downloadMode, setDownloadMode] = useState<'browser' | 'filesystem'>('browser');
+  const [downloadMode, setDownloadMode] = useState<'browser' | 'filesystem'>(
+    'browser',
+  );
   const [filesystemSavePath, setFilesystemSavePath] = useState<string>('');
 
   // 邮件通知设置
@@ -179,7 +219,9 @@ export const UserMenu: React.FC = () => {
   const [isDoubanSectionOpen, setIsDoubanSectionOpen] = useState(false);
 
   // TMDB 图片设置
-  const [tmdbImageBaseUrl, setTmdbImageBaseUrl] = useState('https://image.tmdb.org');
+  const [tmdbImageBaseUrl, setTmdbImageBaseUrl] = useState(
+    'https://image.tmdb.org',
+  );
   const [isUsageSectionOpen, setIsUsageSectionOpen] = useState(false);
   const [isDownloadSectionOpen, setIsDownloadSectionOpen] = useState(false);
   const [isBufferSectionOpen, setIsBufferSectionOpen] = useState(false);
@@ -203,9 +245,11 @@ export const UserMenu: React.FC = () => {
     { id: 'upcomingContent', name: '即将上映', enabled: true, order: 5 },
   ];
 
-  const [homeModules, setHomeModules] = useState<HomeModule[]>(defaultHomeModules);
+  const [homeModules, setHomeModules] =
+    useState<HomeModule[]>(defaultHomeModules);
   const [homeBannerEnabled, setHomeBannerEnabled] = useState(true);
-  const [homeContinueWatchingEnabled, setHomeContinueWatchingEnabled] = useState(true);
+  const [homeContinueWatchingEnabled, setHomeContinueWatchingEnabled] =
+    useState(true);
 
   // 豆瓣数据源选项
   const doubanDataSourceOptions = [
@@ -229,8 +273,14 @@ export const UserMenu: React.FC = () => {
     { value: 'cmliussss-cdn-ali', label: '豆瓣 CDN By CMLiussss（阿里云）' },
     { value: 'baidu', label: '百度图片代理' },
     { value: 'custom', label: '自定义代理' },
-    { value: 'direct', label: '直连（浏览器直接请求豆瓣，可能需要浏览器插件才能正常显示）' },
-    { value: 'img3', label: '豆瓣官方精品 CDN（阿里云，可能需要浏览器插件才能正常显示）' },
+    {
+      value: 'direct',
+      label: '直连（浏览器直接请求豆瓣，可能需要浏览器插件才能正常显示）',
+    },
+    {
+      value: 'img3',
+      label: '豆瓣官方精品 CDN（阿里云，可能需要浏览器插件才能正常显示）',
+    },
   ];
 
   // 缓冲策略选项
@@ -249,7 +299,9 @@ export const UserMenu: React.FC = () => {
 
   // 清除弹幕缓存相关状态
   const [isClearingCache, setIsClearingCache] = useState(false);
-  const [clearCacheMessage, setClearCacheMessage] = useState<string | null>(null);
+  const [clearCacheMessage, setClearCacheMessage] = useState<string | null>(
+    null,
+  );
   const [danmakuCacheUsage, setDanmakuCacheUsage] = useState('计算中...');
 
   // 确保组件已挂载
@@ -300,7 +352,10 @@ export const UserMenu: React.FC = () => {
     if (globalWindow.__loadingNotifications) {
       // 如果正在加载，等待加载完成后获取结果
       const checkInterval = setInterval(() => {
-        if (!globalWindow.__loadingNotifications && globalWindow.__unreadNotificationCount !== undefined) {
+        if (
+          !globalWindow.__loadingNotifications &&
+          globalWindow.__unreadNotificationCount !== undefined
+        ) {
           setUnreadCount(globalWindow.__unreadNotificationCount);
           clearInterval(checkInterval);
         }
@@ -340,14 +395,18 @@ export const UserMenu: React.FC = () => {
 
     window.addEventListener('notificationsUpdated', handleNotificationsUpdated);
     return () => {
-      window.removeEventListener('notificationsUpdated', handleNotificationsUpdated);
+      window.removeEventListener(
+        'notificationsUpdated',
+        handleNotificationsUpdated,
+      );
     };
   }, []);
 
   // 从运行时配置读取订阅是否启用
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const enabled = (window as any).RUNTIME_CONFIG?.ENABLE_TVBOX_SUBSCRIBE || false;
+      const enabled =
+        (window as any).RUNTIME_CONFIG?.ENABLE_TVBOX_SUBSCRIBE || false;
       setSubscribeEnabled(enabled);
     }
   }, []);
@@ -363,7 +422,13 @@ export const UserMenu: React.FC = () => {
         const token = data.token;
         setTvboxToken(token);
 
-        setSubscribeUrl(buildSubscribeUrl(token, subscribeAdFilterEnabled, subscribeYellowFilterEnabled));
+        setSubscribeUrl(
+          buildSubscribeUrl(
+            token,
+            subscribeAdFilterEnabled,
+            subscribeYellowFilterEnabled,
+          ),
+        );
       }
     } catch (error) {
       console.error('获取订阅URL失败:', error);
@@ -393,11 +458,18 @@ export const UserMenu: React.FC = () => {
             const token = data.token;
             setTvboxToken(token);
 
-            setSubscribeUrl(buildSubscribeUrl(token, subscribeAdFilterEnabled, subscribeYellowFilterEnabled));
+            setSubscribeUrl(
+              buildSubscribeUrl(
+                token,
+                subscribeAdFilterEnabled,
+                subscribeYellowFilterEnabled,
+              ),
+            );
 
             if (messageEl) {
               messageEl.textContent = '订阅token已重置！';
-              messageEl.className = 'text-xs text-center text-green-600 dark:text-green-400 mt-2';
+              messageEl.className =
+                'text-xs text-center text-green-600 dark:text-green-400 mt-2';
               messageEl.classList.remove('hidden');
               setTimeout(() => {
                 messageEl.classList.add('hidden');
@@ -407,7 +479,8 @@ export const UserMenu: React.FC = () => {
             const data = await response.json();
             if (messageEl) {
               messageEl.textContent = data.error || '重置失败，请重试';
-              messageEl.className = 'text-xs text-center text-red-600 dark:text-red-400 mt-2';
+              messageEl.className =
+                'text-xs text-center text-red-600 dark:text-red-400 mt-2';
               messageEl.classList.remove('hidden');
             }
           }
@@ -416,7 +489,8 @@ export const UserMenu: React.FC = () => {
           const messageEl = document.getElementById('tvbox-token-message');
           if (messageEl) {
             messageEl.textContent = '重置失败，请重试';
-            messageEl.className = 'text-xs text-center text-red-600 dark:text-red-400 mt-2';
+            messageEl.className =
+              'text-xs text-center text-red-600 dark:text-red-400 mt-2';
             messageEl.classList.remove('hidden');
           }
         } finally {
@@ -426,7 +500,11 @@ export const UserMenu: React.FC = () => {
     });
   };
 
-  const buildSubscribeUrl = (token: string, adFilter: boolean, yellowFilter: boolean) => {
+  const buildSubscribeUrl = (
+    token: string,
+    adFilter: boolean,
+    yellowFilter: boolean,
+  ) => {
     const currentOrigin = window.location.origin;
     const url = new URL('/api/tvbox/subscribe', currentOrigin);
     url.searchParams.set('token', token);
@@ -457,7 +535,7 @@ export const UserMenu: React.FC = () => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedAggregateSearch = localStorage.getItem(
-        'defaultAggregateSearch'
+        'defaultAggregateSearch',
       );
       if (savedAggregateSearch !== null) {
         setDefaultAggregateSearch(JSON.parse(savedAggregateSearch));
@@ -465,7 +543,8 @@ export const UserMenu: React.FC = () => {
 
       const savedDoubanDataSource = localStorage.getItem('doubanDataSource');
       const defaultDoubanProxyType =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent';
+        (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
+        'cmliussss-cdn-tencent';
       if (savedDoubanDataSource !== null) {
         setDoubanDataSource(savedDoubanDataSource);
       } else if (defaultDoubanProxyType) {
@@ -482,20 +561,21 @@ export const UserMenu: React.FC = () => {
       }
 
       const savedDoubanDataSourceBackup = localStorage.getItem(
-        'doubanDataSourceBackup'
+        'doubanDataSourceBackup',
       );
       setDoubanDataSourceBackup(savedDoubanDataSourceBackup || 'direct');
 
       const savedDoubanProxyUrlBackup = localStorage.getItem(
-        'doubanProxyUrlBackup'
+        'doubanProxyUrlBackup',
       );
       setDoubanProxyUrlBackup(savedDoubanProxyUrlBackup || '');
 
       const savedDoubanImageProxyType = localStorage.getItem(
-        'doubanImageProxyType'
+        'doubanImageProxyType',
       );
       const defaultDoubanImageProxyType =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE || 'cmliussss-cdn-tencent';
+        (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
+        'cmliussss-cdn-tencent';
       if (savedDoubanImageProxyType !== null) {
         setDoubanImageProxyType(savedDoubanImageProxyType);
       } else if (defaultDoubanImageProxyType) {
@@ -503,7 +583,7 @@ export const UserMenu: React.FC = () => {
       }
 
       const savedDoubanImageProxyUrl = localStorage.getItem(
-        'doubanImageProxyUrl'
+        'doubanImageProxyUrl',
       );
       const defaultDoubanImageProxyUrl =
         (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
@@ -514,12 +594,14 @@ export const UserMenu: React.FC = () => {
       }
 
       const savedDoubanImageProxyTypeBackup = localStorage.getItem(
-        'doubanImageProxyTypeBackup'
+        'doubanImageProxyTypeBackup',
       );
-      setDoubanImageProxyTypeBackup(savedDoubanImageProxyTypeBackup || 'server');
+      setDoubanImageProxyTypeBackup(
+        savedDoubanImageProxyTypeBackup || 'server',
+      );
 
       const savedDoubanImageProxyUrlBackup = localStorage.getItem(
-        'doubanImageProxyUrlBackup'
+        'doubanImageProxyUrlBackup',
       );
       setDoubanImageProxyUrlBackup(savedDoubanImageProxyUrlBackup || '');
 
@@ -548,7 +630,9 @@ export const UserMenu: React.FC = () => {
         setFluidSearch(defaultFluidSearch);
       }
 
-      const savedTmdbBackdropDisabled = localStorage.getItem('tmdb_backdrop_disabled');
+      const savedTmdbBackdropDisabled = localStorage.getItem(
+        'tmdb_backdrop_disabled',
+      );
       if (savedTmdbBackdropDisabled !== null) {
         setTmdbBackdropDisabled(savedTmdbBackdropDisabled === 'true');
       }
@@ -563,17 +647,23 @@ export const UserMenu: React.FC = () => {
         setBufferStrategy(savedBufferStrategy);
       }
 
-      const savedNextEpisodePreCache = localStorage.getItem('nextEpisodePreCache');
+      const savedNextEpisodePreCache = localStorage.getItem(
+        'nextEpisodePreCache',
+      );
       if (savedNextEpisodePreCache !== null) {
         setNextEpisodePreCache(savedNextEpisodePreCache === 'true');
       }
 
-      const savedNextEpisodeDanmakuPreload = localStorage.getItem('nextEpisodeDanmakuPreload');
+      const savedNextEpisodeDanmakuPreload = localStorage.getItem(
+        'nextEpisodeDanmakuPreload',
+      );
       if (savedNextEpisodeDanmakuPreload !== null) {
         setNextEpisodeDanmakuPreload(savedNextEpisodeDanmakuPreload === 'true');
       }
 
-      const savedDisableAutoLoadDanmaku = localStorage.getItem('disableAutoLoadDanmaku');
+      const savedDisableAutoLoadDanmaku = localStorage.getItem(
+        'disableAutoLoadDanmaku',
+      );
       if (savedDisableAutoLoadDanmaku !== null) {
         setDisableAutoLoadDanmaku(savedDisableAutoLoadDanmaku === 'true');
       } else {
@@ -587,7 +677,9 @@ export const UserMenu: React.FC = () => {
         setDanmakuMaxCount(parseInt(savedDanmakuMaxCount, 10));
       }
 
-      const savedDanmakuHeatmapDisabled = localStorage.getItem('danmaku_heatmap_disabled');
+      const savedDanmakuHeatmapDisabled = localStorage.getItem(
+        'danmaku_heatmap_disabled',
+      );
       if (savedDanmakuHeatmapDisabled !== null) {
         setDanmakuHeatmapDisabled(savedDanmakuHeatmapDisabled === 'true');
       }
@@ -597,9 +689,13 @@ export const UserMenu: React.FC = () => {
         setHomeBannerEnabled(savedHomeBannerEnabled === 'true');
       }
 
-      const savedHomeContinueWatchingEnabled = localStorage.getItem('homeContinueWatchingEnabled');
+      const savedHomeContinueWatchingEnabled = localStorage.getItem(
+        'homeContinueWatchingEnabled',
+      );
       if (savedHomeContinueWatchingEnabled !== null) {
-        setHomeContinueWatchingEnabled(savedHomeContinueWatchingEnabled === 'true');
+        setHomeContinueWatchingEnabled(
+          savedHomeContinueWatchingEnabled === 'true',
+        );
       }
 
       // 加载首页模块配置
@@ -613,9 +709,13 @@ export const UserMenu: React.FC = () => {
       }
 
       // 加载搜索繁体转简体设置
-      const savedSearchTraditionalToSimplified = localStorage.getItem('searchTraditionalToSimplified');
+      const savedSearchTraditionalToSimplified = localStorage.getItem(
+        'searchTraditionalToSimplified',
+      );
       if (savedSearchTraditionalToSimplified !== null) {
-        setSearchTraditionalToSimplified(savedSearchTraditionalToSimplified === 'true');
+        setSearchTraditionalToSimplified(
+          savedSearchTraditionalToSimplified === 'true',
+        );
       }
 
       // 加载精确搜索设置
@@ -625,25 +725,33 @@ export const UserMenu: React.FC = () => {
       }
 
       // 加载最大同时下载限制设置
-      const savedMaxConcurrentDownloads = localStorage.getItem('maxConcurrentDownloads');
+      const savedMaxConcurrentDownloads = localStorage.getItem(
+        'maxConcurrentDownloads',
+      );
       if (savedMaxConcurrentDownloads !== null) {
         setMaxConcurrentDownloads(Number(savedMaxConcurrentDownloads));
       }
 
       // 加载单任务线程数设置
-      const savedDownloadThreadsPerTask = localStorage.getItem('downloadThreadsPerTask');
+      const savedDownloadThreadsPerTask = localStorage.getItem(
+        'downloadThreadsPerTask',
+      );
       if (savedDownloadThreadsPerTask !== null) {
         setDownloadThreadsPerTask(Number(savedDownloadThreadsPerTask));
       }
 
       // 加载下载模式设置
       const savedDownloadMode = localStorage.getItem('downloadMode');
-      if (savedDownloadMode === 'browser' || savedDownloadMode === 'filesystem') {
+      if (
+        savedDownloadMode === 'browser' ||
+        savedDownloadMode === 'filesystem'
+      ) {
         setDownloadMode(savedDownloadMode);
       }
 
       // 加载保存路径设置
-      const savedFilesystemSavePath = localStorage.getItem('filesystemSavePath');
+      const savedFilesystemSavePath =
+        localStorage.getItem('filesystemSavePath');
       if (savedFilesystemSavePath !== null) {
         setFilesystemSavePath(savedFilesystemSavePath);
       }
@@ -758,7 +866,8 @@ export const UserMenu: React.FC = () => {
     setConfirmDialog({
       isOpen: true,
       title: '登出所有设备',
-      message: '确定要登出所有设备吗？这将清除所有设备的登录状态（包括当前设备）。',
+      message:
+        '确定要登出所有设备吗？这将清除所有设备的登录状态（包括当前设备）。',
       onConfirm: async () => {
         setConfirmDialog({ ...confirmDialog, isOpen: false });
         try {
@@ -784,7 +893,11 @@ export const UserMenu: React.FC = () => {
   const getDeviceIcon = (deviceInfo: string) => {
     const info = deviceInfo.toLowerCase();
 
-    if (info.includes('mobile') || info.includes('iphone') || info.includes('android')) {
+    if (
+      info.includes('mobile') ||
+      info.includes('iphone') ||
+      info.includes('android')
+    ) {
       return Smartphone;
     }
 
@@ -927,11 +1040,22 @@ export const UserMenu: React.FC = () => {
       console.error('复制失败:', error);
     }
   };
-  
+
   useEffect(() => {
     if (!tvboxToken || !isSubscribeOpen) return;
-    setSubscribeUrl(buildSubscribeUrl(tvboxToken, subscribeAdFilterEnabled, subscribeYellowFilterEnabled));
-  }, [tvboxToken, subscribeAdFilterEnabled, subscribeYellowFilterEnabled, isSubscribeOpen]);
+    setSubscribeUrl(
+      buildSubscribeUrl(
+        tvboxToken,
+        subscribeAdFilterEnabled,
+        subscribeYellowFilterEnabled,
+      ),
+    );
+  }, [
+    tvboxToken,
+    subscribeAdFilterEnabled,
+    subscribeYellowFilterEnabled,
+    isSubscribeOpen,
+  ]);
 
   const handleSubmitChangePassword = async () => {
     setPasswordError('');
@@ -1031,11 +1155,16 @@ export const UserMenu: React.FC = () => {
 
   const handleDownloadModeChange = (mode: 'browser' | 'filesystem') => {
     // 如果选择 filesystem 模式，先检测浏览器是否支持
-    if (mode === 'filesystem' && typeof window !== 'undefined' && !('showDirectoryPicker' in window)) {
+    if (
+      mode === 'filesystem' &&
+      typeof window !== 'undefined' &&
+      !('showDirectoryPicker' in window)
+    ) {
       setConfirmDialog({
         isOpen: true,
         title: '浏览器不支持',
-        message: '您的浏览器不支持 File System Access API，请使用 Chrome 86+ 或 Edge 86+',
+        message:
+          '您的浏览器不支持 File System Access API，请使用 Chrome 86+ 或 Edge 86+',
         onConfirm: () => {
           setConfirmDialog({ ...confirmDialog, isOpen: false });
         },
@@ -1073,18 +1202,28 @@ export const UserMenu: React.FC = () => {
 
           // 创建 activeTasks 表（如果不存在）
           if (!db.objectStoreNames.contains('activeTasks')) {
-            const activeStore = db.createObjectStore('activeTasks', { keyPath: 'id' });
+            const activeStore = db.createObjectStore('activeTasks', {
+              keyPath: 'id',
+            });
             activeStore.createIndex('status', 'status', { unique: false });
-            activeStore.createIndex('createdAt', 'createdAt', { unique: false });
+            activeStore.createIndex('createdAt', 'createdAt', {
+              unique: false,
+            });
           }
 
           // 创建 completedTasks 表（如果不存在）
           if (!db.objectStoreNames.contains('completedTasks')) {
-            const completedStore = db.createObjectStore('completedTasks', { keyPath: 'id' });
+            const completedStore = db.createObjectStore('completedTasks', {
+              keyPath: 'id',
+            });
             completedStore.createIndex('source', 'source', { unique: false });
             completedStore.createIndex('videoId', 'videoId', { unique: false });
-            completedStore.createIndex('completedAt', 'completedAt', { unique: false });
-            completedStore.createIndex('sourceVideoId', ['source', 'videoId'], { unique: false });
+            completedStore.createIndex('completedAt', 'completedAt', {
+              unique: false,
+            });
+            completedStore.createIndex('sourceVideoId', ['source', 'videoId'], {
+              unique: false,
+            });
           }
         };
 
@@ -1278,8 +1417,8 @@ export const UserMenu: React.FC = () => {
 
   // 首页模块配置处理函数
   const handleHomeModuleToggle = (id: string, enabled: boolean) => {
-    const updatedModules = homeModules.map(module =>
-      module.id === id ? { ...module, enabled } : module
+    const updatedModules = homeModules.map((module) =>
+      module.id === id ? { ...module, enabled } : module,
     );
     setHomeModules(updatedModules);
     if (typeof window !== 'undefined') {
@@ -1344,11 +1483,13 @@ export const UserMenu: React.FC = () => {
 
   const handleResetSettings = () => {
     const defaultDoubanProxyType =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent';
+      (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
+      'cmliussss-cdn-tencent';
     const defaultDoubanProxy =
       (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY || '';
     const defaultDoubanImageProxyType =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE || 'cmliussss-cdn-tencent';
+      (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
+      'cmliussss-cdn-tencent';
     const defaultDoubanImageProxyUrl =
       (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
     const defaultFluidSearch =
@@ -1402,7 +1543,7 @@ export const UserMenu: React.FC = () => {
       localStorage.setItem('nextEpisodeDanmakuPreload', 'true');
       localStorage.setItem(
         'disableAutoLoadDanmaku',
-        String(!defaultDanmakuAutoLoad)
+        String(!defaultDanmakuAutoLoad),
       );
       localStorage.setItem('danmakuMaxCount', '0');
       localStorage.setItem('danmaku_heatmap_disabled', 'false');
@@ -1494,31 +1635,31 @@ export const UserMenu: React.FC = () => {
     <>
       {/* 背景遮罩 - 普通菜单无需模糊 */}
       <div
-        className='fixed inset-0 bg-transparent z-[1000]'
+        className='fixed inset-0 z-[1000] bg-transparent'
         onClick={handleCloseMenu}
       />
 
       {/* 菜单面板 */}
-      <div className='fixed top-14 right-4 w-56 bg-white dark:bg-gray-900 rounded-lg shadow-xl z-[1001] border border-gray-200/50 dark:border-gray-700/50 overflow-hidden select-none'>
+      <div className='fixed right-4 top-14 z-[1001] w-56 select-none overflow-hidden rounded-lg border border-gray-200/50 bg-white shadow-xl dark:border-gray-700/50 dark:bg-gray-900'>
         {/* 用户信息区域 */}
-        <div className='px-3 py-1 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-800 dark:to-gray-800/50'>
+        <div className='border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100/50 px-3 py-1 dark:border-gray-700 dark:from-gray-800 dark:to-gray-800/50'>
           <div className='flex items-start justify-between gap-3'>
             <button
               onClick={handleOpenProfileCenter}
-              className='flex items-center gap-3 rounded-xl px-2 py-1 text-left hover:bg-white/70 dark:hover:bg-gray-700/40 transition-colors'
+              className='flex items-center gap-3 rounded-xl px-2 py-1 text-left transition-colors hover:bg-white/70 dark:hover:bg-gray-700/40'
             >
               <div className='relative flex h-11 w-11 items-center justify-center rounded-full bg-blue-500 text-lg font-semibold text-white shadow-sm'>
                 <span>{avatarText}</span>
                 {shouldShowRoleBadge && (
                   <span
-                    className={`absolute left-1/2 top-[calc(100%-6px)] z-10 -translate-x-1/2 inline-flex min-w-[26px] items-center justify-center whitespace-nowrap rounded-full px-1.5 py-[2px] text-[8px] leading-none font-medium shadow-sm ${roleBadgeClassName}`}
+                    className={`absolute left-1/2 top-[calc(100%-6px)] z-10 inline-flex min-w-[26px] -translate-x-1/2 items-center justify-center whitespace-nowrap rounded-full px-1.5 py-[2px] text-[8px] font-medium leading-none shadow-sm ${roleBadgeClassName}`}
                   >
                     {currentRoleText}
                   </span>
                 )}
               </div>
               <div className='min-w-0'>
-                <span className='block max-w-[84px] truncate text-sm font-semibold text-gray-900 dark:text-gray-100 leading-none'>
+                <span className='block max-w-[84px] truncate text-sm font-semibold leading-none text-gray-900 dark:text-gray-100'>
                   {currentUsername}
                 </span>
               </div>
@@ -1528,7 +1669,9 @@ export const UserMenu: React.FC = () => {
               <div className='text-[10px] text-gray-400 dark:text-gray-500'>
                 <div>数据存储</div>
                 <div className='mt-0.5'>
-                  {displayStorageType === 'localstorage' ? '本地' : displayStorageType}
+                  {displayStorageType === 'localstorage'
+                    ? '本地'
+                    : displayStorageType}
                 </div>
               </div>
             </div>
@@ -1543,12 +1686,12 @@ export const UserMenu: React.FC = () => {
               setIsOpen(false);
               setIsNotificationPanelOpen(true);
             }}
-            className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm relative'
+            className='relative flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
           >
-            <Bell className='w-4 h-4 text-gray-500 dark:text-gray-400' />
+            <Bell className='h-4 w-4 text-gray-500 dark:text-gray-400' />
             <span className='font-medium'>通知中心</span>
             {unreadCount > 0 && (
-              <span className='ml-auto px-2 py-0.5 text-xs font-medium bg-red-500 text-white rounded-full'>
+              <span className='ml-auto rounded-full bg-red-500 px-2 py-0.5 text-xs font-medium text-white'>
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
@@ -1560,18 +1703,18 @@ export const UserMenu: React.FC = () => {
               setIsOpen(false);
               setIsFavoritesPanelOpen(true);
             }}
-            className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm relative'
+            className='relative flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
           >
-            <Star className='w-4 h-4 text-gray-500 dark:text-gray-400' />
+            <Star className='h-4 w-4 text-gray-500 dark:text-gray-400' />
             <span className='font-medium'>我的收藏</span>
           </button>
 
           {/* 设置按钮 */}
           <button
             onClick={handleSettings}
-            className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm'
+            className='flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
           >
-            <Settings className='w-4 h-4 text-gray-500 dark:text-gray-400' />
+            <Settings className='h-4 w-4 text-gray-500 dark:text-gray-400' />
             <span className='font-medium'>设置</span>
           </button>
 
@@ -1579,9 +1722,9 @@ export const UserMenu: React.FC = () => {
           {showAdminPanel && (
             <button
               onClick={handleAdminPanel}
-              className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm'
+              className='flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
             >
-              <Shield className='w-4 h-4 text-gray-500 dark:text-gray-400' />
+              <Shield className='h-4 w-4 text-gray-500 dark:text-gray-400' />
               <span className='font-medium'>管理面板</span>
             </button>
           )}
@@ -1593,9 +1736,9 @@ export const UserMenu: React.FC = () => {
                 setIsOfflineDownloadPanelOpen(true);
                 setIsOpen(false);
               }}
-              className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm'
+              className='flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
             >
-              <Download className='w-4 h-4 text-gray-500 dark:text-gray-400' />
+              <Download className='h-4 w-4 text-gray-500 dark:text-gray-400' />
               <span className='font-medium'>离线下载</span>
             </button>
           )}
@@ -1604,9 +1747,9 @@ export const UserMenu: React.FC = () => {
           {showChangePassword && (
             <button
               onClick={handleChangePassword}
-              className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm'
+              className='flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
             >
-              <KeyRound className='w-4 h-4 text-gray-500 dark:text-gray-400' />
+              <KeyRound className='h-4 w-4 text-gray-500 dark:text-gray-400' />
               <span className='font-medium'>修改密码</span>
             </button>
           )}
@@ -1615,9 +1758,9 @@ export const UserMenu: React.FC = () => {
           {subscribeEnabled && (
             <button
               onClick={handleSubscribe}
-              className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm'
+              className='flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
             >
-              <Rss className='w-4 h-4 text-gray-500 dark:text-gray-400' />
+              <Rss className='h-4 w-4 text-gray-500 dark:text-gray-400' />
               <span className='font-medium'>订阅</span>
             </button>
           )}
@@ -1628,9 +1771,9 @@ export const UserMenu: React.FC = () => {
               setIsOpen(false);
               setIsEcoAppsOpen(true);
             }}
-            className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm'
+            className='flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
           >
-            <Package className='w-4 h-4 text-gray-500 dark:text-gray-400' />
+            <Package className='h-4 w-4 text-gray-500 dark:text-gray-400' />
             <span className='font-medium'>生态应用</span>
           </button>
 
@@ -1640,9 +1783,9 @@ export const UserMenu: React.FC = () => {
           {/* 登出按钮 */}
           <button
             onClick={handleLogout}
-            className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm'
+            className='flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
           >
-            <LogOut className='w-4 h-4' />
+            <LogOut className='h-4 w-4' />
             <span className='font-medium'>登出</span>
           </button>
 
@@ -1655,7 +1798,7 @@ export const UserMenu: React.FC = () => {
               setIsVersionPanelOpen(true);
               handleCloseMenu();
             }}
-            className='w-full px-3 py-2 text-center flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-xs'
+            className='flex w-full items-center justify-center px-3 py-2 text-center text-xs text-gray-500 transition-colors hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800/50'
           >
             <div className='flex items-center gap-1'>
               <span className='font-mono'>v{CURRENT_VERSION}</span>
@@ -1663,12 +1806,13 @@ export const UserMenu: React.FC = () => {
                 updateStatus &&
                 updateStatus !== UpdateStatus.FETCH_FAILED && (
                   <div
-                    className={`w-2 h-2 rounded-full -translate-y-2 ${updateStatus === UpdateStatus.HAS_UPDATE
-                      ? 'bg-yellow-500'
-                      : updateStatus === UpdateStatus.NO_UPDATE
-                        ? 'bg-green-400'
-                        : ''
-                      }`}
+                    className={`h-2 w-2 -translate-y-2 rounded-full ${
+                      updateStatus === UpdateStatus.HAS_UPDATE
+                        ? 'bg-yellow-500'
+                        : updateStatus === UpdateStatus.NO_UPDATE
+                          ? 'bg-green-400'
+                          : ''
+                    }`}
                   ></div>
                 )}
             </div>
@@ -1683,7 +1827,7 @@ export const UserMenu: React.FC = () => {
     <>
       {/* 背景遮罩 */}
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className='fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm'
         onClick={handleCloseSettings}
         onTouchMove={(e) => {
           // 只阻止滚动，允许其他触摸事件
@@ -1699,12 +1843,10 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 设置面板 */}
-      <div
-        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] flex flex-col'
-      >
+      <div className='fixed left-1/2 top-1/2 z-[1001] flex max-h-[90vh] w-full max-w-xl -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl bg-white shadow-xl dark:bg-gray-900'>
         {/* 内容容器 - 独立的滚动区域 */}
         <div
-          className='flex-1 px-4 py-6 md:p-6 overflow-y-auto'
+          className='flex-1 overflow-y-auto px-4 py-6 md:p-6'
           data-panel-content
           style={{
             touchAction: 'pan-y', // 只允许垂直滚动
@@ -1712,14 +1854,14 @@ export const UserMenu: React.FC = () => {
           }}
         >
           {/* 标题栏 */}
-          <div className='flex items-center justify-between mb-6'>
+          <div className='mb-6 flex items-center justify-between'>
             <div className='flex items-center gap-3'>
               <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
                 本地设置
               </h3>
               <button
                 onClick={handleResetSettings}
-                className='px-2 py-1 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border border-red-200 hover:border-red-300 dark:border-red-800 dark:hover:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors'
+                className='rounded border border-red-200 px-2 py-1 text-xs text-red-500 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:border-red-700 dark:hover:bg-red-900/20 dark:hover:text-red-300'
                 title='重置为默认设置'
               >
                 恢复默认
@@ -1727,42 +1869,42 @@ export const UserMenu: React.FC = () => {
             </div>
             <button
               onClick={handleCloseSettings}
-              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+              className='flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
               aria-label='Close'
             >
-              <X className='w-full h-full' />
+              <X className='h-full w-full' />
             </button>
           </div>
 
           {/* 设置项 */}
           <div className='space-y-3 md:space-y-4'>
             {/* 豆瓣设置 */}
-            <div className='border border-gray-200 dark:border-gray-700 rounded-lg overflow-visible'>
+            <div className='overflow-visible rounded-lg border border-gray-200 dark:border-gray-700'>
               <button
                 onClick={() => setIsDoubanSectionOpen(!isDoubanSectionOpen)}
-                className='w-full px-3 py-2.5 md:px-4 md:py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors flex items-center justify-between'
+                className='dark:hover:bg-gray-750 flex w-full items-center justify-between bg-gray-50 px-3 py-2.5 transition-colors hover:bg-gray-100 dark:bg-gray-800 md:px-4 md:py-3'
               >
                 <div className='flex items-center gap-2'>
-                  <Globe className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <Globe className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                   <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200'>
                     数据源设置
                   </h3>
                 </div>
                 {isDoubanSectionOpen ? (
-                  <ChevronUp className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <ChevronUp className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                 ) : (
-                  <ChevronDown className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <ChevronDown className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                 )}
               </button>
               {isDoubanSectionOpen && (
-                <div className='p-3 md:p-4 space-y-4 md:space-y-6'>
+                <div className='space-y-4 p-3 md:space-y-6 md:p-4'>
                   {/* 豆瓣数据源选择 */}
                   <div className='space-y-3'>
                     <div>
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         豆瓣数据代理
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         选择获取豆瓣数据的方式
                       </p>
                     </div>
@@ -1770,27 +1912,30 @@ export const UserMenu: React.FC = () => {
                       {/* 自定义下拉选择框 */}
                       <button
                         type='button'
-                        onClick={() => setIsDoubanDropdownOpen(!isDoubanDropdownOpen)}
-                        className='w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm hover:border-gray-400 dark:hover:border-gray-500 text-left'
+                        onClick={() =>
+                          setIsDoubanDropdownOpen(!isDoubanDropdownOpen)
+                        }
+                        className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 pr-10 text-left text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500'
                       >
                         {
                           doubanDataSourceOptions.find(
-                            (option) => option.value === doubanDataSource
+                            (option) => option.value === doubanDataSource,
                           )?.label
                         }
                       </button>
 
                       {/* 下拉箭头 */}
-                      <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                      <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3'>
                         <ChevronDown
-                          className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isDoubanDropdownOpen ? 'rotate-180' : ''
-                            }`}
+                          className={`h-4 w-4 text-gray-400 transition-transform duration-200 dark:text-gray-500 ${
+                            isDoubanDropdownOpen ? 'rotate-180' : ''
+                          }`}
                         />
                       </div>
 
                       {/* 下拉选项列表 */}
                       {isDoubanDropdownOpen && (
-                        <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+                        <div className='absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800'>
                           {doubanDataSourceOptions.map((option) => (
                             <button
                               key={option.value}
@@ -1799,14 +1944,15 @@ export const UserMenu: React.FC = () => {
                                 handleDoubanDataSourceChange(option.value);
                                 setIsDoubanDropdownOpen(false);
                               }}
-                              className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${doubanDataSource === option.value
-                                ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                                : 'text-gray-900 dark:text-gray-100'
-                                }`}
+                              className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                                doubanDataSource === option.value
+                                  ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400'
+                                  : 'text-gray-900 dark:text-gray-100'
+                              }`}
                             >
                               <span className='truncate'>{option.label}</span>
                               {doubanDataSource === option.value && (
-                                <Check className='w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 ml-2' />
+                                <Check className='ml-2 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400' />
                               )}
                             </button>
                           ))}
@@ -1820,9 +1966,12 @@ export const UserMenu: React.FC = () => {
                         <button
                           type='button'
                           onClick={() =>
-                            window.open(getThanksInfo(doubanDataSource)!.url, '_blank')
+                            window.open(
+                              getThanksInfo(doubanDataSource)!.url,
+                              '_blank',
+                            )
                           }
-                          className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
+                          className='flex w-full cursor-pointer items-center justify-center gap-1.5 px-3 text-xs text-gray-500 dark:text-gray-400'
                         >
                           <span className='font-medium'>
                             {getThanksInfo(doubanDataSource)!.text}
@@ -1840,19 +1989,21 @@ export const UserMenu: React.FC = () => {
                         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                           豆瓣代理地址
                         </h4>
-                        <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                        <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                           自定义代理服务器地址
                         </p>
                       </div>
                       <input
                         type='text'
-                        className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
+                        className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-500 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:hover:border-gray-500'
                         placeholder='例如: https://proxy.example.com/fetch?url='
                         value={doubanProxyUrl}
-                        onChange={(e) => handleDoubanProxyUrlChange(e.target.value)}
+                        onChange={(e) =>
+                          handleDoubanProxyUrlChange(e.target.value)
+                        }
                       />
                       {!doubanProxyUrl.trim() && (
-                        <p className='text-xs text-amber-600 dark:text-amber-400 mt-1'>
+                        <p className='mt-1 text-xs text-amber-600 dark:text-amber-400'>
                           未填写地址时将自动按直连处理
                         </p>
                       )}
@@ -1864,7 +2015,7 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         豆瓣数据备用渠道
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         主渠道失败后自动切换，默认直连
                       </p>
                     </div>
@@ -1875,40 +2026,46 @@ export const UserMenu: React.FC = () => {
                       <button
                         type='button'
                         onClick={() =>
-                          setIsDoubanBackupDropdownOpen(!isDoubanBackupDropdownOpen)
+                          setIsDoubanBackupDropdownOpen(
+                            !isDoubanBackupDropdownOpen,
+                          )
                         }
-                        className='w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm hover:border-gray-400 dark:hover:border-gray-500 text-left'
+                        className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 pr-10 text-left text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500'
                       >
                         {
                           doubanDataSourceOptions.find(
-                            (option) => option.value === doubanDataSourceBackup
+                            (option) => option.value === doubanDataSourceBackup,
                           )?.label
                         }
                       </button>
-                      <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                      <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3'>
                         <ChevronDown
-                          className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isDoubanBackupDropdownOpen ? 'rotate-180' : ''
-                            }`}
+                          className={`h-4 w-4 text-gray-400 transition-transform duration-200 dark:text-gray-500 ${
+                            isDoubanBackupDropdownOpen ? 'rotate-180' : ''
+                          }`}
                         />
                       </div>
                       {isDoubanBackupDropdownOpen && (
-                        <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+                        <div className='absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800'>
                           {doubanDataSourceOptions.map((option) => (
                             <button
                               key={option.value}
                               type='button'
                               onClick={() => {
-                                handleDoubanDataSourceBackupChange(option.value);
+                                handleDoubanDataSourceBackupChange(
+                                  option.value,
+                                );
                                 setIsDoubanBackupDropdownOpen(false);
                               }}
-                              className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${doubanDataSourceBackup === option.value
-                                ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                                : 'text-gray-900 dark:text-gray-100'
-                                }`}
+                              className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                                doubanDataSourceBackup === option.value
+                                  ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400'
+                                  : 'text-gray-900 dark:text-gray-100'
+                              }`}
                             >
                               <span className='truncate'>{option.label}</span>
                               {doubanDataSourceBackup === option.value && (
-                                <Check className='w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 ml-2' />
+                                <Check className='ml-2 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400' />
                               )}
                             </button>
                           ))}
@@ -1923,13 +2080,13 @@ export const UserMenu: React.FC = () => {
                         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                           豆瓣备用代理地址
                         </h4>
-                        <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                        <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                           备用渠道为自定义代理时生效
                         </p>
                       </div>
                       <input
                         type='text'
-                        className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
+                        className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-500 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:hover:border-gray-500'
                         placeholder='例如: https://proxy.example.com/fetch?url='
                         value={doubanProxyUrlBackup}
                         onChange={(e) =>
@@ -1937,7 +2094,7 @@ export const UserMenu: React.FC = () => {
                         }
                       />
                       {!doubanProxyUrlBackup.trim() && (
-                        <p className='text-xs text-amber-600 dark:text-amber-400 mt-1'>
+                        <p className='mt-1 text-xs text-amber-600 dark:text-amber-400'>
                           未填写地址时备用渠道将自动按直连处理
                         </p>
                       )}
@@ -1953,39 +2110,43 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         豆瓣图片代理
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         选择获取豆瓣图片的方式
                       </p>
                     </div>
-                    <div className='relative' data-dropdown='douban-image-proxy'>
+                    <div
+                      className='relative'
+                      data-dropdown='douban-image-proxy'
+                    >
                       {/* 自定义下拉选择框 */}
                       <button
                         type='button'
                         onClick={() =>
                           setIsDoubanImageProxyDropdownOpen(
-                            !isDoubanImageProxyDropdownOpen
+                            !isDoubanImageProxyDropdownOpen,
                           )
                         }
-                        className='w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm hover:border-gray-400 dark:hover:border-gray-500 text-left'
+                        className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 pr-10 text-left text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500'
                       >
                         {
                           doubanImageProxyTypeOptions.find(
-                            (option) => option.value === doubanImageProxyType
+                            (option) => option.value === doubanImageProxyType,
                           )?.label
                         }
                       </button>
 
                       {/* 下拉箭头 */}
-                      <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                      <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3'>
                         <ChevronDown
-                          className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isDoubanDropdownOpen ? 'rotate-180' : ''
-                            }`}
+                          className={`h-4 w-4 text-gray-400 transition-transform duration-200 dark:text-gray-500 ${
+                            isDoubanDropdownOpen ? 'rotate-180' : ''
+                          }`}
                         />
                       </div>
 
                       {/* 下拉选项列表 */}
                       {isDoubanImageProxyDropdownOpen && (
-                        <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+                        <div className='absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800'>
                           {doubanImageProxyTypeOptions.map((option) => (
                             <button
                               key={option.value}
@@ -1994,14 +2155,15 @@ export const UserMenu: React.FC = () => {
                                 handleDoubanImageProxyTypeChange(option.value);
                                 setIsDoubanImageProxyDropdownOpen(false);
                               }}
-                              className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${doubanImageProxyType === option.value
-                                ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                                : 'text-gray-900 dark:text-gray-100'
-                                }`}
+                              className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                                doubanImageProxyType === option.value
+                                  ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400'
+                                  : 'text-gray-900 dark:text-gray-100'
+                              }`}
                             >
                               <span className='truncate'>{option.label}</span>
                               {doubanImageProxyType === option.value && (
-                                <Check className='w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 ml-2' />
+                                <Check className='ml-2 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400' />
                               )}
                             </button>
                           ))}
@@ -2017,10 +2179,10 @@ export const UserMenu: React.FC = () => {
                           onClick={() =>
                             window.open(
                               getThanksInfo(doubanImageProxyType)!.url,
-                              '_blank'
+                              '_blank',
                             )
                           }
-                          className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
+                          className='flex w-full cursor-pointer items-center justify-center gap-1.5 px-3 text-xs text-gray-500 dark:text-gray-400'
                         >
                           <span className='font-medium'>
                             {getThanksInfo(doubanImageProxyType)!.text}
@@ -2038,13 +2200,13 @@ export const UserMenu: React.FC = () => {
                         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                           豆瓣图片代理地址
                         </h4>
-                        <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                        <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                           自定义图片代理服务器地址
                         </p>
                       </div>
                       <input
                         type='text'
-                        className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
+                        className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-500 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:hover:border-gray-500'
                         placeholder='例如: https://proxy.example.com/fetch?url='
                         value={doubanImageProxyUrl}
                         onChange={(e) =>
@@ -2052,7 +2214,7 @@ export const UserMenu: React.FC = () => {
                         }
                       />
                       {!doubanImageProxyUrl.trim() && (
-                        <p className='text-xs text-amber-600 dark:text-amber-400 mt-1'>
+                        <p className='mt-1 text-xs text-amber-600 dark:text-amber-400'>
                           未填写地址时将自动按服务器代理处理
                         </p>
                       )}
@@ -2064,7 +2226,7 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         豆瓣图片备用渠道
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         主图片渠道失败后自动切换，默认服务器代理
                       </p>
                     </div>
@@ -2076,41 +2238,48 @@ export const UserMenu: React.FC = () => {
                         type='button'
                         onClick={() =>
                           setIsDoubanImageProxyBackupDropdownOpen(
-                            !isDoubanImageProxyBackupDropdownOpen
+                            !isDoubanImageProxyBackupDropdownOpen,
                           )
                         }
-                        className='w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm hover:border-gray-400 dark:hover:border-gray-500 text-left'
+                        className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 pr-10 text-left text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500'
                       >
                         {
                           doubanImageProxyTypeOptions.find(
-                            (option) => option.value === doubanImageProxyTypeBackup
+                            (option) =>
+                              option.value === doubanImageProxyTypeBackup,
                           )?.label
                         }
                       </button>
-                      <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                      <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3'>
                         <ChevronDown
-                          className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isDoubanImageProxyBackupDropdownOpen ? 'rotate-180' : ''
-                            }`}
+                          className={`h-4 w-4 text-gray-400 transition-transform duration-200 dark:text-gray-500 ${
+                            isDoubanImageProxyBackupDropdownOpen
+                              ? 'rotate-180'
+                              : ''
+                          }`}
                         />
                       </div>
                       {isDoubanImageProxyBackupDropdownOpen && (
-                        <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+                        <div className='absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800'>
                           {doubanImageProxyTypeOptions.map((option) => (
                             <button
                               key={option.value}
                               type='button'
                               onClick={() => {
-                                handleDoubanImageProxyTypeBackupChange(option.value);
+                                handleDoubanImageProxyTypeBackupChange(
+                                  option.value,
+                                );
                                 setIsDoubanImageProxyBackupDropdownOpen(false);
                               }}
-                              className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${doubanImageProxyTypeBackup === option.value
-                                ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                                : 'text-gray-900 dark:text-gray-100'
-                                }`}
+                              className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                                doubanImageProxyTypeBackup === option.value
+                                  ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400'
+                                  : 'text-gray-900 dark:text-gray-100'
+                              }`}
                             >
                               <span className='truncate'>{option.label}</span>
                               {doubanImageProxyTypeBackup === option.value && (
-                                <Check className='w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 ml-2' />
+                                <Check className='ml-2 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400' />
                               )}
                             </button>
                           ))}
@@ -2125,13 +2294,13 @@ export const UserMenu: React.FC = () => {
                         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                           豆瓣图片备用代理地址
                         </h4>
-                        <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                        <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                           备用图片渠道为自定义代理时生效
                         </p>
                       </div>
                       <input
                         type='text'
-                        className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
+                        className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-500 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:hover:border-gray-500'
                         placeholder='例如: https://proxy.example.com/fetch?url='
                         value={doubanImageProxyUrlBackup}
                         onChange={(e) =>
@@ -2139,7 +2308,7 @@ export const UserMenu: React.FC = () => {
                         }
                       />
                       {!doubanImageProxyUrlBackup.trim() && (
-                        <p className='text-xs text-amber-600 dark:text-amber-400 mt-1'>
+                        <p className='mt-1 text-xs text-amber-600 dark:text-amber-400'>
                           未填写地址时备用图片渠道将自动按服务器代理处理
                         </p>
                       )}
@@ -2155,13 +2324,13 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         TMDB 图片网络请求地址
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         TMDB 图片的 Base URL（默认: https://image.tmdb.org）
                       </p>
                     </div>
                     <input
                       type='text'
-                      className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
+                      className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-500 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:hover:border-gray-500'
                       placeholder='例如: https://image.tmdb.org'
                       value={tmdbImageBaseUrl}
                       onChange={(e) =>
@@ -2173,45 +2342,47 @@ export const UserMenu: React.FC = () => {
               )}
             </div>
 
-            <div className='border border-gray-200 dark:border-gray-700 rounded-lg overflow-visible'>
+            <div className='overflow-visible rounded-lg border border-gray-200 dark:border-gray-700'>
               <button
                 onClick={() => setIsUsageSectionOpen(!isUsageSectionOpen)}
-                className='w-full px-3 py-2.5 md:px-4 md:py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors flex items-center justify-between'
+                className='dark:hover:bg-gray-750 flex w-full items-center justify-between bg-gray-50 px-3 py-2.5 transition-colors hover:bg-gray-100 dark:bg-gray-800 md:px-4 md:py-3'
               >
                 <div className='flex items-center gap-2'>
-                  <Sliders className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <Sliders className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                   <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200'>
                     通用设置
                   </h3>
                 </div>
                 {isUsageSectionOpen ? (
-                  <ChevronUp className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <ChevronUp className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                 ) : (
-                  <ChevronDown className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <ChevronDown className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                 )}
               </button>
               {isUsageSectionOpen && (
-                <div className='p-3 md:p-4 space-y-4 md:space-y-6'>
+                <div className='space-y-4 p-3 md:space-y-6 md:p-4'>
                   {/* 默认聚合搜索结果 */}
                   <div className='flex items-center justify-between'>
                     <div>
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         默认聚合搜索结果
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         搜索时默认按标题和年份聚合显示结果
                       </p>
                     </div>
-                    <label className='flex items-center cursor-pointer'>
+                    <label className='flex cursor-pointer items-center'>
                       <div className='relative'>
                         <input
                           type='checkbox'
-                          className='sr-only peer'
+                          className='peer sr-only'
                           checked={defaultAggregateSearch}
-                          onChange={(e) => handleAggregateToggle(e.target.checked)}
+                          onChange={(e) =>
+                            handleAggregateToggle(e.target.checked)
+                          }
                         />
-                        <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                        <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
+                        <div className='h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-green-500 dark:bg-gray-600'></div>
+                        <div className='absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5'></div>
                       </div>
                     </label>
                   </div>
@@ -2222,20 +2393,22 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         优选和测速
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         如出现播放器劫持问题可关闭
                       </p>
                     </div>
-                    <label className='flex items-center cursor-pointer'>
+                    <label className='flex cursor-pointer items-center'>
                       <div className='relative'>
                         <input
                           type='checkbox'
-                          className='sr-only peer'
+                          className='peer sr-only'
                           checked={enableOptimization}
-                          onChange={(e) => handleOptimizationToggle(e.target.checked)}
+                          onChange={(e) =>
+                            handleOptimizationToggle(e.target.checked)
+                          }
                         />
-                        <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                        <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
+                        <div className='h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-green-500 dark:bg-gray-600'></div>
+                        <div className='absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5'></div>
                       </div>
                     </label>
                   </div>
@@ -2258,40 +2431,42 @@ export const UserMenu: React.FC = () => {
                           max='30000'
                           step='1000'
                           value={speedTestTimeout}
-                          onChange={(e) => handleSpeedTestTimeoutChange(Number(e.target.value))}
-                          className='flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700'
+                          onChange={(e) =>
+                            handleSpeedTestTimeoutChange(Number(e.target.value))
+                          }
+                          className='h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700'
                           style={{
-                            background: `linear-gradient(to right, #10b981 0%, #10b981 ${((speedTestTimeout - 4000) / (30000 - 4000)) * 100}%, #e5e7eb ${((speedTestTimeout - 4000) / (30000 - 4000)) * 100}%, #e5e7eb 100%)`
+                            background: `linear-gradient(to right, #10b981 0%, #10b981 ${((speedTestTimeout - 4000) / (30000 - 4000)) * 100}%, #e5e7eb ${((speedTestTimeout - 4000) / (30000 - 4000)) * 100}%, #e5e7eb 100%)`,
                           }}
                         />
                       </div>
                       <div className='flex justify-between text-xs text-gray-500 dark:text-gray-400'>
                         <button
                           onClick={() => handleSpeedTestTimeoutChange(4000)}
-                          className={`px-2 py-0.5 rounded ${speedTestTimeout === 4000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                          className={`rounded px-2 py-0.5 ${speedTestTimeout === 4000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
                         >
                           4秒
                         </button>
                         <button
                           onClick={() => handleSpeedTestTimeoutChange(10000)}
-                          className={`px-2 py-0.5 rounded ${speedTestTimeout === 10000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                          className={`rounded px-2 py-0.5 ${speedTestTimeout === 10000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
                         >
                           10秒
                         </button>
                         <button
                           onClick={() => handleSpeedTestTimeoutChange(20000)}
-                          className={`px-2 py-0.5 rounded ${speedTestTimeout === 20000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                          className={`rounded px-2 py-0.5 ${speedTestTimeout === 20000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
                         >
                           20秒
                         </button>
                         <button
                           onClick={() => handleSpeedTestTimeoutChange(30000)}
-                          className={`px-2 py-0.5 rounded ${speedTestTimeout === 30000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                          className={`rounded px-2 py-0.5 ${speedTestTimeout === 30000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
                         >
                           30秒
                         </button>
                       </div>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 italic'>
+                      <p className='text-xs italic text-gray-500 dark:text-gray-400'>
                         注：此设置仅对换源面板测速生效，优选播放源时仍使用4秒超时
                       </p>
                     </div>
@@ -2303,20 +2478,22 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         流式搜索输出
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         启用搜索结果实时流式输出，关闭后使用传统一次性搜索
                       </p>
                     </div>
-                    <label className='flex items-center cursor-pointer'>
+                    <label className='flex cursor-pointer items-center'>
                       <div className='relative'>
                         <input
                           type='checkbox'
-                          className='sr-only peer'
+                          className='peer sr-only'
                           checked={fluidSearch}
-                          onChange={(e) => handleFluidSearchToggle(e.target.checked)}
+                          onChange={(e) =>
+                            handleFluidSearchToggle(e.target.checked)
+                          }
                         />
-                        <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                        <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
+                        <div className='h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-green-500 dark:bg-gray-600'></div>
+                        <div className='absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5'></div>
                       </div>
                     </label>
                   </div>
@@ -2327,20 +2504,22 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         禁用背景图渲染
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         关闭播放页面的TMDB背景图显示（需手动刷新页面生效）
                       </p>
                     </div>
-                    <label className='flex items-center cursor-pointer'>
+                    <label className='flex cursor-pointer items-center'>
                       <div className='relative'>
                         <input
                           type='checkbox'
-                          className='sr-only peer'
+                          className='peer sr-only'
                           checked={tmdbBackdropDisabled}
-                          onChange={(e) => handleTmdbBackdropDisabledToggle(e.target.checked)}
+                          onChange={(e) =>
+                            handleTmdbBackdropDisabledToggle(e.target.checked)
+                          }
                         />
-                        <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                        <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
+                        <div className='h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-green-500 dark:bg-gray-600'></div>
+                        <div className='absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5'></div>
                       </div>
                     </label>
                   </div>
@@ -2351,20 +2530,22 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         首页预告片
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         在首页轮播图中显示视频预告片（需刷新页面生效）
                       </p>
                     </div>
-                    <label className='flex items-center cursor-pointer'>
+                    <label className='flex cursor-pointer items-center'>
                       <div className='relative'>
                         <input
                           type='checkbox'
-                          className='sr-only peer'
+                          className='peer sr-only'
                           checked={enableTrailers}
-                          onChange={(e) => handleEnableTrailersToggle(e.target.checked)}
+                          onChange={(e) =>
+                            handleEnableTrailersToggle(e.target.checked)
+                          }
                         />
-                        <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                        <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
+                        <div className='h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-green-500 dark:bg-gray-600'></div>
+                        <div className='absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5'></div>
                       </div>
                     </label>
                   </div>
@@ -2375,20 +2556,24 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         搜索繁体转简体
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         搜索时自动将繁体中文转换为简体中文
                       </p>
                     </div>
-                    <label className='flex items-center cursor-pointer'>
+                    <label className='flex cursor-pointer items-center'>
                       <div className='relative'>
                         <input
                           type='checkbox'
-                          className='sr-only peer'
+                          className='peer sr-only'
                           checked={searchTraditionalToSimplified}
-                          onChange={(e) => handleSearchTraditionalToSimplifiedToggle(e.target.checked)}
+                          onChange={(e) =>
+                            handleSearchTraditionalToSimplifiedToggle(
+                              e.target.checked,
+                            )
+                          }
                         />
-                        <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                        <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
+                        <div className='h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-green-500 dark:bg-gray-600'></div>
+                        <div className='absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5'></div>
                       </div>
                     </label>
                   </div>
@@ -2399,20 +2584,22 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         精确搜索
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         开启后，搜索结果将过滤掉不包含搜索词的内容
                       </p>
                     </div>
-                    <label className='flex items-center cursor-pointer'>
+                    <label className='flex cursor-pointer items-center'>
                       <div className='relative'>
                         <input
                           type='checkbox'
-                          className='sr-only peer'
+                          className='peer sr-only'
                           checked={exactSearch}
-                          onChange={(e) => handleExactSearchToggle(e.target.checked)}
+                          onChange={(e) =>
+                            handleExactSearchToggle(e.target.checked)
+                          }
                         />
-                        <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                        <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
+                        <div className='h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-green-500 dark:bg-gray-600'></div>
+                        <div className='absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5'></div>
                       </div>
                     </label>
                   </div>
@@ -2421,32 +2608,32 @@ export const UserMenu: React.FC = () => {
             </div>
 
             {/* 下载设置 */}
-            <div className='border border-gray-200 dark:border-gray-700 rounded-lg overflow-visible'>
+            <div className='overflow-visible rounded-lg border border-gray-200 dark:border-gray-700'>
               <button
                 onClick={() => setIsDownloadSectionOpen(!isDownloadSectionOpen)}
-                className='w-full px-3 py-2.5 md:px-4 md:py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors flex items-center justify-between'
+                className='dark:hover:bg-gray-750 flex w-full items-center justify-between bg-gray-50 px-3 py-2.5 transition-colors hover:bg-gray-100 dark:bg-gray-800 md:px-4 md:py-3'
               >
                 <div className='flex items-center gap-2'>
-                  <Download className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <Download className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                   <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200'>
                     下载设置
                   </h3>
                 </div>
                 {isDownloadSectionOpen ? (
-                  <ChevronUp className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <ChevronUp className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                 ) : (
-                  <ChevronDown className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <ChevronDown className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                 )}
               </button>
               {isDownloadSectionOpen && (
-                <div className='p-3 md:p-4 space-y-4 md:space-y-6'>
+                <div className='space-y-4 p-3 md:space-y-6 md:p-4'>
                   {/* 最大同时下载限制 */}
                   <div className='space-y-2'>
                     <div>
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         最大同时下载限制
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         控制播放页面下载时的同时下载数量
                       </p>
                     </div>
@@ -2465,23 +2652,27 @@ export const UserMenu: React.FC = () => {
                         max='10'
                         step='1'
                         value={maxConcurrentDownloads}
-                        onChange={(e) => handleMaxConcurrentDownloadsChange(Number(e.target.value))}
-                        className='flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700'
+                        onChange={(e) =>
+                          handleMaxConcurrentDownloadsChange(
+                            Number(e.target.value),
+                          )
+                        }
+                        className='h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700'
                         style={{
-                          background: `linear-gradient(to right, #10b981 0%, #10b981 ${((maxConcurrentDownloads - 1) / (10 - 1)) * 100}%, #e5e7eb ${((maxConcurrentDownloads - 1) / (10 - 1)) * 100}%, #e5e7eb 100%)`
+                          background: `linear-gradient(to right, #10b981 0%, #10b981 ${((maxConcurrentDownloads - 1) / (10 - 1)) * 100}%, #e5e7eb ${((maxConcurrentDownloads - 1) / (10 - 1)) * 100}%, #e5e7eb 100%)`,
                         }}
                       />
                     </div>
                     <div className='flex justify-between text-xs text-gray-500 dark:text-gray-400'>
                       <button
                         onClick={() => handleMaxConcurrentDownloadsChange(1)}
-                        className={`px-2 py-0.5 rounded ${maxConcurrentDownloads === 1 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                        className={`rounded px-2 py-0.5 ${maxConcurrentDownloads === 1 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
                       >
                         1个
                       </button>
                       <button
                         onClick={() => handleMaxConcurrentDownloadsChange(10)}
-                        className={`px-2 py-0.5 rounded ${maxConcurrentDownloads === 10 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                        className={`rounded px-2 py-0.5 ${maxConcurrentDownloads === 10 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
                       >
                         10个
                       </button>
@@ -2494,7 +2685,7 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         单任务线程数
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         控制每个下载任务使用的线程数量，线程越多下载越快但占用资源越多
                       </p>
                     </div>
@@ -2513,23 +2704,27 @@ export const UserMenu: React.FC = () => {
                         max='32'
                         step='1'
                         value={downloadThreadsPerTask}
-                        onChange={(e) => handleDownloadThreadsPerTaskChange(Number(e.target.value))}
-                        className='flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700'
+                        onChange={(e) =>
+                          handleDownloadThreadsPerTaskChange(
+                            Number(e.target.value),
+                          )
+                        }
+                        className='h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700'
                         style={{
-                          background: `linear-gradient(to right, #10b981 0%, #10b981 ${((downloadThreadsPerTask - 1) / (32 - 1)) * 100}%, #e5e7eb ${((downloadThreadsPerTask - 1) / (32 - 1)) * 100}%, #e5e7eb 100%)`
+                          background: `linear-gradient(to right, #10b981 0%, #10b981 ${((downloadThreadsPerTask - 1) / (32 - 1)) * 100}%, #e5e7eb ${((downloadThreadsPerTask - 1) / (32 - 1)) * 100}%, #e5e7eb 100%)`,
                         }}
                       />
                     </div>
                     <div className='flex justify-between text-xs text-gray-500 dark:text-gray-400'>
                       <button
                         onClick={() => handleDownloadThreadsPerTaskChange(1)}
-                        className={`px-2 py-0.5 rounded ${downloadThreadsPerTask === 1 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                        className={`rounded px-2 py-0.5 ${downloadThreadsPerTask === 1 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
                       >
                         1个
                       </button>
                       <button
                         onClick={() => handleDownloadThreadsPerTaskChange(32)}
-                        className={`px-2 py-0.5 rounded ${downloadThreadsPerTask === 32 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                        className={`rounded px-2 py-0.5 ${downloadThreadsPerTask === 32 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
                       >
                         32个
                       </button>
@@ -2544,27 +2739,29 @@ export const UserMenu: React.FC = () => {
                       </h4>
                     </div>
                     <div className='space-y-2'>
-                      <label className='flex items-center gap-2 cursor-pointer'>
+                      <label className='flex cursor-pointer items-center gap-2'>
                         <input
                           type='radio'
                           name='downloadMode'
                           value='browser'
                           checked={downloadMode === 'browser'}
                           onChange={() => handleDownloadModeChange('browser')}
-                          className='w-4 h-4 text-green-500'
+                          className='h-4 w-4 text-green-500'
                         />
                         <span className='text-sm text-gray-700 dark:text-gray-300'>
                           浏览器下载（合并为单文件）
                         </span>
                       </label>
-                      <label className='flex items-center gap-2 cursor-pointer'>
+                      <label className='flex cursor-pointer items-center gap-2'>
                         <input
                           type='radio'
                           name='downloadMode'
                           value='filesystem'
                           checked={downloadMode === 'filesystem'}
-                          onChange={() => handleDownloadModeChange('filesystem')}
-                          className='w-4 h-4 text-green-500'
+                          onChange={() =>
+                            handleDownloadModeChange('filesystem')
+                          }
+                          className='h-4 w-4 text-green-500'
                         />
                         <span className='text-sm text-gray-700 dark:text-gray-300'>
                           File System API（保存分片到本地目录）
@@ -2574,7 +2771,7 @@ export const UserMenu: React.FC = () => {
 
                     {/* 保存路径选择（仅在 filesystem 模式显示） */}
                     {downloadMode === 'filesystem' && (
-                      <div className='mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2'>
+                      <div className='mt-3 space-y-2 rounded-lg bg-gray-50 p-3 dark:bg-gray-800'>
                         <label className='block text-xs font-medium text-gray-700 dark:text-gray-300'>
                           保存路径
                         </label>
@@ -2584,11 +2781,11 @@ export const UserMenu: React.FC = () => {
                             value={filesystemSavePath}
                             readOnly
                             placeholder='点击选择保存目录'
-                            className='flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                            className='flex-1 rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300'
                           />
                           <button
                             onClick={handleSelectSavePath}
-                            className='px-4 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors'
+                            className='rounded bg-green-500 px-4 py-2 text-sm text-white transition-colors hover:bg-green-600'
                           >
                             选择目录
                           </button>
@@ -2604,9 +2801,9 @@ export const UserMenu: React.FC = () => {
                   <div className='space-y-2'>
                     <button
                       onClick={() => setIsDownloadManagementOpen(true)}
-                      className='w-full px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex items-center justify-center gap-2'
+                      className='flex w-full items-center justify-center gap-2 rounded bg-blue-500 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-600'
                     >
-                      <Package className='w-4 h-4' />
+                      <Package className='h-4 w-4' />
                       下载文件管理
                     </button>
                   </div>
@@ -2615,25 +2812,25 @@ export const UserMenu: React.FC = () => {
             </div>
 
             {/* 缓冲设置 */}
-            <div className='border border-gray-200 dark:border-gray-700 rounded-lg overflow-visible'>
+            <div className='overflow-visible rounded-lg border border-gray-200 dark:border-gray-700'>
               <button
                 onClick={() => setIsBufferSectionOpen(!isBufferSectionOpen)}
-                className='w-full px-3 py-2.5 md:px-4 md:py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors flex items-center justify-between'
+                className='dark:hover:bg-gray-750 flex w-full items-center justify-between bg-gray-50 px-3 py-2.5 transition-colors hover:bg-gray-100 dark:bg-gray-800 md:px-4 md:py-3'
               >
                 <div className='flex items-center gap-2'>
-                  <Gauge className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <Gauge className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                   <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200'>
                     缓冲设置
                   </h3>
                 </div>
                 {isBufferSectionOpen ? (
-                  <ChevronUp className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <ChevronUp className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                 ) : (
-                  <ChevronDown className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <ChevronDown className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                 )}
               </button>
               {isBufferSectionOpen && (
-                <div className='p-3 md:p-4 space-y-4 md:space-y-6'>
+                <div className='space-y-4 p-3 md:space-y-6 md:p-4'>
                   <div>
                     <p className='text-xs text-gray-500 dark:text-gray-400'>
                       调整播放器缓冲策略（仅在播放页面生效）
@@ -2646,7 +2843,7 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         缓冲策略
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         设置视频缓冲块大小，影响播放流畅度和流量消耗
                       </p>
                     </div>
@@ -2661,36 +2858,61 @@ export const UserMenu: React.FC = () => {
                         value={getSliderValueFromStrategy(bufferStrategy)}
                         onChange={(e) => {
                           const sliderValue = parseInt(e.target.value);
-                          const strategy = getBufferStrategyFromSlider(sliderValue);
+                          const strategy =
+                            getBufferStrategyFromSlider(sliderValue);
                           handleBufferStrategyChange(strategy);
                         }}
-                        className='w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-green-500'
+                        className='h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-green-500 dark:bg-gray-700'
                         style={{
-                          background: `linear-gradient(to right, rgb(34 197 94) 0%, rgb(34 197 94) ${(getSliderValueFromStrategy(bufferStrategy) / 3) * 100}%, rgb(229 231 235) ${(getSliderValueFromStrategy(bufferStrategy) / 3) * 100}%, rgb(229 231 235) 100%)`
+                          background: `linear-gradient(to right, rgb(34 197 94) 0%, rgb(34 197 94) ${(getSliderValueFromStrategy(bufferStrategy) / 3) * 100}%, rgb(229 231 235) ${(getSliderValueFromStrategy(bufferStrategy) / 3) * 100}%, rgb(229 231 235) 100%)`,
                         }}
                       />
 
                       {/* 标签显示 */}
-                      <div className='flex justify-between text-xs text-gray-500 dark:text-gray-400 px-1'>
-                        <span className={bufferStrategy === 'low' ? 'font-semibold text-green-600 dark:text-green-400' : ''}>
+                      <div className='flex justify-between px-1 text-xs text-gray-500 dark:text-gray-400'>
+                        <span
+                          className={
+                            bufferStrategy === 'low'
+                              ? 'font-semibold text-green-600 dark:text-green-400'
+                              : ''
+                          }
+                        >
                           低缓冲
                         </span>
-                        <span className={bufferStrategy === 'medium' ? 'font-semibold text-green-600 dark:text-green-400' : ''}>
+                        <span
+                          className={
+                            bufferStrategy === 'medium'
+                              ? 'font-semibold text-green-600 dark:text-green-400'
+                              : ''
+                          }
+                        >
                           中缓冲
                         </span>
-                        <span className={bufferStrategy === 'high' ? 'font-semibold text-green-600 dark:text-green-400' : ''}>
+                        <span
+                          className={
+                            bufferStrategy === 'high'
+                              ? 'font-semibold text-green-600 dark:text-green-400'
+                              : ''
+                          }
+                        >
                           高缓冲
                         </span>
-                        <span className={bufferStrategy === 'ultra' ? 'font-semibold text-green-600 dark:text-green-400' : ''}>
+                        <span
+                          className={
+                            bufferStrategy === 'ultra'
+                              ? 'font-semibold text-green-600 dark:text-green-400'
+                              : ''
+                          }
+                        >
                           超高缓冲
                         </span>
                       </div>
 
                       {/* 当前选择的说明 */}
-                      <div className='text-center text-sm font-medium text-gray-700 dark:text-gray-300 mt-2'>
+                      <div className='mt-2 text-center text-sm font-medium text-gray-700 dark:text-gray-300'>
                         {
                           bufferStrategyOptions.find(
-                            (option) => option.value === bufferStrategy
+                            (option) => option.value === bufferStrategy,
                           )?.label
                         }
                       </div>
@@ -2703,20 +2925,22 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         下集预缓冲
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         播放进度达到90%时，自动预缓冲下一集内容
                       </p>
                     </div>
-                    <label className='flex items-center cursor-pointer'>
+                    <label className='flex cursor-pointer items-center'>
                       <div className='relative'>
                         <input
                           type='checkbox'
-                          className='sr-only peer'
+                          className='peer sr-only'
                           checked={nextEpisodePreCache}
-                          onChange={(e) => handleNextEpisodePreCacheToggle(e.target.checked)}
+                          onChange={(e) =>
+                            handleNextEpisodePreCacheToggle(e.target.checked)
+                          }
                         />
-                        <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                        <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
+                        <div className='h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-green-500 dark:bg-gray-600'></div>
+                        <div className='absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5'></div>
                       </div>
                     </label>
                   </div>
@@ -2725,45 +2949,47 @@ export const UserMenu: React.FC = () => {
             </div>
 
             {/* 弹幕设置 */}
-            <div className='border border-gray-200 dark:border-gray-700 rounded-lg overflow-visible'>
+            <div className='overflow-visible rounded-lg border border-gray-200 dark:border-gray-700'>
               <button
                 onClick={() => setIsDanmakuSectionOpen(!isDanmakuSectionOpen)}
-                className='w-full px-3 py-2.5 md:px-4 md:py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors flex items-center justify-between'
+                className='dark:hover:bg-gray-750 flex w-full items-center justify-between bg-gray-50 px-3 py-2.5 transition-colors hover:bg-gray-100 dark:bg-gray-800 md:px-4 md:py-3'
               >
                 <div className='flex items-center gap-2'>
-                  <MessageSquare className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <MessageSquare className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                   <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200'>
                     弹幕设置
                   </h3>
                 </div>
                 {isDanmakuSectionOpen ? (
-                  <ChevronUp className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <ChevronUp className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                 ) : (
-                  <ChevronDown className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <ChevronDown className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                 )}
               </button>
               {isDanmakuSectionOpen && (
-                <div className='p-3 md:p-4 space-y-4 md:space-y-6'>
+                <div className='space-y-4 p-3 md:space-y-6 md:p-4'>
                   {/* 禁用自动装填弹幕 */}
                   <div className='flex items-center justify-between'>
                     <div>
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         禁用自动装填弹幕
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         开启后，播放页面不会自动匹配弹幕，只能手动匹配
                       </p>
                     </div>
-                    <label className='flex items-center cursor-pointer'>
+                    <label className='flex cursor-pointer items-center'>
                       <div className='relative'>
                         <input
                           type='checkbox'
-                          className='sr-only peer'
+                          className='peer sr-only'
                           checked={disableAutoLoadDanmaku}
-                          onChange={(e) => handleDisableAutoLoadDanmakuToggle(e.target.checked)}
+                          onChange={(e) =>
+                            handleDisableAutoLoadDanmakuToggle(e.target.checked)
+                          }
                         />
-                        <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                        <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
+                        <div className='h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-green-500 dark:bg-gray-600'></div>
+                        <div className='absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5'></div>
                       </div>
                     </label>
                   </div>
@@ -2774,20 +3000,24 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         下集弹幕预加载
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         播放进度达到90%时，自动预加载下一集弹幕
                       </p>
                     </div>
-                    <label className='flex items-center cursor-pointer'>
+                    <label className='flex cursor-pointer items-center'>
                       <div className='relative'>
                         <input
                           type='checkbox'
-                          className='sr-only peer'
+                          className='peer sr-only'
                           checked={nextEpisodeDanmakuPreload}
-                          onChange={(e) => handleNextEpisodeDanmakuPreloadToggle(e.target.checked)}
+                          onChange={(e) =>
+                            handleNextEpisodeDanmakuPreloadToggle(
+                              e.target.checked,
+                            )
+                          }
                         />
-                        <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                        <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
+                        <div className='h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-green-500 dark:bg-gray-600'></div>
+                        <div className='absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5'></div>
                       </div>
                     </label>
                   </div>
@@ -2798,20 +3028,22 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         禁用弹幕热力图
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         开启后不显示弹幕热力图和热力图开关
                       </p>
                     </div>
-                    <label className='flex items-center cursor-pointer'>
+                    <label className='flex cursor-pointer items-center'>
                       <div className='relative'>
                         <input
                           type='checkbox'
-                          className='sr-only peer'
+                          className='peer sr-only'
                           checked={danmakuHeatmapDisabled}
-                          onChange={(e) => handleDanmakuHeatmapDisabledToggle(e.target.checked)}
+                          onChange={(e) =>
+                            handleDanmakuHeatmapDisabledToggle(e.target.checked)
+                          }
                         />
-                        <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                        <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
+                        <div className='h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-green-500 dark:bg-gray-600'></div>
+                        <div className='absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5'></div>
                       </div>
                     </label>
                   </div>
@@ -2823,7 +3055,9 @@ export const UserMenu: React.FC = () => {
                         弹幕加载上限
                       </span>
                       <span className='text-xs font-medium text-gray-700 dark:text-gray-300'>
-                        {danmakuMaxCount === 0 ? '无上限' : `${danmakuMaxCount} 条`}
+                        {danmakuMaxCount === 0
+                          ? '无上限'
+                          : `${danmakuMaxCount} 条`}
                       </span>
                     </div>
                     <div className='flex items-center gap-2'>
@@ -2833,44 +3067,49 @@ export const UserMenu: React.FC = () => {
                         max='10000'
                         step='100'
                         value={danmakuMaxCount}
-                        onChange={(e) => handleDanmakuMaxCountChange(parseInt(e.target.value))}
-                        className='flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700'
+                        onChange={(e) =>
+                          handleDanmakuMaxCountChange(parseInt(e.target.value))
+                        }
+                        className='h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700'
                         style={{
-                          background: `linear-gradient(to right, #10b981 0%, #10b981 ${(danmakuMaxCount / 10000) * 100}%, #e5e7eb ${(danmakuMaxCount / 10000) * 100}%, #e5e7eb 100%)`
+                          background: `linear-gradient(to right, #10b981 0%, #10b981 ${(danmakuMaxCount / 10000) * 100}%, #e5e7eb ${(danmakuMaxCount / 10000) * 100}%, #e5e7eb 100%)`,
                         }}
                       />
                     </div>
-                    <div className='relative text-xs text-gray-500 dark:text-gray-400' style={{ height: '24px' }}>
+                    <div
+                      className='relative text-xs text-gray-500 dark:text-gray-400'
+                      style={{ height: '24px' }}
+                    >
                       <button
                         onClick={() => handleDanmakuMaxCountChange(0)}
-                        className={`absolute px-2 py-0.5 rounded ${danmakuMaxCount === 0 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                        className={`absolute rounded px-2 py-0.5 ${danmakuMaxCount === 0 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
                         style={{ left: '0%', transform: 'translateX(0%)' }}
                       >
                         无上限
                       </button>
                       <button
                         onClick={() => handleDanmakuMaxCountChange(3000)}
-                        className={`absolute px-2 py-0.5 rounded ${danmakuMaxCount === 3000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                        className={`absolute rounded px-2 py-0.5 ${danmakuMaxCount === 3000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
                         style={{ left: '30%', transform: 'translateX(-50%)' }}
                       >
                         3000
                       </button>
                       <button
                         onClick={() => handleDanmakuMaxCountChange(5000)}
-                        className={`absolute px-2 py-0.5 rounded ${danmakuMaxCount === 5000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                        className={`absolute rounded px-2 py-0.5 ${danmakuMaxCount === 5000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
                         style={{ left: '50%', transform: 'translateX(-50%)' }}
                       >
                         5000
                       </button>
                       <button
                         onClick={() => handleDanmakuMaxCountChange(10000)}
-                        className={`absolute px-2 py-0.5 rounded ${danmakuMaxCount === 10000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                        className={`absolute rounded px-2 py-0.5 ${danmakuMaxCount === 10000 ? 'bg-green-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
                         style={{ left: '100%', transform: 'translateX(-100%)' }}
                       >
                         10000
                       </button>
                     </div>
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                    <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                       限制加载的弹幕数量，减少性能消耗
                     </p>
                   </div>
@@ -2881,27 +3120,37 @@ export const UserMenu: React.FC = () => {
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         弹幕缓存管理
                       </h4>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         弹幕缓存空间占用：{danmakuCacheUsage}
                       </p>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         清除所有已缓存的弹幕数据
                       </p>
                     </div>
                     <button
                       onClick={handleClearDanmakuCache}
                       disabled={isClearingCache}
-                      className='w-full px-4 py-2.5 bg-red-500 hover:bg-red-600 disabled:bg-red-400 dark:bg-red-600 dark:hover:bg-red-700 dark:disabled:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md disabled:cursor-not-allowed flex items-center justify-center gap-2'
+                      className='flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors duration-200 hover:bg-red-600 hover:shadow-md disabled:cursor-not-allowed disabled:bg-red-400 dark:bg-red-600 dark:hover:bg-red-700 dark:disabled:bg-red-500'
                     >
                       {isClearingCache ? (
                         <>
-                          <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                          <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent'></div>
                           <span>清除中...</span>
                         </>
                       ) : (
                         <>
-                          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                          <svg
+                            className='h-4 w-4'
+                            fill='none'
+                            stroke='currentColor'
+                            viewBox='0 0 24 24'
+                          >
+                            <path
+                              strokeLinecap='round'
+                              strokeLinejoin='round'
+                              strokeWidth={2}
+                              d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+                            />
                           </svg>
                           <span>清除弹幕缓存</span>
                         </>
@@ -2910,11 +3159,13 @@ export const UserMenu: React.FC = () => {
 
                     {/* 成功/失败提示 */}
                     {clearCacheMessage && (
-                      <div className={`text-sm p-3 rounded-lg border ${
-                        clearCacheMessage.includes('成功')
-                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
-                          : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
-                      }`}>
+                      <div
+                        className={`rounded-lg border p-3 text-sm ${
+                          clearCacheMessage.includes('成功')
+                            ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300'
+                            : 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300'
+                        }`}
+                      >
                         {clearCacheMessage}
                       </div>
                     )}
@@ -2924,74 +3175,86 @@ export const UserMenu: React.FC = () => {
             </div>
 
             {/* 首页设置 */}
-            <div className='border border-gray-200 dark:border-gray-700 rounded-lg overflow-visible'>
+            <div className='overflow-visible rounded-lg border border-gray-200 dark:border-gray-700'>
               <button
                 onClick={() => setIsHomepageSectionOpen(!isHomepageSectionOpen)}
-                className='w-full px-3 py-2.5 md:px-4 md:py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors flex items-center justify-between'
+                className='dark:hover:bg-gray-750 flex w-full items-center justify-between bg-gray-50 px-3 py-2.5 transition-colors hover:bg-gray-100 dark:bg-gray-800 md:px-4 md:py-3'
               >
                 <div className='flex items-center gap-2'>
-                  <Home className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <Home className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                   <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200'>
                     首页设置
                   </h3>
                 </div>
                 {isHomepageSectionOpen ? (
-                  <ChevronUp className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <ChevronUp className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                 ) : (
-                  <ChevronDown className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                  <ChevronDown className='h-5 w-5 text-gray-600 dark:text-gray-400' />
                 )}
               </button>
               {isHomepageSectionOpen && (
-                <div className='p-3 md:p-4 space-y-4 md:space-y-6'>
+                <div className='space-y-4 p-3 md:space-y-6 md:p-4'>
                   <div>
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mb-3'>
+                    <p className='mb-3 text-xs text-gray-500 dark:text-gray-400'>
                       配置首页模块的显示顺序和可见性
                     </p>
                   </div>
 
                   {/* 首页顶部组件显示 */}
                   <div className='space-y-2'>
-                    <div className='flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+                    <div className='flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800'>
                       <button
-                        onClick={() => handleHomeBannerToggle(!homeBannerEnabled)}
+                        onClick={() =>
+                          handleHomeBannerToggle(!homeBannerEnabled)
+                        }
                         className='flex-shrink-0'
                         title={homeBannerEnabled ? '点击隐藏' : '点击显示'}
                       >
                         {homeBannerEnabled ? (
-                          <Eye className='w-5 h-5 text-green-600 dark:text-green-400' />
+                          <Eye className='h-5 w-5 text-green-600 dark:text-green-400' />
                         ) : (
-                          <EyeOff className='w-5 h-5 text-gray-400 dark:text-gray-500' />
+                          <EyeOff className='h-5 w-5 text-gray-400 dark:text-gray-500' />
                         )}
                       </button>
                       <div className='flex-1'>
-                        <span className={`text-sm font-medium ${
-                          homeBannerEnabled
-                            ? 'text-gray-900 dark:text-gray-100'
-                            : 'text-gray-400 dark:text-gray-500'
-                        }`}>
+                        <span
+                          className={`text-sm font-medium ${
+                            homeBannerEnabled
+                              ? 'text-gray-900 dark:text-gray-100'
+                              : 'text-gray-400 dark:text-gray-500'
+                          }`}
+                        >
                           首页轮播图
                         </span>
                       </div>
                     </div>
 
-                    <div className='flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+                    <div className='flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800'>
                       <button
-                        onClick={() => handleHomeContinueWatchingToggle(!homeContinueWatchingEnabled)}
+                        onClick={() =>
+                          handleHomeContinueWatchingToggle(
+                            !homeContinueWatchingEnabled,
+                          )
+                        }
                         className='flex-shrink-0'
-                        title={homeContinueWatchingEnabled ? '点击隐藏' : '点击显示'}
+                        title={
+                          homeContinueWatchingEnabled ? '点击隐藏' : '点击显示'
+                        }
                       >
                         {homeContinueWatchingEnabled ? (
-                          <Eye className='w-5 h-5 text-green-600 dark:text-green-400' />
+                          <Eye className='h-5 w-5 text-green-600 dark:text-green-400' />
                         ) : (
-                          <EyeOff className='w-5 h-5 text-gray-400 dark:text-gray-500' />
+                          <EyeOff className='h-5 w-5 text-gray-400 dark:text-gray-500' />
                         )}
                       </button>
                       <div className='flex-1'>
-                        <span className={`text-sm font-medium ${
-                          homeContinueWatchingEnabled
-                            ? 'text-gray-900 dark:text-gray-100'
-                            : 'text-gray-400 dark:text-gray-500'
-                        }`}>
+                        <span
+                          className={`text-sm font-medium ${
+                            homeContinueWatchingEnabled
+                              ? 'text-gray-900 dark:text-gray-100'
+                              : 'text-gray-400 dark:text-gray-500'
+                          }`}
+                        >
                           继续观看
                         </span>
                       </div>
@@ -3003,28 +3266,32 @@ export const UserMenu: React.FC = () => {
                     {homeModules.map((module, index) => (
                       <div
                         key={module.id}
-                        className='flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'
+                        className='flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800'
                       >
                         {/* 左侧：显示/隐藏开关 */}
                         <button
-                          onClick={() => handleHomeModuleToggle(module.id, !module.enabled)}
+                          onClick={() =>
+                            handleHomeModuleToggle(module.id, !module.enabled)
+                          }
                           className='flex-shrink-0'
                           title={module.enabled ? '点击隐藏' : '点击显示'}
                         >
                           {module.enabled ? (
-                            <Eye className='w-5 h-5 text-green-600 dark:text-green-400' />
+                            <Eye className='h-5 w-5 text-green-600 dark:text-green-400' />
                           ) : (
-                            <EyeOff className='w-5 h-5 text-gray-400 dark:text-gray-500' />
+                            <EyeOff className='h-5 w-5 text-gray-400 dark:text-gray-500' />
                           )}
                         </button>
 
                         {/* 中间：模块名称 */}
                         <div className='flex-1'>
-                          <span className={`text-sm font-medium ${
-                            module.enabled
-                              ? 'text-gray-900 dark:text-gray-100'
-                              : 'text-gray-400 dark:text-gray-500'
-                          }`}>
+                          <span
+                            className={`text-sm font-medium ${
+                              module.enabled
+                                ? 'text-gray-900 dark:text-gray-100'
+                                : 'text-gray-400 dark:text-gray-500'
+                            }`}
+                          >
                             {module.name}
                           </span>
                         </div>
@@ -3034,18 +3301,18 @@ export const UserMenu: React.FC = () => {
                           <button
                             onClick={() => handleHomeModuleMoveUp(index)}
                             disabled={index === 0}
-                            className='p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors'
+                            className='rounded p-1.5 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-gray-700'
                             title='上移'
                           >
-                            <MoveUp className='w-4 h-4 text-gray-600 dark:text-gray-400' />
+                            <MoveUp className='h-4 w-4 text-gray-600 dark:text-gray-400' />
                           </button>
                           <button
                             onClick={() => handleHomeModuleMoveDown(index)}
                             disabled={index === homeModules.length - 1}
-                            className='p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors'
+                            className='rounded p-1.5 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-gray-700'
                             title='下移'
                           >
-                            <MoveDown className='w-4 h-4 text-gray-600 dark:text-gray-400' />
+                            <MoveDown className='h-4 w-4 text-gray-600 dark:text-gray-400' />
                           </button>
                         </div>
                       </div>
@@ -3059,20 +3326,31 @@ export const UserMenu: React.FC = () => {
                       setHomeBannerEnabled(true);
                       setHomeContinueWatchingEnabled(true);
                       if (typeof window !== 'undefined') {
-                        localStorage.setItem('homeModules', JSON.stringify(defaultHomeModules));
+                        localStorage.setItem(
+                          'homeModules',
+                          JSON.stringify(defaultHomeModules),
+                        );
                         localStorage.setItem('homeBannerEnabled', 'true');
-                        localStorage.setItem('homeContinueWatchingEnabled', 'true');
-                        window.dispatchEvent(new CustomEvent('homeModulesUpdated'));
+                        localStorage.setItem(
+                          'homeContinueWatchingEnabled',
+                          'true',
+                        );
+                        window.dispatchEvent(
+                          new CustomEvent('homeModulesUpdated'),
+                        );
                       }
                     }}
-                    className='w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors'
+                    className='w-full rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                   >
                     恢复默认配置
                   </button>
 
                   {/* 提示信息 */}
-                  <div className='text-xs text-gray-500 dark:text-gray-400 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg'>
-                    <p>💡 提示：点击眼睛图标可显示/隐藏模块，使用箭头按钮调整模块顺序</p>
+                  <div className='rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-gray-500 dark:border-blue-800 dark:bg-blue-900/20 dark:text-gray-400'>
+                    <p>
+                      💡
+                      提示：点击眼睛图标可显示/隐藏模块，使用箭头按钮调整模块顺序
+                    </p>
                   </div>
                 </div>
               )}
@@ -3080,8 +3358,8 @@ export const UserMenu: React.FC = () => {
           </div>
 
           {/* 底部说明 */}
-          <div className='mt-6 pt-4 border-t border-gray-200 dark:border-gray-700'>
-            <p className='text-xs text-gray-500 dark:text-gray-400 text-center'>
+          <div className='mt-6 border-t border-gray-200 pt-4 dark:border-gray-700'>
+            <p className='text-center text-xs text-gray-500 dark:text-gray-400'>
               这些设置保存在本地浏览器中
             </p>
           </div>
@@ -3095,7 +3373,7 @@ export const UserMenu: React.FC = () => {
     <>
       {/* 背景遮罩 */}
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className='fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm'
         onClick={handleCloseSubscribe}
         onTouchMove={(e) => {
           e.preventDefault();
@@ -3109,9 +3387,7 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 订阅面板 */}
-      <div
-        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'
-      >
+      <div className='fixed left-1/2 top-1/2 z-[1001] w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl bg-white shadow-xl dark:bg-gray-900'>
         <div
           className='h-full p-6'
           data-panel-content
@@ -3123,16 +3399,16 @@ export const UserMenu: React.FC = () => {
           }}
         >
           {/* 标题栏 */}
-          <div className='flex items-center justify-between mb-6'>
+          <div className='mb-6 flex items-center justify-between'>
             <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
               TVBox订阅
             </h3>
             <button
               onClick={handleCloseSubscribe}
-              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+              className='flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
               aria-label='Close'
             >
-              <X className='w-full h-full' />
+              <X className='h-full w-full' />
             </button>
           </div>
 
@@ -3142,27 +3418,27 @@ export const UserMenu: React.FC = () => {
               <>
                 {/* 加载骨架 - 开关 */}
                 <div>
-                  <div className='h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-3 animate-pulse'></div>
+                  <div className='mb-3 h-5 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-700'></div>
                   <div className='space-y-2'>
-                    <div className='h-14 bg-gray-200 dark:bg-gray-700 rounded animate-pulse'></div>
-                    <div className='h-14 bg-gray-200 dark:bg-gray-700 rounded animate-pulse'></div>
+                    <div className='h-14 animate-pulse rounded bg-gray-200 dark:bg-gray-700'></div>
+                    <div className='h-14 animate-pulse rounded bg-gray-200 dark:bg-gray-700'></div>
                   </div>
                 </div>
 
                 {/* 加载骨架 - 订阅链接 */}
                 <div>
-                  <div className='h-5 w-28 bg-gray-200 dark:bg-gray-700 rounded mb-2 animate-pulse'></div>
+                  <div className='mb-2 h-5 w-28 animate-pulse rounded bg-gray-200 dark:bg-gray-700'></div>
                   <div className='flex gap-2'>
-                    <div className='flex-1 h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse'></div>
-                    <div className='w-20 h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse'></div>
+                    <div className='h-10 flex-1 animate-pulse rounded bg-gray-200 dark:bg-gray-700'></div>
+                    <div className='h-10 w-20 animate-pulse rounded bg-gray-200 dark:bg-gray-700'></div>
                   </div>
-                  <div className='h-4 w-full bg-gray-200 dark:bg-gray-700 rounded mt-1 animate-pulse'></div>
+                  <div className='mt-1 h-4 w-full animate-pulse rounded bg-gray-200 dark:bg-gray-700'></div>
                 </div>
 
                 {/* 加载骨架 - 重置按钮 */}
                 <div className='pt-2'>
-                  <div className='w-full h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse'></div>
-                  <div className='h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded mt-2 mx-auto animate-pulse'></div>
+                  <div className='h-10 w-full animate-pulse rounded bg-gray-200 dark:bg-gray-700'></div>
+                  <div className='mx-auto mt-2 h-4 w-40 animate-pulse rounded bg-gray-200 dark:bg-gray-700'></div>
                 </div>
               </>
             ) : (
@@ -3175,61 +3451,72 @@ export const UserMenu: React.FC = () => {
                   <button
                     type='button'
                     onClick={() => setSubscribeAdFilterEnabled((prev) => !prev)}
-                    className='w-full flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 text-left bg-gray-50 dark:bg-gray-800/70'
+                    className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left dark:border-gray-700 dark:bg-gray-800/70'
                   >
                     <div>
                       <div className='text-sm font-medium text-gray-800 dark:text-gray-200'>
                         去广告
                       </div>
-                      <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <div className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         开启后通过代理处理播放链接，兼容性可能略低
                       </div>
                     </div>
-                    <div className={`relative h-6 w-11 rounded-full transition-colors ${subscribeAdFilterEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                      <div className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${subscribeAdFilterEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                    <div
+                      className={`relative h-6 w-11 rounded-full transition-colors ${subscribeAdFilterEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                    >
+                      <div
+                        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${subscribeAdFilterEnabled ? 'translate-x-5' : 'translate-x-0.5'}`}
+                      />
                     </div>
                   </button>
 
                   <button
                     type='button'
-                    onClick={() => setSubscribeYellowFilterEnabled((prev) => !prev)}
-                    className='w-full flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 text-left bg-gray-50 dark:bg-gray-800/70'
+                    onClick={() =>
+                      setSubscribeYellowFilterEnabled((prev) => !prev)
+                    }
+                    className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left dark:border-gray-700 dark:bg-gray-800/70'
                   >
                     <div>
                       <div className='text-sm font-medium text-gray-800 dark:text-gray-200'>
                         黄色过滤
                       </div>
-                      <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      <div className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                         开启后同样走代理，并在代理搜索时过滤黄色内容
                       </div>
                     </div>
-                    <div className={`relative h-6 w-11 rounded-full transition-colors ${subscribeYellowFilterEnabled ? 'bg-yellow-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                      <div className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${subscribeYellowFilterEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                    <div
+                      className={`relative h-6 w-11 rounded-full transition-colors ${subscribeYellowFilterEnabled ? 'bg-yellow-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                    >
+                      <div
+                        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${subscribeYellowFilterEnabled ? 'translate-x-5' : 'translate-x-0.5'}`}
+                      />
                     </div>
                   </button>
                 </div>
 
                 <div>
-                  <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <h4 className='mb-2 text-sm font-medium text-gray-700 dark:text-gray-300'>
                     订阅链接
                   </h4>
                   <div className='flex gap-2'>
                     <input
                       type='text'
-                      className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                      className='flex-1 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
                       value={subscribeUrl}
                       readOnly
                     />
                     <button
                       onClick={handleCopySubscribeUrl}
-                      className='px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors flex items-center gap-2 whitespace-nowrap'
+                      className='flex items-center gap-2 whitespace-nowrap rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600'
                     >
-                      <Copy className='w-4 h-4' />
+                      <Copy className='h-4 w-4' />
                       {copySuccess ? '已复制' : '复制'}
                     </button>
                   </div>
-                  {(subscribeAdFilterEnabled || subscribeYellowFilterEnabled) && (
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                  {(subscribeAdFilterEnabled ||
+                    subscribeYellowFilterEnabled) && (
+                    <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                       💡 代理模式已开启，某些源可能因为区域或兼容问题无法播放
                     </p>
                   )}
@@ -3240,23 +3527,26 @@ export const UserMenu: React.FC = () => {
                   <button
                     onClick={handleResetToken}
                     disabled={isResettingToken}
-                    className='w-full px-4 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                    className='w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-600'
                   >
                     {isResettingToken ? '重置中...' : '重置订阅Token'}
                   </button>
-                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-2 text-center'>
+                  <p className='mt-2 text-center text-xs text-gray-500 dark:text-gray-400'>
                     ⚠️ 重置后旧链接将失效
                   </p>
                   {/* 消息提示 */}
-                  <p id='tvbox-token-message' className='text-xs text-center hidden'></p>
+                  <p
+                    id='tvbox-token-message'
+                    className='hidden text-center text-xs'
+                  ></p>
                 </div>
               </>
             )}
           </div>
 
           {/* 底部说明 */}
-          <div className='mt-6 pt-4 border-t border-gray-200 dark:border-gray-700'>
-            <p className='text-xs text-gray-500 dark:text-gray-400 text-center'>
+          <div className='mt-6 border-t border-gray-200 pt-4 dark:border-gray-700'>
+            <p className='text-center text-xs text-gray-500 dark:text-gray-400'>
               将订阅链接复制到TVBox应用中使用
             </p>
           </div>
@@ -3270,7 +3560,7 @@ export const UserMenu: React.FC = () => {
     <>
       {/* 背景遮罩 */}
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className='fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm'
         onClick={handleCloseChangePassword}
         onTouchMove={(e) => {
           // 只阻止滚动，允许其他触摸事件
@@ -3286,9 +3576,7 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 修改密码面板 */}
-      <div
-        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'
-      >
+      <div className='fixed left-1/2 top-1/2 z-[1001] w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl bg-white shadow-xl dark:bg-gray-900'>
         {/* 内容容器 - 独立的滚动区域 */}
         <div
           className='h-full p-6'
@@ -3302,16 +3590,16 @@ export const UserMenu: React.FC = () => {
           }}
         >
           {/* 标题栏 */}
-          <div className='flex items-center justify-between mb-6'>
+          <div className='mb-6 flex items-center justify-between'>
             <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
               修改密码
             </h3>
             <button
               onClick={handleCloseChangePassword}
-              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+              className='flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
               aria-label='Close'
             >
-              <X className='w-full h-full' />
+              <X className='h-full w-full' />
             </button>
           </div>
 
@@ -3319,12 +3607,12 @@ export const UserMenu: React.FC = () => {
           <div className='space-y-4'>
             {/* 新密码输入 */}
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
                 新密码
               </label>
               <input
                 type='password'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400'
+                className='w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-500 transition-colors focus:border-transparent focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400'
                 placeholder='请输入新密码'
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -3334,12 +3622,12 @@ export const UserMenu: React.FC = () => {
 
             {/* 确认密码输入 */}
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
                 确认密码
               </label>
               <input
                 type='password'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400'
+                className='w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-500 transition-colors focus:border-transparent focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400'
                 placeholder='请再次输入新密码'
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -3349,24 +3637,24 @@ export const UserMenu: React.FC = () => {
 
             {/* 错误信息 */}
             {passwordError && (
-              <div className='text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-md border border-red-200 dark:border-red-800'>
+              <div className='rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-500 dark:border-red-800 dark:bg-red-900/20'>
                 {passwordError}
               </div>
             )}
           </div>
 
           {/* 操作按钮 */}
-          <div className='flex gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700'>
+          <div className='mt-6 flex gap-3 border-t border-gray-200 pt-4 dark:border-gray-700'>
             <button
               onClick={handleCloseChangePassword}
-              className='flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors'
+              className='flex-1 rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
               disabled={passwordLoading}
             >
               取消
             </button>
             <button
               onClick={handleSubmitChangePassword}
-              className='flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+              className='flex-1 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-600'
               disabled={passwordLoading || !newPassword || !confirmPassword}
             >
               {passwordLoading ? '修改中...' : '确认修改'}
@@ -3374,8 +3662,8 @@ export const UserMenu: React.FC = () => {
           </div>
 
           {/* 底部说明 */}
-          <div className='mt-4 pt-4 border-t border-gray-200 dark:border-gray-700'>
-            <p className='text-xs text-gray-500 dark:text-gray-400 text-center'>
+          <div className='mt-4 border-t border-gray-200 pt-4 dark:border-gray-700'>
+            <p className='text-center text-xs text-gray-500 dark:text-gray-400'>
               修改密码后需要重新登录
             </p>
           </div>
@@ -3389,7 +3677,7 @@ export const UserMenu: React.FC = () => {
     <>
       {/* 背景遮罩 */}
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1002]'
+        className='fixed inset-0 z-[1002] bg-black/50 backdrop-blur-sm'
         onClick={() => setIsReportOpen(false)}
         onTouchMove={(e) => {
           e.preventDefault();
@@ -3403,11 +3691,9 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 举报信息面板 */}
-      <div
-        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1003] overflow-hidden'
-      >
+      <div className='fixed left-1/2 top-1/2 z-[1003] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl bg-white shadow-xl dark:bg-gray-900'>
         <div
-          className='h-full max-h-[70vh] flex flex-col'
+          className='flex h-full max-h-[70vh] flex-col'
           data-panel-content
           onTouchMove={(e) => {
             e.stopPropagation();
@@ -3417,39 +3703,46 @@ export const UserMenu: React.FC = () => {
           }}
         >
           {/* 标题栏 */}
-          <div className='flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center justify-between border-b border-gray-200 p-6 dark:border-gray-700'>
             <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
               耻辱柱
             </h3>
             <button
               onClick={() => setIsReportOpen(false)}
-              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+              className='flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
               aria-label='Close'
             >
-              <X className='w-full h-full' />
+              <X className='h-full w-full' />
             </button>
           </div>
 
           {/* 内容区域 */}
           <div className='flex-1 overflow-y-auto p-6'>
-            <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4'>
-              <p className='text-gray-800 dark:text-gray-200 leading-relaxed'>
-                抄袭狗<span className='font-bold text-red-600 dark:text-red-400'>SzeMeng76</span>毫无廉耻，盯着本项目的commit区，疯狂抄袭。警告亦全当看不见，实为开源界耻辱。
+            <div className='rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20'>
+              <p className='leading-relaxed text-gray-800 dark:text-gray-200'>
+                抄袭狗
+                <span className='font-bold text-red-600 dark:text-red-400'>
+                  SzeMeng76
+                </span>
+                毫无廉耻，盯着本项目的commit区，疯狂抄袭。警告亦全当看不见，实为开源界耻辱。
               </p>
-              <p className='text-gray-800 dark:text-gray-200 leading-relaxed mt-3'>
+              <p className='mt-3 leading-relaxed text-gray-800 dark:text-gray-200'>
                 超分，观影室，豆瓣反爬，精确搜索等等等等，直接抄袭，最不要脸的就是，刚更新一版，几小时后直接抄走。
               </p>
-              <p className='text-gray-800 dark:text-gray-200 leading-relaxed mt-3'>
-                <span className='font-semibold text-red-600 dark:text-red-400'>2026-02-25：</span>抄袭emby功能
+              <p className='mt-3 leading-relaxed text-gray-800 dark:text-gray-200'>
+                <span className='font-semibold text-red-600 dark:text-red-400'>
+                  2026-02-25：
+                </span>
+                抄袭emby功能
               </p>
             </div>
           </div>
 
           {/* 底部按钮 */}
-          <div className='p-6 border-t border-gray-200 dark:border-gray-700'>
+          <div className='border-t border-gray-200 p-6 dark:border-gray-700'>
             <button
               onClick={() => setIsReportOpen(false)}
-              className='w-full px-4 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium rounded-lg transition-colors'
+              className='w-full rounded-lg bg-gray-200 px-4 py-2.5 font-medium text-gray-800 transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
             >
               我知道了
             </button>
@@ -3464,7 +3757,7 @@ export const UserMenu: React.FC = () => {
     <>
       {/* 背景遮罩 */}
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className='fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm'
         onClick={() => setIsEcoAppsOpen(false)}
         onTouchMove={(e) => {
           e.preventDefault();
@@ -3478,11 +3771,9 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 生态应用面板 */}
-      <div
-        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'
-      >
+      <div className='fixed left-1/2 top-1/2 z-[1001] w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl bg-white shadow-xl dark:bg-gray-900'>
         <div
-          className='h-full max-h-[85vh] flex flex-col'
+          className='flex h-full max-h-[85vh] flex-col'
           data-panel-content
           onTouchMove={(e) => {
             e.stopPropagation();
@@ -3492,7 +3783,7 @@ export const UserMenu: React.FC = () => {
           }}
         >
           {/* 标题栏 */}
-          <div className='flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center justify-between border-b border-gray-200 p-6 dark:border-gray-700'>
             <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
               生态应用
             </h3>
@@ -3500,7 +3791,7 @@ export const UserMenu: React.FC = () => {
               {/* 举报按钮 */}
               <button
                 onClick={() => setIsReportOpen(true)}
-                className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-lg'
+                className='flex h-8 w-8 items-center justify-center rounded-full p-1 text-lg text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
                 aria-label='Report'
                 title='举报抄袭'
               >
@@ -3509,10 +3800,10 @@ export const UserMenu: React.FC = () => {
               {/* 关闭按钮 */}
               <button
                 onClick={() => setIsEcoAppsOpen(false)}
-                className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+                className='flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
                 aria-label='Close'
               >
-                <X className='w-full h-full' />
+                <X className='h-full w-full' />
               </button>
             </div>
           </div>
@@ -3521,57 +3812,57 @@ export const UserMenu: React.FC = () => {
           <div className='flex-1 overflow-y-auto p-6'>
             <div className='grid gap-6 md:grid-cols-1'>
               {/* MoonTVPlus-PC 客户端 */}
-              <div className='bg-gray-50 dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700'>
+              <div className='rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
+                  <div className='relative flex-shrink-0'>
                     <img
                       src='/logo.png'
                       alt='MoonTVPlus-PC'
-                      className='w-16 h-16 rounded-xl object-cover'
+                      className='h-16 w-16 rounded-xl object-cover'
                     />
-                    <div className='absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg'>
-                      <Monitor className='w-3.5 h-3.5 text-white' />
+                    <div className='absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 shadow-lg'>
+                      <Monitor className='h-3.5 w-3.5 text-white' />
                     </div>
                   </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2'>
+                  <div className='min-w-0 flex-1'>
+                    <h4 className='mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100'>
                       MoonTVPlus-PC客户端
                     </h4>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
+                    <p className='mb-3 text-sm text-gray-600 dark:text-gray-400'>
                       专为Windows开发的客户端，完美支持私人影库mkv视频
                     </p>
                     <a
                       href='https://github.com/mtvpls/MoonTVPlus-PC/releases'
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='inline-flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors'
+                      className='inline-flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600'
                     >
-                      <Download className='w-4 h-4' />
+                      <Download className='h-4 w-4' />
                       下载
-                      <ExternalLink className='w-3 h-3' />
+                      <ExternalLink className='h-3 w-3' />
                     </a>
                   </div>
                 </div>
               </div>
 
               {/* Selene 跨平台客户端 */}
-              <div className='bg-gray-50 dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700'>
+              <div className='rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
+                  <div className='relative flex-shrink-0'>
                     <img
                       src='/icons/Selene.png'
                       alt='Selene'
-                      className='w-16 h-16 rounded-xl object-cover'
+                      className='h-16 w-16 rounded-xl object-cover'
                     />
-                    <span className='absolute -top-1 -right-1 px-1.5 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded'>
+                    <span className='absolute -right-1 -top-1 rounded bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white'>
                       二开
                     </span>
                   </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2'>
+                  <div className='min-w-0 flex-1'>
+                    <h4 className='mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100'>
                       Selene 跨平台客户端
                     </h4>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
+                    <p className='mb-3 text-sm text-gray-600 dark:text-gray-400'>
                       多平台客户端
                     </p>
                     <div className='flex flex-wrap gap-2'>
@@ -3579,11 +3870,11 @@ export const UserMenu: React.FC = () => {
                         href='https://github.com/mtvpls/Selene-Build/releases'
                         target='_blank'
                         rel='noopener noreferrer'
-                        className='inline-flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors'
+                        className='inline-flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600'
                       >
-                        <Download className='w-4 h-4' />
+                        <Download className='h-4 w-4' />
                         下载
-                        <ExternalLink className='w-3 h-3' />
+                        <ExternalLink className='h-3 w-3' />
                       </a>
                     </div>
                   </div>
@@ -3591,66 +3882,67 @@ export const UserMenu: React.FC = () => {
               </div>
 
               {/* OrionTV TV专用客户端 */}
-              <div className='bg-gray-50 dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700'>
+              <div className='rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
+                  <div className='relative flex-shrink-0'>
                     <img
                       src='/icons/OrionTV.png'
                       alt='OrionTV'
-                      className='w-16 h-16 rounded-xl object-cover'
+                      className='h-16 w-16 rounded-xl object-cover'
                     />
-                    <span className='absolute -top-1 -right-1 px-1.5 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded'>
+                    <span className='absolute -right-1 -top-1 rounded bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white'>
                       二开
                     </span>
                   </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2'>
+                  <div className='min-w-0 flex-1'>
+                    <h4 className='mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100'>
                       OrionTV TV专用客户端
                     </h4>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
+                    <p className='mb-3 text-sm text-gray-600 dark:text-gray-400'>
                       tv专用
                     </p>
                     <a
                       href='https://github.com/mtvpls/MoonTVPlus/releases/tag/OrionTV%E9%80%82%E9%85%8D%E7%89%883'
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='inline-flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors'
+                      className='inline-flex items-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600'
                     >
-                      <Download className='w-4 h-4' />
+                      <Download className='h-4 w-4' />
                       下载
-                      <ExternalLink className='w-3 h-3' />
+                      <ExternalLink className='h-3 w-3' />
                     </a>
                   </div>
                 </div>
               </div>
 
               {/* 私人影库转码器 */}
-              <div className='bg-gray-50 dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700'>
+              <div className='rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
-                    <div className='w-16 h-16 rounded-xl bg-amber-500 flex items-center justify-center shadow-sm'>
-                      <RouterIcon className='w-8 h-8 text-white' />
+                  <div className='relative flex-shrink-0'>
+                    <div className='flex h-16 w-16 items-center justify-center rounded-xl bg-amber-500 shadow-sm'>
+                      <RouterIcon className='h-8 w-8 text-white' />
                     </div>
-                    <span className='absolute -top-1 -right-1 px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded'>
+                    <span className='absolute -right-1 -top-1 rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white'>
                       MKV转码
                     </span>
                   </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2'>
+                  <div className='min-w-0 flex-1'>
+                    <h4 className='mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100'>
                       私人影库转码器
                     </h4>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
-                      为私人影库中的 MKV 视频提供转码播放能力，可解析内封字幕并解决部分视频无音频问题，但通常需要较高的本机性能配置。
+                    <p className='mb-3 text-sm text-gray-600 dark:text-gray-400'>
+                      为私人影库中的 MKV
+                      视频提供转码播放能力，可解析内封字幕并解决部分视频无音频问题，但通常需要较高的本机性能配置。
                     </p>
                     <a
                       href='https://github.com/mtvpls/moontvplus-transcoder/tags'
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors'
+                      className='inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-600'
                     >
-                      <Download className='w-4 h-4' />
+                      <Download className='h-4 w-4' />
                       下载
-                      <ExternalLink className='w-3 h-3' />
+                      <ExternalLink className='h-3 w-3' />
                     </a>
                   </div>
                 </div>
@@ -3659,8 +3951,8 @@ export const UserMenu: React.FC = () => {
           </div>
 
           {/* 底部说明 */}
-          <div className='p-6 pt-4 border-t border-gray-200 dark:border-gray-700'>
-            <p className='text-xs text-gray-500 dark:text-gray-400 text-center'>
+          <div className='border-t border-gray-200 p-6 pt-4 dark:border-gray-700'>
+            <p className='text-center text-xs text-gray-500 dark:text-gray-400'>
               选择适合您设备的客户端下载使用
             </p>
           </div>
@@ -3674,18 +3966,18 @@ export const UserMenu: React.FC = () => {
       <div className='relative'>
         <button
           onClick={handleMenuClick}
-          className='w-10 h-10 p-2 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-700/50 transition-colors'
+          className='flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-700/50'
           aria-label='User Menu'
         >
-          <User className='w-full h-full' />
+          <User className='h-full w-full' />
         </button>
         {/* 版本更新红点 */}
         {updateStatus === UpdateStatus.HAS_UPDATE && (
-          <div className='absolute top-[2px] right-[2px] w-2 h-2 bg-yellow-500 rounded-full'></div>
+          <div className='absolute right-[2px] top-[2px] h-2 w-2 rounded-full bg-yellow-500'></div>
         )}
         {/* 未读通知红点 */}
         {unreadCount > 0 && (
-          <div className='absolute top-[2px] right-[2px] w-2 h-2 bg-red-500 rounded-full'></div>
+          <div className='absolute right-[2px] top-[2px] h-2 w-2 rounded-full bg-red-500'></div>
         )}
       </div>
 
@@ -3750,7 +4042,7 @@ export const UserMenu: React.FC = () => {
               // 不需要在这里刷新，NotificationPanel 内部会触发事件
             }}
           />,
-          document.body
+          document.body,
         )}
 
       {/* 使用 Portal 将收藏面板渲染到 document.body */}
@@ -3761,7 +4053,7 @@ export const UserMenu: React.FC = () => {
             isOpen={isFavoritesPanelOpen}
             onClose={() => setIsFavoritesPanelOpen(false)}
           />,
-          document.body
+          document.body,
         )}
 
       {/* 使用 Portal 将下载文件管理面板渲染到 document.body */}
@@ -3772,7 +4064,7 @@ export const UserMenu: React.FC = () => {
             isOpen={isDownloadManagementOpen}
             onClose={() => setIsDownloadManagementOpen(false)}
           />,
-          document.body
+          document.body,
         )}
 
       <EmailSettingsPanel
@@ -3803,23 +4095,19 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 使用 Portal 将生态应用面板渲染到 document.body */}
-      {isEcoAppsOpen &&
-        mounted &&
-        createPortal(ecoAppsPanel, document.body)}
+      {isEcoAppsOpen && mounted && createPortal(ecoAppsPanel, document.body)}
 
       {/* 使用 Portal 将举报信息面板渲染到 document.body */}
-      {isReportOpen &&
-        mounted &&
-        createPortal(reportPanel, document.body)}
+      {isReportOpen && mounted && createPortal(reportPanel, document.body)}
 
       {/* 确认对话框 */}
       {confirmDialog.isOpen &&
         mounted &&
         createPortal(
           <div className='fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm'>
-            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md m-4'>
+            <div className='m-4 w-full max-w-md rounded-lg bg-white shadow-xl dark:bg-gray-800'>
               {/* 标题 */}
-              <div className='p-6 border-b border-gray-200 dark:border-gray-700'>
+              <div className='border-b border-gray-200 p-6 dark:border-gray-700'>
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
                   {confirmDialog.title}
                 </h3>
@@ -3833,23 +4121,25 @@ export const UserMenu: React.FC = () => {
               </div>
 
               {/* 按钮 */}
-              <div className='p-6 pt-0 flex gap-3 justify-end'>
+              <div className='flex justify-end gap-3 p-6 pt-0'>
                 <button
-                  onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
-                  className='px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors'
+                  onClick={() =>
+                    setConfirmDialog({ ...confirmDialog, isOpen: false })
+                  }
+                  className='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                 >
                   取消
                 </button>
                 <button
                   onClick={confirmDialog.onConfirm}
-                  className='px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 rounded-lg transition-colors'
+                  className='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700'
                 >
                   确定
                 </button>
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );

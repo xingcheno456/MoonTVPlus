@@ -32,7 +32,11 @@ async function assertAdmin(request: NextRequest) {
   }
 
   const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-  if (!userInfoV2 || (userInfoV2.role !== 'admin' && userInfoV2.role !== 'owner') || userInfoV2.banned) {
+  if (
+    !userInfoV2 ||
+    (userInfoV2.role !== 'admin' && userInfoV2.role !== 'owner') ||
+    userInfoV2.banned
+  ) {
     return null;
   }
 
@@ -56,12 +60,12 @@ export async function GET(request: NextRequest) {
         headers: {
           'Cache-Control': 'no-store',
         },
-      }
+      },
     );
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message || '获取脚本列表失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -92,7 +96,7 @@ export async function POST(request: NextRequest) {
             headers: {
               'Cache-Control': 'no-store',
             },
-          }
+          },
         );
       }
       case 'delete': {
@@ -103,7 +107,7 @@ export async function POST(request: NextRequest) {
             headers: {
               'Cache-Control': 'no-store',
             },
-          }
+          },
         );
       }
       case 'toggle_enabled': {
@@ -114,7 +118,7 @@ export async function POST(request: NextRequest) {
             headers: {
               'Cache-Control': 'no-store',
             },
-          }
+          },
         );
       }
       case 'test': {
@@ -139,7 +143,7 @@ export async function POST(request: NextRequest) {
       }
       case 'import': {
         const imported = await importSourceScripts(
-          Array.isArray(body.items) ? body.items : []
+          Array.isArray(body.items) ? body.items : [],
         );
         return NextResponse.json(
           { ok: true, items: imported },
@@ -147,7 +151,7 @@ export async function POST(request: NextRequest) {
             headers: {
               'Cache-Control': 'no-store',
             },
-          }
+          },
         );
       }
       default:
@@ -158,7 +162,7 @@ export async function POST(request: NextRequest) {
       {
         error: (error as Error).message || '脚本操作失败',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -13,7 +13,7 @@ export const runtime = 'nodejs';
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // 权限检查
@@ -22,10 +22,11 @@ export async function PUT(
       return NextResponse.json({ error: '无权限访问' }, { status: 403 });
     }
 
+    const { id } = await params;
     const config = await getConfig();
     const subscriptions = config.AnimeSubscriptionConfig?.Subscriptions || [];
 
-    const index = subscriptions.findIndex((sub) => sub.id === params.id);
+    const index = subscriptions.findIndex((sub) => sub.id === id);
     if (index === -1) {
       return NextResponse.json({ error: '订阅不存在' }, { status: 404 });
     }
@@ -55,7 +56,7 @@ export async function PUT(
       if (isNaN(episode) || episode < 0) {
         return NextResponse.json(
           { error: '集数必须是非负整数' },
-          { status: 400 }
+          { status: 400 },
         );
       }
       subscription.lastEpisode = episode;
@@ -70,7 +71,7 @@ export async function PUT(
     console.error('更新追番订阅失败:', error);
     return NextResponse.json(
       { error: error.message || '更新订阅失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -81,7 +82,7 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // 权限检查
@@ -90,10 +91,11 @@ export async function DELETE(
       return NextResponse.json({ error: '无权限访问' }, { status: 403 });
     }
 
+    const { id } = await params;
     const config = await getConfig();
     const subscriptions = config.AnimeSubscriptionConfig?.Subscriptions || [];
 
-    const index = subscriptions.findIndex((sub) => sub.id === params.id);
+    const index = subscriptions.findIndex((sub) => sub.id === id);
     if (index === -1) {
       return NextResponse.json({ error: '订阅不存在' }, { status: 404 });
     }
@@ -106,7 +108,7 @@ export async function DELETE(
     console.error('删除追番订阅失败:', error);
     return NextResponse.json(
       { error: error.message || '删除订阅失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

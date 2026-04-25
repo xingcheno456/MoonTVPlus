@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   if (storageType === 'localstorage') {
     return NextResponse.json(
       { error: '不支持本地存储进行管理员配置' },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -44,7 +44,9 @@ export async function POST(request: NextRequest) {
     const adminConfig = await getConfig();
 
     if (action === 'save') {
-      const normalizedCookie = Quark?.Cookie ? assertQuarkCookieHeaderSafe(Quark.Cookie) : '';
+      const normalizedCookie = Quark?.Cookie
+        ? assertQuarkCookieHeaderSafe(Quark.Cookie)
+        : '';
 
       adminConfig.NetDiskConfig = adminConfig.NetDiskConfig || {};
       adminConfig.NetDiskConfig.Quark = {
@@ -63,7 +65,10 @@ export async function POST(request: NextRequest) {
 
     if (action === 'validate') {
       if (!Quark?.Cookie) {
-        return NextResponse.json({ error: '请先填写夸克 Cookie' }, { status: 400 });
+        return NextResponse.json(
+          { error: '请先填写夸克 Cookie' },
+          { status: 400 },
+        );
       }
 
       await validateQuarkCookieReadable(normalizeQuarkCookie(Quark.Cookie));
@@ -79,7 +84,7 @@ export async function POST(request: NextRequest) {
     console.error('[Admin NetDisk] 操作失败:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '操作失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -5,8 +5,18 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { type MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
 
-import { getAllMangaReadRecords, getAllMangaShelf, saveMangaReadRecord, saveMangaShelf } from '@/lib/db.client';
-import type { MangaChapter, MangaDetail, MangaReadRecord, MangaShelfItem } from '@/lib/manga.types';
+import {
+  getAllMangaReadRecords,
+  getAllMangaShelf,
+  saveMangaReadRecord,
+  saveMangaShelf,
+} from '@/lib/db.client';
+import type {
+  MangaChapter,
+  MangaDetail,
+  MangaReadRecord,
+  MangaShelfItem,
+} from '@/lib/manga.types';
 import { processImageUrl } from '@/lib/utils';
 
 import ProxyImage from '@/components/ProxyImage';
@@ -32,12 +42,24 @@ const SCALE_MODE_OPTIONS: Array<{ value: ScaleMode; label: string }> = [
   { value: 'original', label: '原始大小' },
 ];
 
-function MangaReadSkeleton({ readMode, pageGap }: { readMode: ReadMode; pageGap: number }) {
+function MangaReadSkeleton({
+  readMode,
+  pageGap,
+}: {
+  readMode: ReadMode;
+  pageGap: number;
+}) {
   if (readMode === 'horizontal') {
     return (
-      <div className='flex min-h-[calc(100vh-8rem)] overflow-hidden' style={{ gap: `${pageGap}px` }}>
+      <div
+        className='flex min-h-[calc(100vh-8rem)] overflow-hidden'
+        style={{ gap: `${pageGap}px` }}
+      >
         {Array.from({ length: 2 }).map((_, index) => (
-          <div key={index} className='flex min-w-full items-center justify-center px-1'>
+          <div
+            key={index}
+            className='flex min-w-full items-center justify-center px-1'
+          >
             <div className='h-full min-h-[calc(100vh-8rem)] w-full animate-pulse bg-gray-100 dark:bg-gray-900' />
           </div>
         ))}
@@ -52,9 +74,14 @@ function MangaReadSkeleton({ readMode, pageGap }: { readMode: ReadMode; pageGap:
           className={`grid w-full max-w-6xl ${readMode === 'double' ? 'md:grid-cols-2' : 'grid-cols-1'}`}
           style={{ gap: `${pageGap}px` }}
         >
-          {Array.from({ length: readMode === 'double' ? 2 : 1 }).map((_, index) => (
-            <div key={index} className='min-h-[calc(100vh-8rem)] animate-pulse bg-gray-100 dark:bg-gray-900' />
-          ))}
+          {Array.from({ length: readMode === 'double' ? 2 : 1 }).map(
+            (_, index) => (
+              <div
+                key={index}
+                className='min-h-[calc(100vh-8rem)] animate-pulse bg-gray-100 dark:bg-gray-900'
+              />
+            ),
+          )}
         </div>
       </div>
     );
@@ -63,7 +90,10 @@ function MangaReadSkeleton({ readMode, pageGap }: { readMode: ReadMode; pageGap:
   return (
     <div className='flex flex-col' style={{ gap: `${pageGap}px` }}>
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className='aspect-[3/4] animate-pulse bg-gray-100 dark:bg-gray-900' />
+        <div
+          key={index}
+          className='aspect-[3/4] animate-pulse bg-gray-100 dark:bg-gray-900'
+        />
       ))}
     </div>
   );
@@ -126,28 +156,40 @@ export default function MangaReadPage() {
     requestVerticalPageSyncRef.current?.();
   };
 
-  const getPreloadAnchorPage = () => (
-    readMode === 'vertical' ? currentVerticalPageIndexRef.current : activePage
-  );
+  const getPreloadAnchorPage = () =>
+    readMode === 'vertical' ? currentVerticalPageIndexRef.current : activePage;
 
   const getImageLoadingStrategy = (index: number): 'eager' | 'lazy' => {
     const anchorPage = getPreloadAnchorPage();
-    return index >= Math.max(anchorPage - 1, 0) && index <= anchorPage + PRELOAD_PAGE_COUNT
+    return index >= Math.max(anchorPage - 1, 0) &&
+      index <= anchorPage + PRELOAD_PAGE_COUNT
       ? 'eager'
       : 'lazy';
   };
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const savedMode = window.localStorage.getItem(READ_MODE_STORAGE_KEY) as ReadMode | null;
-    if (savedMode && READ_MODE_OPTIONS.some((item) => item.value === savedMode)) {
+    const savedMode = window.localStorage.getItem(
+      READ_MODE_STORAGE_KEY,
+    ) as ReadMode | null;
+    if (
+      savedMode &&
+      READ_MODE_OPTIONS.some((item) => item.value === savedMode)
+    ) {
       setReadMode(savedMode);
     }
-    const savedScaleMode = window.localStorage.getItem(SCALE_MODE_STORAGE_KEY) as ScaleMode | null;
-    if (savedScaleMode && SCALE_MODE_OPTIONS.some((item) => item.value === savedScaleMode)) {
+    const savedScaleMode = window.localStorage.getItem(
+      SCALE_MODE_STORAGE_KEY,
+    ) as ScaleMode | null;
+    if (
+      savedScaleMode &&
+      SCALE_MODE_OPTIONS.some((item) => item.value === savedScaleMode)
+    ) {
       setScaleMode(savedScaleMode);
     }
-    const savedGap = Number(window.localStorage.getItem(PAGE_GAP_STORAGE_KEY) || 0);
+    const savedGap = Number(
+      window.localStorage.getItem(PAGE_GAP_STORAGE_KEY) || 0,
+    );
     if (!Number.isNaN(savedGap)) {
       setPageGap(Math.min(Math.max(savedGap, 0), 48));
     }
@@ -177,7 +219,10 @@ export default function MangaReadPage() {
 
     window.addEventListener('manga-read-toggle-settings', handleToggleSettings);
     return () => {
-      window.removeEventListener('manga-read-toggle-settings', handleToggleSettings);
+      window.removeEventListener(
+        'manga-read-toggle-settings',
+        handleToggleSettings,
+      );
     };
   }, []);
 
@@ -190,7 +235,10 @@ export default function MangaReadPage() {
 
     window.addEventListener('manga-read-toggle-chapters', handleToggleChapters);
     return () => {
-      window.removeEventListener('manga-read-toggle-chapters', handleToggleChapters);
+      window.removeEventListener(
+        'manga-read-toggle-chapters',
+        handleToggleChapters,
+      );
     };
   }, []);
 
@@ -243,7 +291,10 @@ export default function MangaReadPage() {
           return;
         }
 
-        const nextPage = Math.min(Math.max(record.pageIndex || 0, 0), Math.max(pages.length - 1, 0));
+        const nextPage = Math.min(
+          Math.max(record.pageIndex || 0, 0),
+          Math.max(pages.length - 1, 0),
+        );
         setActivePage(nextPage);
         restoredChapterKeyRef.current = chapterKey;
 
@@ -278,13 +329,21 @@ export default function MangaReadPage() {
   }, [activePage, chapterId, readMode]);
 
   useEffect(() => {
-    if (readMode !== 'vertical' || !pages.length || !mangaId || !sourceId || !chapterId) return;
+    if (
+      readMode !== 'vertical' ||
+      !pages.length ||
+      !mangaId ||
+      !sourceId ||
+      !chapterId
+    )
+      return;
 
     let ticking = false;
     let rafId = 0;
     let lastScrollTop = -1;
     let lastInnerHeight = -1;
-    const scrollingElement = document.scrollingElement || document.documentElement;
+    const scrollingElement =
+      document.scrollingElement || document.documentElement;
 
     const updateActivePageFromViewport = () => {
       ticking = false;
@@ -306,7 +365,10 @@ export default function MangaReadPage() {
       const nextScrollTop = scrollingElement.scrollTop;
       const nextInnerHeight = window.innerHeight;
 
-      if (nextScrollTop !== lastScrollTop || nextInnerHeight !== lastInnerHeight) {
+      if (
+        nextScrollTop !== lastScrollTop ||
+        nextInnerHeight !== lastInnerHeight
+      ) {
         lastScrollTop = nextScrollTop;
         lastInnerHeight = nextInnerHeight;
         requestUpdate();
@@ -318,7 +380,10 @@ export default function MangaReadPage() {
     requestUpdate();
     rafId = window.requestAnimationFrame(watchScrollPosition);
     window.addEventListener('scroll', requestUpdate, { passive: true });
-    document.addEventListener('scroll', requestUpdate, { passive: true, capture: true });
+    document.addEventListener('scroll', requestUpdate, {
+      passive: true,
+      capture: true,
+    });
     window.addEventListener('resize', requestUpdate);
 
     let resizeObserver: ResizeObserver | null = null;
@@ -352,7 +417,9 @@ export default function MangaReadPage() {
     const onScroll = () => {
       const width = container.clientWidth || 1;
       const nextPage = Math.round(container.scrollLeft / width);
-      setActivePage(Math.min(Math.max(nextPage, 0), Math.max(pages.length - 1, 0)));
+      setActivePage(
+        Math.min(Math.max(nextPage, 0), Math.max(pages.length - 1, 0)),
+      );
     };
 
     container.addEventListener('scroll', onScroll, { passive: true });
@@ -369,7 +436,10 @@ export default function MangaReadPage() {
     previousReadModeRef.current = readMode;
     if (previousReadMode === readMode) return;
 
-    const targetPage = Math.min(Math.max(activePage, 0), Math.max(pages.length - 1, 0));
+    const targetPage = Math.min(
+      Math.max(activePage, 0),
+      Math.max(pages.length - 1, 0),
+    );
 
     if (readMode === 'vertical') {
       window.setTimeout(() => {
@@ -393,7 +463,10 @@ export default function MangaReadPage() {
 
   useEffect(() => {
     if (!pages.length || !mangaId || !sourceId || !chapterId) return;
-    const currentPageIndex = readMode === 'vertical' ? currentVerticalPageIndexRef.current : activePage;
+    const currentPageIndex =
+      readMode === 'vertical'
+        ? currentVerticalPageIndexRef.current
+        : activePage;
 
     pendingRecordRef.current = {
       title,
@@ -408,17 +481,32 @@ export default function MangaReadPage() {
       saveTime: Date.now(),
     };
     pendingRecordDirtyRef.current = true;
-  }, [activePage, chapterId, chapterName, cover, mangaId, pages.length, readMode, sourceId, sourceName, title]);
+  }, [
+    activePage,
+    chapterId,
+    chapterName,
+    cover,
+    mangaId,
+    pages.length,
+    readMode,
+    sourceId,
+    sourceName,
+    title,
+  ]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !pages.length) return;
 
     const anchorPage = getPreloadAnchorPage();
-    const preloadTargets = pages.slice(anchorPage + 1, anchorPage + 1 + PRELOAD_PAGE_COUNT);
+    const preloadTargets = pages.slice(
+      anchorPage + 1,
+      anchorPage + 1 + PRELOAD_PAGE_COUNT,
+    );
 
     preloadTargets.forEach((page) => {
       const resolvedUrl = processImageUrl(page);
-      if (!resolvedUrl || preloadedImageUrlsRef.current.has(resolvedUrl)) return;
+      if (!resolvedUrl || preloadedImageUrlsRef.current.has(resolvedUrl))
+        return;
 
       const img = new window.Image();
       img.decoding = 'async';
@@ -432,7 +520,8 @@ export default function MangaReadPage() {
 
     const flushPendingRecord = () => {
       const record = pendingRecordRef.current;
-      if (!record || !pendingRecordDirtyRef.current || saveInFlightRef.current) return;
+      if (!record || !pendingRecordDirtyRef.current || saveInFlightRef.current)
+        return;
 
       const recordToSave =
         readMode === 'vertical'
@@ -489,7 +578,9 @@ export default function MangaReadPage() {
       return a.id.localeCompare(b.id);
     });
     const latestChapter = orderedChapters[orderedChapters.length - 1];
-    const currentChapterIndex = orderedChapters.findIndex((chapter) => chapter.id === chapterId);
+    const currentChapterIndex = orderedChapters.findIndex(
+      (chapter) => chapter.id === chapterId,
+    );
     const nextUnreadChapterCount =
       currentChapterIndex >= 0
         ? Math.max(orderedChapters.length - currentChapterIndex - 1, 0)
@@ -609,8 +700,9 @@ export default function MangaReadPage() {
   };
 
   const progress = useMemo(
-    () => (pages.length ? Math.round(((activePage + 1) / pages.length) * 100) : 0),
-    [activePage, pages.length]
+    () =>
+      pages.length ? Math.round(((activePage + 1) / pages.length) * 100) : 0,
+    [activePage, pages.length],
   );
 
   const nextChapter = useMemo<MangaChapter | null>(() => {
@@ -623,8 +715,11 @@ export default function MangaReadPage() {
       return (a.uploadDate ?? 0) - (b.uploadDate ?? 0);
     });
 
-    const currentIndex = orderedChapters.findIndex((item) => item.id === chapterId);
-    if (currentIndex === -1 || currentIndex >= orderedChapters.length - 1) return null;
+    const currentIndex = orderedChapters.findIndex(
+      (item) => item.id === chapterId,
+    );
+    if (currentIndex === -1 || currentIndex >= orderedChapters.length - 1)
+      return null;
 
     return orderedChapters[currentIndex + 1];
   }, [chapterId, mangaDetail?.chapters]);
@@ -640,7 +735,7 @@ export default function MangaReadPage() {
 
   const orderedChapterList = useMemo(
     () => (chapterListDesc ? [...chapterList].reverse() : chapterList),
-    [chapterList, chapterListDesc]
+    [chapterList, chapterListDesc],
   );
 
   useEffect(() => {
@@ -716,13 +811,19 @@ export default function MangaReadPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className='mb-4'>
-              <div className='text-base font-semibold text-gray-900 dark:text-gray-100'>阅读设置</div>
-              <div className='mt-1 text-xs text-gray-500'>可继续扩展更多阅读参数</div>
+              <div className='text-base font-semibold text-gray-900 dark:text-gray-100'>
+                阅读设置
+              </div>
+              <div className='mt-1 text-xs text-gray-500'>
+                可继续扩展更多阅读参数
+              </div>
             </div>
 
             <div className='space-y-5'>
               <div>
-                <div className='mb-2 text-sm font-medium text-gray-700 dark:text-gray-200'>显示方式</div>
+                <div className='mb-2 text-sm font-medium text-gray-700 dark:text-gray-200'>
+                  显示方式
+                </div>
                 <div className='grid grid-cols-2 gap-2'>
                   {READ_MODE_OPTIONS.map((option) => (
                     <button
@@ -742,7 +843,9 @@ export default function MangaReadPage() {
               </div>
 
               <div>
-                <div className='mb-2 text-sm font-medium text-gray-700 dark:text-gray-200'>缩放类型</div>
+                <div className='mb-2 text-sm font-medium text-gray-700 dark:text-gray-200'>
+                  缩放类型
+                </div>
                 <div className='grid grid-cols-2 gap-2'>
                   {SCALE_MODE_OPTIONS.map((option) => (
                     <button
@@ -775,7 +878,9 @@ export default function MangaReadPage() {
                   onChange={(e) => setPageGap(Number(e.target.value))}
                   className='w-full accent-sky-600'
                 />
-                <div className='mt-1 text-xs text-gray-500'>滚动阅读时，两张图片之间的间隔</div>
+                <div className='mt-1 text-xs text-gray-500'>
+                  滚动阅读时，两张图片之间的间隔
+                </div>
               </div>
 
               <div className='flex justify-end'>
@@ -793,7 +898,10 @@ export default function MangaReadPage() {
       )}
 
       {chapterListOpen && (
-        <div className='fixed inset-0 z-40 bg-black/30' onClick={() => setChapterListOpen(false)}>
+        <div
+          className='fixed inset-0 z-40 bg-black/30'
+          onClick={() => setChapterListOpen(false)}
+        >
           <div
             className='absolute right-0 top-14 h-[calc(100vh-3.5rem)] w-full max-w-sm overflow-y-auto border-l border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-950 sm:top-16 sm:h-[calc(100vh-4rem)]'
             onClick={(event) => event.stopPropagation()}
@@ -805,7 +913,11 @@ export default function MangaReadPage() {
                   className='inline-flex items-center gap-2 rounded-2xl border border-gray-200 px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900'
                   onClick={() => setChapterListDesc((prev) => !prev)}
                 >
-                  {chapterListDesc ? <ArrowDownWideNarrow className='h-4 w-4' /> : <ArrowUpWideNarrow className='h-4 w-4' />}
+                  {chapterListDesc ? (
+                    <ArrowDownWideNarrow className='h-4 w-4' />
+                  ) : (
+                    <ArrowUpWideNarrow className='h-4 w-4' />
+                  )}
                   {chapterListDesc ? '倒序' : '正序'}
                 </button>
               </div>
@@ -825,7 +937,7 @@ export default function MangaReadPage() {
                       onClick={() => setChapterListOpen(false)}
                     >
                       <span className='block truncate'>{chapter.name}</span>
-                      <div className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 dark:bg-gray-900 text-white text-sm rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out whitespace-nowrap z-[100] pointer-events-none'>
+                      <div className='pointer-events-none invisible absolute bottom-full left-1/2 z-[100] mb-2 -translate-x-1/2 transform whitespace-nowrap rounded-lg bg-gray-800 px-3 py-2 text-sm text-white opacity-0 shadow-xl transition-all duration-200 ease-out group-hover:visible group-hover:opacity-100 dark:bg-gray-900'>
                         <div className='text-sm'>{chapter.name}</div>
                       </div>
                     </Link>
@@ -842,14 +954,21 @@ export default function MangaReadPage() {
         onClick={handleReaderClick}
       >
         {showChapterComplete && (
-          <div className='fixed inset-0 z-30 flex items-center justify-center bg-black/60 px-4' onClick={() => setShowChapterComplete(false)}>
+          <div
+            className='fixed inset-0 z-30 flex items-center justify-center bg-black/60 px-4'
+            onClick={() => setShowChapterComplete(false)}
+          >
             <div
               className='w-full max-w-sm rounded-3xl border border-gray-200 bg-white p-6 text-center shadow-xl dark:border-gray-700 dark:bg-gray-950'
               onClick={(event) => event.stopPropagation()}
             >
-              <div className='text-lg font-semibold text-gray-900 dark:text-gray-100'>{chapterName} 阅读完毕</div>
+              <div className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                {chapterName} 阅读完毕
+              </div>
               <div className='mt-2 text-sm text-gray-500 dark:text-gray-400'>
-                {nextChapter ? '当前章节已读完，可继续阅读下一话' : '当前章节已读完'}
+                {nextChapter
+                  ? '当前章节已读完，可继续阅读下一话'
+                  : '当前章节已读完'}
               </div>
               <div className='mt-6 flex flex-col gap-3'>
                 {nextChapter ? (
@@ -889,11 +1008,11 @@ export default function MangaReadPage() {
           </div>
         )}
 
-        {pages.length === 0 && <MangaReadSkeleton readMode={readMode} pageGap={pageGap} />}
+        {pages.length === 0 && (
+          <MangaReadSkeleton readMode={readMode} pageGap={pageGap} />
+        )}
 
-        {pages.length === 0 ? (
-          null
-        ) : readMode === 'vertical' ? (
+        {pages.length === 0 ? null : readMode === 'vertical' ? (
           <div className='flex flex-col' style={{ gap: `${pageGap}px` }}>
             {pages.map((page, index) => (
               <div
@@ -917,12 +1036,15 @@ export default function MangaReadPage() {
         ) : readMode === 'horizontal' ? (
           <div
             ref={horizontalContainerRef}
-            className='flex min-h-[calc(100vh-8rem)] snap-x snap-mandatory overflow-x-auto overflow-y-hidden scrollbar-hide'
+            className='scrollbar-hide flex min-h-[calc(100vh-8rem)] snap-x snap-mandatory overflow-x-auto overflow-y-hidden'
             style={{ gap: `${pageGap}px` }}
           >
             {pages.map((page, index) => (
-                <div key={`${page}-${index}`} className='flex min-w-full snap-center items-center justify-center px-1'>
-                  <div className='w-full overflow-hidden bg-gray-100 shadow-sm dark:bg-gray-900'>
+              <div
+                key={`${page}-${index}`}
+                className='flex min-w-full snap-center items-center justify-center px-1'
+              >
+                <div className='w-full overflow-hidden bg-gray-100 shadow-sm dark:bg-gray-900'>
                   <ProxyImage
                     originalSrc={page}
                     alt={`${chapterName}-${index + 1}`}
@@ -935,7 +1057,10 @@ export default function MangaReadPage() {
           </div>
         ) : (
           <div className='flex min-h-[calc(100vh-8rem)] items-center justify-center'>
-            <div className={`grid w-full max-w-6xl ${readMode === 'double' ? 'md:grid-cols-2' : 'grid-cols-1'}`} style={{ gap: `${pageGap}px` }}>
+            <div
+              className={`grid w-full max-w-6xl ${readMode === 'double' ? 'md:grid-cols-2' : 'grid-cols-1'}`}
+              style={{ gap: `${pageGap}px` }}
+            >
               {pagedItems.map((page, index) => (
                 <div
                   key={`${page}-${index}`}

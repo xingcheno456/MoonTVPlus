@@ -8,8 +8,9 @@ export const runtime = 'nodejs';
 // GET: 获取单个求片详情
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -17,7 +18,7 @@ export async function GET(
 
   try {
     const storage = getStorage();
-    const movieRequest = await storage.getMovieRequest(params.id);
+    const movieRequest = await storage.getMovieRequest(id);
 
     if (!movieRequest) {
       return NextResponse.json({ error: '求片不存在' }, { status: 404 });
@@ -28,7 +29,7 @@ export async function GET(
     console.error('获取求片详情失败:', error);
     return NextResponse.json(
       { error: (error as Error).message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -36,8 +37,9 @@ export async function GET(
 // PATCH: 更新求片状态（标记已上架）
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -62,7 +64,7 @@ export async function PATCH(
     const body = await request.json();
     const { status, fulfilledSource, fulfilledId } = body;
 
-    const movieRequest = await storage.getMovieRequest(params.id);
+    const movieRequest = await storage.getMovieRequest(id);
     if (!movieRequest) {
       return NextResponse.json({ error: '求片不存在' }, { status: 404 });
     }
@@ -81,14 +83,14 @@ export async function PATCH(
       // 给所有求片用户发送通知
       for (const username of movieRequest.requestedBy) {
         await storage.addNotification(username, {
-          id: `req_fulfilled_${params.id}_${Date.now()}`,
+          id: `req_fulfilled_${id}_${Date.now()}`,
           type: 'request_fulfilled',
           title: '求片已上架',
           message: `您求的《${movieRequest.title}》已上架`,
           timestamp: Date.now(),
           read: false,
           metadata: {
-            requestId: params.id,
+            requestId: id,
             source: fulfilledSource,
             id: fulfilledId,
           },
@@ -96,7 +98,7 @@ export async function PATCH(
       }
     }
 
-    await storage.updateMovieRequest(params.id, updates);
+    await storage.updateMovieRequest(id, updates);
 
     return NextResponse.json({
       message: '更新成功',
@@ -106,7 +108,7 @@ export async function PATCH(
     console.error('更新求片失败:', error);
     return NextResponse.json(
       { error: (error as Error).message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -114,8 +116,9 @@ export async function PATCH(
 // DELETE: 删除求片
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -137,17 +140,17 @@ export async function DELETE(
       }
     }
 
-    const movieRequest = await storage.getMovieRequest(params.id);
+    const movieRequest = await storage.getMovieRequest(id);
     if (!movieRequest) {
       return NextResponse.json({ error: '求片不存在' }, { status: 404 });
     }
 
     // 删除求片
-    await storage.deleteMovieRequest(params.id);
+    await storage.deleteMovieRequest(id);
 
     // 从所有用户的求片列表中移除
     for (const username of movieRequest.requestedBy) {
-      await storage.removeUserMovieRequest(username, params.id);
+      await storage.removeUserMovieRequest(username, id);
     }
 
     return NextResponse.json({ message: '删除成功' });
@@ -155,7 +158,7 @@ export async function DELETE(
     console.error('删除求片失败:', error);
     return NextResponse.json(
       { error: (error as Error).message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

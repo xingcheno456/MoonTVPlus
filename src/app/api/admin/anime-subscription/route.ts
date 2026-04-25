@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     console.error('获取追番订阅配置失败:', error);
     return NextResponse.json(
       { error: error.message || '获取配置失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       if (isNaN(episodeNum) || episodeNum < 0) {
         return NextResponse.json(
           { error: '集数必须是非负整数' },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
     console.error('创建追番订阅失败:', error);
     return NextResponse.json(
       { error: error.message || '创建订阅失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

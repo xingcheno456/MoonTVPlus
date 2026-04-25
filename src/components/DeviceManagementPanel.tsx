@@ -39,30 +39,30 @@ export function DeviceManagementPanel({
   return createPortal(
     <>
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className='fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm'
         onClick={onClose}
         onTouchMove={(e) => e.preventDefault()}
         onWheel={(e) => e.preventDefault()}
         style={{ touchAction: 'none' }}
       />
 
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
+      <div className='fixed left-1/2 top-1/2 z-[1001] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl bg-white shadow-xl dark:bg-gray-900'>
         <div
-          className='h-full max-h-[80vh] flex flex-col'
+          className='flex h-full max-h-[80vh] flex-col'
           data-panel-content
           onTouchMove={(e) => e.stopPropagation()}
           style={{ touchAction: 'auto' }}
         >
-          <div className='flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center justify-between border-b border-gray-200 p-6 dark:border-gray-700'>
             <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
               设备管理
             </h3>
             <button
               onClick={onClose}
-              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+              className='flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
               aria-label='Close'
             >
-              <X className='w-full h-full' />
+              <X className='h-full w-full' />
             </button>
           </div>
 
@@ -71,17 +71,19 @@ export function DeviceManagementPanel({
               <div className='space-y-3'>
                 {[1, 2, 3].map((i) => (
                   <div key={i} className='animate-pulse'>
-                    <div className='h-20 bg-gray-200 dark:bg-gray-700 rounded-lg'></div>
+                    <div className='h-20 rounded-lg bg-gray-200 dark:bg-gray-700'></div>
                   </div>
                 ))}
-                <div className='text-center text-sm text-gray-500 dark:text-gray-400 mt-4'>
+                <div className='mt-4 text-center text-sm text-gray-500 dark:text-gray-400'>
                   加载中...
                 </div>
               </div>
             ) : devices.length === 0 ? (
-              <div className='text-center py-8'>
-                <Monitor className='w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-3' />
-                <p className='text-sm text-gray-500 dark:text-gray-400'>暂无登录设备</p>
+              <div className='py-8 text-center'>
+                <Monitor className='mx-auto mb-3 h-12 w-12 text-gray-400 dark:text-gray-500' />
+                <p className='text-sm text-gray-500 dark:text-gray-400'>
+                  暂无登录设备
+                </p>
               </div>
             ) : (
               <div className='space-y-3'>
@@ -97,7 +99,7 @@ export function DeviceManagementPanel({
                     return (
                       <div
                         key={device.tokenId}
-                        className={`p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border ${
+                        className={`rounded-lg border bg-gray-50 p-4 dark:bg-gray-800 ${
                           device.isCurrent
                             ? 'border-yellow-400 dark:border-yellow-500'
                             : 'border-gray-200 dark:border-gray-700'
@@ -105,29 +107,41 @@ export function DeviceManagementPanel({
                       >
                         <div className='flex items-start justify-between'>
                           <div className='flex-1'>
-                            <div className='flex items-center gap-2 mb-2'>
-                              <DeviceIcon className='w-4 h-4 text-gray-600 dark:text-gray-400' />
+                            <div className='mb-2 flex items-center gap-2'>
+                              <DeviceIcon className='h-4 w-4 text-gray-600 dark:text-gray-400' />
                               <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
                                 {device.deviceInfo}
                               </span>
                               {device.isCurrent && (
-                                <span className='px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 rounded-full'>
+                                <span className='rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300'>
                                   当前设备
                                 </span>
                               )}
                             </div>
                             <div className='space-y-1 text-xs text-gray-500 dark:text-gray-400'>
-                              <div>登录时间: {new Date(device.createdAt).toLocaleString('zh-CN')}</div>
-                              <div>最后活跃: {new Date(device.lastUsed).toLocaleString('zh-CN')}</div>
+                              <div>
+                                登录时间:{' '}
+                                {new Date(device.createdAt).toLocaleString(
+                                  'zh-CN',
+                                )}
+                              </div>
+                              <div>
+                                最后活跃:{' '}
+                                {new Date(device.lastUsed).toLocaleString(
+                                  'zh-CN',
+                                )}
+                              </div>
                             </div>
                           </div>
                           {!device.isCurrent && (
                             <button
                               onClick={() => onRevokeDevice(device.tokenId)}
                               disabled={revoking === device.tokenId}
-                              className='ml-3 px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border border-red-200 hover:border-red-300 dark:border-red-800 dark:hover:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                              className='ml-3 rounded border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:border-red-700 dark:hover:bg-red-900/20 dark:hover:text-red-300'
                             >
-                              {revoking === device.tokenId ? '撤销中...' : '撤销'}
+                              {revoking === device.tokenId
+                                ? '撤销中...'
+                                : '撤销'}
                             </button>
                           )}
                         </div>
@@ -138,21 +152,21 @@ export function DeviceManagementPanel({
             )}
           </div>
 
-          <div className='p-6 border-t border-gray-200 dark:border-gray-700 space-y-3'>
+          <div className='space-y-3 border-t border-gray-200 p-6 dark:border-gray-700'>
             <button
               onClick={onRevokeAllDevices}
               disabled={devices.length === 0}
-              className='w-full px-4 py-2.5 bg-red-500 hover:bg-red-600 disabled:bg-red-400 dark:bg-red-600 dark:hover:bg-red-700 dark:disabled:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors disabled:cursor-not-allowed'
+              className='w-full rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:bg-red-400 dark:bg-red-600 dark:hover:bg-red-700 dark:disabled:bg-red-500'
             >
               登出所有设备
             </button>
-            <p className='text-xs text-gray-500 dark:text-gray-400 text-center'>
+            <p className='text-center text-xs text-gray-500 dark:text-gray-400'>
               登出所有设备后需要重新登录
             </p>
           </div>
         </div>
       </div>
     </>,
-    document.body
+    document.body,
   );
 }

@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
           'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
           'Netlify-Vary': 'query',
         },
-      }
+      },
     );
   }
 
@@ -44,7 +44,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const enabledScripts = await listEnabledSourceScripts();
-    const matchedScript = enabledScripts.find((item) => item.key === resourceId);
+    const matchedScript = enabledScripts.find(
+      (item) => item.key === resourceId,
+    );
     if (matchedScript) {
       const sourcesExecution = await executeSavedSourceScript({
         key: matchedScript.key,
@@ -71,7 +73,7 @@ export async function GET(request: NextRequest) {
             sourceName: source.name,
             result: execution.result,
           });
-        })
+        }),
       );
 
       let result = scriptResults.flat().filter((r) => r.title === query);
@@ -89,7 +91,7 @@ export async function GET(request: NextRequest) {
             error: '未找到结果',
             result: null,
           },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -102,7 +104,7 @@ export async function GET(request: NextRequest) {
             'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
             'Netlify-Vary': 'query',
           },
-        }
+        },
       );
     }
 
@@ -114,7 +116,7 @@ export async function GET(request: NextRequest) {
           error: `未找到指定的视频源: ${resourceId}`,
           result: null,
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -134,7 +136,7 @@ export async function GET(request: NextRequest) {
           error: '未找到结果',
           result: null,
         },
-        { status: 404 }
+        { status: 404 },
       );
     } else {
       return NextResponse.json(
@@ -146,7 +148,7 @@ export async function GET(request: NextRequest) {
             'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
             'Netlify-Vary': 'query',
           },
-        }
+        },
       );
     }
   } catch (error) {
@@ -155,7 +157,7 @@ export async function GET(request: NextRequest) {
         error: '搜索失败',
         result: null,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

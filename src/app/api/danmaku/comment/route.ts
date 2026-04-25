@@ -7,7 +7,9 @@ import { getDanmakuApiBaseUrl } from '@/lib/danmaku/config';
 export const runtime = 'nodejs';
 
 // 解析弹幕 XML 为 JSON
-function parseXmlDanmaku(xmlText: string): Array<{ p: string; m: string; cid: number }> {
+function parseXmlDanmaku(
+  xmlText: string,
+): Array<{ p: string; m: string; cid: number }> {
   const comments: Array<{ p: string; m: string; cid: number }> = [];
 
   // 使用正则表达式提取所有 <d> 标签
@@ -45,7 +47,7 @@ export async function GET(request: NextRequest) {
           count: 0,
           comments: [],
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -71,7 +73,7 @@ export async function GET(request: NextRequest) {
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
-          'Accept': 'application/xml, text/xml',
+          Accept: 'application/xml, text/xml',
         },
         signal: controller.signal,
         keepalive: true,
@@ -110,7 +112,7 @@ export async function GET(request: NextRequest) {
         count: 0,
         comments: [],
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

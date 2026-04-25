@@ -25,14 +25,19 @@ export async function GET(request: NextRequest) {
     const pageParam = searchParams.get('page');
     const pageSizeParam = searchParams.get('pageSize');
     const page = pageParam ? Math.max(parseInt(pageParam, 10), 1) : null;
-    const pageSize = pageSizeParam ? Math.min(Math.max(parseInt(pageSizeParam, 10), 1), 60) : null;
+    const pageSize = pageSizeParam
+      ? Math.min(Math.max(parseInt(pageSizeParam, 10), 1), 60)
+      : null;
 
     if (!id) {
       return NextResponse.json({ error: '缺少ID参数' }, { status: 400 });
     }
 
     if (type !== 'movie' && type !== 'tv') {
-      return NextResponse.json({ error: '类型参数必须是movie或tv' }, { status: 400 });
+      return NextResponse.json(
+        { error: '类型参数必须是movie或tv' },
+        { status: 400 },
+      );
     }
 
     const config = await getConfig();
@@ -41,7 +46,10 @@ export async function GET(request: NextRequest) {
     const tmdbReverseProxy = config.SiteConfig.TMDBReverseProxy;
 
     if (!tmdbApiKey) {
-      return NextResponse.json({ error: 'TMDB API Key 未配置' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'TMDB API Key 未配置' },
+        { status: 400 },
+      );
     }
 
     const response = await getTMDBImages(
@@ -49,13 +57,13 @@ export async function GET(request: NextRequest) {
       parseInt(id, 10),
       type as 'movie' | 'tv',
       tmdbProxy,
-      tmdbReverseProxy
+      tmdbReverseProxy,
     );
 
     if (response.code !== 200 || !response.images) {
       return NextResponse.json(
         { error: 'TMDB 图片信息获取失败', code: response.code },
-        { status: response.code }
+        { status: response.code },
       );
     }
 
@@ -99,7 +107,7 @@ export async function GET(request: NextRequest) {
     console.error('TMDB图片信息获取失败:', error);
     return NextResponse.json(
       { error: '获取图片信息失败', details: (error as Error).message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

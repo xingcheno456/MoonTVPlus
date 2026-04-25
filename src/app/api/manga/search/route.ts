@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
     const results = await suwayomiClient.searchManga(q, sourceId, page);
     return NextResponse.json({ results });
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 },
+    );
   }
 }

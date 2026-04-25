@@ -7,7 +7,11 @@ import { useCallback, useEffect, useState } from 'react';
 
 import Toast, { ToastProps } from '@/components/Toast';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
-import { screenShareQualityOptions, type ScreenShareQualityPreset, useScreenShare } from '@/hooks/useScreenShare';
+import {
+  screenShareQualityOptions,
+  type ScreenShareQualityPreset,
+  useScreenShare,
+} from '@/hooks/useScreenShare';
 
 const NEW_TAB_KEY_PREFIX = 'watch_room_screen_home_opened_';
 const WATCH_ROOM_NO_CONNECT_KEY = 'watch_room_no_connect';
@@ -46,7 +50,8 @@ export default function WatchRoomScreenPage() {
   const watchRoom = useWatchRoomContext();
   const { currentRoom, members, leaveRoom } = watchRoom;
   const [toast, setToast] = useState<ToastProps | null>(null);
-  const [qualityPreset, setQualityPreset] = useState<ScreenShareQualityPreset>('smooth');
+  const [qualityPreset, setQualityPreset] =
+    useState<ScreenShareQualityPreset>('smooth');
   const {
     currentRoom: screenRoom,
     isOwner,
@@ -143,7 +148,9 @@ export default function WatchRoomScreenPage() {
         captureSettings.width && captureSettings.height
           ? `${captureSettings.width}x${captureSettings.height}`
           : '分辨率未知',
-        captureSettings.frameRate ? `${Math.round(captureSettings.frameRate)} fps` : '帧率未知',
+        captureSettings.frameRate
+          ? `${Math.round(captureSettings.frameRate)} fps`
+          : '帧率未知',
       ].join(' / ')
     : '未开始';
 
@@ -208,7 +215,9 @@ export default function WatchRoomScreenPage() {
               <div className='absolute px-6 text-center text-white'>
                 <MonitorPlay className='mx-auto mb-3 h-12 w-12 text-white/70' />
                 <p className='text-lg font-medium'>
-                  {isOwner ? '点击开始共享，向房员推送浏览器画面' : '等待房主开始共享屏幕'}
+                  {isOwner
+                    ? '点击开始共享，向房员推送浏览器画面'
+                    : '等待房主开始共享屏幕'}
                 </p>
                 {isOwner && (
                   <p className='mt-2 text-sm text-white/70'>
@@ -247,7 +256,11 @@ export default function WatchRoomScreenPage() {
                   </label>
                   <select
                     value={qualityPreset}
-                    onChange={(event) => setQualityPreset(event.target.value as ScreenShareQualityPreset)}
+                    onChange={(event) =>
+                      setQualityPreset(
+                        event.target.value as ScreenShareQualityPreset,
+                      )
+                    }
                     disabled={isStarting || isSharing}
                     className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900'
                   >
@@ -271,7 +284,11 @@ export default function WatchRoomScreenPage() {
                       disabled={isStarting || isSharing}
                       className='flex-1 rounded-lg bg-blue-500 px-4 py-2 text-white disabled:bg-gray-400'
                     >
-                      {isStarting ? '启动中...' : isSharing ? '共享中' : '开始共享'}
+                      {isStarting
+                        ? '启动中...'
+                        : isSharing
+                          ? '共享中'
+                          : '开始共享'}
                     </button>
                     <button
                       onClick={() => stopSharing(true)}

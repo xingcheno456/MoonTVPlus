@@ -1,6 +1,6 @@
+'use client';
 /* eslint-disable react-hooks/exhaustive-deps */
 
-'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -109,11 +109,11 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
   // 更新指示器位置的通用函数
   const updateIndicatorPosition = (
     activeIndex: number,
-    containerRef: React.RefObject<HTMLDivElement>,
+    containerRef: React.RefObject<HTMLDivElement | null>,
     buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
     setIndicatorStyle: React.Dispatch<
       React.SetStateAction<{ left: number; width: number }>
-    >
+    >,
   ) => {
     if (
       activeIndex >= 0 &&
@@ -145,44 +145,45 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     if (type === 'movie') {
       const activeIndex = moviePrimaryOptions.findIndex(
         (opt) =>
-          opt.value === (primarySelection || moviePrimaryOptions[0].value)
+          opt.value === (primarySelection || moviePrimaryOptions[0].value),
       );
       updateIndicatorPosition(
         activeIndex,
         primaryContainerRef,
         primaryButtonRefs,
-        setPrimaryIndicatorStyle
+        setPrimaryIndicatorStyle,
       );
     } else if (type === 'tv') {
       const activeIndex = tvPrimaryOptions.findIndex(
-        (opt) => opt.value === (primarySelection || tvPrimaryOptions[1].value)
+        (opt) => opt.value === (primarySelection || tvPrimaryOptions[1].value),
       );
       updateIndicatorPosition(
         activeIndex,
         primaryContainerRef,
         primaryButtonRefs,
-        setPrimaryIndicatorStyle
+        setPrimaryIndicatorStyle,
       );
     } else if (type === 'anime') {
       const activeIndex = animePrimaryOptions.findIndex(
         (opt) =>
-          opt.value === (primarySelection || animePrimaryOptions[0].value)
+          opt.value === (primarySelection || animePrimaryOptions[0].value),
       );
       updateIndicatorPosition(
         activeIndex,
         primaryContainerRef,
         primaryButtonRefs,
-        setPrimaryIndicatorStyle
+        setPrimaryIndicatorStyle,
       );
     } else if (type === 'show') {
       const activeIndex = showPrimaryOptions.findIndex(
-        (opt) => opt.value === (primarySelection || showPrimaryOptions[1].value)
+        (opt) =>
+          opt.value === (primarySelection || showPrimaryOptions[1].value),
       );
       updateIndicatorPosition(
         activeIndex,
         primaryContainerRef,
         primaryButtonRefs,
-        setPrimaryIndicatorStyle
+        setPrimaryIndicatorStyle,
       );
     }
 
@@ -191,17 +192,17 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     if (type === 'movie') {
       secondaryActiveIndex = movieSecondaryOptions.findIndex(
         (opt) =>
-          opt.value === (secondarySelection || movieSecondaryOptions[0].value)
+          opt.value === (secondarySelection || movieSecondaryOptions[0].value),
       );
     } else if (type === 'tv') {
       secondaryActiveIndex = tvSecondaryOptions.findIndex(
         (opt) =>
-          opt.value === (secondarySelection || tvSecondaryOptions[0].value)
+          opt.value === (secondarySelection || tvSecondaryOptions[0].value),
       );
     } else if (type === 'show') {
       secondaryActiveIndex = showSecondaryOptions.findIndex(
         (opt) =>
-          opt.value === (secondarySelection || showSecondaryOptions[0].value)
+          opt.value === (secondarySelection || showSecondaryOptions[0].value),
       );
     }
 
@@ -210,7 +211,7 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
         secondaryActiveIndex,
         secondaryContainerRef,
         secondaryButtonRefs,
-        setSecondaryIndicatorStyle
+        setSecondaryIndicatorStyle,
       );
     }
   }, [type]); // 只在type变化时重新计算
@@ -219,46 +220,46 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
   useEffect(() => {
     if (type === 'movie') {
       const activeIndex = moviePrimaryOptions.findIndex(
-        (opt) => opt.value === primarySelection
+        (opt) => opt.value === primarySelection,
       );
       const cleanup = updateIndicatorPosition(
         activeIndex,
         primaryContainerRef,
         primaryButtonRefs,
-        setPrimaryIndicatorStyle
+        setPrimaryIndicatorStyle,
       );
       return cleanup;
     } else if (type === 'tv') {
       const activeIndex = tvPrimaryOptions.findIndex(
-        (opt) => opt.value === primarySelection
+        (opt) => opt.value === primarySelection,
       );
       const cleanup = updateIndicatorPosition(
         activeIndex,
         primaryContainerRef,
         primaryButtonRefs,
-        setPrimaryIndicatorStyle
+        setPrimaryIndicatorStyle,
       );
       return cleanup;
     } else if (type === 'anime') {
       const activeIndex = animePrimaryOptions.findIndex(
-        (opt) => opt.value === primarySelection
+        (opt) => opt.value === primarySelection,
       );
       const cleanup = updateIndicatorPosition(
         activeIndex,
         primaryContainerRef,
         primaryButtonRefs,
-        setPrimaryIndicatorStyle
+        setPrimaryIndicatorStyle,
       );
       return cleanup;
     } else if (type === 'show') {
       const activeIndex = showPrimaryOptions.findIndex(
-        (opt) => opt.value === primarySelection
+        (opt) => opt.value === primarySelection,
       );
       const cleanup = updateIndicatorPosition(
         activeIndex,
         primaryContainerRef,
         primaryButtonRefs,
-        setPrimaryIndicatorStyle
+        setPrimaryIndicatorStyle,
       );
       return cleanup;
     }
@@ -271,17 +272,17 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
 
     if (type === 'movie') {
       activeIndex = movieSecondaryOptions.findIndex(
-        (opt) => opt.value === secondarySelection
+        (opt) => opt.value === secondarySelection,
       );
       options = movieSecondaryOptions;
     } else if (type === 'tv') {
       activeIndex = tvSecondaryOptions.findIndex(
-        (opt) => opt.value === secondarySelection
+        (opt) => opt.value === secondarySelection,
       );
       options = tvSecondaryOptions;
     } else if (type === 'show') {
       activeIndex = showSecondaryOptions.findIndex(
-        (opt) => opt.value === secondarySelection
+        (opt) => opt.value === secondarySelection,
       );
       options = showSecondaryOptions;
     }
@@ -291,7 +292,7 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
         activeIndex,
         secondaryContainerRef,
         secondaryButtonRefs,
-        setSecondaryIndicatorStyle
+        setSecondaryIndicatorStyle,
       );
       return cleanup;
     }
@@ -302,7 +303,7 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     options: SelectorOption[],
     activeValue: string | undefined,
     onChange: (value: string) => void,
-    isPrimary = false
+    isPrimary = false,
   ) => {
     const containerRef = isPrimary
       ? primaryContainerRef
@@ -315,12 +316,12 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     return (
       <div
         ref={containerRef}
-        className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-sm'
+        className='relative inline-flex rounded-full bg-gray-200/60 p-0.5 backdrop-blur-sm dark:bg-gray-700/60 sm:p-1'
       >
         {/* 滑动的白色背景指示器 */}
         {indicatorStyle.width > 0 && (
           <div
-            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out'
+            className='absolute bottom-0.5 top-0.5 rounded-full bg-white shadow-sm transition-all duration-300 ease-out dark:bg-gray-500 sm:bottom-1 sm:top-1'
             style={{
               left: `${indicatorStyle.left}px`,
               width: `${indicatorStyle.width}px`,
@@ -337,10 +338,10 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
                 buttonRefs.current[index] = el;
               }}
               onClick={() => onChange(option.value)}
-              className={`relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 whitespace-nowrap ${
+              className={`relative z-10 whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium transition-all duration-200 sm:px-4 sm:py-2 sm:text-sm ${
                 isActive
-                  ? 'text-gray-900 dark:text-gray-100 cursor-default'
-                  : 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer'
+                  ? 'cursor-default text-gray-900 dark:text-gray-100'
+                  : 'cursor-pointer text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
               }`}
             >
               {option.label}
@@ -357,8 +358,8 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
       {type === 'movie' && (
         <div className='space-y-3 sm:space-y-4'>
           {/* 一级选择器 */}
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+            <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
               分类
             </span>
             <div className='overflow-x-auto'>
@@ -366,15 +367,15 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
                 moviePrimaryOptions,
                 primarySelection || moviePrimaryOptions[0].value,
                 onPrimaryChange,
-                true
+                true,
               )}
             </div>
           </div>
 
           {/* 二级选择器 - 只在非"全部"时显示 */}
           {primarySelection !== '全部' ? (
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
                 地区
               </span>
               <div className='overflow-x-auto'>
@@ -382,14 +383,14 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
                   movieSecondaryOptions,
                   secondarySelection || movieSecondaryOptions[0].value,
                   onSecondaryChange,
-                  false
+                  false,
                 )}
               </div>
             </div>
           ) : (
             /* 多级选择器 - 只在选中"全部"时显示 */
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
                 筛选
               </span>
               <div className='overflow-x-auto'>
@@ -408,8 +409,8 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
       {type === 'tv' && (
         <div className='space-y-3 sm:space-y-4'>
           {/* 一级选择器 */}
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+            <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
               分类
             </span>
             <div className='overflow-x-auto'>
@@ -417,15 +418,15 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
                 tvPrimaryOptions,
                 primarySelection || tvPrimaryOptions[1].value,
                 onPrimaryChange,
-                true
+                true,
               )}
             </div>
           </div>
 
           {/* 二级选择器 - 只在选中"最近热门"时显示，选中"全部"时显示多级选择器 */}
           {(primarySelection || tvPrimaryOptions[1].value) === '最近热门' ? (
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
                 类型
               </span>
               <div className='overflow-x-auto'>
@@ -433,14 +434,14 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
                   tvSecondaryOptions,
                   secondarySelection || tvSecondaryOptions[0].value,
                   onSecondaryChange,
-                  false
+                  false,
                 )}
               </div>
             </div>
           ) : (primarySelection || tvPrimaryOptions[1].value) === '全部' ? (
             /* 多级选择器 - 只在选中"全部"时显示 */
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
                 筛选
               </span>
               <div className='overflow-x-auto'>
@@ -458,8 +459,8 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
       {/* 动漫类型 - 显示一级选择器和多级选择器 */}
       {type === 'anime' && (
         <div className='space-y-3 sm:space-y-4'>
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+            <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
               分类
             </span>
             <div className='overflow-x-auto'>
@@ -467,7 +468,7 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
                 animePrimaryOptions,
                 primarySelection || animePrimaryOptions[0].value,
                 onPrimaryChange,
-                true
+                true,
               )}
             </div>
           </div>
@@ -475,8 +476,8 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
           {/* 筛选部分 - 根据一级选择器显示不同内容 */}
           {(primarySelection || animePrimaryOptions[0].value) === '每日放送' ? (
             // 每日放送分类下显示星期选择器
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
                 星期
               </span>
               <div className='overflow-x-auto'>
@@ -485,8 +486,8 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
             </div>
           ) : (
             // 其他分类下显示原有的筛选功能
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
                 筛选
               </span>
               <div className='overflow-x-auto'>
@@ -514,8 +515,8 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
       {type === 'show' && (
         <div className='space-y-3 sm:space-y-4'>
           {/* 一级选择器 */}
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+            <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
               分类
             </span>
             <div className='overflow-x-auto'>
@@ -523,15 +524,15 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
                 showPrimaryOptions,
                 primarySelection || showPrimaryOptions[1].value,
                 onPrimaryChange,
-                true
+                true,
               )}
             </div>
           </div>
 
           {/* 二级选择器 - 只在选中"最近热门"时显示，选中"全部"时显示多级选择器 */}
           {(primarySelection || showPrimaryOptions[1].value) === '最近热门' ? (
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
                 类型
               </span>
               <div className='overflow-x-auto'>
@@ -539,14 +540,14 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
                   showSecondaryOptions,
                   secondarySelection || showSecondaryOptions[0].value,
                   onSecondaryChange,
-                  false
+                  false,
                 )}
               </div>
             </div>
           ) : (primarySelection || showPrimaryOptions[1].value) === '全部' ? (
             /* 多级选择器 - 只在选中"全部"时显示 */
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
                 筛选
               </span>
               <div className='overflow-x-auto'>

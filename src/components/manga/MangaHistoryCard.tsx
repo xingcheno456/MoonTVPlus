@@ -19,24 +19,31 @@ interface MangaHistoryCardProps {
   onDelete: (item: MangaReadRecord) => void | Promise<void>;
 }
 
-export default function MangaHistoryCard({ item, inShelf, onToggleShelf, onDelete }: MangaHistoryCardProps) {
+export default function MangaHistoryCard({
+  item,
+  inShelf,
+  onToggleShelf,
+  onDelete,
+}: MangaHistoryCardProps) {
   const router = useRouter();
   const [showActions, setShowActions] = useState(false);
   const [showImageViewer, setShowImageViewer] = useState(false);
 
   const readHref = useMemo(
-    () => `/manga/read?mangaId=${item.mangaId}&sourceId=${item.sourceId}&chapterId=${item.chapterId}&title=${encodeURIComponent(item.title)}&cover=${encodeURIComponent(item.cover)}&sourceName=${encodeURIComponent(item.sourceName)}&chapterName=${encodeURIComponent(item.chapterName)}&returnTo=${encodeURIComponent('/manga/history')}`,
-    [item]
+    () =>
+      `/manga/read?mangaId=${item.mangaId}&sourceId=${item.sourceId}&chapterId=${item.chapterId}&title=${encodeURIComponent(item.title)}&cover=${encodeURIComponent(item.cover)}&sourceName=${encodeURIComponent(item.sourceName)}&chapterName=${encodeURIComponent(item.chapterName)}&returnTo=${encodeURIComponent('/manga/history')}`,
+    [item],
   );
 
   const detailHref = useMemo(
-    () => `/manga/detail?mangaId=${item.mangaId}&sourceId=${item.sourceId}&title=${encodeURIComponent(item.title)}&cover=${encodeURIComponent(item.cover)}&sourceName=${encodeURIComponent(item.sourceName)}&returnTo=${encodeURIComponent('/manga/history')}`,
-    [item]
+    () =>
+      `/manga/detail?mangaId=${item.mangaId}&sourceId=${item.sourceId}&title=${encodeURIComponent(item.title)}&cover=${encodeURIComponent(item.cover)}&sourceName=${encodeURIComponent(item.sourceName)}&returnTo=${encodeURIComponent('/manga/history')}`,
+    [item],
   );
 
   const subtitle = useMemo(
     () => `${item.chapterName} · 第 ${item.pageIndex + 1}/${item.pageCount} 页`,
-    [item]
+    [item],
   );
 
   const openActions = () => setShowActions(true);
@@ -78,13 +85,13 @@ export default function MangaHistoryCard({ item, inShelf, onToggleShelf, onDelet
         color: 'danger' as const,
       },
     ],
-    [detailHref, goRead, inShelf, item, onDelete, onToggleShelf, router]
+    [detailHref, goRead, inShelf, item, onDelete, onToggleShelf, router],
   );
 
   return (
     <>
       <div
-        className='group overflow-hidden rounded-2xl border border-gray-200/70 bg-white/90 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-gray-700 dark:bg-gray-900/80 cursor-pointer'
+        className='group cursor-pointer overflow-hidden rounded-2xl border border-gray-200/70 bg-white/90 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-gray-700 dark:bg-gray-900/80'
         onClick={goRead}
         onContextMenu={(e) => {
           e.preventDefault();
@@ -119,19 +126,25 @@ export default function MangaHistoryCard({ item, inShelf, onToggleShelf, onDelet
             <ProxyImage
               originalSrc={item.cover}
               alt={item.title}
-              className='h-full w-full object-cover transition duration-300 group-hover:scale-105 pointer-events-none'
+              className='pointer-events-none h-full w-full object-cover transition duration-300 group-hover:scale-105'
               draggable={false}
             />
           ) : (
-            <div className='flex h-full items-center justify-center text-sm text-gray-400'>暂无封面</div>
+            <div className='flex h-full items-center justify-center text-sm text-gray-400'>
+              暂无封面
+            </div>
           )}
         </div>
         <div className='space-y-1 p-3'>
           <div className='line-clamp-2 min-h-[2.75rem] text-sm font-semibold text-gray-900 dark:text-gray-100'>
             {item.title}
           </div>
-          <div className='text-xs text-gray-500 dark:text-gray-400'>{item.sourceName}</div>
-          <div className='line-clamp-2 text-xs text-sky-600 dark:text-sky-400'>{subtitle}</div>
+          <div className='text-xs text-gray-500 dark:text-gray-400'>
+            {item.sourceName}
+          </div>
+          <div className='line-clamp-2 text-xs text-sky-600 dark:text-sky-400'>
+            {subtitle}
+          </div>
         </div>
       </div>
 

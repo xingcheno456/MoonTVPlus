@@ -1,11 +1,21 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Play, Volume2, VolumeX } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef,useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { type TMDBItem,getGenreNames, getTMDBImageUrl } from '@/lib/tmdb.client';
+import {
+  type TMDBItem,
+  getGenreNames,
+  getTMDBImageUrl,
+} from '@/lib/tmdb.client';
 import { getDoubanDetail } from '@/lib/douban.client';
 
 import ProxyImage from '@/components/ProxyImage';
@@ -23,7 +33,10 @@ interface BannerItem extends TMDBItem {
   genres?: string[]; // 豆瓣数据源的类型标签
 }
 
-export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = false }: BannerCarouselProps) {
+export default function BannerCarousel({
+  autoPlayInterval = 5000,
+  delayLoad = false,
+}: BannerCarouselProps) {
   const router = useRouter();
   const [items, setItems] = useState<BannerItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -204,10 +217,13 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
 
             // 保存到 localStorage（使用数据源特定的key）
             try {
-              localStorage.setItem(cacheKey, JSON.stringify({
-                data: result.list,
-                timestamp: Date.now()
-              }));
+              localStorage.setItem(
+                cacheKey,
+                JSON.stringify({
+                  data: result.list,
+                  timestamp: Date.now(),
+                }),
+              );
             } catch (e) {
               // localStorage 可能已满，忽略错误
               console.error('保存到 localStorage 失败:', e);
@@ -227,7 +243,12 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
   // 前端获取豆瓣预告片
   useEffect(() => {
     // 只有在启用预告片、数据源是豆瓣、有数据且未加载预告片时才执行
-    if (!enableTrailers || dataSource !== 'Douban' || items.length === 0 || trailersLoaded) {
+    if (
+      !enableTrailers ||
+      dataSource !== 'Douban' ||
+      items.length === 0 ||
+      trailersLoaded
+    ) {
       return;
     }
 
@@ -241,9 +262,10 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
               const detail = await getDoubanDetail(item.id.toString());
 
               // 获取预告片链接（取第一个）
-              const trailerUrl = detail.trailers && detail.trailers.length > 0
-                ? detail.trailers[0].video_url
-                : null;
+              const trailerUrl =
+                detail.trailers && detail.trailers.length > 0
+                  ? detail.trailers[0].video_url
+                  : null;
 
               return {
                 ...item,
@@ -253,7 +275,7 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
               console.error(`获取豆瓣电影 ${item.id} 预告片失败:`, error);
               return item;
             }
-          })
+          }),
         );
 
         setItems(itemsWithTrailers);
@@ -298,7 +320,7 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
         setSkipNextAutoPlay(false);
         return;
       }
-      
+
       setCurrentIndex((prev) => (prev + 1) % items.length);
     }, autoPlayInterval);
 
@@ -350,7 +372,7 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
     // 防止在手动切换过程中触发
     if (isManualChange.current) return;
     if (!touchStartX.current) return;
-    
+
     // 如果有滑动，则执行滑动逻辑
     if (touchEndX.current !== 0) {
       const distance = touchStartX.current - touchEndX.current;
@@ -374,13 +396,13 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
 
   if (isLoading || !shouldLoad) {
     return (
-      <div className="relative w-full h-[200px] sm:h-[300px] md:h-[400px] lg:h-[500px] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 overflow-hidden flex items-center justify-center">
+      <div className='relative flex h-[200px] w-full items-center justify-center overflow-hidden bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 sm:h-[300px] md:h-[400px] lg:h-[500px]'>
         <Image
-          src="/logo.png"
-          alt="MoonTVPlus"
+          src='/logo.png'
+          alt='MoonTVPlus'
           width={120}
           height={120}
-          className="opacity-50"
+          className='opacity-50'
           priority
         />
       </div>
@@ -395,7 +417,7 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
 
   return (
     <div
-      className="relative w-full h-[200px] sm:h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden group"
+      className='group relative h-[200px] w-full overflow-hidden sm:h-[300px] md:h-[400px] lg:h-[500px]'
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={handleTouchStart}
@@ -409,7 +431,7 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
       }}
     >
       {/* 背景图片或视频 */}
-      <div className="absolute inset-0">
+      <div className='absolute inset-0'>
         {items.map((item, index) => (
           <div
             key={item.id}
@@ -419,7 +441,7 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
           >
             {item.trailer_url && enableTrailers ? (
               /* 显示豆瓣直链视频 */
-              <div className="absolute inset-0 overflow-hidden">
+              <div className='absolute inset-0 overflow-hidden'>
                 <video
                   ref={(el) => {
                     if (el) {
@@ -429,20 +451,20 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
                     }
                   }}
                   src={getVideoUrl(item.trailer_url) || undefined}
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto object-cover"
+                  className='absolute left-1/2 top-1/2 h-auto min-h-full w-auto min-w-full -translate-x-1/2 -translate-y-1/2 object-cover'
                   muted={isMuted}
                   loop
                   playsInline
-                  preload="metadata"
+                  preload='metadata'
                 />
               </div>
             ) : item.video_key && isYouTubeAccessible && enableTrailers ? (
               /* 显示YouTube视频 */
-              <div className="absolute inset-0 overflow-hidden">
+              <div className='absolute inset-0 overflow-hidden'>
                 <iframe
                   src={`https://www.youtube.com/embed/${item.video_key}?listType=playlist&autoplay=1&mute=1&controls=0&loop=1&playlist=${item.video_key}&modestbranding=1&rel=0&showinfo=0&vq=hd1080&hd=1&disablekb=1&fs=0&iv_load_policy=3`}
-                  className="absolute top-1/2 left-1/2 pointer-events-none"
-                  allow="autoplay; encrypted-media"
+                  className='pointer-events-none absolute left-1/2 top-1/2'
+                  allow='autoplay; encrypted-media'
                   style={{
                     border: 'none',
                     width: '100vw',
@@ -456,54 +478,65 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
             ) : (
               /* 显示图片 */
               <ProxyImage
-                originalSrc={getImageUrl(item.backdrop_path || item.poster_path)}
+                originalSrc={getImageUrl(
+                  item.backdrop_path || item.poster_path,
+                )}
                 alt={item.title}
-                className="absolute inset-0 w-full h-full object-cover"
+                className='absolute inset-0 h-full w-full object-cover'
                 loading={index === 0 ? 'eager' : 'lazy'}
               />
             )}
             {/* 渐变遮罩 */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+            <div className='absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent'></div>
+            <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent'></div>
           </div>
         ))}
       </div>
 
       {/* 内容信息 */}
-      <div className="absolute inset-0 flex items-end p-8 md:p-12 pointer-events-none">
-        <div className="max-w-2xl space-y-4">
-          <h2 className="text-3xl md:text-5xl font-bold text-white drop-shadow-lg">
+      <div className='pointer-events-none absolute inset-0 flex items-end p-8 md:p-12'>
+        <div className='max-w-2xl space-y-4'>
+          <h2 className='text-3xl font-bold text-white drop-shadow-lg md:text-5xl'>
             {currentItem.title}
           </h2>
 
-          <div className="flex items-center gap-2 md:gap-3 text-sm md:text-base text-white/90 flex-wrap">
+          <div className='flex flex-wrap items-center gap-2 text-sm text-white/90 md:gap-3 md:text-base'>
             {currentItem.vote_average > 0 && (
-              <span className="px-2 py-1 bg-yellow-500 text-black font-semibold rounded">
+              <span className='rounded bg-yellow-500 px-2 py-1 font-semibold text-black'>
                 {currentItem.vote_average.toFixed(1)}
               </span>
             )}
             {/* 显示标签：优先TX的tags，其次豆瓣的genres，最后TMDB的genre_ids */}
-            {currentItem.tags && currentItem.tags.length > 0 ? (
-              currentItem.tags.slice(0, 3).map((tag, index) => (
-                <span key={index} className="px-2 py-1 bg-white/20 backdrop-blur-sm rounded text-sm">
-                  {tag}
-                </span>
-              ))
-            ) : currentItem.genres && Array.isArray(currentItem.genres) && currentItem.genres.length > 0 ? (
-              /* 显示豆瓣数据源的标签 */
-              currentItem.genres.slice(0, 3).map((genre, index) => (
-                <span key={index} className="px-2 py-1 bg-white/20 backdrop-blur-sm rounded text-sm">
-                  {genre}
-                </span>
-              ))
-            ) : (
-              /* 显示TMDB数据源的类型标签 */
-              getGenreNames(currentItem.genre_ids, 3).map(genre => (
-                <span key={genre} className="px-2 py-1 bg-white/20 backdrop-blur-sm rounded text-sm">
-                  {genre}
-                </span>
-              ))
-            )}
+            {currentItem.tags && currentItem.tags.length > 0
+              ? currentItem.tags.slice(0, 3).map((tag, index) => (
+                  <span
+                    key={index}
+                    className='rounded bg-white/20 px-2 py-1 text-sm backdrop-blur-sm'
+                  >
+                    {tag}
+                  </span>
+                ))
+              : currentItem.genres &&
+                  Array.isArray(currentItem.genres) &&
+                  currentItem.genres.length > 0
+                ? /* 显示豆瓣数据源的标签 */
+                  currentItem.genres.slice(0, 3).map((genre, index) => (
+                    <span
+                      key={index}
+                      className='rounded bg-white/20 px-2 py-1 text-sm backdrop-blur-sm'
+                    >
+                      {genre}
+                    </span>
+                  ))
+                : /* 显示TMDB数据源的类型标签 */
+                  getGenreNames(currentItem.genre_ids, 3).map((genre) => (
+                    <span
+                      key={genre}
+                      className='rounded bg-white/20 px-2 py-1 text-sm backdrop-blur-sm'
+                    >
+                      {genre}
+                    </span>
+                  ))}
             {currentItem.release_date && (
               <span>{currentItem.release_date}</span>
             )}
@@ -515,14 +548,14 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
               e.stopPropagation();
               handlePlay(currentItem.title);
             }}
-            className="hidden md:flex items-center gap-2 px-6 py-3 bg-gray-500/30 hover:bg-gray-500/50 backdrop-blur-sm text-white font-semibold rounded-lg transition-all pointer-events-auto"
+            className='pointer-events-auto hidden items-center gap-2 rounded-lg bg-gray-500/30 px-6 py-3 font-semibold text-white backdrop-blur-sm transition-all hover:bg-gray-500/50 md:flex'
           >
-            <Play className="w-5 h-5 fill-white" />
+            <Play className='h-5 w-5 fill-white' />
             立即播放
           </button>
 
           {currentItem.overview && (
-            <p className="text-sm md:text-base text-white/80 line-clamp-3 drop-shadow-md">
+            <p className='line-clamp-3 text-sm text-white/80 drop-shadow-md md:text-base'>
               {currentItem.overview}
             </p>
           )}
@@ -532,36 +565,36 @@ export default function BannerCarousel({ autoPlayInterval = 5000, delayLoad = fa
       {/* 左右切换按钮 - 只在桌面端显示 */}
       <button
         onClick={goToPrevious}
-        className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/30 hover:bg-black/60 text-white rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        aria-label="上一张"
+        className='absolute left-4 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white opacity-0 transition-opacity duration-300 hover:bg-black/60 group-hover:opacity-100 md:flex'
+        aria-label='上一张'
       >
-        <ChevronLeft className="w-8 h-8" />
+        <ChevronLeft className='h-8 w-8' />
       </button>
       <button
         onClick={goToNext}
-        className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/30 hover:bg-black/60 text-white rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        aria-label="下一张"
+        className='absolute right-4 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white opacity-0 transition-opacity duration-300 hover:bg-black/60 group-hover:opacity-100 md:flex'
+        aria-label='下一张'
       >
-        <ChevronRight className="w-8 h-8" />
+        <ChevronRight className='h-8 w-8' />
       </button>
 
       {/* 音量控制按钮 - 只在有豆瓣预告片时显示 */}
       {currentItem.trailer_url && enableTrailers && (
         <button
           onClick={toggleMute}
-          className="absolute top-2 right-2 md:top-4 md:right-4 w-8 h-8 md:w-10 md:h-10 bg-black/30 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-all duration-300 z-10"
-          aria-label={isMuted ? "开启声音" : "关闭声音"}
+          className='absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/30 text-white transition-all duration-300 hover:bg-black/60 md:right-4 md:top-4 md:h-10 md:w-10'
+          aria-label={isMuted ? '开启声音' : '关闭声音'}
         >
           {isMuted ? (
-            <VolumeX className="w-4 h-4 md:w-5 md:h-5" />
+            <VolumeX className='h-4 w-4 md:h-5 md:w-5' />
           ) : (
-            <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
+            <Volume2 className='h-4 w-4 md:h-5 md:w-5' />
           )}
         </button>
       )}
 
       {/* 指示器 */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+      <div className='absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2'>
         {items.map((_, index) => (
           <button
             key={index}

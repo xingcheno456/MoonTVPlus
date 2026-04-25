@@ -18,10 +18,7 @@ export async function POST(req: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(req);
     if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json(
-        { error: '无权限访问' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
     }
 
     const { keyword, page = 1 } = await req.json();
@@ -29,7 +26,7 @@ export async function POST(req: NextRequest) {
     if (!keyword || typeof keyword !== 'string') {
       return NextResponse.json(
         { error: '搜索关键词不能为空' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -37,7 +34,7 @@ export async function POST(req: NextRequest) {
     if (!trimmedKeyword) {
       return NextResponse.json(
         { error: '搜索关键词不能为空' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -45,7 +42,7 @@ export async function POST(req: NextRequest) {
     if (isNaN(pageNum) || pageNum < 1) {
       return NextResponse.json(
         { error: '页码必须是大于0的整数' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -61,17 +58,21 @@ export async function POST(req: NextRequest) {
     const config = await getConfig();
     const baseUrl = `${getMagnetBaseUrl(
       'http://share.dmhy.org',
-      config.SiteConfig.MagnetDmhyReverseProxy
+      config.SiteConfig.MagnetDmhyReverseProxy,
     )}/topics/rss/rss.xml`;
     const params = new URLSearchParams({ keyword: trimmedKeyword });
     const searchUrl = `${baseUrl}?${params.toString()}`;
 
-    const response = await universalMagnetFetch(searchUrl, config.SiteConfig.MagnetProxy, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    const response = await universalMagnetFetch(
+      searchUrl,
+      config.SiteConfig.MagnetProxy,
+      {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
       },
-    });
+    );
 
     if (!response.ok) {
       throw new Error(`DMHY API 请求失败: ${response.status}`);
@@ -94,7 +95,8 @@ export async function POST(req: NextRequest) {
     const results = items.map((item: any) => {
       const title = item.title?.[0] || '';
       const link = item.link?.[0] || '';
-      const guid = item.guid?.[0] || link || `${title}-${item.pubDate?.[0] || ''}`;
+      const guid =
+        item.guid?.[0] || link || `${title}-${item.pubDate?.[0] || ''}`;
       const pubDate = item.pubDate?.[0] || '';
       const description = item.description?.[0] || '';
       const torrentUrl = item.enclosure?.[0]?.$?.url || '';
@@ -134,7 +136,7 @@ export async function POST(req: NextRequest) {
     console.error('DMHY 搜索失败:', error);
     return NextResponse.json(
       { error: error.message || '搜索失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

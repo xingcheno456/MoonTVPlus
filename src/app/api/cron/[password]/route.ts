@@ -16,7 +16,11 @@ import { fetchVideoDetail } from '@/lib/fetchVideoDetail';
 import { refreshLiveChannels } from '@/lib/live';
 import { MangaChapter, MangaShelfItem } from '@/lib/manga.types';
 import { startOpenListRefresh } from '@/lib/openlist-refresh';
-import { getSuwayomiConfig, loginWithSimpleAuth, SuwayomiClient } from '@/lib/suwayomi.client';
+import {
+  getSuwayomiConfig,
+  loginWithSimpleAuth,
+  SuwayomiClient,
+} from '@/lib/suwayomi.client';
 import { SearchResult } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -24,11 +28,16 @@ const MAX_INLINE_MANGA_COVERS = 3;
 const MAX_INLINE_MANGA_COVER_BYTES = 350 * 1024;
 const TARGET_INLINE_MANGA_COVER_WIDTH = 480;
 
-function buildSuwayomiBasicAuthHeader(username: string, password: string): string {
+function buildSuwayomiBasicAuthHeader(
+  username: string,
+  password: string,
+): string {
   return `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
 }
 
-async function fetchMangaCoverAsDataUri(coverUrl?: string): Promise<string | undefined> {
+async function fetchMangaCoverAsDataUri(
+  coverUrl?: string,
+): Promise<string | undefined> {
   if (!coverUrl) return undefined;
 
   try {
@@ -59,7 +68,10 @@ async function fetchMangaCoverAsDataUri(coverUrl?: string): Promise<string | und
       if (config.authMode === 'basic_auth') {
         if (!config.username || !config.password) return undefined;
         headers = new Headers({
-          Authorization: buildSuwayomiBasicAuthHeader(config.username, config.password),
+          Authorization: buildSuwayomiBasicAuthHeader(
+            config.username,
+            config.password,
+          ),
         });
       } else if (config.authMode === 'simple_login') {
         headers = new Headers({
@@ -82,7 +94,7 @@ async function fetchMangaCoverAsDataUri(coverUrl?: string): Promise<string | und
       return undefined;
     }
 
-    let buffer = Buffer.from(await response.arrayBuffer());
+    let buffer: Buffer = Buffer.from(await response.arrayBuffer());
     if (!buffer.length) {
       return undefined;
     }
@@ -98,12 +110,14 @@ async function fetchMangaCoverAsDataUri(coverUrl?: string): Promise<string | und
       const metadata = await transformer.metadata();
 
       if (metadata.hasAlpha) {
-        buffer = await transformer.png({
-          compressionLevel: 9,
-          palette: true,
-          quality: 80,
-          effort: 10,
-        }).toBuffer();
+        buffer = await transformer
+          .png({
+            compressionLevel: 9,
+            palette: true,
+            quality: 80,
+            effort: 10,
+          })
+          .toBuffer();
         finalContentType = 'image/png';
       } else {
         const qualities = [72, 60, 48];
@@ -147,15 +161,16 @@ const COOLDOWN_MS = 10 * 60 * 1000; // 10分钟冷却时间
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { password: string } }
+  { params }: { params: Promise<{ password: string }> },
 ) {
   console.log(request.url);
 
+  const { password } = await params;
   const cronPassword = process.env.CRON_PASSWORD || 'mtvpls';
-  if (params.password !== cronPassword) {
+  if (password !== cronPassword) {
     return NextResponse.json(
       { success: false, message: 'Unauthorized' },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -164,19 +179,28 @@ export async function GET(
   const timeSinceLastExecution = now - lastExecutionTime;
 
   if (lastExecutionTime > 0 && timeSinceLastExecution < COOLDOWN_MS) {
-    const remainingSeconds = Math.ceil((COOLDOWN_MS - timeSinceLastExecution) / 1000);
+    const remainingSeconds = Math.ceil(
+      (COOLDOWN_MS - timeSinceLastExecution) / 1000,
+    );
     const remainingMinutes = Math.floor(remainingSeconds / 60);
     const seconds = remainingSeconds % 60;
 
-    console.log(`Cron job skipped: cooldown period active. Remaining: ${remainingMinutes}m ${seconds}s`);
+    console.log(
+      `Cron job skipped: cooldown period active. Remaining: ${remainingMinutes}m ${seconds}s`,
+    );
 
-    return NextResponse.json({
-      success: false,
-      message: 'Cron job is in cooldown period',
-      remainingSeconds,
-      nextAvailableTime: new Date(lastExecutionTime + COOLDOWN_MS).toISOString(),
-      timestamp: new Date().toISOString(),
-    }, { status: 429 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Cron job is in cooldown period',
+        remainingSeconds,
+        nextAvailableTime: new Date(
+          lastExecutionTime + COOLDOWN_MS,
+        ).toISOString(),
+        timestamp: new Date().toISOString(),
+      },
+      { status: 429 },
+    );
   }
 
   try {
@@ -200,11 +224,14 @@ export async function GET(
     } else {
       // 立即返回 202，定时任务在后台执行
       cronJob();
-      return NextResponse.json({
-        success: true,
-        message: 'Cron job accepted and running in background',
-        timestamp: new Date().toISOString(),
-      }, { status: 202 });
+      return NextResponse.json(
+        {
+          success: true,
+          message: 'Cron job accepted and running in background',
+          timestamp: new Date().toISOString(),
+        },
+        { status: 202 },
+      );
     }
   } catch (error) {
     console.error('Cron job failed:', error);
@@ -216,7 +243,7 @@ export async function GET(
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -239,13 +266,16 @@ async function refreshAllLiveChannels() {
 
   // 并发刷新所有启用的直播源
   const refreshPromises = (config.LiveConfig || [])
-    .filter(liveInfo => !liveInfo.disabled)
+    .filter((liveInfo) => !liveInfo.disabled)
     .map(async (liveInfo) => {
       try {
         const nums = await refreshLiveChannels(liveInfo);
         liveInfo.channelNumber = nums;
       } catch (error) {
-        console.error(`刷新直播源失败 [${liveInfo.name || liveInfo.key}]:`, error);
+        console.error(
+          `刷新直播源失败 [${liveInfo.name || liveInfo.key}]:`,
+          error,
+        );
         liveInfo.channelNumber = 0;
       }
     });
@@ -259,7 +289,12 @@ async function refreshAllLiveChannels() {
 
 async function refreshConfig() {
   let config = await getConfig();
-  if (config && config.ConfigSubscribtion && config.ConfigSubscribtion.URL && config.ConfigSubscribtion.AutoUpdate) {
+  if (
+    config &&
+    config.ConfigSubscribtion &&
+    config.ConfigSubscribtion.URL &&
+    config.ConfigSubscribtion.AutoUpdate
+  ) {
     try {
       const response = await fetch(config.ConfigSubscribtion.URL);
 
@@ -314,7 +349,8 @@ async function refreshRecordAndFavorites() {
     }
 
     // 环境变量控制是否跳过特定源（默认为 false，即默认跳过）
-    const includeSpecialSources = process.env.CRON_INCLUDE_SPECIAL_SOURCES === 'true';
+    const includeSpecialSources =
+      process.env.CRON_INCLUDE_SPECIAL_SOURCES === 'true';
 
     // 检查是否应该跳过该源
     const shouldSkipSource = (source: string): boolean => {
@@ -322,14 +358,22 @@ async function refreshRecordAndFavorites() {
         return false; // 如果开启了包含特殊源，则不跳过任何源
       }
       // 默认跳过 emby 开头、openlist、xiaoya 和 live 开头的源
-      return source.startsWith('emby') || source === 'openlist' || source === 'xiaoya' || source.startsWith('live');
+      return (
+        source.startsWith('emby') ||
+        source === 'openlist' ||
+        source === 'xiaoya' ||
+        source.startsWith('live')
+      );
     };
 
     // 函数级缓存：key 为 `${source}+${id}`，值为 Promise<VideoDetail | null>
     const detailCache = new Map<string, Promise<SearchResult | null>>();
     const mangaDetailCache = new Map<
       string,
-      Promise<{ chapters: MangaChapter[]; shelfItem: Partial<MangaShelfItem> } | null>
+      Promise<{
+        chapters: MangaChapter[];
+        shelfItem: Partial<MangaShelfItem>;
+      } | null>
     >();
     const suwayomiClient = new SuwayomiClient();
 
@@ -337,7 +381,7 @@ async function refreshRecordAndFavorites() {
     const getDetail = async (
       source: string,
       id: string,
-      fallbackTitle: string
+      fallbackTitle: string,
     ): Promise<SearchResult | null> => {
       const key = `${source}+${id}`;
       let promise = detailCache.get(key);
@@ -363,8 +407,11 @@ async function refreshRecordAndFavorites() {
     };
 
     const getMangaDetail = async (
-      item: MangaShelfItem
-    ): Promise<{ chapters: MangaChapter[]; shelfItem: Partial<MangaShelfItem> } | null> => {
+      item: MangaShelfItem,
+    ): Promise<{
+      chapters: MangaChapter[];
+      shelfItem: Partial<MangaShelfItem>;
+    } | null> => {
       const key = `${item.sourceId}+${item.mangaId}`;
       let promise = mangaDetailCache.get(key);
       if (!promise) {
@@ -446,12 +493,14 @@ async function refreshRecordAndFavorites() {
             const episodeCount = detail.episodes?.length || 0;
             if (episodeCount > 0 && episodeCount !== record.total_episodes) {
               // 计算新增的剧集数量
-              const newEpisodesCount = episodeCount > record.total_episodes
-                ? episodeCount - record.total_episodes
-                : 0;
+              const newEpisodesCount =
+                episodeCount > record.total_episodes
+                  ? episodeCount - record.total_episodes
+                  : 0;
 
               // 如果有新增剧集，累加到现有的 new_episodes 字段
-              const updatedNewEpisodes = (record.new_episodes || 0) + newEpisodesCount;
+              const updatedNewEpisodes =
+                (record.new_episodes || 0) + newEpisodesCount;
 
               await db.savePlayRecord(user, source, id, {
                 title: detail.title || record.title,
@@ -464,10 +513,11 @@ async function refreshRecordAndFavorites() {
                 total_time: record.total_time,
                 save_time: record.save_time,
                 search_title: record.search_title,
-                new_episodes: updatedNewEpisodes > 0 ? updatedNewEpisodes : undefined,
+                new_episodes:
+                  updatedNewEpisodes > 0 ? updatedNewEpisodes : undefined,
               });
               console.log(
-                `更新播放记录: ${record.title} (${record.total_episodes} -> ${episodeCount}, 新增 ${newEpisodesCount} 集)`
+                `更新播放记录: ${record.title} (${record.total_episodes} -> ${episodeCount}, 新增 ${newEpisodesCount} 集)`,
               );
             }
 
@@ -487,7 +537,7 @@ async function refreshRecordAndFavorites() {
       try {
         let favorites = await db.getAllFavorites(user);
         favorites = Object.fromEntries(
-          Object.entries(favorites).filter(([_, fav]) => fav.origin !== 'live')
+          Object.entries(favorites).filter(([_, fav]) => fav.origin !== 'live'),
         );
         const totalFavorites = Object.keys(favorites).length;
         let processedFavorites = 0;
@@ -527,7 +577,7 @@ async function refreshRecordAndFavorites() {
                 search_title: fav.search_title,
               });
               console.log(
-                `更新收藏: ${fav.title} (${fav.total_episodes} -> ${favEpisodeCount})`
+                `更新收藏: ${fav.title} (${fav.total_episodes} -> ${favEpisodeCount})`,
               );
 
               // 创建通知
@@ -551,7 +601,8 @@ async function refreshRecordAndFavorites() {
               console.log(`已为用户 ${user} 创建收藏更新通知: ${fav.title}`);
 
               // 收集更新信息用于邮件
-              const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+              const siteUrl =
+                process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
               const playUrl = `${siteUrl}/play?source=${source}&id=${id}&title=${encodeURIComponent(fav.title)}`;
               userUpdates.push({
                 title: fav.title,
@@ -575,7 +626,9 @@ async function refreshRecordAndFavorites() {
         if (userUpdates.length > 0) {
           (async () => {
             try {
-              const userEmail = storage.getUserEmail ? await storage.getUserEmail(user) : null;
+              const userEmail = storage.getUserEmail
+                ? await storage.getUserEmail(user)
+                : null;
               const emailNotifications = storage.getEmailNotificationPreference
                 ? await storage.getEmailNotificationPreference(user)
                 : false;
@@ -585,7 +638,8 @@ async function refreshRecordAndFavorites() {
                 const emailConfig = config?.EmailConfig;
 
                 if (emailConfig?.enabled) {
-                  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+                  const siteUrl =
+                    process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
                   const siteName = config?.SiteConfig?.SiteName || 'MoonTVPlus';
 
                   await EmailService.send(emailConfig, {
@@ -595,17 +649,21 @@ async function refreshRecordAndFavorites() {
                       user,
                       userUpdates,
                       siteUrl,
-                      siteName
+                      siteName,
                     ),
                   });
 
-                  console.log(`邮件汇总已发送至: ${userEmail} (${userUpdates.length} 个更新)`);
+                  console.log(
+                    `邮件汇总已发送至: ${userEmail} (${userUpdates.length} 个更新)`,
+                  );
                 }
               }
             } catch (emailError) {
               console.error(`发送邮件汇总失败 (${user}):`, emailError);
             }
-          })().catch(err => console.error(`邮件发送异步任务失败 (${user}):`, err));
+          })().catch((err) =>
+            console.error(`邮件发送异步任务失败 (${user}):`, err),
+          );
         }
       } catch (err) {
         console.error(`获取用户收藏失败 (${user}):`, err);
@@ -659,10 +717,11 @@ async function refreshRecordAndFavorites() {
             }
 
             const addedChapters = latestChapterCount - previousChapterCount;
-            const hasNewChapters = addedChapters > 0 && latestChapterId !== item.latestChapterId;
+            const hasNewChapters =
+              addedChapters > 0 && latestChapterId !== item.latestChapterId;
             const nextUnreadChapterCount = hasNewChapters
               ? Math.max((item.unreadChapterCount || 0) + addedChapters, 0)
-              : item.unreadChapterCount ?? 0;
+              : (item.unreadChapterCount ?? 0);
 
             const nextItem: MangaShelfItem = {
               ...baseItem,
@@ -694,7 +753,9 @@ async function refreshRecordAndFavorites() {
 
               const inlineCover =
                 inlinedCoverCount < MAX_INLINE_MANGA_COVERS
-                  ? await fetchMangaCoverAsDataUri(detail.shelfItem.cover || item.cover)
+                  ? await fetchMangaCoverAsDataUri(
+                      detail.shelfItem.cover || item.cover,
+                    )
                   : undefined;
               if (inlineCover) {
                 inlinedCoverCount++;
@@ -710,19 +771,28 @@ async function refreshRecordAndFavorites() {
               });
             }
 
-            await db.saveMangaShelf(user, item.sourceId, item.mangaId, nextItem);
+            await db.saveMangaShelf(
+              user,
+              item.sourceId,
+              item.mangaId,
+              nextItem,
+            );
             processedShelfItems++;
           } catch (err) {
             console.error(`处理漫画书架失败 (${key}):`, err);
           }
         }
 
-        console.log(`漫画书架处理完成: ${processedShelfItems}/${totalShelfItems}`);
+        console.log(
+          `漫画书架处理完成: ${processedShelfItems}/${totalShelfItems}`,
+        );
 
         if (mangaUpdates.length > 0) {
           (async () => {
             try {
-              const userEmail = storage.getUserEmail ? await storage.getUserEmail(user) : null;
+              const userEmail = storage.getUserEmail
+                ? await storage.getUserEmail(user)
+                : null;
               const emailNotifications = storage.getEmailNotificationPreference
                 ? await storage.getEmailNotificationPreference(user)
                 : false;
@@ -732,7 +802,8 @@ async function refreshRecordAndFavorites() {
                 const emailConfig = config?.EmailConfig;
 
                 if (emailConfig?.enabled) {
-                  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+                  const siteUrl =
+                    process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
                   const siteName = config?.SiteConfig?.SiteName || 'MoonTVPlus';
 
                   await EmailService.send(emailConfig, {
@@ -742,7 +813,7 @@ async function refreshRecordAndFavorites() {
                       user,
                       mangaUpdates,
                       siteUrl,
-                      siteName
+                      siteName,
                     ),
                   });
                 }
@@ -750,7 +821,9 @@ async function refreshRecordAndFavorites() {
             } catch (emailError) {
               console.error(`发送漫画更新邮件失败 (${user}):`, emailError);
             }
-          })().catch((err) => console.error(`漫画更新邮件异步任务失败 (${user}):`, err));
+          })().catch((err) =>
+            console.error(`漫画更新邮件异步任务失败 (${user}):`, err),
+          );
         }
       } catch (err) {
         console.error(`获取用户漫画书架失败 (${user}):`, err);
@@ -762,8 +835,10 @@ async function refreshRecordAndFavorites() {
     const BATCH_SIZE = parseInt(process.env.CRON_USER_BATCH_SIZE || '3', 10);
     for (let i = 0; i < users.length; i += BATCH_SIZE) {
       const batch = users.slice(i, i + BATCH_SIZE);
-      console.log(`处理用户批次 ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(users.length / BATCH_SIZE)}: ${batch.join(', ')}`);
-      await Promise.all(batch.map(user => processUser(user)));
+      console.log(
+        `处理用户批次 ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(users.length / BATCH_SIZE)}: ${batch.join(', ')}`,
+      );
+      await Promise.all(batch.map((user) => processUser(user)));
     }
 
     console.log('刷新播放记录/收藏任务完成');
@@ -784,7 +859,11 @@ async function refreshOpenList() {
     }
 
     // 检查是否配置了 OpenList 和定时扫描
-    if (!openListConfig.URL || !openListConfig.Username || !openListConfig.Password) {
+    if (
+      !openListConfig.URL ||
+      !openListConfig.Username ||
+      !openListConfig.Password
+    ) {
       console.log('跳过 OpenList 扫描：未配置');
       return;
     }
@@ -797,7 +876,9 @@ async function refreshOpenList() {
 
     // 检查间隔时间是否满足最低要求（60分钟）
     if (scanInterval < 60) {
-      console.log(`跳过 OpenList 扫描：间隔时间 ${scanInterval} 分钟小于最低要求 60 分钟`);
+      console.log(
+        `跳过 OpenList 扫描：间隔时间 ${scanInterval} 分钟小于最低要求 60 分钟`,
+      );
       return;
     }
 
@@ -808,8 +889,12 @@ async function refreshOpenList() {
     const intervalMs = scanInterval * 60 * 1000;
 
     if (timeSinceLastRefresh < intervalMs) {
-      const remainingMinutes = Math.ceil((intervalMs - timeSinceLastRefresh) / 60000);
-      console.log(`跳过 OpenList 扫描：距离上次扫描仅 ${Math.floor(timeSinceLastRefresh / 60000)} 分钟，还需等待 ${remainingMinutes} 分钟`);
+      const remainingMinutes = Math.ceil(
+        (intervalMs - timeSinceLastRefresh) / 60000,
+      );
+      console.log(
+        `跳过 OpenList 扫描：距离上次扫描仅 ${Math.floor(timeSinceLastRefresh / 60000)} 分钟，还需等待 ${remainingMinutes} 分钟`,
+      );
       return;
     }
 
@@ -822,4 +907,3 @@ async function refreshOpenList() {
     console.error('OpenList 定时扫描失败:', err);
   }
 }
-

@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
   if (now >= authInfo.refreshExpires) {
     return NextResponse.json(
       { error: 'Refresh token expired' },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     authInfo.role,
     authInfo.tokenId,
     authInfo.refreshToken,
-    authInfo.refreshExpires
+    authInfo.refreshExpires,
   );
 
   if (!newAuthData) {

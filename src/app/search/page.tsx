@@ -1,5 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any,@typescript-eslint/no-non-null-assertion,no-empty */
 'use client';
+/* eslint-disable react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any,@typescript-eslint/no-non-null-assertion,no-empty */
 
 import {
   ChevronUp,
@@ -53,7 +53,7 @@ function SearchPageClient() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   // 选项卡状态: 'video' 或 'pansou' 或 'acg'
   const [activeTab, setActiveTab] = useState<'video' | 'pansou' | 'acg'>(
-    'video'
+    'video',
   );
   // Pansou 搜索触发标志
   const [triggerPansouSearch, setTriggerPansouSearch] = useState(false);
@@ -61,7 +61,7 @@ function SearchPageClient() {
   const [triggerAcgSearch, setTriggerAcgSearch] = useState(false);
   // 用户权限
   const [userRole, setUserRole] = useState<'owner' | 'admin' | 'user' | null>(
-    null
+    null,
   );
   // 繁体转简体转换器
   const converterRef = useRef<((text: string) => string) | null>(null);
@@ -84,8 +84,8 @@ function SearchPageClient() {
   const flushTimerRef = useRef<number | null>(null);
   const [useFluidSearch, setUseFluidSearch] = useState(true);
   // 聚合卡片 refs 与聚合统计缓存
-  const groupRefs = useRef<Map<string, React.RefObject<VideoCardHandle>>>(
-    new Map()
+  const groupRefs = useRef<Map<string, React.RefObject<VideoCardHandle | null>>>(
+    new Map(),
   );
   const groupStatsRef = useRef<
     Map<
@@ -169,7 +169,7 @@ function SearchPageClient() {
       return res;
     })();
     const source_names = Array.from(
-      new Set(group.map((g) => g.source_name).filter(Boolean))
+      new Set(group.map((g) => g.source_name).filter(Boolean)),
     ) as string[];
 
     const douban_id = (() => {
@@ -239,7 +239,7 @@ function SearchPageClient() {
         }
       }
       return 'card';
-    }
+    },
   );
   const [expandedSourceTags, setExpandedSourceTags] = useState<
     Record<string, boolean>
@@ -273,7 +273,7 @@ function SearchPageClient() {
   const compareYear = (
     aYear: string,
     bYear: string,
-    order: 'none' | 'asc' | 'desc'
+    order: 'none' | 'asc' | 'desc',
   ) => {
     // 如果是无排序状态，返回0（保持原顺序）
     if (order === 'none') return 0;
@@ -361,7 +361,7 @@ function SearchPageClient() {
     if (!exactSearch) return searchResults;
 
     return searchResults.filter((item) =>
-      titleContainsQuery(item.title, submittedSearchQuery)
+      titleContainsQuery(item.title, submittedSearchQuery),
     );
   }, [searchResults, submittedSearchQuery, exactSearch]);
 
@@ -429,7 +429,7 @@ function SearchPageClient() {
 
     // 按出现顺序返回聚合结果
     return keyOrder.map(
-      (key) => [key, finalMap.get(key)!] as [string, SearchResult[]]
+      (key) => [key, finalMap.get(key)!] as [string, SearchResult[]],
     );
   }, [allExactSearchResults]);
 
@@ -466,12 +466,12 @@ function SearchPageClient() {
   const filterOptions = useMemo(() => {
     const exactSearchFiltered = exactSearch
       ? searchResults.filter((item) =>
-          titleContainsQuery(item.title, currentQueryRef.current)
+          titleContainsQuery(item.title, currentQueryRef.current),
         )
       : searchResults;
 
     const buildSourceOptions = (
-      sourceEntries: Array<{ source: string; source_name: string }>
+      sourceEntries: Array<{ source: string; source_name: string }>,
     ) => [
       { label: '全部来源', value: 'all' },
       ...Array.from(
@@ -482,10 +482,10 @@ function SearchPageClient() {
                 item.source &&
                 item.source_name &&
                 item.source.trim() !== '' &&
-                item.source_name.trim() !== ''
+                item.source_name.trim() !== '',
             )
-            .map((item) => [item.source, item.source_name])
-        ).entries()
+            .map((item) => [item.source, item.source_name]),
+        ).entries(),
       )
         .sort((a, b) => {
           const aIsOpenList = a[0] === 'openlist';
@@ -515,7 +515,7 @@ function SearchPageClient() {
 
     const buildYearOptions = (years: string[]) => {
       const yearSet = Array.from(
-        new Set(years.filter((year) => year && year.trim() !== ''))
+        new Set(years.filter((year) => year && year.trim() !== '')),
       );
       const knownYears = yearSet
         .filter((year) => year !== 'unknown')
@@ -591,14 +591,14 @@ function SearchPageClient() {
           allForSourceOptions.map((item) => ({
             source: item.source,
             source_name: item.source_name,
-          }))
+          })),
         ),
       },
       {
         key: 'title',
         label: '标题',
         options: buildTitleOptions(
-          allForTitleOptions.map((item) => item.title)
+          allForTitleOptions.map((item) => item.title),
         ),
       },
       {
@@ -617,22 +617,22 @@ function SearchPageClient() {
             group.map((item) => ({
               source: item.source,
               source_name: item.source_name,
-            }))
-          )
+            })),
+          ),
         ),
       },
       {
         key: 'title',
         label: '标题',
         options: buildTitleOptions(
-          aggForTitleOptions.map(([_, group]) => group[0]?.title ?? '')
+          aggForTitleOptions.map(([_, group]) => group[0]?.title ?? ''),
         ),
       },
       {
         key: 'year',
         label: '年份',
         options: buildYearOptions(
-          aggForYearOptions.map(([_, group]) => group[0]?.year ?? 'unknown')
+          aggForYearOptions.map(([_, group]) => group[0]?.year ?? 'unknown'),
         ),
       },
     ];
@@ -779,14 +779,14 @@ function SearchPageClient() {
 
     if (params.isAggregate || !params.source || !params.id) {
       return `/play?title=${encodeURIComponent(
-        params.title.trim()
+        params.title.trim(),
       )}${yearParam}${typeParam}${preferParam}${queryParam}`;
     }
 
     return `/play?source=${params.source}&id=${
       params.id
     }&title=${encodeURIComponent(
-      params.title.trim()
+      params.title.trim(),
     )}${yearParam}${preferParam}${queryParam}${typeParam}`;
   };
 
@@ -819,8 +819,8 @@ function SearchPageClient() {
     const sourceTags = item.isAggregate
       ? Array.from(new Set(item.sourceNames || []))
       : item.sourceName
-      ? [item.sourceName]
-      : [];
+        ? [item.sourceName]
+        : [];
     const isExpanded = !!expandedSourceTags[item.key];
     const maxVisibleSourceTags = 3;
     const visibleSourceTags = isExpanded
@@ -828,7 +828,7 @@ function SearchPageClient() {
       : sourceTags.slice(0, maxVisibleSourceTags);
     const hiddenSourceCount = Math.max(
       0,
-      sourceTags.length - visibleSourceTags.length
+      sourceTags.length - visibleSourceTags.length,
     );
     const description = (item.desc || '').trim();
     const itemUrl = getSearchResultUrl({
@@ -874,29 +874,29 @@ function SearchPageClient() {
                 <div className='mt-2 flex flex-wrap gap-2'>
                   {renderTag(
                     item.type === 'movie' ? '电影' : '剧集',
-                    'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                    'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300',
                   )}
                   {yearText &&
                     renderTag(
                       yearText,
-                      'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                      'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
                     )}
                   {item.episodes &&
                     item.episodes > 0 &&
                     renderTag(
                       `${item.episodes}集`,
-                      'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                      'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
                     )}
                   {item.vodRemarks &&
                     renderTag(
                       item.vodRemarks,
-                      'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                      'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
                     )}
                   {item.doubanId &&
                     item.doubanId > 0 &&
                     renderTag(
                       '豆瓣',
-                      'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                      'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
                     )}
                 </div>
               </div>
@@ -1043,7 +1043,7 @@ function SearchPageClient() {
       'searchHistoryUpdated',
       (newHistory: string[]) => {
         setSearchHistory(newHistory);
-      }
+      },
     );
 
     // 获取滚动位置的函数 - 专门针对 body 滚动
@@ -1096,7 +1096,7 @@ function SearchPageClient() {
     // 如果开启了繁体转简体，进行转换
     if (query && typeof window !== 'undefined') {
       const searchTraditionalToSimplified = localStorage.getItem(
-        'searchTraditionalToSimplified'
+        'searchTraditionalToSimplified',
       );
 
       if (searchTraditionalToSimplified === 'true' && converterRef.current) {
@@ -1113,7 +1113,7 @@ function SearchPageClient() {
                 searchParams.get('type')
                   ? `&type=${searchParams.get('type')}`
                   : ''
-              }`
+              }`,
             );
             return; // 等待 URL 更新后重新触发此 effect
           }
@@ -1198,7 +1198,7 @@ function SearchPageClient() {
       if (currentFluidSearch) {
         // 流式搜索：打开新的流式连接
         const es = new EventSource(
-          `/api/search/ws?q=${encodeURIComponent(trimmed)}`
+          `/api/search/ws?q=${encodeURIComponent(trimmed)}`,
         );
         eventSourceRef.current = es;
 
@@ -1384,7 +1384,7 @@ function SearchPageClient() {
     // 如果开启了繁体转简体，进行转换
     if (typeof window !== 'undefined') {
       const searchTraditionalToSimplified = localStorage.getItem(
-        'searchTraditionalToSimplified'
+        'searchTraditionalToSimplified',
       );
       if (searchTraditionalToSimplified === 'true' && converterRef.current) {
         try {
@@ -1424,7 +1424,7 @@ function SearchPageClient() {
     // 如果开启了繁体转简体，进行转换
     if (typeof window !== 'undefined') {
       const searchTraditionalToSimplified = localStorage.getItem(
-        'searchTraditionalToSimplified'
+        'searchTraditionalToSimplified',
       );
       if (searchTraditionalToSimplified === 'true' && converterRef.current) {
         try {
@@ -1447,19 +1447,19 @@ function SearchPageClient() {
     if (activeTab === 'video') {
       // 影视搜索
       router.push(
-        `/search?q=${encodeURIComponent(processedSuggestion)}&type=video`
+        `/search?q=${encodeURIComponent(processedSuggestion)}&type=video`,
       );
       // 其余由 searchParams 变化的 effect 处理
     } else if (activeTab === 'pansou') {
       // 网盘搜索 - 触发搜索
       router.push(
-        `/search?q=${encodeURIComponent(processedSuggestion)}&type=pansou`
+        `/search?q=${encodeURIComponent(processedSuggestion)}&type=pansou`,
       );
       setTriggerPansouSearch((prev) => !prev);
     } else if (activeTab === 'acg') {
       // ACG 磁力搜索 - 触发搜索
       router.push(
-        `/search?q=${encodeURIComponent(processedSuggestion)}&type=acg`
+        `/search?q=${encodeURIComponent(processedSuggestion)}&type=acg`,
       );
       setTriggerAcgSearch((prev) => !prev);
     }
@@ -1487,17 +1487,17 @@ function SearchPageClient() {
     const currentQuery = searchParams.get('q');
     if (currentQuery) {
       router.push(
-        `/search?q=${encodeURIComponent(currentQuery)}&type=${newTab}`
+        `/search?q=${encodeURIComponent(currentQuery)}&type=${newTab}`,
       );
     }
   };
 
   return (
     <PageLayout activePath='/search'>
-      <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible mb-10'>
+      <div className='mb-10 overflow-visible px-4 py-4 sm:px-10 sm:py-8'>
         {/* 搜索框 */}
         <div className='mb-8'>
-          <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
+          <form onSubmit={handleSearch} className='mx-auto max-w-2xl'>
             <div className='relative'>
               <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
               <input
@@ -1508,7 +1508,7 @@ function SearchPageClient() {
                 onFocus={handleInputFocus}
                 placeholder='搜索电影、电视剧...'
                 autoComplete='off'
-                className='w-full h-12 rounded-lg bg-gray-50/80 py-3 pl-10 pr-12 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:bg-white border border-gray-200/50 shadow-sm dark:bg-gray-800 dark:text-gray-300 dark:placeholder-gray-500 dark:focus:bg-gray-700 dark:border-gray-700'
+                className='h-12 w-full rounded-lg border border-gray-200/50 bg-gray-50/80 py-3 pl-10 pr-12 text-sm text-gray-700 placeholder-gray-400 shadow-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:placeholder-gray-500 dark:focus:bg-gray-700'
               />
 
               {/* 清除按钮 */}
@@ -1520,7 +1520,7 @@ function SearchPageClient() {
                     setShowSuggestions(false);
                     document.getElementById('searchInput')?.focus();
                   }}
-                  className='absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-500 dark:hover:text-gray-300'
+                  className='absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
                   aria-label='清除搜索内容'
                 >
                   <X className='h-5 w-5' />
@@ -1550,7 +1550,7 @@ function SearchPageClient() {
           </form>
 
           {/* 选项卡 */}
-          <div className='flex justify-center mt-6'>
+          <div className='mt-6 flex justify-center'>
             <CapsuleSwitch
               options={[
                 {
@@ -1583,7 +1583,7 @@ function SearchPageClient() {
         </div>
 
         {/* 搜索结果或搜索历史 */}
-        <div className='max-w-[95%] mx-auto mt-12 overflow-visible'>
+        <div className='mx-auto mt-12 max-w-[95%] overflow-visible'>
           {showResults ? (
             <section className='mb-12'>
               {activeTab === 'video' ? (
@@ -1621,8 +1621,7 @@ function SearchPageClient() {
                         </span>
                         {resultCountMeta.isFiltered && (
                           <span className='inline-flex items-center rounded-full bg-white/80 px-2.5 py-1 font-medium text-gray-500 ring-1 ring-gray-200 dark:bg-gray-900/70 dark:text-gray-400 dark:ring-gray-700'>
-                            筛选前{' '}
-                            {resultCountMeta.totalCount.toLocaleString()}{' '}
+                            筛选前 {resultCountMeta.totalCount.toLocaleString()}{' '}
                             {resultCountMeta.unit}
                           </span>
                         )}
@@ -1714,11 +1713,11 @@ function SearchPageClient() {
                   </div>
                   {searchResults.length === 0 ? (
                     isLoading ? (
-                      <div className='flex justify-center items-center h-40'>
-                        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-500'></div>
+                      <div className='flex h-40 items-center justify-center'>
+                        <div className='h-8 w-8 animate-spin rounded-full border-b-2 border-green-500'></div>
                       </div>
                     ) : (
-                      <div className='text-center text-gray-500 py-8 dark:text-gray-400'>
+                      <div className='py-8 text-center text-gray-500 dark:text-gray-400'>
                         未找到相关结果
                       </div>
                     )
@@ -1747,17 +1746,17 @@ function SearchPageClient() {
                               const lastDashIndex = mapKey.lastIndexOf('-');
                               const secondLastDashIndex = mapKey.lastIndexOf(
                                 '-',
-                                lastDashIndex - 1
+                                lastDashIndex - 1,
                               );
                               const type =
                                 secondLastDashIndex > 0
                                   ? (mapKey.substring(
                                       secondLastDashIndex + 1,
-                                      lastDashIndex
+                                      lastDashIndex,
                                     ) as 'movie' | 'tv')
                                   : episodes === 1
-                                  ? 'movie'
-                                  : 'tv';
+                                    ? 'movie'
+                                    : 'tv';
 
                               if (!groupStatsRef.current.has(mapKey)) {
                                 groupStatsRef.current.set(mapKey, {
@@ -1917,14 +1916,14 @@ function SearchPageClient() {
           ) : searchHistory.length > 0 ? (
             // 搜索历史
             <section className='mb-12'>
-              <h2 className='mb-4 text-xl font-bold text-gray-800 text-left dark:text-gray-200'>
+              <h2 className='mb-4 text-left text-xl font-bold text-gray-800 dark:text-gray-200'>
                 搜索历史
                 {searchHistory.length > 0 && (
                   <button
                     onClick={() => {
                       clearSearchHistory(); // 事件监听会自动更新界面
                     }}
-                    className='ml-3 text-sm text-gray-500 hover:text-red-500 transition-colors dark:text-gray-400 dark:hover:text-red-500'
+                    className='ml-3 text-sm text-gray-500 transition-colors hover:text-red-500 dark:text-gray-400 dark:hover:text-red-500'
                   >
                     清空
                   </button>
@@ -1932,7 +1931,7 @@ function SearchPageClient() {
               </h2>
               <div className='flex flex-wrap gap-2'>
                 {searchHistory.map((item) => (
-                  <div key={item} className='relative group'>
+                  <div key={item} className='group relative'>
                     <button
                       onClick={() => {
                         setSearchQuery(item);
@@ -1945,28 +1944,28 @@ function SearchPageClient() {
                           // 影视搜索
                           router.push(
                             `/search?q=${encodeURIComponent(
-                              item.trim()
-                            )}&type=video`
+                              item.trim(),
+                            )}&type=video`,
                           );
                         } else if (activeTab === 'pansou') {
                           // 网盘搜索
                           router.push(
                             `/search?q=${encodeURIComponent(
-                              item.trim()
-                            )}&type=pansou`
+                              item.trim(),
+                            )}&type=pansou`,
                           );
                           setTriggerPansouSearch((prev) => !prev);
                         } else if (activeTab === 'acg') {
                           // ACG 磁力搜索
                           router.push(
                             `/search?q=${encodeURIComponent(
-                              item.trim()
-                            )}&type=acg`
+                              item.trim(),
+                            )}&type=acg`,
                           );
                           setTriggerAcgSearch((prev) => !prev);
                         }
                       }}
-                      className='px-4 py-2 bg-gray-500/10 hover:bg-gray-300 rounded-full text-sm text-gray-700 transition-colors duration-200 dark:bg-gray-700/50 dark:hover:bg-gray-600 dark:text-gray-300'
+                      className='rounded-full bg-gray-500/10 px-4 py-2 text-sm text-gray-700 transition-colors duration-200 hover:bg-gray-300 dark:bg-gray-700/50 dark:text-gray-300 dark:hover:bg-gray-600'
                     >
                       {item}
                     </button>
@@ -1978,9 +1977,9 @@ function SearchPageClient() {
                         e.preventDefault();
                         deleteSearchHistory(item); // 事件监听会自动更新界面
                       }}
-                      className='absolute -top-1 -right-1 w-4 h-4 opacity-0 group-hover:opacity-100 bg-gray-400 hover:bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] transition-colors'
+                      className='absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-gray-400 text-[10px] text-white opacity-0 transition-colors hover:bg-red-500 group-hover:opacity-100'
                     >
-                      <X className='w-3 h-3' />
+                      <X className='h-3 w-3' />
                     </button>
                   </div>
                 ))}
@@ -2002,14 +2001,14 @@ function SearchPageClient() {
       {/* 返回顶部悬浮按钮 */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-20 md:bottom-6 right-6 z-[500] w-12 h-12 bg-green-500/90 hover:bg-green-500 text-white rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 ease-in-out flex items-center justify-center group ${
+        className={`group fixed bottom-20 right-6 z-[500] flex h-12 w-12 items-center justify-center rounded-full bg-green-500/90 text-white shadow-lg backdrop-blur-sm transition-all duration-300 ease-in-out hover:bg-green-500 md:bottom-6 ${
           showBackToTop
-            ? 'opacity-100 translate-y-0 pointer-events-auto'
-            : 'opacity-0 translate-y-4 pointer-events-none'
+            ? 'pointer-events-auto translate-y-0 opacity-100'
+            : 'pointer-events-none translate-y-4 opacity-0'
         }`}
         aria-label='返回顶部'
       >
-        <ChevronUp className='w-6 h-6 transition-transform group-hover:scale-110' />
+        <ChevronUp className='h-6 w-6 transition-transform group-hover:scale-110' />
       </button>
     </PageLayout>
   );

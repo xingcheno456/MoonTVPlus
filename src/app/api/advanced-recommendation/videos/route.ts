@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message || '获取高级推荐失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

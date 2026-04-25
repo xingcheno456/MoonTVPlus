@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: '获取高级推荐脚本失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

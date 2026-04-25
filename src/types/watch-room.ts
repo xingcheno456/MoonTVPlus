@@ -87,36 +87,73 @@ export interface ServerToClientEvents {
   'screen:start': (state: ScreenState) => void;
   'screen:stop': () => void;
   'screen:viewer-ready': (data: { userId: string }) => void;
-  'screen:offer': (data: { userId: string; offer: RTCSessionDescriptionInit }) => void;
-  'screen:answer': (data: { userId: string; answer: RTCSessionDescriptionInit }) => void;
-  'screen:ice': (data: { userId: string; candidate: RTCIceCandidateInit }) => void;
+  'screen:offer': (data: {
+    userId: string;
+    offer: RTCSessionDescriptionInit;
+  }) => void;
+  'screen:answer': (data: {
+    userId: string;
+    answer: RTCSessionDescriptionInit;
+  }) => void;
+  'screen:ice': (data: {
+    userId: string;
+    candidate: RTCIceCandidateInit;
+  }) => void;
   'chat:message': (message: ChatMessage) => void;
-  'voice:offer': (data: { userId: string; offer: RTCSessionDescriptionInit }) => void;
-  'voice:answer': (data: { userId: string; answer: RTCSessionDescriptionInit }) => void;
-  'voice:ice': (data: { userId: string; candidate: RTCIceCandidateInit }) => void;
+  'voice:offer': (data: {
+    userId: string;
+    offer: RTCSessionDescriptionInit;
+  }) => void;
+  'voice:answer': (data: {
+    userId: string;
+    answer: RTCSessionDescriptionInit;
+  }) => void;
+  'voice:ice': (data: {
+    userId: string;
+    candidate: RTCIceCandidateInit;
+  }) => void;
   'voice:mic-enabled': (data: { userId: string }) => void;
-  'voice:audio-chunk': (data: { userId: string; audioData: number[]; sampleRate?: number }) => void;
+  'voice:audio-chunk': (data: {
+    userId: string;
+    audioData: number[];
+    sampleRate?: number;
+  }) => void;
   'state:cleared': () => void;
   'heartbeat:pong': (data: { timestamp: number }) => void;
-  'error': (message: string) => void;
+  error: (message: string) => void;
 }
 
 export interface ClientToServerEvents {
-  'room:create': (data: {
-    name: string;
-    description: string;
-    password?: string;
-    isPublic: boolean;
-    roomType: RoomType;
-    userName: string;
-  }, callback: (response: { success: boolean; room?: Room; error?: string }) => void) => void;
+  'room:create': (
+    data: {
+      name: string;
+      description: string;
+      password?: string;
+      isPublic: boolean;
+      roomType: RoomType;
+      userName: string;
+    },
+    callback: (response: {
+      success: boolean;
+      room?: Room;
+      error?: string;
+    }) => void,
+  ) => void;
 
-  'room:join': (data: {
-    roomId: string;
-    password?: string;
-    userName: string;
-    ownerToken?: string; // 房主令牌，用于重连时恢复房主身份
-  }, callback: (response: { success: boolean; room?: Room; members?: Member[]; error?: string }) => void) => void;
+  'room:join': (
+    data: {
+      roomId: string;
+      password?: string;
+      userName: string;
+      ownerToken?: string; // 房主令牌，用于重连时恢复房主身份
+    },
+    callback: (response: {
+      success: boolean;
+      room?: Room;
+      members?: Member[];
+      error?: string;
+    }) => void,
+  ) => void;
 
   'room:leave': () => void;
 
@@ -129,27 +166,54 @@ export interface ClientToServerEvents {
   'play:change': (state: PlayState) => void;
 
   'live:change': (state: LiveState) => void;
-  'screen:helper-register': (data: {
-    roomId: string;
-    ownerToken: string;
-  }, callback: (response: { success: boolean; error?: string }) => void) => void;
+  'screen:helper-register': (
+    data: {
+      roomId: string;
+      ownerToken: string;
+    },
+    callback: (response: { success: boolean; error?: string }) => void,
+  ) => void;
   'screen:start': (state: ScreenState) => void;
   'screen:stop': () => void;
   'screen:viewer-ready': () => void;
-  'screen:offer': (data: { targetUserId: string; offer: RTCSessionDescriptionInit }) => void;
-  'screen:answer': (data: { targetUserId: string; answer: RTCSessionDescriptionInit }) => void;
-  'screen:ice': (data: { targetUserId: string; candidate: RTCIceCandidateInit }) => void;
+  'screen:offer': (data: {
+    targetUserId: string;
+    offer: RTCSessionDescriptionInit;
+  }) => void;
+  'screen:answer': (data: {
+    targetUserId: string;
+    answer: RTCSessionDescriptionInit;
+  }) => void;
+  'screen:ice': (data: {
+    targetUserId: string;
+    candidate: RTCIceCandidateInit;
+  }) => void;
 
   'chat:message': (data: { content: string; type: 'text' | 'emoji' }) => void;
 
-  'voice:offer': (data: { targetUserId: string; offer: RTCSessionDescriptionInit }) => void;
-  'voice:answer': (data: { targetUserId: string; answer: RTCSessionDescriptionInit }) => void;
-  'voice:ice': (data: { targetUserId: string; candidate: RTCIceCandidateInit }) => void;
-  'voice:audio-chunk': (data: { roomId: string; audioData: number[]; sampleRate?: number }) => void;
+  'voice:offer': (data: {
+    targetUserId: string;
+    offer: RTCSessionDescriptionInit;
+  }) => void;
+  'voice:answer': (data: {
+    targetUserId: string;
+    answer: RTCSessionDescriptionInit;
+  }) => void;
+  'voice:ice': (data: {
+    targetUserId: string;
+    candidate: RTCIceCandidateInit;
+  }) => void;
+  'voice:audio-chunk': (data: {
+    roomId: string;
+    audioData: number[];
+    sampleRate?: number;
+  }) => void;
 
-  'state:clear': (callback?: (response: { success: boolean; error?: string }) => void) => void;
+  'state:clear': (
+    callback?: (response: { success: boolean; error?: string }) => void,
+  ) => void;
 
-  'heartbeat': () => void;
+  heartbeat: () => void;
 }
 
 // 配置类型

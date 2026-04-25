@@ -13,17 +13,23 @@ interface PageLayoutProps {
   hideNavigation?: boolean; // 控制是否隐藏顶部和底部导航栏
 }
 
-const PageLayout = ({ children, activePath = '/', hideNavigation = false }: PageLayoutProps) => {
+const PageLayout = ({
+  children,
+  activePath = '/',
+  hideNavigation = false,
+}: PageLayoutProps) => {
   return (
     <VersionCheckProvider>
-      <div className='w-full min-h-screen'>
+      <div className='min-h-screen w-full'>
         {/* 移动端头部 */}
         {!hideNavigation && (
-          <MobileHeader showBackButton={['/play', '/live'].includes(activePath)} />
+          <MobileHeader
+            showBackButton={['/play', '/live'].includes(activePath)}
+          />
         )}
 
         {/* 主要布局容器 */}
-        <div className='flex md:grid md:grid-cols-[auto_1fr] w-full min-h-screen md:min-h-auto'>
+        <div className='md:min-h-auto flex min-h-screen w-full md:grid md:grid-cols-[auto_1fr]'>
           {/* 侧边栏 - 桌面端显示，移动端隐藏 */}
           {!hideNavigation && (
             <div className='hidden md:block'>
@@ -35,14 +41,14 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
           <div className='relative min-w-0 flex-1 transition-all duration-300'>
             {/* 桌面端左上角返回按钮 */}
             {!hideNavigation && ['/play', '/live'].includes(activePath) && (
-              <div className='absolute top-3 left-1 z-20 hidden md:flex'>
+              <div className='absolute left-1 top-3 z-20 hidden md:flex'>
                 <BackButton />
               </div>
             )}
 
             {/* 桌面端顶部按钮 */}
             {!hideNavigation && (
-              <div className='absolute top-2 right-4 z-20 hidden md:flex items-center gap-2'>
+              <div className='absolute right-4 top-2 z-20 hidden items-center gap-2 md:flex'>
                 <ThemeToggle />
                 <UserMenu />
                 <UpdateNotification />
@@ -51,7 +57,7 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
 
             {/* 主内容 */}
             <main
-              className='flex-1 md:min-h-0 mb-14 md:mb-0 md:mt-0 mt-12'
+              className='mb-14 mt-12 flex-1 md:mb-0 md:mt-0 md:min-h-0'
               style={{
                 paddingBottom: 'calc(3.5rem + env(safe-area-inset-bottom))',
               }}

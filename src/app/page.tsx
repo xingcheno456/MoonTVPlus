@@ -1,8 +1,15 @@
+'use client';
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console */
 
-'use client';
 
-import { BookOpen, Bot, ChevronRight, Link as LinkIcon, ListVideo, Music } from 'lucide-react';
+import {
+  BookOpen,
+  Bot,
+  ChevronRight,
+  Link as LinkIcon,
+  ListVideo,
+  Music,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -58,13 +65,16 @@ function HomeClient() {
     { id: 'upcomingContent', name: '即将上映', enabled: true, order: 5 },
   ]);
   const [homeBannerEnabled, setHomeBannerEnabled] = useState(true);
-  const [homeContinueWatchingEnabled, setHomeContinueWatchingEnabled] = useState(true);
+  const [homeContinueWatchingEnabled, setHomeContinueWatchingEnabled] =
+    useState(true);
 
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [showHttpWarning, setShowHttpWarning] = useState(true);
   const [showAIChat, setShowAIChat] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(false);
-  const [aiDefaultMessageNoVideo, setAiDefaultMessageNoVideo] = useState('你好！我是MoonTVPlus的AI影视助手。想看什么电影或剧集？需要推荐吗？');
+  const [aiDefaultMessageNoVideo, setAiDefaultMessageNoVideo] = useState(
+    '你好！我是MoonTVPlus的AI影视助手。想看什么电影或剧集？需要推荐吗？',
+  );
   const [sourceSearchEnabled, setSourceSearchEnabled] = useState(true);
   const [musicEnabled, setMusicEnabled] = useState(false);
   const [mangaEnabled, setMangaEnabled] = useState(false);
@@ -103,9 +113,13 @@ function HomeClient() {
       setHomeBannerEnabled(savedHomeBannerEnabled === 'true');
     }
 
-    const savedHomeContinueWatchingEnabled = localStorage.getItem('homeContinueWatchingEnabled');
+    const savedHomeContinueWatchingEnabled = localStorage.getItem(
+      'homeContinueWatchingEnabled',
+    );
     if (savedHomeContinueWatchingEnabled !== null) {
-      setHomeContinueWatchingEnabled(savedHomeContinueWatchingEnabled === 'true');
+      setHomeContinueWatchingEnabled(
+        savedHomeContinueWatchingEnabled === 'true',
+      );
     }
   };
 
@@ -122,7 +136,10 @@ function HomeClient() {
 
     window.addEventListener('homeModulesUpdated', handleHomeModulesUpdated);
     return () => {
-      window.removeEventListener('homeModulesUpdated', handleHomeModulesUpdated);
+      window.removeEventListener(
+        'homeModulesUpdated',
+        handleHomeModulesUpdated,
+      );
     };
   }, []);
 
@@ -135,7 +152,8 @@ function HomeClient() {
       setAiEnabled(enabled);
 
       // 加载AI默认消息配置
-      const defaultMsg = (window as any).RUNTIME_CONFIG?.AI_DEFAULT_MESSAGE_NO_VIDEO;
+      const defaultMsg = (window as any).RUNTIME_CONFIG
+        ?.AI_DEFAULT_MESSAGE_NO_VIDEO;
       if (defaultMsg) {
         setAiDefaultMessageNoVideo(defaultMsg);
       }
@@ -145,7 +163,8 @@ function HomeClient() {
   // 检查源站寻片功能是否启用
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const enabled = (window as any).RUNTIME_CONFIG?.ENABLE_SOURCE_SEARCH !== false;
+      const enabled =
+        (window as any).RUNTIME_CONFIG?.ENABLE_SOURCE_SEARCH !== false;
       setSourceSearchEnabled(enabled);
     }
   }, []);
@@ -194,7 +213,10 @@ function HomeClient() {
 
     const setCache = (key: string, data: any) => {
       try {
-        localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+        localStorage.setItem(
+          key,
+          JSON.stringify({ data, timestamp: Date.now() }),
+        );
       } catch {
         // Ignore localStorage errors
       }
@@ -214,18 +236,43 @@ function HomeClient() {
     if (duanjuCache?.data) setHotDuanju(duanjuCache.data);
     if (upcomingCache?.data) setUpcomingContent(upcomingCache.data);
 
-    const hasCache = moviesCache || tvShowsCache || varietyCache || bangumiCache || duanjuCache || upcomingCache;
+    const hasCache =
+      moviesCache ||
+      tvShowsCache ||
+      varietyCache ||
+      bangumiCache ||
+      duanjuCache ||
+      upcomingCache;
     if (hasCache) setLoading(false);
 
-    const needsRefresh = !moviesCache || moviesCache.expired || !tvShowsCache || tvShowsCache.expired ||
-                         !varietyCache || varietyCache.expired || !bangumiCache || bangumiCache.expired ||
-                         !duanjuCache || duanjuCache.expired || !upcomingCache || upcomingCache.expired;
+    const needsRefresh =
+      !moviesCache ||
+      moviesCache.expired ||
+      !tvShowsCache ||
+      tvShowsCache.expired ||
+      !varietyCache ||
+      varietyCache.expired ||
+      !bangumiCache ||
+      bangumiCache.expired ||
+      !duanjuCache ||
+      duanjuCache.expired ||
+      !upcomingCache ||
+      upcomingCache.expired;
 
     if (needsRefresh) {
       (async () => {
         try {
-          const [moviesData, tvShowsData, varietyShowsData, bangumiCalendarData] = await Promise.all([
-            getDoubanCategories({ kind: 'movie', category: '热门', type: '全部' }),
+          const [
+            moviesData,
+            tvShowsData,
+            varietyShowsData,
+            bangumiCalendarData,
+          ] = await Promise.all([
+            getDoubanCategories({
+              kind: 'movie',
+              category: '热门',
+              type: '全部',
+            }),
             getDoubanCategories({ kind: 'tv', category: 'tv', type: 'tv' }),
             getDoubanCategories({ kind: 'tv', category: 'show', type: 'show' }),
             GetBangumiCalendarData(),
@@ -258,7 +305,11 @@ function HomeClient() {
             const duanjuResponse = await fetch('/api/duanju/recommends');
             if (duanjuResponse.ok) {
               const duanjuResult = await duanjuResponse.json();
-              if (duanjuResult.code === 200 && duanjuResult.data && duanjuResult.data.length > 0) {
+              if (
+                duanjuResult.code === 200 &&
+                duanjuResult.data &&
+                duanjuResult.data.length > 0
+              ) {
                 setHotDuanju(duanjuResult.data);
                 setCache('homepage_duanju', duanjuResult.data);
               }
@@ -271,10 +322,18 @@ function HomeClient() {
             const response = await fetch('/api/tmdb/upcoming');
             if (response.ok) {
               const result = await response.json();
-              if (result.code === 200 && result.data && result.data.length > 0) {
+              if (
+                result.code === 200 &&
+                result.data &&
+                result.data.length > 0
+              ) {
                 const sorted = [...result.data].sort((a, b) => {
-                  const dateA = new Date(a.release_date || '9999-12-31').getTime();
-                  const dateB = new Date(b.release_date || '9999-12-31').getTime();
+                  const dateA = new Date(
+                    a.release_date || '9999-12-31',
+                  ).getTime();
+                  const dateB = new Date(
+                    b.release_date || '9999-12-31',
+                  ).getTime();
                   return dateA - dateB;
                 });
                 setUpcomingContent(sorted);
@@ -294,8 +353,6 @@ function HomeClient() {
     }
   }, []);
 
-
-
   const handleCloseAnnouncement = (announcement: string) => {
     setShowAnnouncement(false);
     localStorage.setItem('hasSeenAnnouncement', announcement); // 记录已查看弹窗
@@ -306,7 +363,7 @@ function HomeClient() {
     switch (moduleId) {
       case 'hotMovies':
         return (
-          <section key="hotMovies" className='mb-8'>
+          <section key='hotMovies' className='mb-8'>
             <div className='mb-4 flex items-center justify-between'>
               <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
                 热门电影
@@ -316,7 +373,7 @@ function HomeClient() {
                 className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
               >
                 查看更多
-                <ChevronRight className='w-4 h-4 ml-1' />
+                <ChevronRight className='ml-1 h-4 w-4' />
               </Link>
             </div>
             <ScrollableRow>
@@ -324,16 +381,16 @@ function HomeClient() {
                 ? Array.from({ length: 8 }).map((_, index) => (
                     <div
                       key={index}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='w-24 min-w-[96px] sm:w-44 sm:min-w-[180px]'
                     >
-                      <div className='aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2' />
-                      <div className='h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4' />
+                      <div className='mb-2 aspect-[2/3] animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700' />
+                      <div className='h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-700' />
                     </div>
                   ))
                 : hotMovies.map((movie) => (
                     <div
                       key={movie.id}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='w-24 min-w-[96px] sm:w-44 sm:min-w-[180px]'
                     >
                       <VideoCard
                         id={movie.id}
@@ -354,7 +411,7 @@ function HomeClient() {
       case 'hotDuanju':
         if (hotDuanju.length === 0) return null;
         return (
-          <section key="hotDuanju" className='mb-8'>
+          <section key='hotDuanju' className='mb-8'>
             <div className='mb-4 flex items-center justify-between'>
               <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
                 热播短剧
@@ -365,16 +422,16 @@ function HomeClient() {
                 ? Array.from({ length: 8 }).map((_, index) => (
                     <div
                       key={index}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='w-24 min-w-[96px] sm:w-44 sm:min-w-[180px]'
                     >
-                      <div className='aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2' />
-                      <div className='h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4' />
+                      <div className='mb-2 aspect-[2/3] animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700' />
+                      <div className='h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-700' />
                     </div>
                   ))
                 : hotDuanju.map((duanju) => (
                     <div
                       key={duanju.id + duanju.source}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='w-24 min-w-[96px] sm:w-44 sm:min-w-[180px]'
                     >
                       <VideoCard
                         id={duanju.id}
@@ -401,7 +458,7 @@ function HomeClient() {
 
       case 'bangumiCalendar':
         return (
-          <section key="bangumiCalendar" className='mb-8'>
+          <section key='bangumiCalendar' className='mb-8'>
             <div className='mb-4 flex items-center justify-between'>
               <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
                 新番放送
@@ -411,7 +468,7 @@ function HomeClient() {
                 className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
               >
                 查看更多
-                <ChevronRight className='w-4 h-4 ml-1' />
+                <ChevronRight className='ml-1 h-4 w-4' />
               </Link>
             </div>
             <ScrollableRow>
@@ -419,17 +476,25 @@ function HomeClient() {
                 ? Array.from({ length: 8 }).map((_, index) => (
                     <div
                       key={index}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='w-24 min-w-[96px] sm:w-44 sm:min-w-[180px]'
                     >
-                      <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
+                      <div className='relative aspect-[2/3] w-full animate-pulse overflow-hidden rounded-lg bg-gray-200 dark:bg-gray-800'>
                         <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700'></div>
                       </div>
-                      <div className='mt-2 h-4 bg-gray-200 rounded animate-pulse dark:bg-gray-800'></div>
+                      <div className='mt-2 h-4 animate-pulse rounded bg-gray-200 dark:bg-gray-800'></div>
                     </div>
                   ))
                 : (() => {
                     const today = new Date();
-                    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const weekdays = [
+                      'Sun',
+                      'Mon',
+                      'Tue',
+                      'Wed',
+                      'Thu',
+                      'Fri',
+                      'Sat',
+                    ];
                     const currentWeekday = weekdays[today.getDay()];
                     const todayAnimes =
                       bangumiCalendarData
@@ -439,7 +504,7 @@ function HomeClient() {
                     return todayAnimes.map((anime, index) => (
                       <div
                         key={`${anime.id}-${index}`}
-                        className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                        className='w-24 min-w-[96px] sm:w-44 sm:min-w-[180px]'
                       >
                         <VideoCard
                           from='douban'
@@ -466,7 +531,7 @@ function HomeClient() {
 
       case 'hotTvShows':
         return (
-          <section key="hotTvShows" className='mb-8'>
+          <section key='hotTvShows' className='mb-8'>
             <div className='mb-4 flex items-center justify-between'>
               <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
                 热门剧集
@@ -476,7 +541,7 @@ function HomeClient() {
                 className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
               >
                 查看更多
-                <ChevronRight className='w-4 h-4 ml-1' />
+                <ChevronRight className='ml-1 h-4 w-4' />
               </Link>
             </div>
             <ScrollableRow>
@@ -484,16 +549,16 @@ function HomeClient() {
                 ? Array.from({ length: 8 }).map((_, index) => (
                     <div
                       key={index}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='w-24 min-w-[96px] sm:w-44 sm:min-w-[180px]'
                     >
-                      <div className='aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2' />
-                      <div className='h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4' />
+                      <div className='mb-2 aspect-[2/3] animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700' />
+                      <div className='h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-700' />
                     </div>
                   ))
                 : hotTvShows.map((tvShow) => (
                     <div
                       key={tvShow.id}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='w-24 min-w-[96px] sm:w-44 sm:min-w-[180px]'
                     >
                       <VideoCard
                         id={tvShow.id}
@@ -513,7 +578,7 @@ function HomeClient() {
 
       case 'hotVarietyShows':
         return (
-          <section key="hotVarietyShows" className='mb-8'>
+          <section key='hotVarietyShows' className='mb-8'>
             <div className='mb-4 flex items-center justify-between'>
               <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
                 热门综艺
@@ -523,7 +588,7 @@ function HomeClient() {
                 className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
               >
                 查看更多
-                <ChevronRight className='w-4 h-4 ml-1' />
+                <ChevronRight className='ml-1 h-4 w-4' />
               </Link>
             </div>
             <ScrollableRow>
@@ -531,16 +596,16 @@ function HomeClient() {
                 ? Array.from({ length: 8 }).map((_, index) => (
                     <div
                       key={index}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='w-24 min-w-[96px] sm:w-44 sm:min-w-[180px]'
                     >
-                      <div className='aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2' />
-                      <div className='h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4' />
+                      <div className='mb-2 aspect-[2/3] animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700' />
+                      <div className='h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-700' />
                     </div>
                   ))
                 : hotVarietyShows.map((varietyShow) => (
                     <div
                       key={varietyShow.id}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='w-24 min-w-[96px] sm:w-44 sm:min-w-[180px]'
                     >
                       <VideoCard
                         id={varietyShow.id}
@@ -550,7 +615,9 @@ function HomeClient() {
                         rate={varietyShow.rate}
                         type='tv'
                         from='douban'
-                        douban_id={varietyShow.id ? parseInt(varietyShow.id) : undefined}
+                        douban_id={
+                          varietyShow.id ? parseInt(varietyShow.id) : undefined
+                        }
                       />
                     </div>
                   ))}
@@ -561,7 +628,7 @@ function HomeClient() {
       case 'upcomingContent':
         if (upcomingContent.length === 0) return null;
         return (
-          <section key="upcomingContent" className='mb-8'>
+          <section key='upcomingContent' className='mb-8'>
             <div className='mb-4 flex items-center justify-between'>
               <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
                 即将上映
@@ -571,7 +638,7 @@ function HomeClient() {
               {upcomingContent.map((item) => (
                 <div
                   key={`${item.media_type}-${item.id}`}
-                  className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                  className='w-24 min-w-[96px] sm:w-44 sm:min-w-[180px]'
                 >
                   <VideoCard
                     title={item.title}
@@ -603,20 +670,22 @@ function HomeClient() {
       <FireworksCanvas />
       {/* TMDB 热门轮播图 */}
       {homeBannerEnabled && (
-        <div className='w-full mb-4'>
+        <div className='mb-4 w-full'>
           <BannerCarousel delayLoad={true} />
         </div>
       )}
 
-      <div className='px-2 sm:px-10 pb-4 sm:pb-8 overflow-visible'>
-        <div className='max-w-[95%] mx-auto'>
+      <div className='overflow-visible px-2 pb-4 sm:px-10 sm:pb-8'>
+        <div className='mx-auto max-w-[95%]'>
           {/* 首页内容 */}
           <>
             {/* 源站寻片和AI问片入口 */}
-            <div className={`flex items-center justify-end gap-2 mb-4 ${homeBannerEnabled ? '' : 'mt-[30px]'}`}>
+            <div
+              className={`mb-4 flex items-center justify-end gap-2 ${homeBannerEnabled ? '' : 'mt-[30px]'}`}
+            >
               <button
                 onClick={handleDirectPlay}
-                className='p-1.5 rounded-lg text-blue-500 hover:text-blue-600 transition-colors'
+                className='rounded-lg p-1.5 text-blue-500 transition-colors hover:text-blue-600'
                 title='直链播放'
               >
                 <LinkIcon size={18} />
@@ -625,7 +694,7 @@ function HomeClient() {
               {musicEnabled && (
                 <Link href='/music'>
                   <button
-                    className='p-1.5 rounded-lg text-green-500 hover:text-green-600 transition-colors'
+                    className='rounded-lg p-1.5 text-green-500 transition-colors hover:text-green-600'
                     title='音乐视听'
                   >
                     <Music size={18} />
@@ -636,7 +705,7 @@ function HomeClient() {
               {mangaEnabled && (
                 <Link href='/manga'>
                   <button
-                    className='p-1.5 rounded-lg text-emerald-500 hover:text-emerald-600 transition-colors'
+                    className='rounded-lg p-1.5 text-emerald-500 transition-colors hover:text-emerald-600'
                     title='漫画展馆'
                   >
                     <BookOpen size={18} />
@@ -648,7 +717,7 @@ function HomeClient() {
               {sourceSearchEnabled && (
                 <Link href='/source-search'>
                   <button
-                    className='p-2 rounded-lg text-blue-500 hover:text-blue-600 transition-colors'
+                    className='rounded-lg p-2 text-blue-500 transition-colors hover:text-blue-600'
                     title='源站寻片'
                   >
                     <ListVideo size={20} />
@@ -660,7 +729,7 @@ function HomeClient() {
               {aiEnabled && (
                 <button
                   onClick={() => setShowAIChat(true)}
-                  className='p-2 rounded-lg text-purple-500 hover:text-purple-600 transition-colors'
+                  className='rounded-lg p-2 text-purple-500 transition-colors hover:text-purple-600'
                   title='AI问片'
                 >
                   <Bot size={20} />
@@ -673,9 +742,9 @@ function HomeClient() {
 
             {/* 根据配置动态渲染首页模块 */}
             {homeModules
-              .filter(module => module.enabled)
+              .filter((module) => module.enabled)
               .sort((a, b) => a.order - b.order)
-              .map(module => renderModule(module.id))}
+              .map((module) => renderModule(module.id))}
           </>
         </div>
       </div>
@@ -696,17 +765,17 @@ function HomeClient() {
 
       {/* 公告弹窗 */}
       {showAnnouncement && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
-          <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6'>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3'>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4'>
+          <div className='w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800'>
+            <h3 className='mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100'>
               公告
             </h3>
-            <div className='text-gray-700 dark:text-gray-300 mb-4 whitespace-pre-wrap'>
+            <div className='mb-4 whitespace-pre-wrap text-gray-700 dark:text-gray-300'>
               {announcement}
             </div>
             <button
               onClick={() => handleCloseAnnouncement(announcement || '')}
-              className='w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors'
+              className='w-full rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700'
             >
               知道了
             </button>
@@ -716,26 +785,26 @@ function HomeClient() {
 
       {showDirectPlayDialog && (
         <div
-          className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'
+          className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'
           onClick={() => setShowDirectPlayDialog(false)}
         >
           <div
-            className='bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-lg'
+            className='w-full max-w-lg rounded-lg bg-white shadow-xl dark:bg-gray-900'
             onClick={(event) => event.stopPropagation()}
           >
-            <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
+            <div className='flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700'>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
                 直链播放
               </h3>
               <button
                 onClick={() => setShowDirectPlayDialog(false)}
-                className='p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors'
+                className='rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
                 aria-label='关闭'
               >
                 <span className='text-gray-600 dark:text-gray-400'>×</span>
               </button>
             </div>
-            <div className='p-4 space-y-4'>
+            <div className='space-y-4 p-4'>
               <div className='text-sm text-gray-600 dark:text-gray-300'>
                 请输入可直接播放的视频链接。
               </div>
@@ -748,19 +817,19 @@ function HomeClient() {
                   }
                 }}
                 placeholder='https://example.com/video.m3u8'
-                className='w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100'
               />
               <div className='flex justify-end gap-2'>
                 <button
                   onClick={() => setShowDirectPlayDialog(false)}
-                  className='px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+                  className='rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800'
                 >
                   取消
                 </button>
                 <button
                   onClick={submitDirectPlay}
                   disabled={!directPlayUrl.trim()}
-                  className='px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   开始播放
                 </button>

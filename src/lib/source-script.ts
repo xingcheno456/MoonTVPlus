@@ -149,7 +149,10 @@ function buildEmptyRegistry(): SourceScriptRegistry {
 }
 
 async function loadRegistry(): Promise<SourceScriptRegistry> {
-  if (_registryCache && Date.now() - _registryCache.ts < REGISTRY_CACHE_TTL_MS) {
+  if (
+    _registryCache &&
+    Date.now() - _registryCache.ts < REGISTRY_CACHE_TTL_MS
+  ) {
     return _registryCache.data;
   }
 
@@ -180,10 +183,7 @@ async function saveRegistry(registry: SourceScriptRegistry) {
   _registryCache = null;
   _compiledCache.clear();
   _runtimeCache.clear();
-  await db.setGlobalValue(
-    SOURCE_SCRIPT_REGISTRY_KEY,
-    JSON.stringify(registry)
-  );
+  await db.setGlobalValue(SOURCE_SCRIPT_REGISTRY_KEY, JSON.stringify(registry));
 }
 
 function assertScriptKey(key: string) {
@@ -227,7 +227,10 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs = DEFAULT_TIMEOUT_MS) {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) => {
-      setTimeout(() => reject(new Error(`执行超时(${timeoutMs}ms)`)), timeoutMs);
+      setTimeout(
+        () => reject(new Error(`执行超时(${timeoutMs}ms)`)),
+        timeoutMs,
+      );
     }),
   ]);
 }
@@ -292,13 +295,15 @@ function createUtils() {
 }
 
 function createScriptFactory(code: string) {
-  return new Function(
-    'require',
-    `"use strict";\n${code}`
-  ) as (req: NodeRequire) => any;
+  return new Function('require', `"use strict";\n${code}`) as (
+    req: NodeRequire,
+  ) => any;
 }
 
-async function createScriptContext(script: SourceScriptRecord, configValues?: Record<string, string>) {
+async function createScriptContext(
+  script: SourceScriptRecord,
+  configValues?: Record<string, string>,
+) {
   const { logs, log } = createLogCollector();
   const cache = createCacheHelpers(script.id);
 
@@ -323,7 +328,7 @@ async function createScriptContext(script: SourceScriptRecord, configValues?: Re
     const controller = new AbortController();
     const timeoutId = setTimeout(
       () => controller.abort(),
-      input.timeoutMs || DEFAULT_TIMEOUT_MS
+      input.timeoutMs || DEFAULT_TIMEOUT_MS,
     );
 
     try {
@@ -333,7 +338,8 @@ async function createScriptContext(script: SourceScriptRecord, configValues?: Re
           ...(input.json ? { 'Content-Type': 'application/json' } : {}),
           ...(input.headers || {}),
         },
-        body: input.json !== undefined ? JSON.stringify(input.json) : input.body,
+        body:
+          input.json !== undefined ? JSON.stringify(input.json) : input.body,
         signal: controller.signal,
       });
 
@@ -355,17 +361,35 @@ async function createScriptContext(script: SourceScriptRecord, configValues?: Re
     ctx: Object.freeze({
       fetch: fetcher,
       request: {
-        get: (url: string, options?: Omit<Parameters<typeof fetcher>[0], 'url' | 'method'>) =>
-          fetcher({ url, method: 'GET', ...(options || {}) }),
-        post: (url: string, options?: Omit<Parameters<typeof fetcher>[0], 'url' | 'method'>) =>
-          fetcher({ url, method: 'POST', ...(options || {}) }),
-        async getHtml(url: string, options?: Omit<Parameters<typeof fetcher>[0], 'url' | 'method'>) {
-          const response = await fetcher({ url, method: 'GET', ...(options || {}) });
+        get: (
+          url: string,
+          options?: Omit<Parameters<typeof fetcher>[0], 'url' | 'method'>,
+        ) => fetcher({ url, method: 'GET', ...(options || {}) }),
+        post: (
+          url: string,
+          options?: Omit<Parameters<typeof fetcher>[0], 'url' | 'method'>,
+        ) => fetcher({ url, method: 'POST', ...(options || {}) }),
+        async getHtml(
+          url: string,
+          options?: Omit<Parameters<typeof fetcher>[0], 'url' | 'method'>,
+        ) {
+          const response = await fetcher({
+            url,
+            method: 'GET',
+            ...(options || {}),
+          });
           const text = await response.text();
           return cheerio.load(text);
         },
-        async getJson<T = any>(url: string, options?: Omit<Parameters<typeof fetcher>[0], 'url' | 'method'>) {
-          const response = await fetcher({ url, method: 'GET', ...(options || {}) });
+        async getJson<T = any>(
+          url: string,
+          options?: Omit<Parameters<typeof fetcher>[0], 'url' | 'method'>,
+        ) {
+          const response = await fetcher({
+            url,
+            method: 'GET',
+            ...(options || {}),
+          });
           return response.json<T>();
         },
       },
@@ -446,7 +470,7 @@ function getOrCompileScript(script: SourceScriptRecord) {
 
 async function compileSourceScript(
   script: SourceScriptRecord,
-  configValues?: Record<string, string>
+  configValues?: Record<string, string>,
 ) {
   const compiled = getOrCompileScript(script);
   const context = await createScriptContext(script, configValues);
@@ -466,7 +490,7 @@ export async function executeSavedSourceScript(input: {
   const script = await getEnabledSourceScriptByKey(input.key);
   const { compiled, ctx, logs } = await compileSourceScript(
     script,
-    input.configValues
+    input.configValues,
   );
 
   const hook = compiled[input.hook];
@@ -476,7 +500,7 @@ export async function executeSavedSourceScript(input: {
 
   const result = await withTimeout(
     Promise.resolve(hook(ctx, input.payload || {})),
-    DEFAULT_TIMEOUT_MS
+    DEFAULT_TIMEOUT_MS,
   );
 
   return {
@@ -488,7 +512,9 @@ export async function executeSavedSourceScript(input: {
   };
 }
 
-export async function listEnabledSourceScripts(): Promise<PublicSourceScriptSummary[]> {
+export async function listEnabledSourceScripts(): Promise<
+  PublicSourceScriptSummary[]
+> {
   const registry = await loadRegistry();
   return registry.items
     .filter((item) => item.enabled)
@@ -658,11 +684,14 @@ export async function testSourceScript(input: {
       throw new Error(`脚本未实现 ${input.hook} hook`);
     }
 
-    const { ctx, logs } = await createScriptContext(tempScript, input.configValues);
+    const { ctx, logs } = await createScriptContext(
+      tempScript,
+      input.configValues,
+    );
     collectedLogs = logs;
     const result = await withTimeout(
       Promise.resolve(hook(ctx, input.payload)),
-      DEFAULT_TIMEOUT_MS
+      DEFAULT_TIMEOUT_MS,
     );
 
     return {
@@ -732,7 +761,9 @@ export function normalizeScriptSearchResults(input: {
 }) {
   const list = Array.isArray(input.result?.list) ? input.result.list : [];
   return list.map((item: any) => {
-    const titles = Array.isArray(item.episodes_titles) ? item.episodes_titles : [];
+    const titles = Array.isArray(item.episodes_titles)
+      ? item.episodes_titles
+      : [];
     const episodes = Array.isArray(item.episodes)
       ? item.episodes.map((episode: any, index: number) => {
           const playUrl =
@@ -781,19 +812,19 @@ export function normalizeScriptRecommendResults(input: {
 }) {
   const list = Array.isArray(input.result?.list) ? input.result.list : [];
   const sourceMap = new Map(
-    (input.sources || []).map((item) => [String(item.id), String(item.name)])
+    (input.sources || []).map((item) => [String(item.id), String(item.name)]),
   );
   const fallbackSourceId = input.defaultSourceId || 'default';
 
   return list.map((item: any) => {
     const sourceId = String(
-      item?.sourceId || item?.source_id || item?.source || fallbackSourceId
+      item?.sourceId || item?.source_id || item?.source || fallbackSourceId,
     );
     const sourceName = String(
       item?.sourceName ||
         item?.source_name ||
         sourceMap.get(sourceId) ||
-        sourceId
+        sourceId,
     );
 
     return {
@@ -926,7 +957,9 @@ export async function resolveScriptDetailPlaybacks(input: {
   const resolvedPlaybacks = await Promise.all(
     playbacks.map(async (playback: any) => {
       const playbackSourceId = String(playback.sourceId || input.sourceId);
-      const episodes = Array.isArray(playback.episodes) ? playback.episodes : [];
+      const episodes = Array.isArray(playback.episodes)
+        ? playback.episodes
+        : [];
 
       const resolvedEpisodes = await Promise.all(
         episodes.map(async (episode: any, index: number) => {
@@ -942,22 +975,22 @@ export async function resolveScriptDetailPlaybacks(input: {
                   playUrl,
                   sourceId: playbackSourceId,
                   episodeIndex: index,
-                })
+                }),
               ),
-              DEFAULT_TIMEOUT_MS
+              DEFAULT_TIMEOUT_MS,
             );
             return result?.url || playUrl;
           } catch {
             return playUrl;
           }
-        })
+        }),
       );
 
       return {
         ...playback,
         episodes: resolvedEpisodes,
       };
-    })
+    }),
   );
 
   return {
@@ -976,7 +1009,8 @@ function encodeBase64Url(value: string) {
 
 function decodeBase64Url(value: string) {
   const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
-  const padding = normalized.length % 4 === 0 ? '' : '='.repeat(4 - (normalized.length % 4));
+  const padding =
+    normalized.length % 4 === 0 ? '' : '='.repeat(4 - (normalized.length % 4));
   return Buffer.from(`${normalized}${padding}`, 'base64').toString('utf8');
 }
 
@@ -1007,7 +1041,10 @@ export async function resolveSavedScriptPlayUrl(input: {
   configValues?: Record<string, string>;
 }) {
   const script = await getEnabledSourceScriptByKey(input.key);
-  const { compiled, ctx } = await compileSourceScript(script, input.configValues);
+  const { compiled, ctx } = await compileSourceScript(
+    script,
+    input.configValues,
+  );
 
   if (typeof compiled.resolvePlayUrl !== 'function') {
     return {
@@ -1023,9 +1060,9 @@ export async function resolveSavedScriptPlayUrl(input: {
         playUrl: input.playUrl,
         sourceId: input.sourceId,
         episodeIndex: input.episodeIndex,
-      })
+      }),
     ),
-    DEFAULT_TIMEOUT_MS
+    DEFAULT_TIMEOUT_MS,
   );
 
   return {

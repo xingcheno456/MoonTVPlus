@@ -34,12 +34,15 @@ export interface DatabaseAdapter {
   prepare(query: string): D1PreparedStatement;
   batch?(statements: D1PreparedStatement[]): Promise<D1Result[]>;
   exec?(query: string): void;
+  readonly placeholderStyle: '?' | '$n';
 }
 
 /**
  * Cloudflare D1 适配器（生产环境）
  */
 export class CloudflareD1Adapter implements DatabaseAdapter {
+  readonly placeholderStyle = '?' as const;
+
   constructor(private db: D1Database) {}
 
   prepare(query: string): D1PreparedStatement {
@@ -56,7 +59,8 @@ export class CloudflareD1Adapter implements DatabaseAdapter {
  * 包装 better-sqlite3 以兼容 D1 API
  */
 export class SQLiteAdapter implements DatabaseAdapter {
-  private db: any; // better-sqlite3 Database
+  private db: any;
+  readonly placeholderStyle = '?' as const;
 
   constructor(db: any) {
     this.db = db;

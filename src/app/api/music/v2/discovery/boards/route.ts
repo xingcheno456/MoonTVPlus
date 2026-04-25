@@ -12,20 +12,30 @@ export async function GET(request: NextRequest) {
     if (!isMusicSource(source)) return badRequest('不支持的音源');
 
     const fallbackSources = [source, 'kg', 'kw', 'tx', 'wy', 'mg'].filter(
-      (item, index, arr) => arr.indexOf(item) === index
+      (item, index, arr) => arr.indexOf(item) === index,
     );
 
     let actualSource = source as typeof source;
-    let list: Array<{ id?: string; bangid?: string; name: string; img?: string }> = [];
+    let list: Array<{
+      id?: string;
+      bangid?: string;
+      name: string;
+      img?: string;
+    }> = [];
     const errors: string[] = [];
 
     for (const candidate of fallbackSources) {
       try {
         const candidatePayload = await lxGetJson<any>(
           `/api/music/leaderboard/boards?source=${candidate}`,
-          'none'
+          'none',
         );
-        const candidateList = unwrapLxArray<{ id?: string; bangid?: string; name: string; img?: string }>(candidatePayload);
+        const candidateList = unwrapLxArray<{
+          id?: string;
+          bangid?: string;
+          name: string;
+          img?: string;
+        }>(candidatePayload);
         if (Array.isArray(candidateList) && candidateList.length > 0) {
           actualSource = candidate as typeof source;
           list = candidateList;
@@ -41,7 +51,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        list: list.map(item => ({
+        list: list.map((item) => ({
           id: item.bangid || item.id || '',
           name: item.name,
           cover: item.img,

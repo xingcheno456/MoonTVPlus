@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle, Info, X,XCircle } from 'lucide-react';
+import { CheckCircle, Info, X, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export interface ToastProps {
@@ -10,7 +10,12 @@ export interface ToastProps {
   onClose?: () => void;
 }
 
-export default function Toast({ message, type = 'info', duration = 3000, onClose }: ToastProps) {
+export default function Toast({
+  message,
+  type = 'info',
+  duration = 3000,
+  onClose,
+}: ToastProps) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
@@ -32,9 +37,9 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
   };
 
   const icons = {
-    success: <CheckCircle className="w-5 h-5" />,
-    error: <XCircle className="w-5 h-5" />,
-    info: <Info className="w-5 h-5" />,
+    success: <CheckCircle className='h-5 w-5' />,
+    error: <XCircle className='h-5 w-5' />,
+    info: <Info className='h-5 w-5' />,
   };
 
   const colors = {
@@ -45,18 +50,20 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
 
   return (
     <div
-      className={`fixed top-20 left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      className={`fixed left-1/2 top-20 z-[9999] -translate-x-1/2 transition-all duration-300 ${
+        isVisible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
       }`}
     >
-      <div className={`${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 min-w-[300px]`}>
-        <div className="flex-shrink-0">{icons[type]}</div>
-        <div className="flex-1 text-sm font-medium">{message}</div>
+      <div
+        className={`${colors[type]} flex min-w-[300px] items-center gap-3 rounded-lg px-6 py-3 text-white shadow-lg`}
+      >
+        <div className='flex-shrink-0'>{icons[type]}</div>
+        <div className='flex-1 text-sm font-medium'>{message}</div>
         <button
           onClick={handleClose}
-          className="flex-shrink-0 hover:bg-white/20 rounded p-1 transition-colors"
+          className='flex-shrink-0 rounded p-1 transition-colors hover:bg-white/20'
         >
-          <X className="w-4 h-4" />
+          <X className='h-4 w-4' />
         </button>
       </div>
     </div>

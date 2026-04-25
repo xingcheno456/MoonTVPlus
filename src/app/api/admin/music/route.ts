@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       {
         error: '不支持本地存储进行管理员配置',
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -28,12 +28,7 @@ export async function POST(request: NextRequest) {
     }
     const username = authInfo.username;
 
-    const {
-      Enabled,
-      BaseUrl,
-      Token,
-      ProxyEnabled,
-    } = body as {
+    const { Enabled, BaseUrl, Token, ProxyEnabled } = body as {
       Enabled?: boolean;
       BaseUrl?: string;
       Token?: string;
@@ -78,7 +73,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Cache-Control': 'no-store', // 不缓存结果
         },
-      }
+      },
     );
   } catch (error) {
     console.error('更新音乐配置失败:', error);
@@ -87,7 +82,7 @@ export async function POST(request: NextRequest) {
         error: '更新音乐配置失败',
         details: (error as Error).message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

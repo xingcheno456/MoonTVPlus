@@ -1,3 +1,4 @@
+'use client';
 /* eslint-disable react-hooks/exhaustive-deps */
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -178,14 +179,14 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative inline-flex bg-gray-300/80 rounded-full p-1 dark:bg-gray-700 max-w-full ${
+      className={`relative inline-flex max-w-full rounded-full bg-gray-300/80 p-1 dark:bg-gray-700 ${
         className || ''
       }`}
     >
       {/* 可滚动容器 */}
       <div
         ref={scrollContainerRef}
-        className='relative flex overflow-x-auto scrollbar-hide'
+        className='scrollbar-hide relative flex overflow-x-auto'
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
@@ -194,7 +195,7 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
         {/* 滑动的白色背景指示器 */}
         {indicatorStyle.width > 0 && (
           <div
-            className='absolute top-0 bottom-0 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out pointer-events-none'
+            className='pointer-events-none absolute bottom-0 top-0 rounded-full bg-white shadow-sm transition-all duration-300 ease-out dark:bg-gray-500'
             style={{
               left: `${indicatorStyle.left}px`,
               width: `${indicatorStyle.width}px`,
@@ -218,13 +219,15 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
                 }
                 onChange(opt.value);
               }}
-              className={`relative z-10 flex items-center justify-center gap-1.5 px-3 py-1 text-xs sm:px-4 sm:py-2 sm:text-sm rounded-full font-medium transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0 ${
+              className={`relative z-10 flex flex-shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-all duration-200 sm:px-4 sm:py-2 sm:text-sm ${
                 isActive
                   ? 'text-gray-900 dark:text-gray-100'
                   : 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
               }`}
             >
-              {opt.icon && <span className='inline-flex items-center'>{opt.icon}</span>}
+              {opt.icon && (
+                <span className='inline-flex items-center'>{opt.icon}</span>
+              )}
               {opt.label}
             </button>
           );

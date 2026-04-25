@@ -14,7 +14,7 @@ export const runtime = 'nodejs';
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // 权限检查
@@ -23,10 +23,11 @@ export async function POST(
       return NextResponse.json({ error: '无权限访问' }, { status: 403 });
     }
 
+    const { id } = await params;
     const config = await getConfig();
     const subscriptions = config.AnimeSubscriptionConfig?.Subscriptions || [];
 
-    const subscription = subscriptions.find((sub) => sub.id === params.id);
+    const subscription = subscriptions.find((sub) => sub.id === id);
     if (!subscription) {
       return NextResponse.json({ error: '订阅不存在' }, { status: 404 });
     }
@@ -45,7 +46,7 @@ export async function POST(
     console.error('检查追番订阅失败:', error);
     return NextResponse.json(
       { error: error.message || '检查失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

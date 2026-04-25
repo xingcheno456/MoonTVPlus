@@ -56,7 +56,8 @@ export default async function RootLayout({
     process.env.ANNOUNCEMENT ||
     '本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。';
 
-  let doubanProxyType = process.env.NEXT_PUBLIC_DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent';
+  let doubanProxyType =
+    process.env.NEXT_PUBLIC_DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent';
   let doubanProxy = process.env.NEXT_PUBLIC_DOUBAN_PROXY || '';
   let doubanImageProxyType =
     process.env.NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE || 'cmliussss-cdn-tencent';
@@ -114,7 +115,7 @@ export default async function RootLayout({
     doubanImageProxy = config.SiteConfig.DoubanImageProxy;
     disableYellowFilter = config.SiteConfig.DisableYellowFilter;
     customCategories = config.CustomCategories.filter(
-      (category) => !category.disabled
+      (category) => !category.disabled,
     ).map((category) => ({
       name: category.name || '',
       type: category.type,
@@ -123,7 +124,8 @@ export default async function RootLayout({
     fluidSearch = config.SiteConfig.FluidSearch;
     enableComments = config.SiteConfig.EnableComments;
     danmakuAutoLoadDefault = config.SiteConfig.DanmakuAutoLoadDefault !== false;
-    recommendationDataSource = config.SiteConfig.RecommendationDataSource || 'Mixed';
+    recommendationDataSource =
+      config.SiteConfig.RecommendationDataSource || 'Mixed';
     tmdbApiKey = config.SiteConfig.TMDBApiKey || '';
     loginBackgroundImage = config.ThemeConfig?.loginBackgroundImage || '';
     registerBackgroundImage = config.ThemeConfig?.registerBackgroundImage || '';
@@ -131,9 +133,11 @@ export default async function RootLayout({
     progressThumbPresetId = config.ThemeConfig?.progressThumbPresetId || '';
     progressThumbCustomUrl = config.ThemeConfig?.progressThumbCustomUrl || '';
     enableRegistration = config.SiteConfig.EnableRegistration || false;
-    requireRegistrationInviteCode = config.SiteConfig.RequireRegistrationInviteCode || false;
+    requireRegistrationInviteCode =
+      config.SiteConfig.RequireRegistrationInviteCode || false;
     loginRequireTurnstile = config.SiteConfig.LoginRequireTurnstile || false;
-    registrationRequireTurnstile = config.SiteConfig.RegistrationRequireTurnstile || false;
+    registrationRequireTurnstile =
+      config.SiteConfig.RegistrationRequireTurnstile || false;
     turnstileSiteKey = config.SiteConfig.TurnstileSiteKey || '';
     enableOIDCLogin = config.SiteConfig.EnableOIDCLogin || false;
     enableOIDCRegistration = config.SiteConfig.EnableOIDCRegistration || false;
@@ -157,8 +161,7 @@ export default async function RootLayout({
     musicProxyEnabled = config.MusicConfig?.ProxyEnabled ?? true;
     // 漫画功能配置
     suwayomiEnabled = !!(
-      config.SuwayomiConfig?.Enabled &&
-      config.SuwayomiConfig?.ServerURL
+      config.SuwayomiConfig?.Enabled && config.SuwayomiConfig?.ServerURL
     );
     // 高级推荐功能配置：存在已启用视频源脚本时显示
     advancedRecommendationEnabled =
@@ -174,19 +177,23 @@ export default async function RootLayout({
     embyEnabled = !!(
       config.EmbyConfig?.Sources &&
       config.EmbyConfig.Sources.length > 0 &&
-      config.EmbyConfig.Sources.some(s => s.enabled && s.ServerURL)
+      config.EmbyConfig.Sources.some((s) => s.enabled && s.ServerURL)
     );
     // 检查是否启用了小雅功能
     xiaoyaEnabled = !!(
-      config.XiaoyaConfig?.Enabled &&
-      config.XiaoyaConfig?.ServerURL
+      config.XiaoyaConfig?.Enabled && config.XiaoyaConfig?.ServerURL
     );
   }
 
   // 将运行时配置注入到全局 window 对象，供客户端在运行时读取
-  const runtimeStorageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
-  const isCloudflare = process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
-  const displayStorageType = runtimeStorageType === 'd1' && !isCloudflare ? 'sqlite' : runtimeStorageType;
+  const runtimeStorageType =
+    process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const isCloudflare =
+    process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
+  const displayStorageType =
+    runtimeStorageType === 'd1' && !isCloudflare
+      ? 'sqlite'
+      : runtimeStorageType;
 
   const runtimeConfig = {
     STORAGE_TYPE: runtimeStorageType,
@@ -202,8 +209,10 @@ export default async function RootLayout({
     DANMAKU_AUTO_LOAD_DEFAULT: danmakuAutoLoadDefault,
     RecommendationDataSource: recommendationDataSource,
     ENABLE_TVBOX_SUBSCRIBE: process.env.ENABLE_TVBOX_SUBSCRIBE === 'true',
-    ENABLE_OFFLINE_DOWNLOAD: process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true',
-    VOICE_CHAT_STRATEGY: process.env.NEXT_PUBLIC_VOICE_CHAT_STRATEGY || 'webrtc-fallback',
+    ENABLE_OFFLINE_DOWNLOAD:
+      process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true',
+    VOICE_CHAT_STRATEGY:
+      process.env.NEXT_PUBLIC_VOICE_CHAT_STRATEGY || 'webrtc-fallback',
     OPENLIST_ENABLED: openListEnabled,
     EMBY_ENABLED: embyEnabled,
     XIAOYA_ENABLED: xiaoyaEnabled,
@@ -237,8 +246,7 @@ export default async function RootLayout({
     MUSIC_ENABLED: tuneHubEnabled,
     MUSIC_PROXY_ENABLED: musicProxyEnabled,
     SUWAYOMI_ENABLED: suwayomiEnabled,
-    FESTIVE_EFFECT_ENABLED:
-      process.env.FESTIVE_EFFECT_ENABLED === 'true',
+    FESTIVE_EFFECT_ENABLED: process.env.FESTIVE_EFFECT_ENABLED === 'true',
   };
 
   return (
@@ -271,7 +279,11 @@ export default async function RootLayout({
           <TopProgressBar />
           <RouteScrollReset />
           <TokenRefreshManager />
-          <SiteProvider siteName={siteName} announcement={announcement} tmdbApiKey={tmdbApiKey}>
+          <SiteProvider
+            siteName={siteName}
+            announcement={announcement}
+            tmdbApiKey={tmdbApiKey}
+          >
             <WatchRoomProvider>
               <DownloadProvider>
                 <StartupCacheCleanup />

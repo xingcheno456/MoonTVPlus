@@ -15,7 +15,10 @@ export async function GET(request: Request) {
   // 安全校验：防 SSRF，只允许合法的公网 URL
   const isSafeUrl = await validateProxyUrlServerSide(videoUrl);
   if (!isSafeUrl) {
-    return NextResponse.json({ error: 'Proxy request to local or invalid network is forbidden' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Proxy request to local or invalid network is forbidden' },
+      { status: 403 },
+    );
   }
 
   try {
@@ -41,14 +44,14 @@ export async function GET(request: Request) {
     if (!videoResponse.ok) {
       return NextResponse.json(
         { error: videoResponse.statusText },
-        { status: videoResponse.status }
+        { status: videoResponse.status },
       );
     }
 
     if (!videoResponse.body) {
       return NextResponse.json(
         { error: 'Video response has no body' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -92,7 +95,7 @@ export async function GET(request: Request) {
     console.error('Error proxying video:', error);
     return NextResponse.json(
       { error: 'Error fetching video' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -40,7 +40,7 @@ function buildCommentPrompt(
   movieName: string,
   movieInfo?: string,
   searchResults?: string,
-  count: number = 10
+  count: number = 10,
 ): string {
   return `你是一个影评生成助手。请生成真实自然的观众评论。
 
@@ -79,7 +79,7 @@ ${searchResults ? `\n网络评价参考：\n${searchResults}` : ''}
 // 联网搜索影片资料
 async function searchMovieInfo(
   movieName: string,
-  aiConfig: GenerateCommentsParams['aiConfig']
+  aiConfig: GenerateCommentsParams['aiConfig'],
 ): Promise<string> {
   if (!aiConfig.EnableWebSearch) {
     return '';
@@ -131,7 +131,7 @@ async function searchMovieInfo(
       }
     } else if (provider === 'serpapi' && aiConfig.SerpApiKey) {
       const response = await fetch(
-        `https://serpapi.com/search?q=${encodeURIComponent(movieName + ' 影评 评价')}&api_key=${aiConfig.SerpApiKey}&num=5`
+        `https://serpapi.com/search?q=${encodeURIComponent(movieName + ' 影评 评价')}&api_key=${aiConfig.SerpApiKey}&num=5`,
       );
 
       if (response.ok) {
@@ -152,7 +152,7 @@ async function searchMovieInfo(
 
 // 调用AI生成评论
 export async function generateAIComments(
-  params: GenerateCommentsParams
+  params: GenerateCommentsParams,
 ): Promise<AIComment[]> {
   const { movieName, movieInfo, count = 10, aiConfig } = params;
 
@@ -161,7 +161,12 @@ export async function generateAIComments(
     const searchResults = await searchMovieInfo(movieName, aiConfig);
 
     // 2. 构建Prompt
-    const prompt = buildCommentPrompt(movieName, movieInfo, searchResults, count);
+    const prompt = buildCommentPrompt(
+      movieName,
+      movieInfo,
+      searchResults,
+      count,
+    );
 
     // 3. 调用AI API
     const response = await fetch(`${aiConfig.CustomBaseURL}/chat/completions`, {
@@ -175,8 +180,7 @@ export async function generateAIComments(
         messages: [
           {
             role: 'system',
-            content:
-              '你是一个专业的影评生成助手，擅长生成真实自然的观众评论。',
+            content: '你是一个专业的影评生成助手，擅长生成真实自然的观众评论。',
           },
           {
             role: 'user',

@@ -53,7 +53,7 @@ export {
 
 // 搜索动漫
 export async function searchAnime(
-  keyword: string
+  keyword: string,
 ): Promise<DanmakuSearchResponse> {
   try {
     const url = `/api/danmaku/search?keyword=${encodeURIComponent(keyword)}`;
@@ -78,7 +78,7 @@ export async function searchAnime(
 
 // 自动匹配（根据文件名）
 export async function matchAnime(
-  fileName: string
+  fileName: string,
 ): Promise<DanmakuMatchResponse> {
   try {
     const url = '/api/danmaku/match';
@@ -112,7 +112,7 @@ export async function matchAnime(
 
 // 获取剧集列表
 export async function getEpisodes(
-  animeId: number
+  animeId: number,
 ): Promise<DanmakuEpisodesResponse> {
   try {
     const url = `/api/danmaku/episodes?animeId=${animeId}`;
@@ -153,21 +153,29 @@ export async function getDanmakuById(
     episodeTitle?: string;
     searchKeyword?: string;
     danmakuCount?: number;
-  }
+  },
 ): Promise<DanmakuComment[]> {
   try {
     // 1. 如果提供了 title 和 episodeIndex，先尝试从缓存读取
     if (title && episodeIndex !== undefined && !options?.bypassCache) {
       const cachedData = await getDanmakuFromCache(title, episodeIndex);
       if (cachedData) {
-        console.log(`[弹幕缓存] 使用缓存: title=${title}, episodeIndex=${episodeIndex}, 数量=${cachedData.comments.length}`);
+        console.log(
+          `[弹幕缓存] 使用缓存: title=${title}, episodeIndex=${episodeIndex}, 数量=${cachedData.comments.length}`,
+        );
         return cachedData.comments;
       }
-      console.log(`[弹幕缓存] 缓存未命中，从 API 获取: title=${title}, episodeIndex=${episodeIndex}`);
+      console.log(
+        `[弹幕缓存] 缓存未命中，从 API 获取: title=${title}, episodeIndex=${episodeIndex}`,
+      );
     } else if (title && episodeIndex !== undefined && options?.bypassCache) {
-      console.log(`[弹幕缓存] 手动选择，跳过缓存读取: title=${title}, episodeIndex=${episodeIndex}, episodeId=${episodeId}`);
+      console.log(
+        `[弹幕缓存] 手动选择，跳过缓存读取: title=${title}, episodeIndex=${episodeIndex}, episodeId=${episodeId}`,
+      );
     } else {
-      console.log(`[弹幕缓存] 未提供 title/episodeIndex，跳过缓存: episodeId=${episodeId}`);
+      console.log(
+        `[弹幕缓存] 未提供 title/episodeIndex，跳过缓存: episodeId=${episodeId}`,
+      );
     }
 
     // 2. 缓存未命中，从 API 获取
@@ -182,9 +190,17 @@ export async function getDanmakuById(
     const comments = data.comments || [];
 
     // 3. 如果提供了 title 和 episodeIndex，保存到缓存
-    if (comments.length > 0 && title && title.trim() !== '' && episodeIndex !== undefined && episodeIndex >= 0) {
+    if (
+      comments.length > 0 &&
+      title &&
+      title.trim() !== '' &&
+      episodeIndex !== undefined &&
+      episodeIndex >= 0
+    ) {
       try {
-        console.log(`[弹幕缓存] 尝试保存缓存: title="${title}", episodeIndex=${episodeIndex}, 数量=${comments.length}`);
+        console.log(
+          `[弹幕缓存] 尝试保存缓存: title="${title}", episodeIndex=${episodeIndex}, 数量=${comments.length}`,
+        );
         await saveDanmakuToCache(title, episodeIndex, comments, {
           animeId: metadata?.animeId,
           episodeId: episodeId,
@@ -193,13 +209,17 @@ export async function getDanmakuById(
           searchKeyword: metadata?.searchKeyword,
           danmakuCount: metadata?.danmakuCount ?? comments.length,
         });
-        console.log(`[弹幕缓存] 已缓存: title=${title}, episodeIndex=${episodeIndex}, 数量=${comments.length}`);
+        console.log(
+          `[弹幕缓存] 已缓存: title=${title}, episodeIndex=${episodeIndex}, 数量=${comments.length}`,
+        );
       } catch (cacheError) {
         console.error('[弹幕缓存] 保存缓存失败:', cacheError);
         // 缓存失败不影响返回结果
       }
     } else {
-      console.log(`[弹幕缓存] 不满足缓存条件: title="${title}", episodeIndex=${episodeIndex}, comments.length=${comments.length}`);
+      console.log(
+        `[弹幕缓存] 不满足缓存条件: title="${title}", episodeIndex=${episodeIndex}, comments.length=${comments.length}`,
+      );
     }
 
     return comments;
@@ -228,9 +248,7 @@ export async function getDanmakuByUrl(url: string): Promise<DanmakuComment[]> {
 }
 
 // 将 danmu_api 的弹幕格式转换为 artplayer-plugin-danmuku 格式
-export function convertDanmakuFormat(
-  comments: DanmakuComment[]
-): Array<{
+export function convertDanmakuFormat(comments: DanmakuComment[]): Array<{
   text: string;
   time: number;
   color: string;
@@ -249,7 +267,8 @@ export function convertDanmakuFormat(
 
     // 转换弹幕类型: 1=滚动(0), 4=底部(1), 5=顶部(2)
     let mode = 0; // 默认滚动
-    if (type === 5) mode = 1; // 顶部
+    if (type === 5)
+      mode = 1; // 顶部
     else if (type === 4) mode = 2; // 底部
 
     return {
@@ -349,7 +368,7 @@ export function saveDanmakuMemory(
   episodeId: number,
   animeTitle: string,
   episodeTitle: string,
-  searchKeyword?: string // 可选的搜索关键词
+  searchKeyword?: string, // 可选的搜索关键词
 ): void {
   if (typeof window === 'undefined') return;
 
@@ -389,9 +408,7 @@ export function saveDanmakuMemory(
 }
 
 // 读取弹幕选择记忆
-export function loadDanmakuMemory(
-  videoTitle: string
-): DanmakuMemory | null {
+export function loadDanmakuMemory(videoTitle: string): DanmakuMemory | null {
   if (typeof window === 'undefined') return null;
 
   try {
