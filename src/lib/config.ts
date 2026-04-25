@@ -1,5 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion */
 
+/**
+ * 配置解析管道 (Config Pipeline)
+ *
+ * 优先级顺序（从高到低）：
+ * 1. 环境变量 (process.env.*) - 最高优先级，用于开发和生产覆盖
+ * 2. AdminConfig (数据库存储) - 用户通过界面配置
+ * 3. ConfigFile (JSON 字符串字段) - 配置文件中的设置
+ * 4. 运行时覆盖 (window.RUNTIME_CONFIG) - 客户端动态注入
+ *
+ * 默认值：在上述所有来源都未配置时使用
+ *
+ * 配置来源说明：
+ * - 环境变量：NEXT_PUBLIC_* (客户端可见), 非 NEXT_PUBLIC_* (仅服务端)
+ * - AdminConfig：存储在数据库中的管理员配置
+ * - ConfigFile：存储在 ConfigFile 字段中的 JSON 字符串
+ * - window.RUNTIME_CONFIG：服务端注入到客户端的运行时配置
+ */
+
 import { db } from '@/lib/db';
 
 import { AdminConfig } from './admin.types';
@@ -228,7 +246,7 @@ async function getInitConfig(
     cfgFile = {} as ConfigFileStruct;
   }
   const hasCustomDanmakuEnv = Boolean(
-    process.env.DANMAKU_API_BASE || process.env.DANMAKU_API_TOKEN,
+    process.env.DANMAKU_API_BASE?.trim() || process.env.DANMAKU_API_TOKEN?.trim(),
   );
   const adminConfig: AdminConfig = {
     ConfigFile: configSource,
@@ -359,7 +377,12 @@ export async function getConfig(): Promise<AdminConfig> {
     if (storageType === 'localstorage') {
       console.log('localStorage 模式：从环境变量初始化配置');
       const adminConfig = await getInitConfig('');
-      cachedConfig = configSelfCheck(adminConfig);
+      try {
+        cachedConfig = mergeWithEnvOverrides(configSelfCheck(adminConfig));
+      } catch (error) {
+        console.error('配置初始化失败:', error);
+        cachedConfig = adminConfig;
+      }
       configInitPromise = null;
       return cachedConfig;
     }
@@ -394,10 +417,10 @@ export async function getConfig(): Promise<AdminConfig> {
       adminConfig.EmbyConfig.ServerURL &&
       !adminConfig.EmbyConfig.Sources;
 
+    // 先执行结构校验和默认值填充（不包含环境变量覆盖）
     adminConfig = configSelfCheck(adminConfig);
-    cachedConfig = adminConfig;
 
-    // 如果进行了Emby配置迁移，保存到数据库
+    // 如果进行了Emby配置迁移，保存到数据库（在环境变量覆盖之前）
     if (!dbReadFailed && needsEmbyMigration) {
       try {
         await db.saveAdminConfig(adminConfig);
@@ -422,7 +445,6 @@ export async function getConfig(): Promise<AdminConfig> {
           // 迁移完成后，清空配置中的用户列表并保存
           adminConfig.UserConfig.Users = [];
           await db.saveAdminConfig(adminConfig);
-          cachedConfig = adminConfig;
           console.log('用户自动迁移完成');
         }
       } catch (error) {
@@ -431,12 +453,159 @@ export async function getConfig(): Promise<AdminConfig> {
       }
     }
 
+    // 所有数据库保存完成后，再应用环境变量覆盖（运行时覆盖，不持久化）
+    adminConfig = mergeWithEnvOverrides(adminConfig);
+    cachedConfig = adminConfig;
+
     // 清除初始化 Promise
     configInitPromise = null;
     return cachedConfig;
   })();
 
   return configInitPromise;
+}
+
+/**
+ * 使用环境变量覆盖配置
+ * 这是配置管道的第1步（最高优先级）
+ * 确保环境变量始终优先于数据库和配置文件中的设置
+ */
+function mergeWithEnvOverrides(adminConfig: AdminConfig): AdminConfig {
+  const hasCustomDanmakuEnv = Boolean(
+    process.env.DANMAKU_API_BASE?.trim() || process.env.DANMAKU_API_TOKEN?.trim(),
+  );
+
+  const VALID_BOOL_VALUES = new Set(['true', 'false']);
+  const VALID_SUWAYOMI_AUTH_MODES = new Set([
+    'none',
+    'basic_auth',
+    'simple_login',
+  ]);
+
+  // SiteConfig 环境变量覆盖
+  if (adminConfig.SiteConfig) {
+    if (process.env.NEXT_PUBLIC_SITE_NAME) {
+      adminConfig.SiteConfig.SiteName = process.env.NEXT_PUBLIC_SITE_NAME;
+    }
+    if (process.env.ANNOUNCEMENT) {
+      adminConfig.SiteConfig.Announcement = process.env.ANNOUNCEMENT;
+    }
+    if (process.env.NEXT_PUBLIC_SEARCH_MAX_PAGE) {
+      const pageNum = Number(process.env.NEXT_PUBLIC_SEARCH_MAX_PAGE);
+      if (!isNaN(pageNum) && pageNum > 0 && Number.isInteger(pageNum)) {
+        adminConfig.SiteConfig.SearchDownstreamMaxPage = pageNum;
+      }
+    }
+    if (process.env.NEXT_PUBLIC_DOUBAN_PROXY_TYPE) {
+      adminConfig.SiteConfig.DoubanProxyType =
+        process.env.NEXT_PUBLIC_DOUBAN_PROXY_TYPE;
+    }
+    if (process.env.NEXT_PUBLIC_DOUBAN_PROXY) {
+      adminConfig.SiteConfig.DoubanProxy = process.env.NEXT_PUBLIC_DOUBAN_PROXY;
+    }
+    if (process.env.NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE) {
+      adminConfig.SiteConfig.DoubanImageProxyType =
+        process.env.NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE;
+    }
+    if (process.env.NEXT_PUBLIC_DOUBAN_IMAGE_PROXY) {
+      adminConfig.SiteConfig.DoubanImageProxy =
+        process.env.NEXT_PUBLIC_DOUBAN_IMAGE_PROXY;
+    }
+    if (VALID_BOOL_VALUES.has(process.env.NEXT_PUBLIC_DISABLE_YELLOW_FILTER || '')) {
+      adminConfig.SiteConfig.DisableYellowFilter =
+        process.env.NEXT_PUBLIC_DISABLE_YELLOW_FILTER === 'true';
+    }
+    if (VALID_BOOL_VALUES.has(process.env.NEXT_PUBLIC_FLUID_SEARCH || '')) {
+      adminConfig.SiteConfig.FluidSearch =
+        process.env.NEXT_PUBLIC_FLUID_SEARCH === 'true';
+    }
+    // 弹幕配置
+    if (hasCustomDanmakuEnv) {
+      adminConfig.SiteConfig.DanmakuSourceType = 'custom';
+    }
+    if (process.env.DANMAKU_API_BASE) {
+      adminConfig.SiteConfig.DanmakuApiBase = process.env.DANMAKU_API_BASE;
+    } else if (
+      hasCustomDanmakuEnv &&
+      !adminConfig.SiteConfig.DanmakuApiBase
+    ) {
+      adminConfig.SiteConfig.DanmakuApiBase = 'http://localhost:9321';
+    }
+    if (process.env.DANMAKU_API_TOKEN) {
+      adminConfig.SiteConfig.DanmakuApiToken = process.env.DANMAKU_API_TOKEN;
+    }
+    // TMDB配置
+    if (process.env.TMDB_API_KEY) {
+      adminConfig.SiteConfig.TMDBApiKey = process.env.TMDB_API_KEY;
+    }
+    if (process.env.TMDB_PROXY) {
+      adminConfig.SiteConfig.TMDBProxy = process.env.TMDB_PROXY;
+    }
+    if (process.env.TMDB_REVERSE_PROXY) {
+      adminConfig.SiteConfig.TMDBReverseProxy =
+        process.env.TMDB_REVERSE_PROXY;
+    }
+  }
+
+  // SuwayomiConfig 环境变量覆盖
+  if (!adminConfig.SuwayomiConfig) {
+    const hasSuwayomiEnv = Boolean(
+      process.env.SUWAYOMI_ENABLED ||
+      process.env.SUWAYOMI_URL ||
+      process.env.NEXT_PUBLIC_SUWAYOMI_URL ||
+      process.env.SUWAYOMI_AUTH_MODE ||
+      process.env.SUWAYOMI_USERNAME ||
+      process.env.SUWAYOMI_PASSWORD,
+    );
+    if (hasSuwayomiEnv) {
+      adminConfig.SuwayomiConfig = {
+        Enabled: false,
+        ServerURL: '',
+        AuthMode: 'none',
+        Username: '',
+        Password: '',
+        DefaultLang: 'zh',
+        SourceIds: [],
+        MaxSources: 10,
+      };
+    }
+  }
+  if (adminConfig.SuwayomiConfig) {
+    if (VALID_BOOL_VALUES.has(process.env.SUWAYOMI_ENABLED || '')) {
+      adminConfig.SuwayomiConfig.Enabled =
+        process.env.SUWAYOMI_ENABLED === 'true';
+    }
+    if (process.env.SUWAYOMI_URL || process.env.NEXT_PUBLIC_SUWAYOMI_URL) {
+      adminConfig.SuwayomiConfig.ServerURL =
+        process.env.SUWAYOMI_URL ||
+        process.env.NEXT_PUBLIC_SUWAYOMI_URL ||
+        '';
+    }
+    if (
+      process.env.SUWAYOMI_AUTH_MODE &&
+      VALID_SUWAYOMI_AUTH_MODES.has(process.env.SUWAYOMI_AUTH_MODE)
+    ) {
+      adminConfig.SuwayomiConfig.AuthMode = process.env
+        .SUWAYOMI_AUTH_MODE as 'none' | 'basic_auth' | 'simple_login';
+    }
+    if (process.env.SUWAYOMI_USERNAME) {
+      adminConfig.SuwayomiConfig.Username = process.env.SUWAYOMI_USERNAME;
+    }
+    if (process.env.SUWAYOMI_PASSWORD) {
+      adminConfig.SuwayomiConfig.Password = process.env.SUWAYOMI_PASSWORD;
+    }
+    if (process.env.SUWAYOMI_DEFAULT_LANG) {
+      adminConfig.SuwayomiConfig.DefaultLang = process.env.SUWAYOMI_DEFAULT_LANG;
+    }
+    if (process.env.SUWAYOMI_MAX_SOURCES) {
+      const maxSources = Number(process.env.SUWAYOMI_MAX_SOURCES);
+      if (!isNaN(maxSources) && maxSources > 0 && Number.isInteger(maxSources)) {
+        adminConfig.SuwayomiConfig.MaxSources = maxSources;
+      }
+    }
+  }
+
+  return adminConfig;
 }
 
 export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
