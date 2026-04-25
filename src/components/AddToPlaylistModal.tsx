@@ -60,7 +60,7 @@ export default function AddToPlaylistModal({
       setLoading(true);
       const response = await fetch('/api/music/v2/playlists');
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setPlaylists(data.data?.playlists || []);
       }
     } catch (error) {
@@ -93,7 +93,7 @@ export default function AddToPlaylistModal({
         setShowCreateForm(false);
         await loadPlaylists();
       } else {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         onError?.(data.error || '创建歌单失败');
       }
     } catch (error) {
@@ -132,7 +132,7 @@ export default function AddToPlaylistModal({
         onSuccess?.();
         onClose();
       } else {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         onError?.(data.error || '添加失败');
       }
     } catch (error) {

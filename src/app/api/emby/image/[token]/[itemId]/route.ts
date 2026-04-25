@@ -2,6 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 
@@ -66,7 +68,7 @@ export async function GET(
 
     // 两者至少满足其一
     if (!hasValidToken && !hasValidAuth) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const imageType = (searchParams.get('imageType') || 'Primary') as
@@ -116,7 +118,7 @@ export async function GET(
           status: imageResponse.status,
           statusText: imageResponse.statusText,
         });
-        return NextResponse.json({ error: '获取图片失败' }, { status: 500 });
+        return apiError('获取图片失败', 500);
       }
 
       // 获取 Content-Type
@@ -147,15 +149,12 @@ export async function GET(
 
       if (error instanceof Error && error.name === 'AbortError') {
         console.error('[Emby Image] 请求超时');
-        return NextResponse.json({ error: '请求超时' }, { status: 504 });
+        return apiError('请求超时', 504);
       }
       throw error;
     }
   } catch (error) {
     console.error('[Emby Image] 错误:', error);
-    return NextResponse.json(
-      { error: '获取图片失败', details: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError('获取图片失败: ' + (error as Error).message, 500);
   }
 }

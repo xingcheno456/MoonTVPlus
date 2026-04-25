@@ -52,7 +52,7 @@ export function OfflineDownloadPanel({
     try {
       const response = await fetch('/api/offline-download');
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setTasks(data.tasks || []);
       }
     } catch (error) {
@@ -71,7 +71,7 @@ export function OfflineDownloadPanel({
         // 从列表中移除
         setTasks((prev) => prev.filter((t) => t.id !== taskId));
       } else {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         alert(`删除失败: ${data.error}`);
       }
     } catch (error) {
@@ -91,7 +91,7 @@ export function OfflineDownloadPanel({
       );
 
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         // 更新任务状态（保留进度，只重试失败的片段）
         setTasks((prev) =>
           prev.map((t) =>
@@ -108,7 +108,7 @@ export function OfflineDownloadPanel({
         // 立即刷新以获取最新状态
         fetchTasks();
       } else {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         alert(`重试失败: ${data.error}`);
       }
     } catch (error) {

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getCachedLiveChannels } from '@/lib/live';
 
@@ -10,20 +12,17 @@ export async function GET(request: NextRequest) {
     const sourceKey = searchParams.get('source');
 
     if (!sourceKey) {
-      return NextResponse.json({ error: '缺少直播源参数' }, { status: 400 });
+      return apiError('缺少直播源参数', 400);
     }
 
     const channelData = await getCachedLiveChannels(sourceKey);
 
     if (!channelData) {
-      return NextResponse.json({ error: '频道信息未找到' }, { status: 404 });
+      return apiError('频道信息未找到', 404);
     }
 
-    return NextResponse.json({
-      success: true,
-      data: channelData.channels,
-    });
+    return apiSuccess({ data: channelData.channels, });
   } catch (error) {
-    return NextResponse.json({ error: '获取频道信息失败' }, { status: 500 });
+    return apiError('获取频道信息失败', 500);
   }
 }

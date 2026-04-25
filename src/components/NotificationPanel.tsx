@@ -28,7 +28,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     try {
       const response = await fetch('/api/notifications');
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setNotifications(data.notifications || []);
       }
     } catch (error) {

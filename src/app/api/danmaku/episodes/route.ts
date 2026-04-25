@@ -1,5 +1,7 @@
 // 获取剧集列表 API 路由
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import { getDanmakuApiBaseUrl } from '@/lib/danmaku/config';
@@ -12,8 +14,7 @@ export async function GET(request: NextRequest) {
     const animeId = searchParams.get('animeId');
 
     if (!animeId) {
-      return NextResponse.json(
-        {
+      return apiSuccess({
           errorCode: -1,
           success: false,
           errorMessage: '缺少动漫ID参数',
@@ -22,9 +23,7 @@ export async function GET(request: NextRequest) {
             animeTitle: '',
             episodes: [],
           },
-        },
-        { status: 400 },
-      );
+        }, { status: 400 });
     }
 
     // 从数据库读取弹幕配置
@@ -56,7 +55,7 @@ export async function GET(request: NextRequest) {
 
       const data = await response.json();
 
-      return NextResponse.json(data);
+      return apiSuccess(data);
     } catch (fetchError) {
       clearTimeout(timeoutId);
 
@@ -69,8 +68,7 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error('获取剧集列表代理错误:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         errorCode: -1,
         success: false,
         errorMessage:
@@ -80,8 +78,6 @@ export async function GET(request: NextRequest) {
           animeTitle: '',
           episodes: [],
         },
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

@@ -314,7 +314,7 @@ export const UserMenu: React.FC = () => {
     try {
       const response = await fetch('/api/notifications');
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         const count = data.unreadCount || 0;
         setUnreadCount(count);
         // 同步到全局，让其他 UserMenu 实例也能获取
@@ -418,7 +418,7 @@ export const UserMenu: React.FC = () => {
       // 获取用户的 TVBox token
       const response = await fetch('/api/user/tvbox-token');
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         const token = data.token;
         setTvboxToken(token);
 
@@ -454,7 +454,7 @@ export const UserMenu: React.FC = () => {
 
           const messageEl = document.getElementById('tvbox-token-message');
           if (response.ok) {
-            const data = await response.json();
+            const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
             const token = data.token;
             setTvboxToken(token);
 
@@ -476,7 +476,7 @@ export const UserMenu: React.FC = () => {
               }, 3000);
             }
           } else {
-            const data = await response.json();
+            const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
             if (messageEl) {
               messageEl.textContent = data.error || '重置失败，请重试';
               messageEl.className =
@@ -766,7 +766,7 @@ export const UserMenu: React.FC = () => {
     try {
       const response = await fetch('/api/user/email-settings');
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setUserEmail(data.email || '');
         setEmailNotifications(data.emailNotifications || false);
       }
@@ -800,7 +800,7 @@ export const UserMenu: React.FC = () => {
           setEmailSettingsMessageType(null);
         }, 3000);
       } else {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setEmailSettingsMessage(data.error || '保存失败');
         setEmailSettingsMessageType('error');
       }
@@ -819,7 +819,7 @@ export const UserMenu: React.FC = () => {
     try {
       const response = await fetch('/api/auth/devices');
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setDevices(data.devices || []);
       }
     } catch (error) {
@@ -1084,7 +1084,9 @@ export const UserMenu: React.FC = () => {
         }),
       });
 
-      const data = await response.json();
+      const _raw_data = await response.json();
+
+      const data = _raw_data.success === true ? _raw_data.data : _raw_data;
 
       if (!response.ok) {
         setPasswordError(data.error || '修改密码失败');

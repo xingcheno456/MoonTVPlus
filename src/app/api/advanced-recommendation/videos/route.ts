@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import {
@@ -12,7 +14,7 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   const { searchParams } = new URL(request.url);
@@ -20,7 +22,7 @@ export async function GET(request: NextRequest) {
   const page = Number(searchParams.get('page') || '1');
 
   if (!sourceKey) {
-    return NextResponse.json({ error: '缺少参数: source' }, { status: 400 });
+    return apiError('缺少参数: source', 400);
   }
 
   try {
@@ -51,16 +53,13 @@ export async function GET(request: NextRequest) {
       defaultSourceId: sources[0]?.id || 'default',
     });
 
-    return NextResponse.json({
+    return apiSuccess({
       results,
       page: Number(execution.result?.page || page),
       pageCount: Number(execution.result?.pageCount || 1),
       total: Number(execution.result?.total || results.length),
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: (error as Error).message || '获取高级推荐失败' },
-      { status: 500 },
-    );
+    return apiError((error as Error).message || '获取高级推荐失败', 500);
   }
 }

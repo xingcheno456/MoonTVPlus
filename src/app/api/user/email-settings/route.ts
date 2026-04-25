@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getStorage } from '@/lib/db';
@@ -11,7 +13,7 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
@@ -26,16 +28,13 @@ export async function GET(request: NextRequest) {
       ? await storage.getEmailNotificationPreference(username)
       : false;
 
-    return NextResponse.json({
+    return apiSuccess({
       email: email || '',
       emailNotifications,
     });
   } catch (error) {
     console.error('获取用户邮箱设置失败:', error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError((error as Error).message, 500);
   }
 }
 
@@ -45,7 +44,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
@@ -58,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (email && typeof email === 'string') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        return NextResponse.json({ error: '邮箱格式不正确' }, { status: 400 });
+        return apiError('邮箱格式不正确', 400);
       }
 
       if (storage.setUserEmail) {
@@ -76,15 +75,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      message: '邮箱设置保存成功',
-    });
+    return apiSuccess({ message: '邮箱设置保存成功', });
   } catch (error) {
     console.error('保存用户邮箱设置失败:', error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError((error as Error).message, 500);
   }
 }

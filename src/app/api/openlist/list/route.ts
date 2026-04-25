@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -23,7 +25,7 @@ export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -42,10 +44,7 @@ export async function GET(request: NextRequest) {
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json(
-        { error: 'OpenList 未配置或未启用', list: [], total: 0 },
-        { status: 200 },
-      );
+      return apiError('OpenList 未配置或未启用', 200);
     }
 
     const client = new OpenListClient(
@@ -93,31 +92,22 @@ export async function GET(request: NextRequest) {
         }
       } catch (error) {
         console.error('[OpenList List] 从数据库读取 metainfo 失败:', error);
-        return NextResponse.json(
-          {
+        return apiSuccess({
             error: 'metainfo 读取失败',
             details: (error as Error).message,
             list: [],
             total: 0,
-          },
-          { status: 200 },
-        );
+          }, { status: 200 });
       }
     }
 
     if (!metaInfo) {
-      return NextResponse.json(
-        { error: '无数据', list: [], total: 0 },
-        { status: 200 },
-      );
+      return apiError('无数据', 200);
     }
 
     // 验证 metaInfo 结构
     if (!metaInfo.folders || typeof metaInfo.folders !== 'object') {
-      return NextResponse.json(
-        { error: 'metainfo.json 结构无效', list: [], total: 0 },
-        { status: 200 },
-      );
+      return apiError('metainfo.json 结构无效', 200);
     }
 
     // 转换为数组并分页
@@ -149,24 +139,18 @@ export async function GET(request: NextRequest) {
     const end = start + pageSize;
     const list = allVideos.slice(start, end);
 
-    return NextResponse.json({
-      success: true,
-      list,
+    return apiSuccess({ list,
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize),
-    });
+      totalPages: Math.ceil(total / pageSize), });
   } catch (error) {
     console.error('获取视频列表失败:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '获取失败',
         details: (error as Error).message,
         list: [],
         total: 0,
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -11,12 +13,9 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
   if (storageType === 'localstorage') {
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '不支持本地存储进行管理员配置',
-      },
-      { status: 400 },
-    );
+      }, { status: 400 });
   }
 
   try {
@@ -24,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
     const username = authInfo.username;
 
@@ -200,7 +199,7 @@ export async function POST(request: NextRequest) {
       (OIDCButtonText !== undefined && typeof OIDCButtonText !== 'string') ||
       (OIDCMinTrustLevel !== undefined && typeof OIDCMinTrustLevel !== 'number')
     ) {
-      return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
+      return apiError('参数格式错误', 400);
     }
 
     const adminConfig = await getConfig();
@@ -209,7 +208,7 @@ export async function POST(request: NextRequest) {
     if (username !== process.env.USERNAME) {
       const userInfo = await db.getUserInfoV2(username);
       if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
+        return apiError('权限不足', 401);
       }
     }
 
@@ -268,22 +267,16 @@ export async function POST(request: NextRequest) {
     // 写入数据库
     await db.saveAdminConfig(adminConfig);
 
-    return NextResponse.json(
-      { ok: true },
-      {
+    return apiSuccess({ ok: true }, {
         headers: {
           'Cache-Control': 'no-store', // 不缓存结果
         },
-      },
-    );
+      });
   } catch (error) {
     console.error('更新站点配置失败:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '更新站点配置失败',
         details: (error as Error).message,
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

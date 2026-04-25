@@ -23,7 +23,7 @@ function OIDCRegisterPageClient() {
       try {
         const res = await fetch('/api/auth/oidc/session-info');
         if (res.ok) {
-          const data = await res.json();
+          const _apiRes_data = await res.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           setOidcInfo(data);
         } else {
           // session无效,跳转到登录页
@@ -61,7 +61,7 @@ function OIDCRegisterPageClient() {
         // 注册成功,跳转到首页
         router.replace('/');
       } else {
-        const data = await res.json().catch(() => ({}));
+        const _apiRes_data = await res.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setError(data.error || '注册失败');
       }
     } catch (error) {

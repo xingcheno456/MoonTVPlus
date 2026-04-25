@@ -1,5 +1,7 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
@@ -121,39 +123,30 @@ export async function POST(request: NextRequest) {
 
     // 验证用户名
     if (!username || typeof username !== 'string') {
-      return NextResponse.json({ error: '用户名不能为空' }, { status: 400 });
+      return apiError('用户名不能为空', 400);
     }
 
     // 验证用户名格式
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-      return NextResponse.json(
-        { error: '用户名只能包含字母、数字、下划线，长度3-20位' },
-        { status: 400 },
-      );
+      return apiError('用户名只能包含字母、数字、下划线，长度3-20位', 400);
     }
 
     // 获取OIDC session
     const oidcSessionCookie = request.cookies.get('oidc_session')?.value;
     if (!oidcSessionCookie) {
-      return NextResponse.json(
-        { error: 'OIDC会话已过期，请重新登录' },
-        { status: 400 },
-      );
+      return apiError('OIDC会话已过期，请重新登录', 400);
     }
 
     let oidcSession: any;
     try {
       oidcSession = JSON.parse(oidcSessionCookie);
     } catch {
-      return NextResponse.json({ error: 'OIDC会话无效' }, { status: 400 });
+      return apiError('OIDC会话无效', 400);
     }
 
     // 检查session是否过期(10分钟)
     if (Date.now() - oidcSession.timestamp > 600000) {
-      return NextResponse.json(
-        { error: 'OIDC会话已过期，请重新登录' },
-        { status: 400 },
-      );
+      return apiError('OIDC会话已过期，请重新登录', 400);
     }
 
     const config = await getConfig();
@@ -161,7 +154,7 @@ export async function POST(request: NextRequest) {
 
     // 检查是否启用OIDC注册
     if (!siteConfig.EnableOIDCRegistration) {
-      return NextResponse.json({ error: 'OIDC注册未启用' }, { status: 403 });
+      return apiError('OIDC注册未启用', 403);
     }
 
     // 检查最低信任等级
@@ -169,33 +162,27 @@ export async function POST(request: NextRequest) {
     if (minTrustLevel > 0) {
       const userTrustLevel = oidcSession.trust_level ?? 0;
       if (userTrustLevel < minTrustLevel) {
-        return NextResponse.json(
-          {
+        return apiSuccess({
             error: `您的信任等级(${userTrustLevel})不满足最低要求(${minTrustLevel})`,
-          },
-          { status: 403 },
-        );
+          }, { status: 403 });
       }
     }
 
     // 检查是否与站长同名
     if (username === process.env.USERNAME) {
-      return NextResponse.json({ error: '该用户名不可用' }, { status: 409 });
+      return apiError('该用户名不可用', 409);
     }
 
     // 检查用户名是否已存在
     const userExists = await db.checkUserExistV2(username);
     if (userExists) {
-      return NextResponse.json({ error: '用户名已存在' }, { status: 409 });
+      return apiError('用户名已存在', 409);
     }
 
     // 检查OIDC sub是否已被使用
     const existingOIDCUsername = await db.getUserByOidcSub(oidcSession.sub);
     if (existingOIDCUsername) {
-      return NextResponse.json(
-        { error: '该OIDC账号已被注册' },
-        { status: 409 },
-      );
+      return apiError('该OIDC账号已被注册', 409);
     }
 
     // 创建用户
@@ -219,7 +206,7 @@ export async function POST(request: NextRequest) {
       );
 
       // 设置认证cookie
-      const response = NextResponse.json({ ok: true, message: '注册成功' });
+      const response = apiSuccess({ ok: true, message: '注册成功' });
       const userAgent = request.headers.get('user-agent') || 'Unknown';
       const deviceInfo = getDeviceInfo(userAgent);
       const cookieValue = await generateAuthCookie(
@@ -243,13 +230,10 @@ export async function POST(request: NextRequest) {
       return response;
     } catch (err) {
       console.error('创建用户失败', err);
-      return NextResponse.json(
-        { error: '注册失败，请稍后重试' },
-        { status: 500 },
-      );
+      return apiError('注册失败，请稍后重试', 500);
     }
   } catch (error) {
     console.error('OIDC注册完成失败:', error);
-    return NextResponse.json({ error: '服务器错误' }, { status: 500 });
+    return apiError('服务器错误', 500);
   }
 }

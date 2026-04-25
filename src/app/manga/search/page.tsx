@@ -168,7 +168,8 @@ export default function MangaSearchPage() {
         const params = new URLSearchParams({ q: trimmedQuery });
         if (selectedSourceId) params.set('sourceId', selectedSourceId);
         const res = await fetch(`/api/manga/search?${params.toString()}`);
-        const data = await res.json();
+        const _raw_data = await res.json();
+        const data = _raw_data.success === true ? _raw_data.data : _raw_data;
         if (!res.ok) throw new Error(data.error || '搜索失败');
         const nextResults = data.results || [];
         setResults(nextResults);

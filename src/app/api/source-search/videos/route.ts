@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { API_CONFIG, getAvailableApiSites } from '@/lib/config';
@@ -29,7 +31,7 @@ interface CmsVideoResponse {
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   const { searchParams } = new URL(request.url);
@@ -38,14 +40,11 @@ export async function GET(request: NextRequest) {
   const page = searchParams.get('page') || '1';
 
   if (!sourceKey) {
-    return NextResponse.json({ error: '缺少参数: source' }, { status: 400 });
+    return apiError('缺少参数: source', 400);
   }
 
   if (!categoryId) {
-    return NextResponse.json(
-      { error: '缺少参数: categoryId' },
-      { status: 400 },
-    );
+    return apiError('缺少参数: categoryId', 400);
   }
 
   try {
@@ -53,10 +52,7 @@ export async function GET(request: NextRequest) {
     const targetSite = apiSites.find((site) => site.key === sourceKey);
 
     if (!targetSite) {
-      return NextResponse.json(
-        { error: `未找到指定的视频源: ${sourceKey}` },
-        { status: 404 },
-      );
+      return apiError(`未找到指定的视频源: ${sourceKey}`, 404);
     }
 
     // 请求分类视频列表
@@ -73,7 +69,7 @@ export async function GET(request: NextRequest) {
     const videoData: CmsVideoResponse = await videoResponse.json();
 
     if (!videoData.list || !Array.isArray(videoData.list)) {
-      return NextResponse.json({
+      return apiSuccess({
         results: [],
         total: 0,
         page: parseInt(page),
@@ -112,7 +108,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({
+    return apiSuccess({
       results,
       total: videoData.total || 0,
       page: parseInt(page),
@@ -120,6 +116,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Failed to get videos:', error);
-    return NextResponse.json({ error: '获取视频列表失败' }, { status: 500 });
+    return apiError('获取视频列表失败', 500);
   }
 }

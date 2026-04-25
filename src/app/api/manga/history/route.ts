@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { db } from '@/lib/db';
 import { MangaReadRecord } from '@/lib/manga.types';
 
@@ -16,22 +18,16 @@ export async function GET(request: NextRequest) {
     if (key) {
       const [sourceId, mangaId] = key.split('+');
       if (!sourceId || !mangaId) {
-        return NextResponse.json(
-          { error: 'Invalid key format' },
-          { status: 400 },
-        );
+        return apiError('Invalid key format', 400);
       }
       const record = await db.getMangaReadRecord(username, sourceId, mangaId);
-      return NextResponse.json(record, { status: 200 });
+      return apiSuccess(record, { status: 200 });
     }
 
     const records = await db.getAllMangaReadRecords(username);
-    return NextResponse.json(records, { status: 200 });
+    return apiSuccess(records, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 },
-    );
+    return apiError('Internal Server Error', 500);
   }
 }
 
@@ -43,18 +39,12 @@ export async function POST(request: NextRequest) {
     const { key, record }: { key: string; record: MangaReadRecord } =
       await request.json();
     if (!key || !record?.chapterId) {
-      return NextResponse.json(
-        { error: 'Missing key or record' },
-        { status: 400 },
-      );
+      return apiError('Missing key or record', 400);
     }
 
     const [sourceId, mangaId] = key.split('+');
     if (!sourceId || !mangaId) {
-      return NextResponse.json(
-        { error: 'Invalid key format' },
-        { status: 400 },
-      );
+      return apiError('Invalid key format', 400);
     }
 
     await db.saveMangaReadRecord(username, sourceId, mangaId, {
@@ -70,12 +60,9 @@ export async function POST(request: NextRequest) {
         });
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return apiSuccess({ success: true }, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 },
-    );
+    return apiError('Internal Server Error', 500);
   }
 }
 
@@ -88,10 +75,7 @@ export async function DELETE(request: NextRequest) {
     if (key) {
       const [sourceId, mangaId] = key.split('+');
       if (!sourceId || !mangaId) {
-        return NextResponse.json(
-          { error: 'Invalid key format' },
-          { status: 400 },
-        );
+        return apiError('Invalid key format', 400);
       }
       await db.deleteMangaReadRecord(username, sourceId, mangaId);
     } else {
@@ -106,11 +90,8 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return apiSuccess({ success: true }, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 },
-    );
+    return apiError('Internal Server Error', 500);
   }
 }

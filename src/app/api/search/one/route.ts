@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
@@ -13,11 +14,10 @@ import { yellowWords } from '@/lib/yellow';
 
 export const runtime = 'nodejs';
 
-// OrionTV 兼容接口
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   const { searchParams } = new URL(request.url);
@@ -26,17 +26,14 @@ export async function GET(request: NextRequest) {
 
   if (!query || !resourceId) {
     const cacheTime = await getCacheTime();
-    return NextResponse.json(
-      { result: null, error: '缺少必要参数: q 或 resourceId' },
-      {
-        headers: {
-          'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
-          'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-          'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-          'Netlify-Vary': 'query',
-        },
+    return apiSuccess({ result: null }, {
+      headers: {
+        'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
+        'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
+        'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
+        'Netlify-Vary': 'query',
       },
-    );
+    });
   }
 
   const config = await getConfig();
@@ -86,38 +83,22 @@ export async function GET(request: NextRequest) {
 
       const cacheTime = await getCacheTime();
       if (result.length === 0) {
-        return NextResponse.json(
-          {
-            error: '未找到结果',
-            result: null,
-          },
-          { status: 404 },
-        );
+        return apiError('未找到结果', 404);
       }
 
-      return NextResponse.json(
-        { results: result },
-        {
-          headers: {
-            'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
-            'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-            'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-            'Netlify-Vary': 'query',
-          },
+      return apiSuccess({ results: result }, {
+        headers: {
+          'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
+          'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
+          'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
+          'Netlify-Vary': 'query',
         },
-      );
+      });
     }
 
-    // 根据 resourceId 查找对应的 API 站点
     const targetSite = apiSites.find((site) => site.key === resourceId);
     if (!targetSite) {
-      return NextResponse.json(
-        {
-          error: `未找到指定的视频源: ${resourceId}`,
-          result: null,
-        },
-        { status: 404 },
-      );
+      return apiError(`未找到指定的视频源: ${resourceId}`, 404);
     }
 
     const results = await searchFromApi(targetSite, query);
@@ -131,33 +112,18 @@ export async function GET(request: NextRequest) {
     const cacheTime = await getCacheTime();
 
     if (result.length === 0) {
-      return NextResponse.json(
-        {
-          error: '未找到结果',
-          result: null,
-        },
-        { status: 404 },
-      );
+      return apiError('未找到结果', 404);
     } else {
-      return NextResponse.json(
-        { results: result },
-        {
-          headers: {
-            'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
-            'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-            'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-            'Netlify-Vary': 'query',
-          },
+      return apiSuccess({ results: result }, {
+        headers: {
+          'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
+          'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
+          'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
+          'Netlify-Vary': 'query',
         },
-      );
+      });
     }
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: '搜索失败',
-        result: null,
-      },
-      { status: 500 },
-    );
+    return apiError('搜索失败', 500);
   }
 }

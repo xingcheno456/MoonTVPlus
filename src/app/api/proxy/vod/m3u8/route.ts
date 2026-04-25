@@ -1,6 +1,6 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 
-import { NextResponse } from 'next/server';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import { getBaseUrl, resolveUrl } from '@/lib/live';
@@ -18,11 +18,11 @@ export async function GET(request: Request) {
   const source = searchParams.get('source'); // 视频源key
 
   if (!url) {
-    return NextResponse.json({ error: 'Missing url' }, { status: 400 });
+    return apiError('Missing url', 400);
   }
 
   if (!source) {
-    return NextResponse.json({ error: 'Missing source' }, { status: 400 });
+    return apiError('Missing source', 400);
   }
 
   // 检查该视频源是否启用了代理模式
@@ -30,14 +30,11 @@ export async function GET(request: Request) {
   const videoSource = config.SourceConfig?.find((s: any) => s.key === source);
 
   if (!videoSource) {
-    return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+    return apiError('Source not found', 404);
   }
 
   if (!videoSource.proxyMode) {
-    return NextResponse.json(
-      { error: 'Proxy mode not enabled for this source' },
-      { status: 403 },
-    );
+    return apiError('Proxy mode not enabled for this source', 403);
   }
 
   let response: Response | null = null;
@@ -49,10 +46,7 @@ export async function GET(request: Request) {
     // 安全校验：防 SSRF 拦截请求内网或非法 URL
     const isSafeUrl = await validateProxyUrlServerSide(decodedUrl);
     if (!isSafeUrl) {
-      return NextResponse.json(
-        { error: 'Proxy request to local or invalid network is forbidden' },
-        { status: 403 },
-      );
+      return apiError('Proxy request to local or invalid network is forbidden', 403);
     }
 
     response = await fetch(decodedUrl, {
@@ -67,10 +61,7 @@ export async function GET(request: Request) {
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to fetch m3u8' },
-        { status: 500 },
-      );
+      return apiError('Failed to fetch m3u8', 500);
     }
 
     const contentType = response.headers.get('Content-Type') || '';
@@ -111,10 +102,7 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch m3u8' },
-      { status: 500 },
-    );
+    return apiError('Failed to fetch m3u8', 500);
   } finally {
     // 确保 response 被正确关闭以释放资源
     if (response && !responseUsed) {

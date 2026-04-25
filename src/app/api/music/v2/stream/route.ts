@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 import {
   extractSongmid,
   isMusicSource,
@@ -62,16 +64,13 @@ export async function GET(request: NextRequest) {
 
     const upstreamUrl = urlResult?.url;
     if (!upstreamUrl) {
-      return NextResponse.json(
-        {
+      return apiSuccess({
           success: false,
           error: {
             code: 'STREAM_FAILED',
             message: urlResult?.error || '获取音频流失败',
           },
-        },
-        { status: 502 },
-      );
+        }, { status: 502 });
     }
 
     const headers = new Headers();
@@ -85,13 +84,10 @@ export async function GET(request: NextRequest) {
     });
 
     if (!upstream.ok && upstream.status !== 206) {
-      return NextResponse.json(
-        {
+      return apiSuccess({
           success: false,
           error: { code: 'STREAM_FAILED', message: '获取音频流失败' },
-        },
-        { status: upstream.status },
-      );
+        }, { status: upstream.status });
     }
 
     const responseHeaders = new Headers();
@@ -122,12 +118,9 @@ export async function GET(request: NextRequest) {
       headers: responseHeaders,
     });
   } catch (error) {
-    return NextResponse.json(
-      {
+    return apiSuccess({
         success: false,
         error: { code: 'STREAM_FAILED', message: (error as Error).message },
-      },
-      { status: 400 },
-    );
+      }, { status: 400 });
   }
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { suwayomiClient } from '@/lib/suwayomi.client';
 
 import { getAuthorizedUsername } from '../_utils';
@@ -17,15 +19,12 @@ export async function GET(request: NextRequest) {
     const page = Number(searchParams.get('page') || '1');
 
     if (!q) {
-      return NextResponse.json({ results: [] });
+      return apiSuccess({ results: [] });
     }
 
     const results = await suwayomiClient.searchManga(q, sourceId, page);
-    return NextResponse.json({ results });
+    return apiSuccess({ results });
   } catch (error) {
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError((error as Error).message, 500);
   }
 }

@@ -367,7 +367,7 @@ function LivePageClient() {
         throw new Error('获取直播源失败');
       }
 
-      const result = await response.json();
+      const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
       if (!result.success) {
         throw new Error(result.error || '获取直播源失败');
       }
@@ -420,7 +420,7 @@ function LivePageClient() {
         throw new Error('获取频道列表失败');
       }
 
-      const result = await response.json();
+      const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
       if (!result.success) {
         throw new Error(result.error || '获取频道列表失败');
       }
@@ -638,7 +638,7 @@ function LivePageClient() {
           `/api/live/epg?source=${source.key}&tvgId=${channel.tvgId}`,
         );
         if (response.ok) {
-          const result = await response.json();
+          const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
           if (result.success) {
             // 清洗EPG数据，去除重叠的节目
             const cleanedData = {
@@ -1746,7 +1746,7 @@ function LivePageClient() {
             setIsVideoLoading(false);
             return;
           }
-          const precheckResult = await precheckResponse.json();
+          const _apiRes_precheckResult = await precheckResponse.json(); const precheckResult = _apiRes_precheckResult.success === true ? _apiRes_precheckResult.data : _apiRes_precheckResult;
           if (precheckResult?.success && precheckResult?.type) {
             type = precheckResult.type;
           } else {

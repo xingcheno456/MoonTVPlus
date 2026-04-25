@@ -737,7 +737,16 @@ async function fetchWithAuth(
 
 async function fetchFromApi<T>(path: string): Promise<T> {
   const res = await fetchWithAuth(path);
-  return (await res.json()) as T;
+  const json = await res.json();
+
+  if (json && typeof json.success === 'boolean') {
+    if (json.success) {
+      return json.data as T;
+    }
+    throw new Error(json.error || '请求失败');
+  }
+
+  return json as T;
 }
 
 /**

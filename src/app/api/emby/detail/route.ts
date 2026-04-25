@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { embyManager } from '@/lib/emby-manager';
 import { getProxyToken } from '@/lib/emby-token';
@@ -13,7 +15,7 @@ export async function GET(request: NextRequest) {
   const embyKey = searchParams.get('embyKey') || undefined;
 
   if (!itemId) {
-    return NextResponse.json({ error: '缺少媒体ID' }, { status: 400 });
+    return apiError('缺少媒体ID', 400);
   }
 
   try {
@@ -53,9 +55,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      item: {
+    return apiSuccess({ item: {
         id: item.Id,
         title: item.Name,
         type: item.Type === 'Movie' ? 'movie' : 'tv',
@@ -73,13 +73,9 @@ export async function GET(request: NextRequest) {
             ? await client.getStreamUrl(item.Id)
             : undefined,
       },
-      episodes: item.Type === 'Series' ? episodes : [],
-    });
+      episodes: item.Type === 'Series' ? episodes : [], });
   } catch (error) {
     console.error('获取 Emby 详情失败:', error);
-    return NextResponse.json(
-      { error: '获取 Emby 详情失败: ' + (error as Error).message },
-      { status: 500 },
-    );
+    return apiError('获取 Emby 详情失败: ' + (error as Error).message, 500);
   }
 }

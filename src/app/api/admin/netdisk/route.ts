@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, setCachedConfig } from '@/lib/config';
@@ -20,22 +22,19 @@ function requireOwner(username: string | undefined) {
 export async function POST(request: NextRequest) {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
   if (storageType === 'localstorage') {
-    return NextResponse.json(
-      { error: '不支持本地存储进行管理员配置' },
-      { status: 400 },
-    );
+    return apiError('不支持本地存储进行管理员配置', 400);
   }
 
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo?.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     if (!requireOwner(authInfo.username)) {
       const userInfo = await db.getUserInfoV2(authInfo.username);
       if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
+        return apiError('权限不足', 401);
       }
     }
 
@@ -60,31 +59,22 @@ export async function POST(request: NextRequest) {
       await db.saveAdminConfig(adminConfig);
       await setCachedConfig(adminConfig);
 
-      return NextResponse.json({ success: true, message: '保存成功' });
+      return apiSuccess({ message: '保存成功' });
     }
 
     if (action === 'validate') {
       if (!Quark?.Cookie) {
-        return NextResponse.json(
-          { error: '请先填写夸克 Cookie' },
-          { status: 400 },
-        );
+        return apiError('请先填写夸克 Cookie', 400);
       }
 
       await validateQuarkCookieReadable(normalizeQuarkCookie(Quark.Cookie));
 
-      return NextResponse.json({
-        success: true,
-        message: '夸克cookie正常',
-      });
+      return apiSuccess({ message: '夸克cookie正常', });
     }
 
-    return NextResponse.json({ error: '未知操作' }, { status: 400 });
+    return apiError('未知操作', 400);
   } catch (error) {
     console.error('[Admin NetDisk] 操作失败:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '操作失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '操作失败', 500);
   }
 }

@@ -329,7 +329,7 @@ export default function MusicPage() {
     const initializePlayState = async () => {
       try {
         const response = await fetch('/api/music/v2/history');
-        const history = await response.json();
+        const _apiRes_history = await response.json(); const history = _apiRes_history.success === true ? _apiRes_history.data : _apiRes_history;
         const dbRecords = (history.data?.records || []) as DbRecord[];
 
         const sortedRecords: PlayRecord[] = dbRecords.map((record) => ({
@@ -546,7 +546,7 @@ export default function MusicPage() {
       const boardsResponse = await fetch(
         `/api/music/v2/discovery/boards?source=${source}`,
       );
-      const boardsData = await boardsResponse.json();
+      const _apiRes_boardsData = await boardsResponse.json(); const boardsData = _apiRes_boardsData.success === true ? _apiRes_boardsData.data : _apiRes_boardsData;
 
       if (boardsResponse.ok && boardsData.success) {
         setPlaylists(
@@ -583,7 +583,7 @@ export default function MusicPage() {
       const response = await fetch(
         `/api/music/v2/discovery/board-songs?source=${source}&boardId=${playlistId}`,
       );
-      const data = await response.json();
+      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
       setSongs((data.data?.list || []).map(mapSong));
       setCurrentPlaylistTitle(playlistName);
       setCurrentView('songs');
@@ -604,7 +604,7 @@ export default function MusicPage() {
       const response = await fetch(
         `/api/music/v2/search?source=${currentSource}&q=${encodeURIComponent(searchKeyword)}&page=1&limit=20`,
       );
-      const data = await response.json();
+      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
       setSongs((data.data?.list || []).map(mapSong));
       setCurrentPlaylistTitle(`搜索: ${searchKeyword}`);
       setCurrentView('songs');
@@ -629,7 +629,7 @@ export default function MusicPage() {
       setLoadingUserPlaylists(true);
       const response = await fetch('/api/music/v2/playlists');
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setUserPlaylists(data.data?.playlists || []);
       }
     } catch (error) {
@@ -647,7 +647,7 @@ export default function MusicPage() {
         `/api/music/v2/playlists/${playlistId}/songs`,
       );
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setUserPlaylistSongs(
           (data.data?.songs || []).map((song: any) => ({
             ...song,
@@ -807,7 +807,7 @@ export default function MusicPage() {
             }
             loadUserPlaylists();
           } else {
-            const data = await response.json();
+            const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
             setToast({
               message: data.error || '删除失败',
               type: 'error',
@@ -860,7 +860,7 @@ export default function MusicPage() {
             });
             loadUserPlaylistSongs(selectedUserPlaylist.id);
           } else {
-            const data = await response.json();
+            const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
             setToast({
               message: data.error || '移除失败',
               type: 'error',

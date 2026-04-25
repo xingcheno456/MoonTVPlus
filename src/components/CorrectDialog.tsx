@@ -150,7 +150,7 @@ export default function CorrectDialog({
         throw new Error('搜索失败');
       }
 
-      const data = await response.json();
+      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
       if (data.success && data.results) {
         setResults(data.results);
@@ -179,7 +179,7 @@ export default function CorrectDialog({
         throw new Error('获取季度列表失败');
       }
 
-      const data = await response.json();
+      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
       if (data.success && data.seasons) {
         return data.seasons as TMDBSeason[];

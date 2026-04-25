@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
@@ -8,7 +10,7 @@ export async function GET(request: NextRequest) {
     const epgUrl = searchParams.get('url');
 
     if (!epgUrl) {
-      return NextResponse.json({ error: '缺少EPG URL参数' }, { status: 400 });
+      return apiError('缺少EPG URL参数', 400);
     }
 
     console.log('[EPG Download] Fetching:', epgUrl);
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      return NextResponse.json({ error: 'EPG文件下载失败' }, { status: 500 });
+      return apiError('EPG文件下载失败', 500);
     }
 
     // 检查是否是gzip压缩
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
       // 读取所有数据
       const reader = response.body?.getReader();
       if (!reader) {
-        return NextResponse.json({ error: '无法读取响应' }, { status: 500 });
+        return apiError('无法读取响应', 500);
       }
 
       const chunks: Uint8Array[] = [];
@@ -86,6 +88,6 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error('[EPG Download] Error:', error);
-    return NextResponse.json({ error: '下载EPG文件失败' }, { status: 500 });
+    return apiError('下载EPG文件失败', 500);
   }
 }

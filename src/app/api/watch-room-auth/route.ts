@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 
@@ -18,13 +20,13 @@ export async function GET(request: NextRequest) {
   // 从 cookie 获取用户信息
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   // 返回外部服务器认证信息
   const externalServerAuth = process.env.WATCH_ROOM_EXTERNAL_SERVER_AUTH;
 
-  return NextResponse.json({
+  return apiSuccess({
     externalServerAuth: externalServerAuth || null,
   });
 }

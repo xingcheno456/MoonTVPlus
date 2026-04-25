@@ -2,6 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
@@ -51,14 +53,14 @@ export async function GET(
 
     // 两者至少满足其一
     if (!hasValidToken && !hasValidAuth) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const folderName = searchParams.get('folder');
     const fileName = searchParams.get('fileName');
 
     if (!folderName || !fileName) {
-      return NextResponse.json({ error: '缺少参数' }, { status: 400 });
+      return apiError('缺少参数', 400);
     }
 
     const config = await getConfig();
@@ -71,10 +73,7 @@ export async function GET(
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json(
-        { error: 'OpenList 未配置或未启用' },
-        { status: 400 },
-      );
+      return apiError('OpenList 未配置或未启用', 400);
     }
 
     const rootPath = openListConfig.RootPath || '/';
@@ -96,16 +95,13 @@ export async function GET(
         code: fileResponse.code,
         message: fileResponse.message,
       });
-      return NextResponse.json({ error: '获取播放链接失败' }, { status: 500 });
+      return apiError('获取播放链接失败', 500);
     }
 
     // 返回重定向到真实播放 URL
     return NextResponse.redirect(fileResponse.data.raw_url);
   } catch (error) {
     console.error('获取播放链接失败:', error);
-    return NextResponse.json(
-      { error: '获取失败', details: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError('获取失败: ' + (error as Error).message, 500);
   }
 }

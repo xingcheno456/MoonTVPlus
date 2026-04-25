@@ -2,6 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
@@ -68,7 +70,7 @@ export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -77,7 +79,7 @@ export async function GET(request: NextRequest) {
     const format = searchParams.get('format'); // 新增 format 参数
 
     if (!folderName || !fileName) {
-      return NextResponse.json({ error: '缺少参数' }, { status: 400 });
+      return apiError('缺少参数', 400);
     }
 
     const config = await getConfig();
@@ -90,10 +92,7 @@ export async function GET(request: NextRequest) {
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json(
-        { error: 'OpenList 未配置或未启用' },
-        { status: 400 },
-      );
+      return apiError('OpenList 未配置或未启用', 400);
     }
 
     // folderName 已经是完整路径，直接使用
@@ -116,10 +115,7 @@ export async function GET(request: NextRequest) {
           code: fileResponse.code,
           message: fileResponse.message,
         });
-        return NextResponse.json(
-          { error: '获取播放链接失败' },
-          { status: 500 },
-        );
+        return apiError('获取播放链接失败', 500);
       }
 
       // 如果指定了 format=json，使用 getFinalUrl 并返回 JSON
@@ -131,7 +127,7 @@ export async function GET(request: NextRequest) {
           throw new Error('获取到的播放链接为空');
         }
 
-        return NextResponse.json({ url: finalUrl });
+        return apiSuccess({ url: finalUrl });
       }
 
       // 检查URL是否为空
@@ -188,7 +184,7 @@ export async function GET(request: NextRequest) {
           })),
         );
 
-        return NextResponse.json({
+        return apiSuccess({
           url: resolvedQualities[0].url,
           qualities: resolvedQualities,
         });
@@ -211,10 +207,7 @@ export async function GET(request: NextRequest) {
           code: fileResponse.code,
           message: fileResponse.message,
         });
-        return NextResponse.json(
-          { error: '获取播放链接失败' },
-          { status: 500 },
-        );
+        return apiError('获取播放链接失败', 500);
       }
 
       // 如果指定了 format=json，使用 getFinalUrl 并返回 JSON
@@ -226,7 +219,7 @@ export async function GET(request: NextRequest) {
           throw new Error('获取到的播放链接为空');
         }
 
-        return NextResponse.json({ url: finalUrl });
+        return apiSuccess({ url: finalUrl });
       }
 
       // 检查URL是否为空
@@ -242,9 +235,6 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error('获取播放链接失败:', error);
-    return NextResponse.json(
-      { error: '获取失败', details: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError('获取失败: ' + (error as Error).message, 500);
   }
 }

@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie, parseAuthInfo } from '@/lib/auth';
 import { refreshAccessToken } from '@/lib/middleware-auth';
@@ -27,24 +29,24 @@ function buildRefreshResponse(authToken?: string | null) {
     }
   }
 
-  return NextResponse.json(body);
+  return apiSuccess(body);
 }
 
 export async function POST(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
 
   if (!authInfo) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   if (STORAGE_TYPE === 'localstorage') {
     if (!authInfo.password || authInfo.password !== process.env.PASSWORD) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     const authCookie = request.cookies.get('auth');
     if (!authCookie?.value) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     const response = buildRefreshResponse(authCookie.value);
@@ -68,17 +70,14 @@ export async function POST(request: NextRequest) {
     !authInfo.refreshToken ||
     !authInfo.refreshExpires
   ) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   const now = Date.now();
 
   // 只检查 Refresh Token 是否过期
   if (now >= authInfo.refreshExpires) {
-    return NextResponse.json(
-      { error: 'Refresh token expired' },
-      { status: 401 },
-    );
+    return apiError('Refresh token expired', 401);
   }
 
   // 只要 Refresh Token 有效，就允许刷新（即使 Access Token 已过期）
@@ -92,7 +91,7 @@ export async function POST(request: NextRequest) {
   );
 
   if (!newAuthData) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   const response = buildRefreshResponse(newAuthData);

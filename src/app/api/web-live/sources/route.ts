@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 
@@ -8,15 +10,12 @@ export async function GET(request: NextRequest) {
   try {
     const config = await getConfig();
     if (!config?.WebLiveConfig) {
-      return NextResponse.json([]);
+      return apiSuccess([]);
     }
 
     const sources = config.WebLiveConfig.filter((s) => !s.disabled);
-    return NextResponse.json(sources);
+    return apiSuccess(sources);
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '获取失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '获取失败', 500);
   }
 }

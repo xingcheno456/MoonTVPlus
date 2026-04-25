@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { embyManager } from '@/lib/emby-manager';
 
@@ -12,7 +12,7 @@ export async function GET() {
   try {
     const sources = await embyManager.getEnabledSources();
 
-    return NextResponse.json({
+    return apiSuccess({
       sources: sources.map((s) => ({
         key: s.key,
         name: s.name,
@@ -20,9 +20,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('[Emby Sources] 获取Emby源列表失败:', error);
-    return NextResponse.json(
-      { error: '获取Emby源列表失败', sources: [] },
-      { status: 500 },
-    );
+    return apiError('获取Emby源列表失败', 500);
   }
 }

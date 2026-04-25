@@ -1,5 +1,7 @@
 import { randomUUID } from 'crypto';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { db } from '@/lib/db';
 import {
@@ -17,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const playlists = await db.listMusicV2Playlists(username);
-    return NextResponse.json({ success: true, data: { playlists } });
+    return apiSuccess({ data: { playlists } });
   } catch (error) {
     return internalError('获取歌单失败', (error as Error).message);
   }
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
       description: body?.description?.trim(),
     });
     const playlist = await db.getMusicV2Playlist(playlistId);
-    return NextResponse.json({ success: true, data: { playlist } });
+    return apiSuccess({ data: { playlist } });
   } catch (error) {
     return internalError('创建歌单失败', (error as Error).message);
   }

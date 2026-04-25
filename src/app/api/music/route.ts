@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
@@ -434,14 +436,14 @@ export async function GET(request: NextRequest) {
     const { enabled, baseUrl } = await getTuneHubConfig();
 
     if (!enabled) {
-      return NextResponse.json({ error: '音乐功能未开启' }, { status: 403 });
+      return apiError('音乐功能未开启', 403);
     }
 
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
 
     if (!action) {
-      return NextResponse.json({ error: '缺少 action 参数' }, { status: 400 });
+      return apiError('缺少 action 参数', 400);
     }
 
     // 处理不同的 action
@@ -450,10 +452,7 @@ export async function GET(request: NextRequest) {
         // 获取排行榜列表
         const platform = searchParams.get('platform');
         if (!platform) {
-          return NextResponse.json(
-            { error: '缺少 platform 参数' },
-            { status: 400 },
-          );
+          return apiError('缺少 platform 参数', 400);
         }
 
         const cacheKey = `toplists-${platform}`;
@@ -463,7 +462,7 @@ export async function GET(request: NextRequest) {
           cached &&
           Date.now() - cached.timestamp < serverCache.CACHE_DURATION
         ) {
-          return NextResponse.json(cached.data);
+          return apiSuccess(cached.data);
         }
 
         const data = await executeMethod(baseUrl, platform, 'toplists');
@@ -472,7 +471,7 @@ export async function GET(request: NextRequest) {
           timestamp: Date.now(),
         });
 
-        return NextResponse.json(data);
+        return apiSuccess(data);
       }
 
       case 'toplist': {
@@ -481,10 +480,7 @@ export async function GET(request: NextRequest) {
         const id = searchParams.get('id');
 
         if (!platform || !id) {
-          return NextResponse.json(
-            { error: '缺少 platform 或 id 参数' },
-            { status: 400 },
-          );
+          return apiError('缺少 platform 或 id 参数', 400);
         }
 
         const cacheKey = `toplist-${platform}-${id}`;
@@ -494,7 +490,7 @@ export async function GET(request: NextRequest) {
           cached &&
           Date.now() - cached.timestamp < serverCache.CACHE_DURATION
         ) {
-          return NextResponse.json(cached.data);
+          return apiSuccess(cached.data);
         }
 
         const data = await executeMethod(baseUrl, platform, 'toplist', { id });
@@ -503,7 +499,7 @@ export async function GET(request: NextRequest) {
           timestamp: Date.now(),
         });
 
-        return NextResponse.json(data);
+        return apiSuccess(data);
       }
 
       case 'playlist': {
@@ -512,10 +508,7 @@ export async function GET(request: NextRequest) {
         const id = searchParams.get('id');
 
         if (!platform || !id) {
-          return NextResponse.json(
-            { error: '缺少 platform 或 id 参数' },
-            { status: 400 },
-          );
+          return apiError('缺少 platform 或 id 参数', 400);
         }
 
         const cacheKey = `playlist-${platform}-${id}`;
@@ -525,7 +518,7 @@ export async function GET(request: NextRequest) {
           cached &&
           Date.now() - cached.timestamp < serverCache.CACHE_DURATION
         ) {
-          return NextResponse.json(cached.data);
+          return apiSuccess(cached.data);
         }
 
         const data = await executeMethod(baseUrl, platform, 'playlist', { id });
@@ -534,7 +527,7 @@ export async function GET(request: NextRequest) {
           timestamp: Date.now(),
         });
 
-        return NextResponse.json(data);
+        return apiSuccess(data);
       }
 
       case 'search': {
@@ -545,10 +538,7 @@ export async function GET(request: NextRequest) {
         const pageSize = searchParams.get('pageSize') || '20';
 
         if (!platform || !keyword) {
-          return NextResponse.json(
-            { error: '缺少 platform 或 keyword 参数' },
-            { status: 400 },
-          );
+          return apiError('缺少 platform 或 keyword 参数', 400);
         }
 
         const cacheKey = `search-${platform}-${keyword}-${page}-${pageSize}`;
@@ -558,7 +548,7 @@ export async function GET(request: NextRequest) {
           cached &&
           Date.now() - cached.timestamp < serverCache.CACHE_DURATION
         ) {
-          return NextResponse.json(cached.data);
+          return apiSuccess(cached.data);
         }
 
         // 注意：不同平台可能使用不同的变量名
@@ -575,21 +565,18 @@ export async function GET(request: NextRequest) {
           timestamp: Date.now(),
         });
 
-        return NextResponse.json(data);
+        return apiSuccess(data);
       }
 
       default:
-        return NextResponse.json({ error: '不支持的 action' }, { status: 400 });
+        return apiError('不支持的 action', 400);
     }
   } catch (error) {
     console.error('音乐 API 错误:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '请求失败',
         details: (error as Error).message,
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }
 
@@ -599,40 +586,34 @@ export async function POST(request: NextRequest) {
     const { enabled, baseUrl, apiKey } = await getTuneHubConfig();
 
     if (!enabled) {
-      return NextResponse.json({ error: '音乐功能未开启' }, { status: 403 });
+      return apiError('音乐功能未开启', 403);
     }
 
     const body = await request.json();
     const { action } = body;
 
     if (!action) {
-      return NextResponse.json({ error: '缺少 action 参数' }, { status: 400 });
+      return apiError('缺少 action 参数', 400);
     }
 
     switch (action) {
       case 'parse': {
         // 解析歌曲（需要 API Key）
         if (!apiKey) {
-          return NextResponse.json(
-            {
+          return apiSuccess({
               code: -1,
               error: '未配置 TuneHub API Key',
               message: '未配置 TuneHub API Key',
-            },
-            { status: 403 },
-          );
+            }, { status: 403 });
         }
 
         const { platform, ids, quality } = body;
         if (!platform || !ids) {
-          return NextResponse.json(
-            {
+          return apiSuccess({
               code: -1,
               error: '缺少 platform 或 ids 参数',
               message: '缺少 platform 或 ids 参数',
-            },
-            { status: 400 },
-          );
+            }, { status: 400 });
         }
 
         // 添加缓存支持
@@ -668,10 +649,10 @@ export async function POST(request: NextRequest) {
               timestamp: Date.now(),
             });
 
-            return NextResponse.json(updatedData);
+            return apiSuccess(updatedData);
           } else {
             // 没有 OpenList 配置，直接返回内存缓存
-            return NextResponse.json(cached.data);
+            return apiSuccess(cached.data);
           }
         }
 
@@ -702,7 +683,7 @@ export async function POST(request: NextRequest) {
                   timestamp: Date.now(),
                 });
 
-                return NextResponse.json(updatedData);
+                return apiSuccess(updatedData);
               }
             }
           } catch (error) {
@@ -729,7 +710,7 @@ export async function POST(request: NextRequest) {
 
           // 如果 TuneHub 返回错误，包装成统一格式
           if (!response.ok || data.code !== 0) {
-            return NextResponse.json({
+            return apiSuccess({
               code: data.code || -1,
               message: data.message || data.error || '解析失败',
               error: data.error || data.message || '解析失败',
@@ -765,10 +746,10 @@ export async function POST(request: NextRequest) {
               });
           }
 
-          return NextResponse.json(finalData);
+          return apiSuccess(finalData);
         } catch (error) {
           console.error('解析歌曲失败:', error);
-          return NextResponse.json({
+          return apiSuccess({
             code: -1,
             message: '解析请求失败',
             error: (error as Error).message,
@@ -777,16 +758,13 @@ export async function POST(request: NextRequest) {
       }
 
       default:
-        return NextResponse.json({ error: '不支持的 action' }, { status: 400 });
+        return apiError('不支持的 action', 400);
     }
   } catch (error) {
     console.error('音乐 API 错误:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '请求失败',
         details: (error as Error).message,
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

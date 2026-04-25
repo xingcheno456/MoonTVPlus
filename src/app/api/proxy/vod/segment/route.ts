@@ -1,6 +1,6 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 
-import { NextResponse } from 'next/server';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
@@ -14,11 +14,11 @@ export async function GET(request: Request) {
   const source = searchParams.get('source');
 
   if (!url) {
-    return NextResponse.json({ error: 'Missing url' }, { status: 400 });
+    return apiError('Missing url', 400);
   }
 
   if (!source) {
-    return NextResponse.json({ error: 'Missing source' }, { status: 400 });
+    return apiError('Missing source', 400);
   }
 
   // 定义直链播放模式常量
@@ -31,14 +31,11 @@ export async function GET(request: Request) {
     const videoSource = config.SourceConfig?.find((s: any) => s.key === source);
 
     if (!videoSource) {
-      return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+      return apiError('Source not found', 404);
     }
 
     if (!videoSource.proxyMode) {
-      return NextResponse.json(
-        { error: 'Proxy mode not enabled for this source' },
-        { status: 403 },
-      );
+      return apiError('Proxy mode not enabled for this source', 403);
     }
   }
 
@@ -51,10 +48,7 @@ export async function GET(request: Request) {
     // 安全校验：防 SSRF 拦截请求内网或非法 URL (强制检查所有代理请求)
     const isSafeUrl = await validateProxyUrlServerSide(decodedUrl);
     if (!isSafeUrl) {
-      return NextResponse.json(
-        { error: 'Proxy request to local or invalid network is forbidden' },
-        { status: 403 },
-      );
+      return apiError('Proxy request to local or invalid network is forbidden', 403);
     }
 
     response = await fetch(decodedUrl, {
@@ -65,10 +59,7 @@ export async function GET(request: Request) {
       },
     });
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to fetch segment' },
-        { status: 500 },
-      );
+      return apiError('Failed to fetch segment', 500);
     }
 
     const headers = buildProxyStreamHeaders(
@@ -171,9 +162,6 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json(
-      { error: 'Failed to fetch segment' },
-      { status: 500 },
-    );
+    return apiError('Failed to fetch segment', 500);
   }
 }

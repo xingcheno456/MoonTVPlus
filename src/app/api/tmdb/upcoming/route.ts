@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import { getTMDBUpcomingContent } from '@/lib/tmdb.client';
@@ -17,7 +19,7 @@ export async function GET(request: NextRequest) {
     // 检查缓存是否存在且未过期
     const now = Date.now();
     if (cache && now - cache.timestamp < CACHE_DURATION) {
-      return NextResponse.json({
+      return apiSuccess({
         code: 200,
         data: cache.data,
         cached: true,
@@ -32,10 +34,7 @@ export async function GET(request: NextRequest) {
     const tmdbReverseProxy = config.SiteConfig?.TMDBReverseProxy;
 
     if (!tmdbApiKey) {
-      return NextResponse.json(
-        { code: 400, message: 'TMDB API Key 未配置' },
-        { status: 400 },
-      );
+      return apiSuccess({ code: 400, message: 'TMDB API Key 未配置' }, { status: 400 });
     }
 
     // 调用TMDB API获取数据
@@ -46,10 +45,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (result.code !== 200) {
-      return NextResponse.json(
-        { code: result.code, message: '获取TMDB数据失败' },
-        { status: result.code === 401 ? 401 : 500 },
-      );
+      return apiSuccess({ code: result.code, message: '获取TMDB数据失败' }, { status: result.code === 401 ? 401 : 500 });
     }
 
     // 更新缓存
@@ -58,16 +54,13 @@ export async function GET(request: NextRequest) {
       timestamp: now,
     };
 
-    return NextResponse.json({
+    return apiSuccess({
       code: 200,
       data: result.list,
       cached: false,
     });
   } catch (error) {
     console.error('获取TMDB即将上映数据失败:', error);
-    return NextResponse.json(
-      { code: 500, message: '服务器内部错误' },
-      { status: 500 },
-    );
+    return apiSuccess({ code: 500, message: '服务器内部错误' }, { status: 500 });
   }
 }

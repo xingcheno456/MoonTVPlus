@@ -729,7 +729,8 @@ export async function getDoubanDetail(
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
           }
-          return response.json();
+          const _apiRes = await response.json();
+          return _apiRes.success === true ? _apiRes.data : _apiRes;
         }
 
         return fetchDoubanDetail(id, requestProxyUrl, useTencentCDN, useAliCDN);

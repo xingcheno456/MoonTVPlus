@@ -38,7 +38,9 @@ export default function AdvancedRecommendationPage() {
       setIsLoadingSources(true);
       try {
         const response = await fetch('/api/advanced-recommendation/sources');
-        const data = await response.json();
+        const _raw_data = await response.json();
+
+        const data = _raw_data.success === true ? _raw_data.data : _raw_data;
 
         if (!response.ok) {
           throw new Error(data.error || '获取脚本源失败');
@@ -99,7 +101,9 @@ export default function AdvancedRecommendationPage() {
         const response = await fetch(
           `/api/advanced-recommendation/videos?source=${encodeURIComponent(selectedSource)}&page=${page}`,
         );
-        const data = await response.json();
+        const _raw_data = await response.json();
+
+        const data = _raw_data.success === true ? _raw_data.data : _raw_data;
 
         if (!response.ok) {
           throw new Error(data.error || '获取推荐失败');

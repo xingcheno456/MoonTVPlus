@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { promisify } from 'util';
 import { gzip } from 'zlib';
 
@@ -19,37 +21,31 @@ export async function POST(req: NextRequest) {
     // 检查存储类型
     const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
     if (storageType === 'localstorage') {
-      return NextResponse.json(
-        { error: '不支持本地存储进行数据迁移' },
-        { status: 400 },
-      );
+      return apiError('不支持本地存储进行数据迁移', 400);
     }
 
     // 验证身份和权限
     const authInfo = getAuthInfoFromCookie(req);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
+      return apiError('未登录', 401);
     }
 
     // 检查用户权限（只有站长可以导出数据）
     if (authInfo.username !== process.env.USERNAME) {
-      return NextResponse.json(
-        { error: '权限不足，只有站长可以导出数据' },
-        { status: 401 },
-      );
+      return apiError('权限不足，只有站长可以导出数据', 401);
     }
 
     const username = authInfo.username; // 存储到局部变量以便 TypeScript 类型推断
 
     const config = await db.getAdminConfig();
     if (!config) {
-      return NextResponse.json({ error: '无法获取配置' }, { status: 500 });
+      return apiError('无法获取配置', 500);
     }
 
     // 解析请求体获取密码
     const { password } = await req.json();
     if (!password || typeof password !== 'string') {
-      return NextResponse.json({ error: '请提供加密密码' }, { status: 400 });
+      return apiError('请提供加密密码', 400);
     }
 
     // 收集所有数据
@@ -265,10 +261,7 @@ export async function POST(req: NextRequest) {
     if (authInfo?.username) {
       clearProgress(authInfo.username, 'export');
     }
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '导出失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '导出失败', 500);
   }
 }
 

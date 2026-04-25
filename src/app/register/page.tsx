@@ -241,12 +241,12 @@ function RegisterPageClient() {
         }
 
         if (res.status === 400) {
-          const data = await res.json().catch(() => ({}));
+          const _apiRes_data = await res.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           setError(data.error || '注册失败');
         } else if (res.status === 409) {
           setError('用户名已存在');
         } else {
-          const data = await res.json().catch(() => ({}));
+          const _apiRes_data = await res.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           setError(data.error ?? '服务器错误');
         }
       }

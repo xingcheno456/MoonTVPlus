@@ -1,5 +1,7 @@
 // 弹幕搜索 API 路由
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import { getDanmakuApiBaseUrl } from '@/lib/danmaku/config';
@@ -12,15 +14,12 @@ export async function GET(request: NextRequest) {
     const keyword = searchParams.get('keyword');
 
     if (!keyword) {
-      return NextResponse.json(
-        {
+      return apiSuccess({
           errorCode: -1,
           success: false,
           errorMessage: '缺少关键词参数',
           animes: [],
-        },
-        { status: 400 },
-      );
+        }, { status: 400 });
     }
 
     // 从数据库读取弹幕配置
@@ -51,7 +50,7 @@ export async function GET(request: NextRequest) {
 
       const data = await response.json();
 
-      return NextResponse.json(data);
+      return apiSuccess(data);
     } catch (fetchError) {
       clearTimeout(timeoutId);
 
@@ -64,14 +63,11 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error('弹幕搜索代理错误:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         errorCode: -1,
         success: false,
         errorMessage: error instanceof Error ? error.message : '搜索失败',
         animes: [],
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -23,7 +25,7 @@ export async function POST(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const body = await request.json();
@@ -43,10 +45,7 @@ export async function POST(request: NextRequest) {
 
     // 只验证 key 和 title 是必需的
     if (!key || !title) {
-      return NextResponse.json(
-        { error: '缺少必要参数 (key 或 title)' },
-        { status: 400 },
-      );
+      return apiError('缺少必要参数 (key 或 title)', 400);
     }
 
     const config = await getConfig();
@@ -59,10 +58,7 @@ export async function POST(request: NextRequest) {
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json(
-        { error: 'OpenList 未配置或未启用' },
-        { status: 400 },
-      );
+      return apiError('OpenList 未配置或未启用', 400);
     }
 
     const client = new OpenListClient(
@@ -84,23 +80,17 @@ export async function POST(request: NextRequest) {
         }
       } catch (error) {
         console.error('[OpenList Correct] 从数据库读取 metainfo 失败:', error);
-        return NextResponse.json(
-          { error: 'metainfo 读取失败' },
-          { status: 500 },
-        );
+        return apiError('metainfo 读取失败', 500);
       }
     }
 
     if (!metaInfo) {
-      return NextResponse.json(
-        { error: 'metainfo.json 不存在' },
-        { status: 404 },
-      );
+      return apiError('metainfo.json 不存在', 404);
     }
 
     // 检查 key 是否存在
     if (!metaInfo.folders[key]) {
-      return NextResponse.json({ error: '视频不存在' }, { status: 404 });
+      return apiError('视频不存在', 404);
     }
 
     // 保留原始文件夹名称
@@ -131,15 +121,9 @@ export async function POST(request: NextRequest) {
     invalidateMetaInfoCache();
     setCachedMetaInfo(metaInfo);
 
-    return NextResponse.json({
-      success: true,
-      message: '纠错成功',
-    });
+    return apiSuccess({ message: '纠错成功', });
   } catch (error) {
     console.error('视频纠错失败:', error);
-    return NextResponse.json(
-      { error: '纠错失败', details: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError('纠错失败: ' + (error as Error).message, 500);
   }
 }

@@ -1,5 +1,7 @@
 import crypto from 'crypto';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 function getAntiCode(oldAntiCode: string, streamName: string): string {
   const paramsT = 100;
@@ -238,7 +240,7 @@ export async function GET(request: NextRequest) {
     const roomId = searchParams.get('roomId');
 
     if (!platform || !roomId) {
-      return NextResponse.json({ error: '缺少参数' }, { status: 400 });
+      return apiError('缺少参数', 400);
     }
 
     if (platform === 'huya') {
@@ -252,7 +254,7 @@ export async function GET(request: NextRequest) {
 
       const match = html.match(/stream:\s*(\{"data".*?),"iWebDefaultBitRate"/);
       if (!match) {
-        return NextResponse.json({ error: '未找到直播数据' }, { status: 404 });
+        return apiError('未找到直播数据', 404);
       }
 
       const jsonData = JSON.parse(match[1] + '}');
@@ -260,7 +262,7 @@ export async function GET(request: NextRequest) {
       const streamInfo = jsonData.data?.[0]?.gameStreamInfoList?.[0];
 
       if (!streamInfo) {
-        return NextResponse.json({ error: '直播未开启' }, { status: 404 });
+        return apiError('直播未开启', 404);
       }
 
       const { sFlvUrl, sStreamName, sFlvUrlSuffix, sFlvAntiCode } = streamInfo;
@@ -268,7 +270,7 @@ export async function GET(request: NextRequest) {
       const streamUrl = `${sFlvUrl}/${sStreamName}.${sFlvUrlSuffix}?${newAntiCode}`;
       const proxyUrl = `/api/web-live/proxy/proxy.flv?url=${encodeURIComponent(streamUrl)}`;
 
-      return NextResponse.json({
+      return apiSuccess({
         url: proxyUrl,
         originalUrl: streamUrl,
         name: gameLiveInfo?.nick || '',
@@ -280,7 +282,7 @@ export async function GET(request: NextRequest) {
       const streamData = await getBilibiliStream(roomId);
       const proxyUrl = `/api/web-live/proxy/proxy.m3u8?url=${encodeURIComponent(streamData.url)}`;
 
-      return NextResponse.json({
+      return apiSuccess({
         url: proxyUrl,
         originalUrl: streamData.url,
         name: streamData.name,
@@ -292,7 +294,7 @@ export async function GET(request: NextRequest) {
       const streamData = await getDouyinStream(roomId);
       const proxyUrl = `/api/web-live/proxy/proxy.m3u8?url=${encodeURIComponent(streamData.url)}`;
 
-      return NextResponse.json({
+      return apiSuccess({
         url: proxyUrl,
         originalUrl: streamData.url,
         name: streamData.name,
@@ -300,11 +302,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ error: '不支持的平台' }, { status: 400 });
+    return apiError('不支持的平台', 400);
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '获取失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '获取失败', 500);
   }
 }

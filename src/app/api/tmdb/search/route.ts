@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -16,14 +18,14 @@ export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('query');
 
     if (!query) {
-      return NextResponse.json({ error: '缺少查询参数' }, { status: 400 });
+      return apiError('缺少查询参数', 400);
     }
 
     const config = await getConfig();
@@ -32,10 +34,7 @@ export async function GET(request: NextRequest) {
     const tmdbReverseProxy = config.SiteConfig.TMDBReverseProxy;
 
     if (!tmdbApiKey) {
-      return NextResponse.json(
-        { error: 'TMDB API Key 未配置' },
-        { status: 400 },
-      );
+      return apiError('TMDB API Key 未配置', 400);
     }
 
     const response = await searchTMDBMulti(
@@ -46,10 +45,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (response.code !== 200) {
-      return NextResponse.json(
-        { error: 'TMDB 搜索失败', code: response.code },
-        { status: response.code },
-      );
+      return apiError('TMDB 搜索失败', response.code, String(response.code));
     }
 
     // 过滤出电影和电视剧
@@ -57,16 +53,10 @@ export async function GET(request: NextRequest) {
       (item: any) => item.media_type === 'movie' || item.media_type === 'tv',
     );
 
-    return NextResponse.json({
-      success: true,
-      results: validResults,
-      total: validResults.length,
-    });
+    return apiSuccess({ results: validResults,
+      total: validResults.length, });
   } catch (error) {
     console.error('TMDB搜索失败:', error);
-    return NextResponse.json(
-      { error: '搜索失败', details: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError('搜索失败: ' + (error as Error).message, 500);
   }
 }

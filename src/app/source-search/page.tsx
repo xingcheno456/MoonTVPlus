@@ -40,7 +40,7 @@ function SourceSearchPageClient() {
       setIsLoadingSources(true);
       try {
         const response = await fetch('/api/source-search/sources');
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         if (data.sources && Array.isArray(data.sources)) {
           setApiSites(data.sources);
           // 默认选择第一个源
@@ -73,7 +73,7 @@ function SourceSearchPageClient() {
         const response = await fetch(
           `/api/source-search/categories?source=${encodeURIComponent(selectedSource)}`,
         );
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         if (data.categories && Array.isArray(data.categories)) {
           setCategories(data.categories);
           // 默认选择第一个分类
@@ -101,7 +101,7 @@ function SourceSearchPageClient() {
         const response = await fetch(
           `/api/source-search/videos?source=${encodeURIComponent(selectedSource)}&categoryId=${encodeURIComponent(selectedCategory)}&page=${currentPage}`,
         );
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         if (data.results && Array.isArray(data.results)) {
           if (currentPage === 1) {
             setVideos(data.results);
@@ -130,7 +130,7 @@ function SourceSearchPageClient() {
         const response = await fetch(
           `/api/source-search/search?source=${encodeURIComponent(selectedSource)}&keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}`,
         );
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         if (data.results && Array.isArray(data.results)) {
           if (currentPage === 1) {
             setVideos(data.results);

@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
 import { getDetailFromApi } from '@/lib/downstream';
@@ -15,7 +16,7 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   const { searchParams } = new URL(request.url);
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   const sourceCode = searchParams.get('source');
 
   if (!id || !sourceCode) {
-    return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
+    return apiError('缺少必要参数', 400);
   }
 
   const parsedScriptSource = parseScriptSourceValue(sourceCode);
@@ -61,12 +62,9 @@ export async function GET(request: NextRequest) {
         result: detailExecution.result,
       });
 
-      return NextResponse.json(normalized);
+      return apiSuccess(normalized);
     } catch (error) {
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: 500 },
-      );
+      return apiError((error as Error).message, 500);
     }
   }
 
@@ -279,17 +277,14 @@ export async function GET(request: NextRequest) {
         proxyMode: false, // openlist 源不使用代理模式
       };
 
-      return NextResponse.json(result);
+      return apiSuccess(result);
     } catch (error) {
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: 500 },
-      );
+      return apiError((error as Error).message, 500);
     }
   }
 
   if (!/^[\w-]+$/.test(id)) {
-    return NextResponse.json({ error: '无效的视频ID格式' }, { status: 400 });
+    return apiError('无效的视频ID格式', 400);
   }
 
   try {
@@ -297,7 +292,7 @@ export async function GET(request: NextRequest) {
     const apiSite = apiSites.find((site) => site.key === sourceCode);
 
     if (!apiSite) {
-      return NextResponse.json({ error: '无效的API来源' }, { status: 400 });
+      return apiError('无效的API来源', 400);
     }
 
     const result = await getDetailFromApi(apiSite, id);
@@ -310,7 +305,7 @@ export async function GET(request: NextRequest) {
 
     const cacheTime = await getCacheTime();
 
-    return NextResponse.json(resultWithProxy, {
+    return apiSuccess(resultWithProxy, {
       headers: {
         'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
         'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
@@ -319,9 +314,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError((error as Error).message, 500);
   }
 }

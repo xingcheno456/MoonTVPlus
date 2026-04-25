@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import {
@@ -58,7 +60,7 @@ export async function GET(request: NextRequest) {
     const cachedId = searchParams.get('cachedId'); // 浏览器缓存的ID
 
     if (!title && !cachedId) {
-      return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
+      return apiError('缺少必要参数', 400);
     }
 
     const config = await getConfig();
@@ -67,10 +69,7 @@ export async function GET(request: NextRequest) {
     const tmdbReverseProxy = config.SiteConfig.TMDBReverseProxy;
 
     if (!tmdbApiKey) {
-      return NextResponse.json(
-        { error: 'TMDB API Key 未配置' },
-        { status: 500 },
-      );
+      return apiError('TMDB API Key 未配置', 500);
     }
 
     let tmdbId: number;
@@ -101,15 +100,12 @@ export async function GET(request: NextRequest) {
         );
 
         if (searchResult.code !== 200 || !searchResult.results.length) {
-          return NextResponse.json(
-            { recommendations: [], tmdbId: null, mediaType: null },
-            {
+          return apiSuccess({ recommendations: [], tmdbId: null, mediaType: null }, {
               status: 200,
               headers: {
                 'Cache-Control': 'public, max-age=86400', // 浏览器缓存1天
               },
-            },
-          );
+            });
         }
 
         // 过滤出电影和电视剧
@@ -121,15 +117,12 @@ export async function GET(request: NextRequest) {
         const matched = findExactMatch(validResults, title!);
 
         if (!matched) {
-          return NextResponse.json(
-            { recommendations: [], tmdbId: null, mediaType: null },
-            {
+          return apiSuccess({ recommendations: [], tmdbId: null, mediaType: null }, {
               status: 200,
               headers: {
                 'Cache-Control': 'public, max-age=86400',
               },
-            },
-          );
+            });
         }
 
         tmdbId = matched.id;
@@ -167,15 +160,12 @@ export async function GET(request: NextRequest) {
           );
 
     if (recommendationsResult.code !== 200) {
-      return NextResponse.json(
-        { recommendations: [], tmdbId: `${mediaType}:${tmdbId}`, mediaType },
-        {
+      return apiSuccess({ recommendations: [], tmdbId: `${mediaType}:${tmdbId}`, mediaType }, {
           status: 200,
           headers: {
             'Cache-Control': 'public, max-age=86400',
           },
-        },
-      );
+        });
     }
 
     // 转换为统一格式
@@ -190,21 +180,18 @@ export async function GET(request: NextRequest) {
         mediaType,
       }));
 
-    return NextResponse.json(
-      {
+    return apiSuccess({
         recommendations,
         tmdbId: `${mediaType}:${tmdbId}`, // 返回给浏览器用于缓存
         mediaType,
-      },
-      {
+      }, {
         status: 200,
         headers: {
           'Cache-Control': 'public, max-age=86400', // 浏览器缓存1天
         },
-      },
-    );
+      });
   } catch (error) {
     console.error('获取 TMDB 推荐失败:', error);
-    return NextResponse.json({ error: '获取推荐失败' }, { status: 500 });
+    return apiError('获取推荐失败', 500);
   }
 }

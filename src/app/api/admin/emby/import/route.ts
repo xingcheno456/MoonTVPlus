@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, setCachedConfig } from '@/lib/config';
@@ -9,31 +11,25 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
   if (storageType === 'localstorage') {
-    return NextResponse.json(
-      { error: '不支持本地存储进行管理员配置' },
-      { status: 400 },
-    );
+    return apiError('不支持本地存储进行管理员配置', 400);
   }
 
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     // 仅站长可用
     if (authInfo.username !== process.env.USERNAME) {
-      return NextResponse.json(
-        { error: '权限不足，仅站长可用' },
-        { status: 403 },
-      );
+      return apiError('权限不足，仅站长可用', 403);
     }
 
     const body = await request.json();
     const { data } = body;
 
     if (!data) {
-      return NextResponse.json({ error: '缺少导入数据' }, { status: 400 });
+      return apiError('缺少导入数据', 400);
     }
 
     const adminConfig = await getConfig();
@@ -72,14 +68,8 @@ export async function POST(request: NextRequest) {
     // 更新内存缓存
     await setCachedConfig(adminConfig);
 
-    return NextResponse.json({
-      success: true,
-      message: '导入成功',
-    });
+    return apiSuccess({ message: '导入成功', });
   } catch (error) {
-    return NextResponse.json(
-      { error: '导入失败: ' + (error as Error).message },
-      { status: 500 },
-    );
+    return apiError('导入失败: ' + (error as Error).message, 500);
   }
 }

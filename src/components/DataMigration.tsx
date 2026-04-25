@@ -232,7 +232,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const _apiRes_errorData = await response.json().catch(() => ({})); const errorData = _apiRes_errorData.success === true ? _apiRes_errorData.data : _apiRes_errorData;
         throw new Error(errorData.error || `导出失败: ${response.status}`);
       }
 
@@ -335,7 +335,9 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
         body: formData,
       });
 
-      const result = await response.json();
+      const _raw_result = await response.json();
+
+      const result = _raw_result.success === true ? _raw_result.data : _raw_result;
 
       if (!response.ok) {
         throw new Error(result.error || `导入失败: ${response.status}`);

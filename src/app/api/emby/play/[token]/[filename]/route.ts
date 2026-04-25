@@ -2,6 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 
@@ -67,14 +69,14 @@ export async function GET(
 
     // 两者至少满足其一
     if (!hasValidToken && !hasValidAuth) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const itemId = searchParams.get('itemId');
     const embyKey = searchParams.get('embyKey') || undefined;
 
     if (!itemId) {
-      return NextResponse.json({ error: '缺少 itemId 参数' }, { status: 400 });
+      return apiError('缺少 itemId 参数', 400);
     }
 
     // 获取 Emby 客户端
@@ -139,7 +141,7 @@ export async function GET(
           status: videoResponse.status,
           statusText: videoResponse.statusText,
         });
-        return NextResponse.json({ error: '获取视频流失败' }, { status: 500 });
+        return apiError('获取视频流失败', 500);
       }
 
       // 获取 Content-Type
@@ -177,7 +179,7 @@ export async function GET(
       const reader = videoResponse.body?.getReader();
 
       if (!reader) {
-        return NextResponse.json({ error: '无法读取视频流' }, { status: 500 });
+        return apiError('无法读取视频流', 500);
       }
 
       // 异步管道传输，确保在客户端断开时清理资源
@@ -223,15 +225,12 @@ export async function GET(
 
       if (error instanceof Error && error.name === 'AbortError') {
         console.error('[Emby Play] 请求超时');
-        return NextResponse.json({ error: '请求超时' }, { status: 504 });
+        return apiError('请求超时', 504);
       }
       throw error;
     }
   } catch (error) {
     console.error('[Emby Play] 错误:', error);
-    return NextResponse.json(
-      { error: '播放失败', details: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError('播放失败: ' + (error as Error).message, 500);
   }
 }

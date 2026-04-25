@@ -1,5 +1,7 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -10,23 +12,20 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
   if (storageType === 'localstorage') {
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '不支持本地存储进行数据迁移',
-      },
-      { status: 400 },
-    );
+      }, { status: 400 });
   }
 
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     // 只有站长可以执行迁移
     if (authInfo.username !== process.env.USERNAME) {
-      return NextResponse.json({ error: '权限不足' }, { status: 401 });
+      return apiError('权限不足', 401);
     }
 
     // 获取配置
@@ -38,10 +37,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!usersToMigrate || usersToMigrate.length === 0) {
-      return NextResponse.json(
-        { error: '没有需要迁移的用户' },
-        { status: 400 },
-      );
+      return apiError('没有需要迁移的用户', 400);
     }
 
     // 执行迁移
@@ -55,22 +51,16 @@ export async function POST(request: NextRequest) {
     const { setCachedConfig } = await import('@/lib/config');
     await setCachedConfig(adminConfig);
 
-    return NextResponse.json(
-      { ok: true, message: '用户数据迁移成功' },
-      {
+    return apiSuccess({ ok: true, message: '用户数据迁移成功' }, {
         headers: {
           'Cache-Control': 'no-store',
         },
-      },
-    );
+      });
   } catch (error) {
     console.error('用户数据迁移失败:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '用户数据迁移失败',
         details: (error as Error).message,
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

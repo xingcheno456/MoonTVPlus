@@ -356,7 +356,7 @@ export default function AnimeSubscriptionComponent({
         throw new Error('检查失败');
       }
 
-      const result = await response.json();
+      const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
       showAlert({
         type: 'success',
         title: '检查完成',

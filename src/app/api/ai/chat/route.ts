@@ -2,6 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { orchestrateDataSources, VideoContext } from '@/lib/ai-orchestrator';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -221,7 +223,7 @@ export async function POST(request: NextRequest) {
     // 1. 验证用户登录
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     // 2. 获取AI配置
@@ -229,7 +231,7 @@ export async function POST(request: NextRequest) {
     const aiConfig = adminConfig.AIConfig;
 
     if (!aiConfig || !aiConfig.Enabled) {
-      return NextResponse.json({ error: 'AI功能未启用' }, { status: 400 });
+      return apiError('AI功能未启用', 400);
     }
 
     // 3. 权限检查：如果不允许普通用户使用，检查用户角色
@@ -244,10 +246,7 @@ export async function POST(request: NextRequest) {
           (userInfo.role !== 'admin' && userInfo.role !== 'owner') ||
           userInfo.banned
         ) {
-          return NextResponse.json(
-            { error: '该功能仅限站长和管理员使用' },
-            { status: 403 },
-          );
+          return apiError('该功能仅限站长和管理员使用', 403);
         }
       }
     }
@@ -257,7 +256,7 @@ export async function POST(request: NextRequest) {
     const { message, context, history = [] } = body;
 
     if (!message || typeof message !== 'string') {
-      return NextResponse.json({ error: '消息内容不能为空' }, { status: 400 });
+      return apiError('消息内容不能为空', 400);
     }
 
     console.log('📨 收到AI聊天请求:', {
@@ -308,10 +307,7 @@ export async function POST(request: NextRequest) {
     const enableStreaming = aiConfig.EnableStreaming !== false; // 默认启用流式响应
 
     if (!aiConfig.CustomApiKey || !aiConfig.CustomBaseURL) {
-      return NextResponse.json(
-        { error: '自定义API配置不完整' },
-        { status: 400 },
-      );
+      return apiError('自定义API配置不完整', 400);
     }
 
     const result = await streamOpenAIChat(
@@ -347,16 +343,13 @@ export async function POST(request: NextRequest) {
       // 移除thinking标签内容
       content = content.replace(/<think>[\s\S]*?<\/think>/g, '');
 
-      return NextResponse.json({ content });
+      return apiSuccess({ content });
     }
   } catch (error) {
     console.error('❌ AI聊天API错误:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: 'AI聊天请求失败',
         details: (error as Error).message,
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

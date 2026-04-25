@@ -105,7 +105,7 @@ export default function WebLivePage() {
       const res = await fetch('/api/web-live/sources');
       if (res.ok) {
         setLoadingStage('fetching');
-        const data = await res.json();
+        const _apiRes_data = await res.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setSources(data);
         setLoadingStage('ready');
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -301,7 +301,7 @@ export default function WebLivePage() {
         `/api/web-live/stream?platform=${source.platform}&roomId=${source.roomId}`,
       );
       if (res.ok) {
-        const data = await res.json();
+        const _apiRes_data = await res.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
         // 等待 DOM 渲染完成后再设置 videoUrl
         const waitForDom = () => {
@@ -324,7 +324,7 @@ export default function WebLivePage() {
           });
         }
       } else {
-        const data = await res.json();
+        const _apiRes_data = await res.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setErrorMessage(data.error || '获取直播流失败');
       }
     } catch (err) {

@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -17,14 +19,14 @@ export async function POST(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const body = await request.json();
     const { folder } = body;
 
     if (!folder) {
-      return NextResponse.json({ error: '缺少参数' }, { status: 400 });
+      return apiError('缺少参数', 400);
     }
 
     const config = await getConfig();
@@ -37,10 +39,7 @@ export async function POST(request: NextRequest) {
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json(
-        { error: 'OpenList 未配置或未启用' },
-        { status: 400 },
-      );
+      return apiError('OpenList 未配置或未启用', 400);
     }
 
     // folder 已经是完整路径，直接使用
@@ -54,15 +53,9 @@ export async function POST(request: NextRequest) {
     // 清除缓存
     invalidateVideoInfoCache(folderPath);
 
-    return NextResponse.json({
-      success: true,
-      message: '刷新成功',
-    });
+    return apiSuccess({ message: '刷新成功', });
   } catch (error) {
     console.error('刷新视频失败:', error);
-    return NextResponse.json(
-      { error: '刷新失败', details: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError('刷新失败: ' + (error as Error).message, 500);
   }
 }

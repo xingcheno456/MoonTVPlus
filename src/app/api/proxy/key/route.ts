@@ -1,6 +1,6 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 
-import { NextResponse } from 'next/server';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 
@@ -11,13 +11,13 @@ export async function GET(request: Request) {
   const url = searchParams.get('url');
   const source = searchParams.get('moontv-source');
   if (!url) {
-    return NextResponse.json({ error: 'Missing url' }, { status: 400 });
+    return apiError('Missing url', 400);
   }
 
   const config = await getConfig();
   const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
   if (!liveSource) {
-    return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+    return apiError('Source not found', 404);
   }
   const ua = liveSource.ua || 'AptvPlayer/1.4.10';
 
@@ -30,10 +30,7 @@ export async function GET(request: Request) {
       },
     });
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to fetch key' },
-        { status: 500 },
-      );
+      return apiError('Failed to fetch key', 500);
     }
     const keyData = await response.arrayBuffer();
     return new Response(keyData, {
@@ -45,6 +42,6 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch key' }, { status: 500 });
+    return apiError('Failed to fetch key', 500);
   }
 }

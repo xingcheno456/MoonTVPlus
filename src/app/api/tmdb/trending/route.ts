@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextResponse } from 'next/server';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import { fetchDoubanData } from '@/lib/douban';
@@ -32,7 +32,7 @@ export async function GET() {
 
     // 检查缓存
     if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
-      return NextResponse.json(cache.data);
+      return apiSuccess(cache.data);
     }
 
     let result: any;
@@ -65,10 +65,7 @@ export async function GET() {
       const reverseProxy = config.SiteConfig?.TMDBReverseProxy;
 
       if (!apiKey) {
-        return NextResponse.json(
-          { code: 400, message: 'TMDB API Key 未配置' },
-          { status: 400 },
-        );
+        return apiSuccess({ code: 400, message: 'TMDB API Key 未配置' }, { status: 400 });
       }
 
       // 获取热门内容
@@ -100,13 +97,10 @@ export async function GET() {
       };
     }
 
-    return NextResponse.json(result);
+    return apiSuccess(result);
   } catch (error) {
     console.error('获取热门内容失败:', error);
-    return NextResponse.json(
-      { code: 500, message: '获取热门内容失败' },
-      { status: 500 },
-    );
+    return apiSuccess({ code: 500, message: '获取热门内容失败' }, { status: 500 });
   }
 }
 

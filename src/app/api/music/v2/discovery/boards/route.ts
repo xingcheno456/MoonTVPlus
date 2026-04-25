@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { isMusicSource, lxGetJson, unwrapLxArray } from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
@@ -48,9 +50,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
+    return apiSuccess({ data: {
         list: list.map((item) => ({
           id: item.bangid || item.id || '',
           name: item.name,
@@ -59,8 +59,7 @@ export async function GET(request: NextRequest) {
         })),
         source: actualSource,
         errors,
-      },
-    });
+      }, });
   } catch (error) {
     console.error('[music-v2] 获取榜单失败:', error);
     return internalError('获取榜单失败', (error as Error).message);

@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -19,7 +21,7 @@ export async function PUT(
     // 权限检查
     const authInfo = getAuthInfoFromCookie(req);
     if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
+      return apiError('无权限访问', 403);
     }
 
     const { id } = await params;
@@ -28,7 +30,7 @@ export async function PUT(
 
     const index = subscriptions.findIndex((sub) => sub.id === id);
     if (index === -1) {
-      return NextResponse.json({ error: '订阅不存在' }, { status: 404 });
+      return apiError('订阅不存在', 404);
     }
 
     const updates = await req.json();
@@ -43,7 +45,7 @@ export async function PUT(
     }
     if (updates.source !== undefined) {
       if (!['acgrip', 'mikan', 'dmhy'].includes(updates.source)) {
-        return NextResponse.json({ error: '无效的搜索源' }, { status: 400 });
+        return apiError('无效的搜索源', 400);
       }
       subscription.source = updates.source;
     }
@@ -54,10 +56,7 @@ export async function PUT(
       // 验证集数为非负整数
       const episode = parseInt(String(updates.lastEpisode), 10);
       if (isNaN(episode) || episode < 0) {
-        return NextResponse.json(
-          { error: '集数必须是非负整数' },
-          { status: 400 },
-        );
+        return apiError('集数必须是非负整数', 400);
       }
       subscription.lastEpisode = episode;
     }
@@ -66,13 +65,10 @@ export async function PUT(
 
     await db.saveAdminConfig(config);
 
-    return NextResponse.json(subscription);
+    return apiSuccess(subscription);
   } catch (error: any) {
     console.error('更新追番订阅失败:', error);
-    return NextResponse.json(
-      { error: error.message || '更新订阅失败' },
-      { status: 500 },
-    );
+    return apiError(error.message || '更新订阅失败', 500);
   }
 }
 
@@ -88,7 +84,7 @@ export async function DELETE(
     // 权限检查
     const authInfo = getAuthInfoFromCookie(req);
     if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
+      return apiError('无权限访问', 403);
     }
 
     const { id } = await params;
@@ -97,18 +93,15 @@ export async function DELETE(
 
     const index = subscriptions.findIndex((sub) => sub.id === id);
     if (index === -1) {
-      return NextResponse.json({ error: '订阅不存在' }, { status: 404 });
+      return apiError('订阅不存在', 404);
     }
 
     subscriptions.splice(index, 1);
     await db.saveAdminConfig(config);
 
-    return NextResponse.json({ success: true });
+    return apiSuccess({ success: true });
   } catch (error: any) {
     console.error('删除追番订阅失败:', error);
-    return NextResponse.json(
-      { error: error.message || '删除订阅失败' },
-      { status: 500 },
-    );
+    return apiError('删除订阅失败', 500);
   }
 }

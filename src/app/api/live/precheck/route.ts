@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 
@@ -12,12 +14,12 @@ export async function GET(request: NextRequest) {
   const source = searchParams.get('moontv-source');
 
   if (!url) {
-    return NextResponse.json({ error: 'Missing url' }, { status: 400 });
+    return apiError('Missing url', 400);
   }
   const config = await getConfig();
   const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
   if (!liveSource) {
-    return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+    return apiError('Source not found', 404);
   }
   const ua = liveSource.ua || 'AptvPlayer/1.4.10';
 
@@ -34,10 +36,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to fetch', message: response.statusText },
-        { status: 500 },
-      );
+      return apiError('Failed to fetch: ' + response.statusText, 500);
     }
 
     const contentType = response.headers.get('Content-Type');
@@ -45,16 +44,13 @@ export async function GET(request: NextRequest) {
       response.body.cancel();
     }
     if (contentType?.includes('video/mp4')) {
-      return NextResponse.json({ success: true, type: 'mp4' }, { status: 200 });
+      return apiSuccess({ type: 'mp4' }, { status: 200 });
     }
     if (contentType?.includes('video/x-flv')) {
-      return NextResponse.json({ success: true, type: 'flv' }, { status: 200 });
+      return apiSuccess({ type: 'flv' }, { status: 200 });
     }
-    return NextResponse.json({ success: true, type: 'm3u8' }, { status: 200 });
+    return apiSuccess({ type: 'm3u8' }, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch', message: error },
-      { status: 500 },
-    );
+    return apiError('Failed to fetch: ' + (error instanceof Error ? error.message : String(error)), 500);
   }
 }

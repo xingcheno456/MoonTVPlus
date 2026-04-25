@@ -73,7 +73,7 @@ export default function MovieRequestPage() {
       const response = await fetch(
         `/api/tmdb/search?query=${encodeURIComponent(searchKeyword)}`,
       );
-      const data = await response.json();
+      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
       if (data.results) {
         setSearchResults(data.results.slice(0, 20));
@@ -102,7 +102,7 @@ export default function MovieRequestPage() {
 
       try {
         const response = await fetch(`/api/tmdb/seasons?tvId=${item.id}`);
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         if (data.seasons) {
           const validSeasons = data.seasons.filter(
             (s: any) => s.season_number > 0,
@@ -161,7 +161,7 @@ export default function MovieRequestPage() {
         }),
       });
 
-      const data = await response.json();
+      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
       if (response.ok) {
         setShowSeasonDialog(false);
@@ -206,7 +206,7 @@ export default function MovieRequestPage() {
     const fetchMyRequests = async () => {
       try {
         const response = await fetch('/api/movie-requests?my=true');
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         if (data.requests) {
           setMyRequests(data.requests);
         }
@@ -224,7 +224,7 @@ export default function MovieRequestPage() {
   const refreshMyRequests = async () => {
     try {
       const response = await fetch('/api/movie-requests?my=true');
-      const data = await response.json();
+      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
       if (data.requests) {
         setMyRequests(data.requests);
       }

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { fetchLxLyric, normalizeSong } from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
@@ -17,10 +19,7 @@ export async function POST(request: NextRequest) {
 
     const data = await fetchLxLyric(song);
 
-    return NextResponse.json({
-      success: true,
-      data: { lyric: data.lyric || '', tlyric: data.tlyric || '' },
-    });
+    return apiSuccess({ data: { lyric: data.lyric || '', tlyric: data.tlyric || '' }, });
   } catch (error) {
     console.error('[music-v2] lyric route error:', error);
     return internalError('获取歌词失败', (error as Error).message);

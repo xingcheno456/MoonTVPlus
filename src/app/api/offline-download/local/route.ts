@@ -4,6 +4,8 @@
 
 import * as fs from 'fs';
 import { NextRequest, NextResponse } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 import * as path from 'path';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -35,7 +37,7 @@ function checkPermission(request: NextRequest): boolean {
  */
 export async function GET(request: NextRequest) {
   if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
+    return apiError('无权限', 403);
   }
 
   try {
@@ -46,7 +48,7 @@ export async function GET(request: NextRequest) {
     const file = searchParams.get('file'); // 'playlist.m3u8', 'segment_00001.ts', 'key.key' 等
 
     if (!source || !videoId || episodeIndex === null || !file) {
-      return NextResponse.json({ error: '参数不完整' }, { status: 400 });
+      return apiError('参数不完整', 400);
     }
 
     // 构建文件路径
@@ -62,12 +64,12 @@ export async function GET(request: NextRequest) {
     const normalizedFilePath = path.normalize(filePath);
     const normalizedDownloadDir = path.normalize(downloadDir);
     if (!normalizedFilePath.startsWith(normalizedDownloadDir)) {
-      return NextResponse.json({ error: '非法路径' }, { status: 403 });
+      return apiError('非法路径', 403);
     }
 
     // 检查文件是否存在
     if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: '文件不存在' }, { status: 404 });
+      return apiError('文件不存在', 404);
     }
 
     // 读取文件
@@ -126,9 +128,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('代理本地文件失败:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '代理失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '代理失败', 500);
   }
 }

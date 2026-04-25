@@ -624,7 +624,7 @@ const UserConfig = ({
         });
 
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
+          const _apiRes_data = await res.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || `操作失败: ${res.status}`);
         }
 
@@ -723,7 +723,7 @@ const UserConfig = ({
         });
 
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
+          const _apiRes_data = await res.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || `操作失败: ${res.status}`);
         }
 
@@ -889,7 +889,7 @@ const UserConfig = ({
         });
 
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
+          const _apiRes_data = await res.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || `操作失败: ${res.status}`);
         }
 
@@ -938,7 +938,7 @@ const UserConfig = ({
         });
 
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
+          const _apiRes_data = await res.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || `操作失败: ${res.status}`);
         }
 
@@ -981,7 +981,7 @@ const UserConfig = ({
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const _apiRes_data = await res.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         throw new Error(data.error || `操作失败: ${res.status}`);
       }
 
@@ -2912,7 +2912,7 @@ const OpenListConfigComponent = ({
       const url = `/api/openlist/list?page=1&pageSize=100&includeFailed=true${noCache ? '&noCache=true' : ''}`;
       const response = await fetch(url);
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setVideos(data.list || []);
       }
     } catch (error) {
@@ -2943,7 +2943,7 @@ const OpenListConfigComponent = ({
         });
 
         if (!response.ok) {
-          const data = await response.json();
+          const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || '保存失败');
         }
 
@@ -2970,11 +2970,11 @@ const OpenListConfigComponent = ({
       });
 
       if (!response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         throw new Error(data.error || '刷新失败');
       }
 
-      const result = await response.json();
+      const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
       const taskId = result.taskId;
 
       if (!taskId) {
@@ -2993,7 +2993,7 @@ const OpenListConfigComponent = ({
             throw new Error('获取进度失败');
           }
 
-          const progressData = await progressResponse.json();
+          const _apiRes_progressData = await progressResponse.json(); const progressData = _apiRes_progressData.success === true ? _apiRes_progressData.data : _apiRes_progressData;
           const task = progressData.task;
 
           if (task.status === 'running') {
@@ -3042,7 +3042,7 @@ const OpenListConfigComponent = ({
       });
 
       if (!response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         throw new Error(data.error || '刷新失败');
       }
 
@@ -3069,7 +3069,7 @@ const OpenListConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
         if (response.ok && data.success) {
           showSuccess('连接成功', showAlert);
@@ -3102,7 +3102,7 @@ const OpenListConfigComponent = ({
           });
 
           if (!response.ok) {
-            const data = await response.json();
+            const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
             throw new Error(data.error || '删除失败');
           }
 
@@ -3664,7 +3664,8 @@ const NetDiskConfigComponent = ({
         }),
       });
 
-      const data = await response.json();
+      const _raw_data = await response.json();
+      const data = _raw_data.success === true ? _raw_data.data : _raw_data;
       if (!response.ok) {
         throw new Error(data.error || '保存失败');
       }
@@ -3690,7 +3691,8 @@ const NetDiskConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const _raw_data = await response.json();
+        const data = _raw_data.success === true ? _raw_data.data : _raw_data;
         if (!response.ok) {
           throw new Error(data.error || '校验失败');
         }
@@ -4105,7 +4107,7 @@ const EmbyConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
         if (data.success) {
           showSuccess(data.message || 'Emby 连接测试成功', showAlert);
@@ -4133,7 +4135,7 @@ const EmbyConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
         if (data.success) {
           showSuccess(data.message || '缓存清除成功', showAlert);
@@ -4155,7 +4157,7 @@ const EmbyConfigComponent = ({
       try {
         const response = await fetch('/api/admin/emby/export');
         if (!response.ok) {
-          const data = await response.json();
+          const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           showError(data.error || '导出失败', showAlert);
           return;
         }
@@ -4196,7 +4198,7 @@ const EmbyConfigComponent = ({
             body: JSON.stringify({ data }),
           });
 
-          const result = await response.json();
+          const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
 
           if (result.success) {
             showSuccess('导入成功', showAlert);
@@ -4972,12 +4974,12 @@ const VideoSourceConfig = ({
       });
 
       if (!resp.ok) {
-        const data = await resp.json().catch(() => ({}));
+        const _apiRes_data = await resp.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         throw new Error(data.error || `操作失败: ${resp.status}`);
       }
 
       // 获取响应数据
-      const data = await resp.json();
+      const _apiRes_data = await resp.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
       // 成功后刷新配置
       await refreshConfig();
@@ -5031,7 +5033,7 @@ const VideoSourceConfig = ({
         });
 
         if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
+          const _apiRes_data = await response.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || `操作失败: ${response.status}`);
         }
 
@@ -5074,7 +5076,7 @@ const VideoSourceConfig = ({
         });
 
         if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
+          const _apiRes_data = await response.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || `操作失败: ${response.status}`);
         }
 
@@ -6107,7 +6109,7 @@ const CategoryConfig = ({
       });
 
       if (!resp.ok) {
-        const data = await resp.json().catch(() => ({}));
+        const _apiRes_data = await resp.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         throw new Error(data.error || `操作失败: ${resp.status}`);
       }
 
@@ -6501,7 +6503,8 @@ const VideoSourceScriptLab = () => {
       const response = await fetch('/api/admin/source-script', {
         cache: 'no-store',
       });
-      const data = await response.json().catch(() => ({}));
+      const _raw_data = await response.json().catch(() => ({}));
+      const data = _raw_data.success === true ? _raw_data.data : _raw_data;
       if (!response.ok) {
         throw new Error(data.error || '加载脚本失败');
       }
@@ -6600,7 +6603,8 @@ const VideoSourceScriptLab = () => {
           }),
         });
 
-        const data = await response.json().catch(() => ({}));
+        const _raw_data = await response.json().catch(() => ({}));
+        const data = _raw_data.success === true ? _raw_data.data : _raw_data;
         if (!response.ok) {
           throw new Error(data.error || '导入失败');
         }
@@ -6635,7 +6639,8 @@ const VideoSourceScriptLab = () => {
           enabled: editor.enabled,
         }),
       });
-      const data = await response.json().catch(() => ({}));
+      const _raw_data = await response.json().catch(() => ({}));
+      const data = _raw_data.success === true ? _raw_data.data : _raw_data;
       if (!response.ok) {
         throw new Error(data.error || '保存失败');
       }
@@ -6669,7 +6674,8 @@ const VideoSourceScriptLab = () => {
               id: editor.id,
             }),
           });
-          const data = await response.json().catch(() => ({}));
+          const _raw_data = await response.json().catch(() => ({}));
+          const data = _raw_data.success === true ? _raw_data.data : _raw_data;
           if (!response.ok) {
             throw new Error(data.error || '删除失败');
           }
@@ -6695,7 +6701,8 @@ const VideoSourceScriptLab = () => {
           id,
         }),
       });
-      const data = await response.json().catch(() => ({}));
+      const _raw_data = await response.json().catch(() => ({}));
+      const data = _raw_data.success === true ? _raw_data.data : _raw_data;
       if (!response.ok) {
         throw new Error(data.error || '更新失败');
       }
@@ -6727,7 +6734,7 @@ const VideoSourceScriptLab = () => {
           payload,
         }),
       });
-      const data = await response.json().catch(() => ({}));
+      const _apiRes_data = await response.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
       setTestOutput(JSON.stringify(data, null, 2));
       if (!response.ok) {
         throw new Error(data.error || data.message || '测试失败');
@@ -7071,11 +7078,11 @@ const ConfigFileComponent = ({
         });
 
         if (!resp.ok) {
-          const data = await resp.json().catch(() => ({}));
+          const _apiRes_data = await resp.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || `拉取失败: ${resp.status}`);
         }
 
-        const data = await resp.json();
+        const _apiRes_data = await resp.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         if (data.configContent) {
           setConfigContent(data.configContent);
           // 更新本地配置的最后检查时间
@@ -7194,7 +7201,7 @@ const ConfigFileComponent = ({
         });
 
         if (!resp.ok) {
-          const data = await resp.json().catch(() => ({}));
+          const _apiRes_data = await resp.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || `保存失败: ${resp.status}`);
         }
 
@@ -7530,7 +7537,9 @@ const ThemeConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const _raw_data = await response.json();
+
+        const data = _raw_data.success === true ? _raw_data.data : _raw_data;
 
         if (!response.ok) {
           throw new Error(data.error || '保存失败');
@@ -8378,7 +8387,7 @@ const SiteConfigComponent = ({
         });
 
         if (!resp.ok) {
-          const data = await resp.json().catch(() => ({}));
+          const _apiRes_data = await resp.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || `保存失败: ${resp.status}`);
         }
 
@@ -9509,7 +9518,7 @@ const RegistrationConfigComponent = ({
         });
 
         if (!resp.ok) {
-          const data = await resp.json().catch(() => ({}));
+          const _apiRes_data = await resp.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || `保存失败: ${resp.status}`);
         }
 
@@ -9939,11 +9948,11 @@ const RegistrationConfigComponent = ({
                       });
 
                       if (!res.ok) {
-                        const data = await res.json().catch(() => ({}));
+                        const _apiRes_data = await res.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
                         throw new Error(data.error || '获取配置失败');
                       }
 
-                      const data = await res.json();
+                      const _apiRes_data = await res.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
                       setRegistrationSettings((prev) => ({
                         ...prev,
                         OIDCAuthorizationEndpoint:
@@ -10608,7 +10617,7 @@ const SuwayomiConfigComponent = ({
         });
 
         if (!response.ok) {
-          const data = await response.json();
+          const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || '保存失败');
         }
 
@@ -10639,7 +10648,7 @@ const SuwayomiConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         if (!response.ok || !data.success) {
           throw new Error(data.message || data.error || '测试连接失败');
         }
@@ -10890,7 +10899,7 @@ const XiaoyaConfigComponent = ({
         });
 
         if (!response.ok) {
-          const data = await response.json();
+          const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || '保存失败');
         }
 
@@ -10921,7 +10930,7 @@ const XiaoyaConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         if (data.success) {
           showSuccess('连接成功', showAlert);
         } else {
@@ -11174,7 +11183,7 @@ const EmailConfigComponent = ({
         });
 
         if (!response.ok) {
-          const data = await response.json();
+          const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || '保存失败');
         }
 
@@ -11231,7 +11240,7 @@ const EmailConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         if (data.success) {
           showSuccess('测试邮件发送成功，请检查收件箱', showAlert);
         } else {
@@ -11537,7 +11546,7 @@ const MovieRequestsComponent = ({
   const loadCounts = async () => {
     try {
       const response = await fetch('/api/movie-requests');
-      const data = await response.json();
+      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
       const allRequests = data.requests || [];
       setPendingCount(
         allRequests.filter((r: any) => r.status === 'pending').length,
@@ -11556,7 +11565,7 @@ const MovieRequestsComponent = ({
       const response = await fetch(
         `/api/movie-requests?status=${filter}&detail=true`,
       );
-      const data = await response.json();
+      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
       setRequests(data.requests || []);
     } catch (error) {
       console.error('加载求片列表失败:', error);
@@ -11910,7 +11919,7 @@ const AIConfigComponent = ({
         });
 
         if (!response.ok) {
-          const data = await response.json();
+          const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || '保存失败');
         }
 
@@ -12467,7 +12476,8 @@ const MusicConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const _raw_data = await response.json();
+        const data = _raw_data.success === true ? _raw_data.data : _raw_data;
         if (!response.ok) {
           throw new Error(data.error || '保存失败');
         }
@@ -12688,7 +12698,7 @@ const LiveSourceConfig = ({
       });
 
       if (!resp.ok) {
-        const data = await resp.json().catch(() => ({}));
+        const _apiRes_data = await resp.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         throw new Error(data.error || `操作失败: ${resp.status}`);
       }
 
@@ -12778,7 +12788,7 @@ const LiveSourceConfig = ({
         });
 
         if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
+          const _apiRes_data = await response.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           throw new Error(data.error || `刷新失败: ${response.status}`);
         }
 
@@ -13365,7 +13375,7 @@ const WebLiveConfig = ({
         body: JSON.stringify(body),
       });
       if (!resp.ok) {
-        const data = await resp.json().catch(() => ({}));
+        const _apiRes_data = await resp.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         throw new Error(data.error || `操作失败: ${resp.status}`);
       }
       await refreshConfig();
@@ -13892,7 +13902,7 @@ function AdminPageClient() {
         `/api/admin/users?page=${page}&limit=${userLimit}`,
       );
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setUsersV2(data.users);
         setUserTotalPages(data.totalPages || 1);
         setUserTotal(data.total || 0);

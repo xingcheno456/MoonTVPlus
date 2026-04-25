@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
@@ -17,7 +19,7 @@ export async function GET(request: NextRequest) {
   // 检查是否开启订阅功能
   const enableSubscribe = process.env.ENABLE_TVBOX_SUBSCRIBE === 'true';
   if (!enableSubscribe) {
-    return NextResponse.json({ error: '订阅功能未开启' }, { status: 403 });
+    return apiError('订阅功能未开启', 403);
   }
 
   // 验证token
@@ -28,7 +30,7 @@ export async function GET(request: NextRequest) {
   const yellowFilter = searchParams.get('yellowFilter') === 'true';
 
   if (!token) {
-    return NextResponse.json({ error: '缺少订阅token' }, { status: 401 });
+    return apiError('缺少订阅token', 401);
   }
 
   // 判断是全局token还是用户token
@@ -43,13 +45,13 @@ export async function GET(request: NextRequest) {
     // 用户token，查询用户名
     username = (await db.getUsernameByTvboxToken(token)) || undefined;
     if (!username) {
-      return NextResponse.json({ error: '无效的订阅token' }, { status: 401 });
+      return apiError('无效的订阅token', 401);
     }
 
     // 检查用户是否被封禁
     const userInfo = await db.getUserInfoV2(username);
     if (userInfo?.banned) {
-      return NextResponse.json({ error: '用户已被封禁' }, { status: 403 });
+      return apiError('用户已被封禁', 403);
     }
 
     console.log(`用户 ${username} 访问TVBox订阅`);
@@ -208,7 +210,7 @@ export async function GET(request: NextRequest) {
       console.log('TVBOX 订阅已屏蔽源:', blockedSources);
     }
 
-    return NextResponse.json(tvboxSubscription, {
+    return apiSuccess(tvboxSubscription, {
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -216,12 +218,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('生成TVBOX订阅失败:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '生成订阅失败',
         details: (error as Error).message,
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

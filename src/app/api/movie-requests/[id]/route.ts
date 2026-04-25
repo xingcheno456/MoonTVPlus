@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getStorage } from '@/lib/db';
@@ -13,7 +15,7 @@ export async function GET(
   const { id } = await params;
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
@@ -21,16 +23,13 @@ export async function GET(
     const movieRequest = await storage.getMovieRequest(id);
 
     if (!movieRequest) {
-      return NextResponse.json({ error: '求片不存在' }, { status: 404 });
+      return apiError('求片不存在', 404);
     }
 
-    return NextResponse.json({ request: movieRequest });
+    return apiSuccess({ request: movieRequest });
   } catch (error) {
     console.error('获取求片详情失败:', error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError((error as Error).message, 500);
   }
 }
 
@@ -42,7 +41,7 @@ export async function PATCH(
   const { id } = await params;
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
@@ -52,12 +51,12 @@ export async function PATCH(
     if (storage.getUserInfoV2) {
       const userInfo = await storage.getUserInfoV2(authInfo.username);
       if (userInfo?.role !== 'admin' && userInfo?.role !== 'owner') {
-        return NextResponse.json({ error: '无权限操作' }, { status: 403 });
+        return apiError('无权限操作', 403);
       }
     } else {
       // 如果不支持 getUserInfoV2，只允许站长操作
       if (authInfo.username !== process.env.USERNAME) {
-        return NextResponse.json({ error: '无权限操作' }, { status: 403 });
+        return apiError('无权限操作', 403);
       }
     }
 
@@ -66,7 +65,7 @@ export async function PATCH(
 
     const movieRequest = await storage.getMovieRequest(id);
     if (!movieRequest) {
-      return NextResponse.json({ error: '求片不存在' }, { status: 404 });
+      return apiError('求片不存在', 404);
     }
 
     // 更新状态
@@ -100,16 +99,13 @@ export async function PATCH(
 
     await storage.updateMovieRequest(id, updates);
 
-    return NextResponse.json({
+    return apiSuccess({
       message: '更新成功',
       request: { ...movieRequest, ...updates },
     });
   } catch (error) {
     console.error('更新求片失败:', error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError((error as Error).message, 500);
   }
 }
 
@@ -121,7 +117,7 @@ export async function DELETE(
   const { id } = await params;
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
@@ -131,18 +127,18 @@ export async function DELETE(
     if (storage.getUserInfoV2) {
       const userInfo = await storage.getUserInfoV2(authInfo.username);
       if (userInfo?.role !== 'admin' && userInfo?.role !== 'owner') {
-        return NextResponse.json({ error: '无权限操作' }, { status: 403 });
+        return apiError('无权限操作', 403);
       }
     } else {
       // 如果不支持 getUserInfoV2，只允许站长操作
       if (authInfo.username !== process.env.USERNAME) {
-        return NextResponse.json({ error: '无权限操作' }, { status: 403 });
+        return apiError('无权限操作', 403);
       }
     }
 
     const movieRequest = await storage.getMovieRequest(id);
     if (!movieRequest) {
-      return NextResponse.json({ error: '求片不存在' }, { status: 404 });
+      return apiError('求片不存在', 404);
     }
 
     // 删除求片
@@ -153,12 +149,9 @@ export async function DELETE(
       await storage.removeUserMovieRequest(username, id);
     }
 
-    return NextResponse.json({ message: '删除成功' });
+    return apiError('删除成功', 400);
   } catch (error) {
     console.error('删除求片失败:', error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError((error as Error).message, 500);
   }
 }

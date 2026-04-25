@@ -1,6 +1,7 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { parseAuthInfo } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
@@ -23,18 +24,18 @@ const STORAGE_TYPE =
     | undefined) || 'localstorage';
 
 function buildLoginResponse(authToken?: string | null) {
-  const body: Record<string, unknown> = { ok: true };
+  const data: Record<string, unknown> = {};
 
   if (authToken) {
-    body.token = authToken;
+    data.token = authToken;
     const authInfo = parseAuthInfo(authToken);
     if (authInfo) {
       const { password, ...rest } = authInfo;
-      body.auth = rest;
+      data.auth = rest;
     }
   }
 
-  return NextResponse.json(body);
+  return apiSuccess(data);
 }
 
 // 生成签名
@@ -208,14 +209,11 @@ export async function POST(req: NextRequest) {
 
       const { password } = await req.json();
       if (typeof password !== 'string') {
-        return NextResponse.json({ error: '密码不能为空' }, { status: 400 });
+        return apiError('密码不能为空', 400);
       }
 
       if (password !== envPassword) {
-        return NextResponse.json(
-          { ok: false, error: '密码错误' },
-          { status: 401 },
-        );
+        return apiError('密码错误', 401);
       }
 
       // 验证成功，设置认证cookie
@@ -247,21 +245,21 @@ export async function POST(req: NextRequest) {
     const { username, password, turnstileToken } = await req.json();
 
     if (!username || typeof username !== 'string') {
-      return NextResponse.json({ error: '用户名不能为空' }, { status: 400 });
+      return apiError('用户名不能为空', 400);
     }
     if (!password || typeof password !== 'string') {
-      return NextResponse.json({ error: '密码不能为空' }, { status: 400 });
+      return apiError('密码不能为空', 400);
     }
 
     // 如果开启了Turnstile验证
     if (siteConfig.LoginRequireTurnstile) {
       if (!turnstileToken) {
-        return NextResponse.json({ error: '请完成人机验证' }, { status: 400 });
+        return apiError('请完成人机验证', 400);
       }
 
       if (!siteConfig.TurnstileSecretKey) {
         console.error('Turnstile Secret Key未配置');
-        return NextResponse.json({ error: '服务器配置错误' }, { status: 500 });
+        return apiError('服务器配置错误', 500);
       }
 
       // 验证Turnstile Token
@@ -270,10 +268,7 @@ export async function POST(req: NextRequest) {
         siteConfig.TurnstileSecretKey,
       );
       if (!isValid) {
-        return NextResponse.json(
-          { error: '人机验证失败，请重试' },
-          { status: 400 },
-        );
+        return apiError('人机验证失败，请重试', 400);
       }
     }
 
@@ -305,7 +300,7 @@ export async function POST(req: NextRequest) {
 
       return response;
     } else if (username === process.env.USERNAME) {
-      return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 });
+      return apiError('用户名或密码错误', 401);
     }
 
     // 使用新版本的用户验证
@@ -325,11 +320,11 @@ export async function POST(req: NextRequest) {
 
     // 检查用户是否被封禁
     if (isBanned) {
-      return NextResponse.json({ error: '用户被封禁' }, { status: 401 });
+      return apiError('用户被封禁', 401);
     }
 
     if (!pass) {
-      return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 });
+      return apiError('用户名或密码错误', 401);
     }
 
     // 验证成功，设置认证cookie
@@ -357,6 +352,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error('登录接口异常', error);
-    return NextResponse.json({ error: '服务器错误' }, { status: 500 });
+    return apiError('服务器错误', 500);
   }
 }

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import { PansouLink, searchPansou } from '@/lib/pansou.client';
@@ -13,7 +15,7 @@ export async function POST(request: NextRequest) {
     const { keyword } = body;
 
     if (!keyword) {
-      return NextResponse.json({ error: '关键词不能为空' }, { status: 400 });
+      return apiError('关键词不能为空', 400);
     }
 
     // 从系统配置中获取 Pansou 配置
@@ -29,10 +31,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!apiUrl) {
-      return NextResponse.json(
-        { error: '未配置 Pansou API 地址，请在管理面板配置' },
-        { status: 400 },
-      );
+      return apiError('未配置 Pansou API 地址，请在管理面板配置', 400);
     }
 
     // 调用 Pansou 搜索
@@ -85,12 +84,9 @@ export async function POST(request: NextRequest) {
         : [],
     });
 
-    return NextResponse.json(filteredResults);
+    return apiSuccess(filteredResults);
   } catch (error: any) {
     console.error('Pansou 搜索失败:', error);
-    return NextResponse.json(
-      { error: error.message || '搜索失败' },
-      { status: 500 },
-    );
+    return apiError(error.message || '搜索失败', 500);
   }
 }

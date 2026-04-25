@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -18,7 +20,7 @@ export async function POST(request: NextRequest) {
     if (username !== process.env.USERNAME) {
       const userInfo = await db.getUserInfoV2(username || '');
       if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
+        return apiError('权限不足', 401);
       }
     }
 
@@ -40,15 +42,9 @@ export async function POST(request: NextRequest) {
     // 保存配置
     await db.saveAdminConfig(config);
 
-    return NextResponse.json({
-      success: true,
-      message: '直播源刷新成功',
-    });
+    return apiSuccess({ message: '直播源刷新成功', });
   } catch (error) {
     console.error('直播源刷新失败:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '刷新失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '刷新失败', 500);
   }
 }

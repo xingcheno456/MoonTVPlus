@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
-import { NextResponse } from 'next/server';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { API_CONFIG, getCacheTime } from '@/lib/config';
 import { getDuanjuSources } from '@/lib/duanju';
@@ -47,25 +47,22 @@ export async function GET() {
     if (cachedRecommends && now - cachedRecommends.timestamp < CACHE_DURATION) {
       console.log('使用缓存的短剧推荐数据');
       const cacheTime = await getCacheTime();
-      return NextResponse.json(
-        {
+      return apiSuccess({
           code: 200,
           message: '获取成功',
           data: cachedRecommends.data,
-        },
-        {
+        }, {
           headers: {
             'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
           },
-        },
-      );
+        });
     }
 
     // 获取短剧视频源列表
     const sources = await getDuanjuSources();
 
     if (!sources || sources.length === 0) {
-      return NextResponse.json({
+      return apiSuccess({
         code: 200,
         message: '暂无短剧视频源',
         data: [],
@@ -106,7 +103,7 @@ export async function GET() {
     }
 
     if (!duanjuTypeId) {
-      return NextResponse.json({
+      return apiSuccess({
         code: 200,
         message: '未找到短剧分类',
         data: [],
@@ -133,7 +130,7 @@ export async function GET() {
       !Array.isArray(videoListData.list) ||
       videoListData.list.length === 0
     ) {
-      return NextResponse.json({
+      return apiSuccess({
         code: 200,
         message: '暂无短剧视频',
         data: [],
@@ -205,27 +202,21 @@ export async function GET() {
     };
 
     const cacheTime = await getCacheTime();
-    return NextResponse.json(
-      {
+    return apiSuccess({
         code: 200,
         message: '获取成功',
         data: filteredVideos,
-      },
-      {
+      }, {
         headers: {
           'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
         },
-      },
-    );
+      });
   } catch (error) {
     console.error('获取热播短剧推荐失败:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         code: 500,
         message: '获取热播短剧推荐失败',
         error: (error as Error).message,
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

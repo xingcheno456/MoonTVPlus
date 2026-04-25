@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
@@ -26,7 +28,7 @@ export async function GET(request: NextRequest) {
     const yellowFilter = searchParams.get('yellowFilter') === 'true';
 
     if (!apiUrl) {
-      return NextResponse.json({ error: '缺少必要参数: api' }, { status: 400 });
+      return apiError('缺少必要参数: api', 400);
     }
 
     // 特殊处理 openlist
@@ -68,10 +70,7 @@ export async function GET(request: NextRequest) {
           response.status,
           response.statusText,
         );
-        return NextResponse.json(
-          { error: '请求 CMS API 失败' },
-          { status: response.status },
-        );
+        return apiError('请求 CMS API 失败', 400);
       }
 
       const data = await response.json();
@@ -107,7 +106,7 @@ export async function GET(request: NextRequest) {
       // 处理返回数据，替换播放链接为代理链接
       const processedData = processCmsResponse(data, origin, yellowFilter);
 
-      return NextResponse.json(processedData, {
+      return apiSuccess(processedData, {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -118,17 +117,14 @@ export async function GET(request: NextRequest) {
 
       if (fetchError.name === 'AbortError') {
         console.error('CMS API 请求超时:', targetUrl.toString());
-        return NextResponse.json({ error: '请求超时' }, { status: 504 });
+        return apiError('请求超时', 504);
       }
 
       throw fetchError;
     }
   } catch (error) {
     console.error('CMS 代理失败:', error);
-    return NextResponse.json(
-      { error: '代理失败', details: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError('代理失败: ' + (error as Error).message, 500);
   }
 }
 
@@ -340,10 +336,7 @@ async function handleOpenListProxy(request: NextRequest) {
     !openListConfig.Username ||
     !openListConfig.Password
   ) {
-    return NextResponse.json(
-      { code: 0, msg: 'OpenList 未配置', list: [] },
-      { status: 200 },
-    );
+    return apiSuccess({ code: 0, msg: 'OpenList 未配置', list: [] }, { status: 200 });
   }
 
   // 读取 metainfo (从数据库或缓存)
@@ -357,18 +350,12 @@ async function handleOpenListProxy(request: NextRequest) {
         setCachedMetaInfo(metaInfo);
       }
     } catch (error) {
-      return NextResponse.json(
-        { code: 0, msg: 'metainfo 不存在', list: [] },
-        { status: 200 },
-      );
+      return apiSuccess({ code: 0, msg: 'metainfo 不存在', list: [] }, { status: 200 });
     }
   }
 
   if (!metaInfo) {
-    return NextResponse.json(
-      { code: 0, msg: '无数据', list: [] },
-      { status: 200 },
-    );
+    return apiSuccess({ code: 0, msg: '无数据', list: [] }, { status: 200 });
   }
 
   // 搜索模式
@@ -388,7 +375,7 @@ async function handleOpenListProxy(request: NextRequest) {
         type_name: info.media_type === 'movie' ? '电影' : '电视剧',
       }));
 
-    return NextResponse.json({
+    return apiSuccess({
       code: 1,
       msg: '数据列表',
       page: 1,
@@ -405,10 +392,7 @@ async function handleOpenListProxy(request: NextRequest) {
     const info = metaInfo.folders[key];
 
     if (!info) {
-      return NextResponse.json(
-        { code: 0, msg: '视频不存在', list: [] },
-        { status: 200 },
-      );
+      return apiSuccess({ code: 0, msg: '视频不存在', list: [] }, { status: 200 });
     }
 
     const folderName = info.folderName;
@@ -437,7 +421,7 @@ async function handleOpenListProxy(request: NextRequest) {
         })
         .join('#');
 
-      return NextResponse.json({
+      return apiSuccess({
         code: 1,
         msg: '数据列表',
         page: 1,
@@ -460,10 +444,7 @@ async function handleOpenListProxy(request: NextRequest) {
       });
     } catch (error) {
       console.error('获取 OpenList 视频详情失败:', error);
-      return NextResponse.json(
-        { code: 0, msg: '获取详情失败', list: [] },
-        { status: 200 },
-      );
+      return apiSuccess({ code: 0, msg: '获取详情失败', list: [] }, { status: 200 });
     }
   }
 
@@ -477,7 +458,7 @@ async function handleOpenListProxy(request: NextRequest) {
     type_name: info.media_type === 'movie' ? '电影' : '电视剧',
   }));
 
-  return NextResponse.json({
+  return apiSuccess({
     code: 1,
     msg: '数据列表',
     page: 1,

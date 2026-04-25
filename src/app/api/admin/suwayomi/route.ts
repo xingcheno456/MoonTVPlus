@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -10,14 +12,14 @@ export async function POST(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     const username = authInfo.username;
     if (username !== process.env.USERNAME) {
       const userInfo = await db.getUserInfoV2(username);
       if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
+        return apiError('权限不足', 401);
       }
     }
 
@@ -31,20 +33,14 @@ export async function POST(request: NextRequest) {
     };
 
     if (!ServerURL?.trim()) {
-      return NextResponse.json(
-        { success: false, message: '请先填写 Suwayomi 服务地址' },
-        { status: 400 },
-      );
+      return apiSuccess({ success: false, message: '请先填写 Suwayomi 服务地址' }, { status: 400 });
     }
 
     if (
       (AuthMode === 'basic_auth' || AuthMode === 'simple_login') &&
       (!Username?.trim() || !Password)
     ) {
-      return NextResponse.json(
-        { success: false, message: '当前认证方式需要填写用户名和密码' },
-        { status: 400 },
-      );
+      return apiSuccess({ success: false, message: '当前认证方式需要填写用户名和密码' }, { status: 400 });
     }
 
     const client = new SuwayomiClient({
@@ -58,17 +54,11 @@ export async function POST(request: NextRequest) {
       (DefaultLang || 'zh').trim() || 'zh',
     );
 
-    return NextResponse.json({
-      success: true,
-      message: `连接成功，当前语言下检测到 ${sources.length} 个源`,
-    });
+    return apiSuccess({ message: `连接成功，当前语言下检测到 ${sources.length} 个源`, });
   } catch (error) {
-    return NextResponse.json(
-      {
+    return apiSuccess({
         success: false,
         message: error instanceof Error ? error.message : '测试连接失败',
-      },
-      { status: 400 },
-    );
+      }, { status: 400 });
   }
 }

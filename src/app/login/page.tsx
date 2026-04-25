@@ -291,7 +291,7 @@ function LoginPageClient() {
         if (res.status === 401) {
           setError('密码错误');
         } else {
-          const data = await res.json().catch(() => ({}));
+          const _apiRes_data = await res.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
           setError(data.error ?? '服务器错误');
         }
       }

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getCachedEmbyList, setCachedEmbyList } from '@/lib/emby-cache';
 import { embyManager } from '@/lib/emby-manager';
@@ -25,7 +27,7 @@ export async function GET(request: NextRequest) {
     if (isDefaultSort) {
       const cached = getCachedEmbyList(page, pageSize, parentId, embyKey);
       if (cached) {
-        return NextResponse.json(cached);
+        return apiSuccess(cached);
       }
     }
 
@@ -78,10 +80,10 @@ export async function GET(request: NextRequest) {
       setCachedEmbyList(page, pageSize, response, parentId, embyKey);
     }
 
-    return NextResponse.json(response);
+    return apiSuccess(response);
   } catch (error) {
     console.error('获取 Emby 列表失败:', error);
-    return NextResponse.json({
+    return apiSuccess({
       error: '获取 Emby 列表失败: ' + (error as Error).message,
       list: [],
       totalPages: 0,

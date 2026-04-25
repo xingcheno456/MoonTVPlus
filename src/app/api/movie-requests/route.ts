@@ -1,5 +1,7 @@
 import { nanoid } from 'nanoid';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getStorage } from '@/lib/db';
@@ -11,7 +13,7 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
@@ -29,7 +31,7 @@ export async function GET(request: NextRequest) {
         requestIds.map((id) => storage.getMovieRequest(id)),
       );
       const filtered = requests.filter((r) => r !== null) as MovieRequest[];
-      return NextResponse.json({ requests: filtered });
+      return apiSuccess({ requests: filtered });
     }
 
     // 获取所有求片
@@ -53,13 +55,10 @@ export async function GET(request: NextRequest) {
       return b.createdAt - a.createdAt;
     });
 
-    return NextResponse.json({ requests });
+    return apiSuccess({ requests });
   } catch (error) {
     console.error('获取求片列表失败:', error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError((error as Error).message, 500);
   }
 }
 
@@ -67,7 +66,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
@@ -76,14 +75,14 @@ export async function POST(request: NextRequest) {
     const config = await getConfig();
 
     if (config.SiteConfig.EnableMovieRequest === false) {
-      return NextResponse.json({ error: '求片功能已关闭' }, { status: 403 });
+      return apiError('求片功能已关闭', 403);
     }
 
     const body = await request.json();
     const { tmdbId, title, year, mediaType, season, poster, overview } = body;
 
     if (!title || !mediaType) {
-      return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
+      return apiError('缺少必要参数', 400);
     }
 
     const storage = getStorage();
@@ -98,10 +97,7 @@ export async function POST(request: NextRequest) {
         const elapsed = Date.now() - userInfo.last_movie_request_time;
         if (elapsed < rateLimit) {
           const remaining = Math.ceil((rateLimit - elapsed) / 60000);
-          return NextResponse.json(
-            { error: `操作太频繁，请${remaining}分钟后再试` },
-            { status: 429 },
-          );
+          return apiError(`操作太频繁，请${remaining}分钟后再试`, 429);
         }
       }
     }
@@ -117,15 +113,12 @@ export async function POST(request: NextRequest) {
     if (existing) {
       // 如果已上架，不允许再求
       if (existing.status === 'fulfilled') {
-        return NextResponse.json({ error: '该影片已上架' }, { status: 400 });
+        return apiError('该影片已上架', 400);
       }
 
       // 检查用户是否已经求过
       if (existing.requestedBy.includes(authInfo.username)) {
-        return NextResponse.json(
-          { error: '您已经求过这部影片了' },
-          { status: 400 },
-        );
+        return apiError('您已经求过这部影片了', 400);
       }
 
       // 加入求片
@@ -152,7 +145,7 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      return NextResponse.json({
+      return apiSuccess({
         message: '已加入求片',
         request: existing,
       });
@@ -204,15 +197,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
+    return apiSuccess({
       message: '求片成功',
       request: newRequest,
     });
   } catch (error) {
     console.error('创建求片失败:', error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError((error as Error).message, 500);
   }
 }

@@ -45,11 +45,11 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
       });
 
       if (!response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         throw new Error(data.error || '生成AI评论失败');
       }
 
-      const data = await response.json();
+      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
       console.log('AI评论生成成功:', data.comments.length);
 
       setComments(data.comments);

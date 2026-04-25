@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import {
   extractSongmid,
@@ -155,16 +157,13 @@ export async function POST(request: NextRequest) {
       );
 
       if (!urlResult?.url) {
-        return NextResponse.json(
-          {
+        return apiSuccess({
             success: false,
             error: {
               code: 'MUSIC_PLAY_FAILED',
               message: urlResult?.error || '获取播放地址失败',
             },
-          },
-          { status: 502 },
-        );
+          }, { status: 502 });
       }
 
       attempts = urlResult.attempts || attempts;
@@ -176,9 +175,7 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
+    return apiSuccess({ data: {
         song: cachedMeta.song,
         ...(play ? { play } : {}),
         lyric: {
@@ -189,8 +186,7 @@ export async function POST(request: NextRequest) {
           attempts,
           includeUrl,
         },
-      },
-    });
+      }, });
   } catch (error) {
     console.error('[music-v2] play route error:', error);
     return internalError('获取播放信息失败', (error as Error).message);

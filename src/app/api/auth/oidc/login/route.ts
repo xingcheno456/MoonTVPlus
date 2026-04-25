@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { getConfig } from '@/lib/config';
 
 export const runtime = 'nodejs';
@@ -12,15 +14,12 @@ export async function GET(request: NextRequest) {
 
     // 检查是否启用OIDC登录
     if (!siteConfig.EnableOIDCLogin) {
-      return NextResponse.json({ error: 'OIDC登录未启用' }, { status: 403 });
+      return apiError('OIDC登录未启用', 403);
     }
 
     // 检查OIDC配置
     if (!siteConfig.OIDCAuthorizationEndpoint || !siteConfig.OIDCClientId) {
-      return NextResponse.json(
-        { error: 'OIDC配置不完整，请配置Authorization Endpoint和Client ID' },
-        { status: 500 },
-      );
+      return apiError('OIDC配置不完整，请配置Authorization Endpoint和Client ID', 500);
     }
 
     // 生成state参数用于防止CSRF攻击
@@ -51,6 +50,6 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('OIDC登录发起失败:', error);
-    return NextResponse.json({ error: '服务器错误' }, { status: 500 });
+    return apiError('服务器错误', 500);
   }
 }

@@ -1,6 +1,8 @@
 /* eslint-disable no-console,no-case-declarations */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -18,7 +20,7 @@ export async function POST(request: NextRequest) {
     if (username !== process.env.USERNAME) {
       const userInfo = await db.getUserInfoV2(username || '');
       if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
+        return apiError('权限不足', 401);
       }
     }
 
@@ -26,7 +28,7 @@ export async function POST(request: NextRequest) {
     const { action, key, name, url, ua, epg, proxyMode } = body;
 
     if (!config) {
-      return NextResponse.json({ error: '配置不存在' }, { status: 404 });
+      return apiError('配置不存在', 404);
     }
 
     // 确保 LiveConfig 存在
@@ -38,10 +40,7 @@ export async function POST(request: NextRequest) {
       case 'add':
         // 检查是否已存在相同的 key
         if (config.LiveConfig.some((l) => l.key === key)) {
-          return NextResponse.json(
-            { error: '直播源 key 已存在' },
-            { status: 400 },
-          );
+          return apiError('直播源 key 已存在', 400);
         }
 
         const liveInfo = {
@@ -71,15 +70,12 @@ export async function POST(request: NextRequest) {
         // 删除直播源
         const deleteIndex = config.LiveConfig.findIndex((l) => l.key === key);
         if (deleteIndex === -1) {
-          return NextResponse.json({ error: '直播源不存在' }, { status: 404 });
+          return apiError('直播源不存在', 404);
         }
 
         const liveSource = config.LiveConfig[deleteIndex];
         if (liveSource.from === 'config') {
-          return NextResponse.json(
-            { error: '不能删除配置文件中的直播源' },
-            { status: 400 },
-          );
+          return apiError('不能删除配置文件中的直播源', 400);
         }
 
         deleteCachedLiveChannels(key);
@@ -91,7 +87,7 @@ export async function POST(request: NextRequest) {
         // 启用直播源
         const enableSource = config.LiveConfig.find((l) => l.key === key);
         if (!enableSource) {
-          return NextResponse.json({ error: '直播源不存在' }, { status: 404 });
+          return apiError('直播源不存在', 404);
         }
         enableSource.disabled = false;
         break;
@@ -100,7 +96,7 @@ export async function POST(request: NextRequest) {
         // 禁用直播源
         const disableSource = config.LiveConfig.find((l) => l.key === key);
         if (!disableSource) {
-          return NextResponse.json({ error: '直播源不存在' }, { status: 404 });
+          return apiError('直播源不存在', 404);
         }
         disableSource.disabled = true;
         break;
@@ -109,15 +105,12 @@ export async function POST(request: NextRequest) {
         // 编辑直播源
         const editSource = config.LiveConfig.find((l) => l.key === key);
         if (!editSource) {
-          return NextResponse.json({ error: '直播源不存在' }, { status: 404 });
+          return apiError('直播源不存在', 404);
         }
 
         // 配置文件中的直播源不允许编辑
         if (editSource.from === 'config') {
-          return NextResponse.json(
-            { error: '不能编辑配置文件中的直播源' },
-            { status: 400 },
-          );
+          return apiError('不能编辑配置文件中的直播源', 400);
         }
 
         // 更新字段（除了 key 和 from）
@@ -140,10 +133,7 @@ export async function POST(request: NextRequest) {
         // 排序直播源
         const { order } = body;
         if (!Array.isArray(order)) {
-          return NextResponse.json(
-            { error: '排序数据格式错误' },
-            { status: 400 },
-          );
+          return apiError('排序数据格式错误', 400);
         }
 
         // 创建新的排序后的数组
@@ -169,32 +159,26 @@ export async function POST(request: NextRequest) {
         // 设置代理模式
         const setProxySource = config.LiveConfig.find((l) => l.key === key);
         if (!setProxySource) {
-          return NextResponse.json({ error: '直播源不存在' }, { status: 404 });
+          return apiError('直播源不存在', 404);
         }
         if (
           !proxyMode ||
           !['full', 'm3u8-only', 'direct'].includes(proxyMode)
         ) {
-          return NextResponse.json(
-            { error: '无效的代理模式' },
-            { status: 400 },
-          );
+          return apiError('无效的代理模式', 400);
         }
         setProxySource.proxyMode = proxyMode as 'full' | 'm3u8-only' | 'direct';
         break;
 
       default:
-        return NextResponse.json({ error: '未知操作' }, { status: 400 });
+        return apiError('未知操作', 400);
     }
 
     // 保存配置
     await db.saveAdminConfig(config);
 
-    return NextResponse.json({ success: true });
+    return apiSuccess({ success: true });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '操作失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '操作失败', 500);
   }
 }

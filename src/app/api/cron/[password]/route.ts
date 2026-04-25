@@ -1,6 +1,8 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { checkAnimeSubscriptions } from '@/lib/anime-subscription';
 import { getConfig, refineConfig } from '@/lib/config';
@@ -168,10 +170,7 @@ export async function GET(
   const { password } = await params;
   const cronPassword = process.env.CRON_PASSWORD || 'mtvpls';
   if (password !== cronPassword) {
-    return NextResponse.json(
-      { success: false, message: 'Unauthorized' },
-      { status: 401 },
-    );
+    return apiSuccess({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
   // 检查冷却时间
@@ -189,8 +188,7 @@ export async function GET(
       `Cron job skipped: cooldown period active. Remaining: ${remainingMinutes}m ${seconds}s`,
     );
 
-    return NextResponse.json(
-      {
+    return apiSuccess({
         success: false,
         message: 'Cron job is in cooldown period',
         remainingSeconds,
@@ -198,9 +196,7 @@ export async function GET(
           lastExecutionTime + COOLDOWN_MS,
         ).toISOString(),
         timestamp: new Date().toISOString(),
-      },
-      { status: 429 },
-    );
+      }, { status: 429 });
   }
 
   try {
@@ -216,35 +212,23 @@ export async function GET(
     if (waitForCompletion) {
       // 等待定时任务完成后再返回 200
       await cronJob();
-      return NextResponse.json({
-        success: true,
-        message: 'Cron job executed successfully',
-        timestamp: new Date().toISOString(),
-      });
+      return apiSuccess({ message: 'Cron job executed successfully',
+        timestamp: new Date().toISOString(), });
     } else {
       // 立即返回 202，定时任务在后台执行
       cronJob();
-      return NextResponse.json(
-        {
-          success: true,
-          message: 'Cron job accepted and running in background',
-          timestamp: new Date().toISOString(),
-        },
-        { status: 202 },
-      );
+      return apiSuccess({ message: 'Cron job accepted and running in background',
+          timestamp: new Date().toISOString(), }, { status: 202 });
     }
   } catch (error) {
     console.error('Cron job failed:', error);
 
-    return NextResponse.json(
-      {
+    return apiSuccess({
         success: false,
         message: 'Cron job failed',
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }
 

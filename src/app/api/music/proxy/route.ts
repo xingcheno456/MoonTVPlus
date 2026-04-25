@@ -2,6 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 export const runtime = 'nodejs';
 
 // 代理音频流
@@ -11,7 +13,7 @@ export async function GET(request: NextRequest) {
     const url = searchParams.get('url');
 
     if (!url) {
-      return NextResponse.json({ error: '缺少 url 参数' }, { status: 400 });
+      return apiError('缺少 url 参数', 400);
     }
 
     // 安全检查：只允许代理音乐平台的音频和图片 CDN
@@ -33,7 +35,7 @@ export async function GET(request: NextRequest) {
     try {
       urlObj = new URL(url);
     } catch {
-      return NextResponse.json({ error: '无效的 URL' }, { status: 400 });
+      return apiError('无效的 URL', 400);
     }
 
     const isAllowed = allowedDomains.some(
@@ -43,7 +45,7 @@ export async function GET(request: NextRequest) {
 
     if (!isAllowed) {
       console.warn(`拒绝代理音频请求: ${urlObj.hostname}`);
-      return NextResponse.json({ error: '不允许的目标域名' }, { status: 403 });
+      return apiError('不允许的目标域名', 403);
     }
 
     // 检查是否有 Range 请求头
@@ -67,10 +69,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok && response.status !== 206) {
-      return NextResponse.json(
-        { error: '获取音频失败' },
-        { status: response.status },
-      );
+      return apiError('获取音频失败', 400);
     }
 
     // 获取响应头
@@ -103,12 +102,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('代理音频失败:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '代理请求失败',
         details: (error as Error).message,
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

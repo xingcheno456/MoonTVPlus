@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -12,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (username !== process.env.USERNAME) {
       const userInfo = await db.getUserInfoV2(username || '');
       if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
+        return apiError('权限不足', 401);
       }
     }
 
@@ -20,7 +22,7 @@ export async function POST(request: NextRequest) {
     const { action } = body;
 
     if (!config) {
-      return NextResponse.json({ error: '配置不存在' }, { status: 404 });
+      return apiError('配置不存在', 404);
     }
 
     if (!config.WebLiveConfig) {
@@ -37,12 +39,12 @@ export async function POST(request: NextRequest) {
       case 'add': {
         const { name, platform, roomId } = body;
         if (!name || !platform || !roomId) {
-          return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
+          return apiError('缺少必要参数', 400);
         }
 
         const key = `web_${Date.now()}`;
         if (config.WebLiveConfig.some((s) => s.key === key)) {
-          return NextResponse.json({ error: 'Key已存在' }, { status: 400 });
+          return apiError('Key已存在', 400);
         }
 
         config.WebLiveConfig.push({
@@ -60,13 +62,10 @@ export async function POST(request: NextRequest) {
         const { key } = body;
         const source = config.WebLiveConfig.find((s) => s.key === key);
         if (!source) {
-          return NextResponse.json({ error: '源不存在' }, { status: 404 });
+          return apiError('源不存在', 404);
         }
         if (source.from === 'config') {
-          return NextResponse.json(
-            { error: '无法删除配置文件中的源' },
-            { status: 400 },
-          );
+          return apiError('无法删除配置文件中的源', 400);
         }
         config.WebLiveConfig = config.WebLiveConfig.filter(
           (s) => s.key !== key,
@@ -78,7 +77,7 @@ export async function POST(request: NextRequest) {
         const { key } = body;
         const source = config.WebLiveConfig.find((s) => s.key === key);
         if (!source) {
-          return NextResponse.json({ error: '源不存在' }, { status: 404 });
+          return apiError('源不存在', 404);
         }
         source.disabled = false;
         break;
@@ -88,7 +87,7 @@ export async function POST(request: NextRequest) {
         const { key } = body;
         const source = config.WebLiveConfig.find((s) => s.key === key);
         if (!source) {
-          return NextResponse.json({ error: '源不存在' }, { status: 404 });
+          return apiError('源不存在', 404);
         }
         source.disabled = true;
         break;
@@ -98,13 +97,10 @@ export async function POST(request: NextRequest) {
         const { key, name, platform, roomId } = body;
         const source = config.WebLiveConfig.find((s) => s.key === key);
         if (!source) {
-          return NextResponse.json({ error: '源不存在' }, { status: 404 });
+          return apiError('源不存在', 404);
         }
         if (source.from === 'config') {
-          return NextResponse.json(
-            { error: '无法编辑配置文件中的源' },
-            { status: 400 },
-          );
+          return apiError('无法编辑配置文件中的源', 400);
         }
         source.name = name;
         source.platform = platform;
@@ -115,10 +111,7 @@ export async function POST(request: NextRequest) {
       case 'sort': {
         const { keys } = body;
         if (!Array.isArray(keys)) {
-          return NextResponse.json(
-            { error: '无效的排序数据' },
-            { status: 400 },
-          );
+          return apiError('无效的排序数据', 400);
         }
         const sortedSources = keys
           .map((key) => config.WebLiveConfig!.find((s) => s.key === key))
@@ -128,15 +121,12 @@ export async function POST(request: NextRequest) {
       }
 
       default:
-        return NextResponse.json({ error: '未知操作' }, { status: 400 });
+        return apiError('未知操作', 400);
     }
 
     await db.saveAdminConfig(config);
-    return NextResponse.json({ success: true });
+    return apiSuccess({ success: true });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '操作失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '操作失败', 500);
   }
 }

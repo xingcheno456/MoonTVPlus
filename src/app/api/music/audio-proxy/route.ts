@@ -2,6 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
 
@@ -36,19 +38,13 @@ export async function GET(request: NextRequest) {
     const quality = searchParams.get('quality');
 
     if (!platform || !id || !quality) {
-      return NextResponse.json(
-        { error: '缺少必要参数: platform, id, quality' },
-        { status: 400 },
-      );
+      return apiError('缺少必要参数: platform, id, quality', 400);
     }
 
     // 获取OpenList客户端
     const openListClient = await getOpenListClient();
     if (!openListClient) {
-      return NextResponse.json(
-        { error: 'OpenList未配置或未启用' },
-        { status: 503 },
-      );
+      return apiError('OpenList未配置或未启用', 503);
     }
 
     // 获取配置
@@ -62,7 +58,7 @@ export async function GET(request: NextRequest) {
     const fileResponse = await openListClient.getFile(audioPath);
 
     if (fileResponse.code !== 200 || !fileResponse.data?.raw_url) {
-      return NextResponse.json({ error: '音频文件未找到' }, { status: 404 });
+      return apiError('音频文件未找到', 404);
     }
 
     // 检查是否有 Range 请求头
@@ -120,10 +116,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!response.ok && response.status !== 206) {
-      return NextResponse.json(
-        { error: '获取音频失败' },
-        { status: response.status },
-      );
+      return apiError('获取音频失败', 400);
     }
 
     // 获取响应头
@@ -172,12 +165,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('代理OpenList音频失败:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '代理请求失败',
         details: (error as Error).message,
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

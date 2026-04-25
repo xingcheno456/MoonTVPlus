@@ -1,6 +1,6 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 
-import { NextResponse } from 'next/server';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import { getBaseUrl, resolveUrl } from '@/lib/live';
@@ -13,13 +13,13 @@ export async function GET(request: Request) {
   const allowCORS = searchParams.get('allowCORS') === 'true';
   const source = searchParams.get('moontv-source');
   if (!url) {
-    return NextResponse.json({ error: 'Missing url' }, { status: 400 });
+    return apiError('Missing url', 400);
   }
 
   const config = await getConfig();
   const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
   if (!liveSource) {
-    return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+    return apiError('Source not found', 404);
   }
   const ua = liveSource.ua || 'AptvPlayer/1.4.10';
 
@@ -39,10 +39,7 @@ export async function GET(request: Request) {
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to fetch m3u8' },
-        { status: 500 },
-      );
+      return apiError('Failed to fetch m3u8', 500);
     }
 
     const contentType = response.headers.get('Content-Type') || '';
@@ -106,10 +103,7 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch m3u8' },
-      { status: 500 },
-    );
+    return apiError('Failed to fetch m3u8', 500);
   } finally {
     // 确保 response 被正确关闭以释放资源
     if (response && !responseUsed) {

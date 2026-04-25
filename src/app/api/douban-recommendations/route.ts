@@ -1,5 +1,7 @@
 import * as cheerio from 'cheerio/slim';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { fetchDoubanData } from '@/lib/douban';
 import { fetchDoubanWithVerification } from '@/lib/douban-anti-crawler';
@@ -24,7 +26,7 @@ export async function GET(request: NextRequest) {
   const doubanId = searchParams.get('id');
 
   if (!doubanId) {
-    return NextResponse.json({ error: 'Missing douban ID' }, { status: 400 });
+    return apiError('Missing douban ID', 400);
   }
 
   try {
@@ -34,10 +36,7 @@ export async function GET(request: NextRequest) {
     const response = await fetchDoubanWithVerification(url);
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to fetch douban page' },
-        { status: response.status },
-      );
+      return apiError('Failed to fetch douban page', 400);
     }
 
     const html = await response.text();
@@ -114,21 +113,15 @@ export async function GET(request: NextRequest) {
 
     console.log('处理后的推荐数:', processedRecommendations.length);
 
-    return NextResponse.json(
-      {
+    return apiSuccess({
         recommendations: processedRecommendations,
-      },
-      {
+      }, {
         headers: {
           'Cache-Control': 'public, max-age=3600, s-maxage=3600',
         },
-      },
-    );
+      });
   } catch (error) {
     console.error('Douban recommendations fetch error:', error);
-    return NextResponse.json(
-      { error: 'Failed to parse douban recommendations' },
-      { status: 500 },
-    );
+    return apiError('Failed to parse douban recommendations', 500);
   }
 }

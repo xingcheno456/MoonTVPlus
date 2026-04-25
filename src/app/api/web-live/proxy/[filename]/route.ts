@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 function getBaseUrl(url: string): string {
   const urlObj = new URL(url);
   const pathParts = urlObj.pathname.split('/');
@@ -45,7 +47,7 @@ export async function GET(request: NextRequest) {
     const url = searchParams.get('url');
 
     if (!url) {
-      return NextResponse.json({ error: '缺少URL参数' }, { status: 400 });
+      return apiError('缺少URL参数', 400);
     }
 
     // 根据URL判断Referer
@@ -65,7 +67,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!streamRes.ok) {
-      return NextResponse.json({ error: '无法获取直播流' }, { status: 404 });
+      return apiError('无法获取直播流', 404);
     }
 
     const contentType = streamRes.headers.get('Content-Type') || '';
@@ -100,9 +102,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '代理失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '代理失败', 500);
   }
 }

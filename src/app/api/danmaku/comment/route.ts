@@ -1,5 +1,7 @@
 // 获取弹幕 API 路由
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import { getDanmakuApiBaseUrl } from '@/lib/danmaku/config';
@@ -42,13 +44,10 @@ export async function GET(request: NextRequest) {
 
     // 至少需要一个参数
     if (!episodeId && !url) {
-      return NextResponse.json(
-        {
+      return apiSuccess({
           count: 0,
           comments: [],
-        },
-        { status: 400 },
-      );
+        }, { status: 400 });
     }
 
     // 从数据库读取弹幕配置
@@ -91,7 +90,7 @@ export async function GET(request: NextRequest) {
       // 解析 XML 为 JSON
       const comments = parseXmlDanmaku(xmlText);
 
-      return NextResponse.json({
+      return apiSuccess({
         count: comments.length,
         comments,
       });
@@ -107,12 +106,9 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error('获取弹幕代理错误:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         count: 0,
         comments: [],
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

@@ -211,7 +211,9 @@ export default function AcgSearch({
         }),
       });
 
-      const data = await response.json();
+      const _raw_data = await response.json();
+
+      const data = _raw_data.success === true ? _raw_data.data : _raw_data;
 
       if (!response.ok) {
         throw new Error(data.error || '添加下载任务失败');

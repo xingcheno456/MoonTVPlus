@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { getAuthorizedUsername } from '../_utils';
 import { getSuwayomiConfig, loginWithSimpleAuth } from '@/lib/suwayomi.client';
 
@@ -29,7 +31,7 @@ export async function GET(request: NextRequest) {
   try {
     const pathOrUrl = new URL(request.url).searchParams.get('path')?.trim();
     if (!pathOrUrl) {
-      return NextResponse.json({ error: '缺少 path 参数' }, { status: 400 });
+      return apiError('缺少 path 参数', 400);
     }
 
     const config = await getSuwayomiConfig();
@@ -69,10 +71,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: `Suwayomi 图片请求失败: ${response.status}` },
-        { status: response.status },
-      );
+      return apiError(`Suwayomi 图片请求失败: ${response.status}`, 400);
     }
 
     const headers = new Headers();
@@ -86,9 +85,6 @@ export async function GET(request: NextRequest) {
       headers,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '图片代理失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '图片代理失败', 500);
   }
 }

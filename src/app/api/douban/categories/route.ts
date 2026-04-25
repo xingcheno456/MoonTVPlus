@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getCacheTime } from '@/lib/config';
 import { fetchDoubanData } from '@/lib/douban';
@@ -34,31 +34,19 @@ export async function GET(request: Request) {
 
   // 验证参数
   if (!kind || !category || !type) {
-    return NextResponse.json(
-      { error: '缺少必要参数: kind 或 category 或 type' },
-      { status: 400 },
-    );
+    return apiError('缺少必要参数: kind 或 category 或 type', 400);
   }
 
   if (!['tv', 'movie'].includes(kind)) {
-    return NextResponse.json(
-      { error: 'kind 参数必须是 tv 或 movie' },
-      { status: 400 },
-    );
+    return apiError('kind 参数必须是 tv 或 movie', 400);
   }
 
   if (pageLimit < 1 || pageLimit > 100) {
-    return NextResponse.json(
-      { error: 'pageSize 必须在 1-100 之间' },
-      { status: 400 },
-    );
+    return apiError('pageSize 必须在 1-100 之间', 400);
   }
 
   if (pageStart < 0) {
-    return NextResponse.json(
-      { error: 'pageStart 不能小于 0' },
-      { status: 400 },
-    );
+    return apiError('pageStart 不能小于 0', 400);
   }
 
   const target = `https://m.douban.com/rexxar/api/v2/subject/recent_hot/${kind}?start=${pageStart}&limit=${pageLimit}&category=${category}&type=${type}`;
@@ -83,7 +71,7 @@ export async function GET(request: Request) {
     };
 
     const cacheTime = await getCacheTime();
-    return NextResponse.json(response, {
+    return apiSuccess(response, {
       headers: {
         'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
         'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
@@ -92,9 +80,6 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: '获取豆瓣数据失败', details: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError('获取豆瓣数据失败: ' + (error as Error).message, 500);
   }
 }

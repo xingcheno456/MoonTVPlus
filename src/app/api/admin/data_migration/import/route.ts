@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { promisify } from 'util';
 import { gunzip } from 'zlib';
 
@@ -19,24 +21,18 @@ export async function POST(req: NextRequest) {
     // 检查存储类型
     const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
     if (storageType === 'localstorage') {
-      return NextResponse.json(
-        { error: '不支持本地存储进行数据迁移' },
-        { status: 400 },
-      );
+      return apiError('不支持本地存储进行数据迁移', 400);
     }
 
     // 验证身份和权限
     const authInfo = getAuthInfoFromCookie(req);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
+      return apiError('未登录', 401);
     }
 
     // 检查用户权限（只有站长可以导入数据）
     if (authInfo.username !== process.env.USERNAME) {
-      return NextResponse.json(
-        { error: '权限不足，只有站长可以导入数据' },
-        { status: 401 },
-      );
+      return apiError('权限不足，只有站长可以导入数据', 401);
     }
 
     const username = authInfo.username; // 存储到局部变量以便 TypeScript 类型推断
@@ -47,11 +43,11 @@ export async function POST(req: NextRequest) {
     const password = formData.get('password') as string;
 
     if (!file) {
-      return NextResponse.json({ error: '请选择备份文件' }, { status: 400 });
+      return apiError('请选择备份文件', 400);
     }
 
     if (!password) {
-      return NextResponse.json({ error: '请提供解密密码' }, { status: 400 });
+      return apiError('请提供解密密码', 400);
     }
 
     // 读取文件内容
@@ -62,10 +58,7 @@ export async function POST(req: NextRequest) {
     try {
       decryptedData = SimpleCrypto.decrypt(encryptedData, password);
     } catch (error) {
-      return NextResponse.json(
-        { error: '解密失败，请检查密码是否正确' },
-        { status: 400 },
-      );
+      return apiError('解密失败，请检查密码是否正确', 400);
     }
 
     // 解压缩数据
@@ -78,7 +71,7 @@ export async function POST(req: NextRequest) {
     try {
       importData = JSON.parse(decompressedData);
     } catch (error) {
-      return NextResponse.json({ error: '备份文件格式错误' }, { status: 400 });
+      return apiError('备份文件格式错误', 400);
     }
 
     // 验证数据格式
@@ -87,7 +80,7 @@ export async function POST(req: NextRequest) {
       !importData.data.adminConfig ||
       !importData.data.userData
     ) {
-      return NextResponse.json({ error: '备份文件格式无效' }, { status: 400 });
+      return apiError('备份文件格式无效', 400);
     }
 
     // 开始导入数据 - 先清空现有数据
@@ -466,7 +459,7 @@ export async function POST(req: NextRequest) {
     );
     setTimeout(() => clearProgress(username, 'import'), 3000);
 
-    return NextResponse.json({
+    return apiSuccess({
       message: '数据导入成功',
       importedUsers: Object.keys(userData).length,
       importedUsersV2: importData.data.usersV2?.length || 0,
@@ -483,9 +476,6 @@ export async function POST(req: NextRequest) {
     if (authInfo?.username) {
       clearProgress(authInfo.username, 'import');
     }
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '导入失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '导入失败', 500);
   }
 }

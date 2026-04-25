@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { getConfig } from '@/lib/config';
 import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
 
@@ -23,22 +25,19 @@ export async function GET(request: NextRequest) {
     const envToken = process.env.NEXT_PUBLIC_PROXY_M3U8_TOKEN;
     if (envToken && envToken.trim() !== '') {
       if (!token || token !== envToken) {
-        return NextResponse.json({ error: '无效的访问令牌' }, { status: 401 });
+        return apiError('无效的访问令牌', 401);
       }
     }
 
     if (!m3u8Url) {
-      return NextResponse.json({ error: '缺少必要参数: url' }, { status: 400 });
+      return apiError('缺少必要参数: url', 400);
     }
 
     const DIRECT_PLAY_SOURCE = 'directplay';
     // 安全校验：防 SSRF / 域名重绑定，只允许合法的公网 URL。对所有经过 proxy-m3u8 的请求强制校验，不仅限于 directplay
     const isSafeUrl = await validateProxyUrlServerSide(m3u8Url);
     if (!isSafeUrl) {
-      return NextResponse.json(
-        { error: 'Proxy request to local or invalid network is forbidden' },
-        { status: 403 },
-      );
+      return apiError('Proxy request to local or invalid network is forbidden', 403);
     }
 
     // 获取当前请求的 origin
@@ -59,10 +58,7 @@ export async function GET(request: NextRequest) {
         try {
           host = new URL(request.url).host;
         } catch {
-          return NextResponse.json(
-            { error: 'Invalid Request Host' },
-            { status: 400 },
-          );
+          return apiError('Invalid Request Host', 400);
         }
       }
 
@@ -88,10 +84,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: '获取 m3u8 文件失败' },
-        { status: response.status },
-      );
+      return apiError('获取 m3u8 文件失败', 400);
     }
 
     // 后端 MIME Sniffing: 防御伪装成 m3u8 的大文件二进制流
@@ -130,15 +123,12 @@ export async function GET(request: NextRequest) {
       console.warn(
         `[Proxy-M3U8] 拦截到非文本媒体流 (Content-Type: ${contentType}), 拒绝按文本解析, URL: ${m3u8Url}`,
       );
-      return NextResponse.json(
-        {
+      return apiSuccess({
           error: 'Unsupported Media Type',
           details: `The source returned Content-Type "${contentType}", which is not a text m3u8 playlist.`,
           fallbackToDirect: true,
           originalUrl: m3u8Url,
-        },
-        { status: 415, headers: { 'Access-Control-Allow-Origin': '*' } },
-      );
+        }, { status: 415, headers: { 'Access-Control-Allow-Origin': '*' } });
     }
 
     let m3u8Content = await response.text();
@@ -214,10 +204,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('代理 m3u8 失败:', error);
-    return NextResponse.json(
-      { error: '代理失败', details: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError('代理失败: ' + (error as Error).message, 500);
   }
 }
 

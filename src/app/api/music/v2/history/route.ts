@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { db } from '@/lib/db';
 import { MusicV2HistoryRecord, normalizeSong } from '@/lib/music-v2';
@@ -44,7 +46,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const records = await db.listMusicV2History(username);
-    return NextResponse.json({ success: true, data: { records } });
+    return apiSuccess({ data: { records } });
   } catch (error) {
     return internalError('获取播放历史失败', (error as Error).message);
   }
@@ -74,10 +76,7 @@ export async function POST(request: NextRequest) {
             item.songId && item.source && item.name && item.artist,
         );
       await db.batchUpsertMusicV2History(username, records);
-      return NextResponse.json({
-        success: true,
-        data: { count: records.length },
-      });
+      return apiSuccess({ data: { count: records.length }, });
     }
 
     const record = toHistoryRecord(
@@ -89,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     await db.upsertMusicV2History(username, record);
-    return NextResponse.json({ success: true, data: { record } });
+    return apiSuccess({ data: { record } });
   } catch (error) {
     return internalError('保存播放历史失败', (error as Error).message);
   }
@@ -107,7 +106,7 @@ export async function DELETE(request: NextRequest) {
     } else {
       await db.clearMusicV2History(username);
     }
-    return NextResponse.json({ success: true });
+    return apiSuccess({ success: true });
   } catch (error) {
     return internalError('删除播放历史失败', (error as Error).message);
   }

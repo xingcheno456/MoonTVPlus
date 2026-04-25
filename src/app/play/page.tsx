@@ -1398,7 +1398,7 @@ function PlayPageClient() {
           return;
         }
 
-        const result = await response.json();
+        const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
 
         if (result.backdrop) {
           setTmdbBackdrop(processImageUrl(result.backdrop));
@@ -1648,7 +1648,7 @@ function PlayPageClient() {
         throw new Error('转码服务连接失败');
       }
 
-      const data = await response.json().catch(() => null);
+      const _apiRes_data = await response.json().catch(() => null); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
       if (!response.ok) {
         throw new Error(
           data?.error || data?.message || `转码请求失败 (${response.status})`,
@@ -2297,7 +2297,7 @@ function PlayPageClient() {
       );
 
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         return data.downloaded || false;
       }
     } catch (error) {
@@ -2504,7 +2504,7 @@ function PlayPageClient() {
       const fetchUrl = `${currentXiaoyaUrlRef.current}${separator}format=json&t=${Date.now()}`;
 
       const response = await fetch(fetchUrl);
-      const data = await response.json();
+      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
       if (!data.url) {
         throw new Error('未获取到有效链接');
@@ -2771,7 +2771,7 @@ function PlayPageClient() {
         const fetchUrl = `${newUrl}${separator}format=json`;
 
         const response = await fetch(fetchUrl);
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         if (requestSeq !== videoUrlRequestSeqRef.current) {
           return;
         }
@@ -3006,7 +3006,7 @@ function PlayPageClient() {
             }),
           });
 
-          const data = await response.json();
+          const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
           if (response.ok) {
             successCount++;
@@ -4184,7 +4184,7 @@ function PlayPageClient() {
         if (!response.ok) {
           throw new Error('搜索失败');
         }
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         const allResults = (data.results || []) as SearchResult[];
 
         setHasCompletedSearchRequest(true);
@@ -4882,7 +4882,7 @@ function PlayPageClient() {
             `/api/source-detail?source=${newSource}&id=${newId}&title=${encodeURIComponent(newTitle)}`,
           );
           if (detailResponse.ok) {
-            const detailData = await detailResponse.json();
+            const _apiRes_detailData = await detailResponse.json(); const detailData = _apiRes_detailData.success === true ? _apiRes_detailData.data : _apiRes_detailData;
             if (!detailData) {
               throw new Error('获取的详情数据为空');
             }

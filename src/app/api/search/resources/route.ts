@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAvailableApiSites } from '@/lib/config';
 import { listEnabledSourceScripts } from '@/lib/source-script';
@@ -18,8 +20,8 @@ export async function GET(request: NextRequest) {
       script: true,
     }));
 
-    return NextResponse.json([...apiSites, ...scriptSites]);
+    return apiSuccess([...apiSites, ...scriptSites]);
   } catch (error) {
-    return NextResponse.json({ error: '获取资源失败' }, { status: 500 });
+    return apiError('获取资源失败', 500);
   }
 }

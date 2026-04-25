@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -17,7 +19,7 @@ export async function POST(request: NextRequest) {
     // 权限检查
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     // 检查 TMDB API Key 是否配置
@@ -26,10 +28,7 @@ export async function POST(request: NextRequest) {
       !config.SiteConfig.TMDBApiKey ||
       config.SiteConfig.TMDBApiKey.trim() === ''
     ) {
-      return NextResponse.json(
-        { error: '请先在站点配置中配置 TMDB API Key' },
-        { status: 400 },
-      );
+      return apiError('请先在站点配置中配置 TMDB API Key', 400);
     }
 
     // 获取请求参数
@@ -39,16 +38,10 @@ export async function POST(request: NextRequest) {
     // 启动扫描任务
     const { taskId } = await startOpenListRefresh(clearMetaInfo);
 
-    return NextResponse.json({
-      success: true,
-      taskId,
-      message: '扫描任务已启动',
-    });
+    return apiSuccess({ taskId,
+      message: '扫描任务已启动', });
   } catch (error) {
     console.error('启动刷新任务失败:', error);
-    return NextResponse.json(
-      { error: '启动失败', details: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError('启动失败: ' + (error as Error).message, 500);
   }
 }

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { db } from '@/lib/db';
 import { MusicV2PlaylistItem, normalizeSong } from '@/lib/music-v2';
@@ -22,21 +24,12 @@ export async function GET(
     const { playlistId } = await params;
     const playlist = await db.getMusicV2Playlist(playlistId);
     if (!playlist)
-      return NextResponse.json(
-        { success: false, error: { code: 'NOT_FOUND', message: '歌单不存在' } },
-        { status: 404 },
-      );
+      return apiError('歌单不存在', 404, 'NOT_FOUND');
     if (playlist.username !== username)
-      return NextResponse.json(
-        {
-          success: false,
-          error: { code: 'FORBIDDEN', message: '无权限访问此歌单' },
-        },
-        { status: 403 },
-      );
+      return apiError('无权限访问此歌单', 403, 'FORBIDDEN');
 
     const songs = await db.listMusicV2PlaylistItems(playlistId);
-    return NextResponse.json({ success: true, data: { songs } });
+    return apiSuccess({ data: { songs } });
   } catch (error) {
     return internalError('获取歌单歌曲失败', (error as Error).message);
   }
@@ -53,18 +46,9 @@ export async function POST(
     const { playlistId } = await params;
     const playlist = await db.getMusicV2Playlist(playlistId);
     if (!playlist)
-      return NextResponse.json(
-        { success: false, error: { code: 'NOT_FOUND', message: '歌单不存在' } },
-        { status: 404 },
-      );
+      return apiError('歌单不存在', 404, 'NOT_FOUND');
     if (playlist.username !== username)
-      return NextResponse.json(
-        {
-          success: false,
-          error: { code: 'FORBIDDEN', message: '无权限操作此歌单' },
-        },
-        { status: 403 },
-      );
+      return apiError('无权限操作此歌单', 403, 'FORBIDDEN');
 
     const body = await request.json();
     const song = normalizeSong(body?.song || {});
@@ -81,7 +65,7 @@ export async function POST(
       updatedAt: Date.now(),
     };
     await db.addMusicV2PlaylistItem(playlistId, item);
-    return NextResponse.json({ success: true });
+    return apiSuccess({ success: true });
   } catch (error) {
     return internalError('添加歌曲失败', (error as Error).message);
   }
@@ -98,25 +82,16 @@ export async function DELETE(
     const { playlistId } = await params;
     const playlist = await db.getMusicV2Playlist(playlistId);
     if (!playlist)
-      return NextResponse.json(
-        { success: false, error: { code: 'NOT_FOUND', message: '歌单不存在' } },
-        { status: 404 },
-      );
+      return apiError('歌单不存在', 404, 'NOT_FOUND');
     if (playlist.username !== username)
-      return NextResponse.json(
-        {
-          success: false,
-          error: { code: 'FORBIDDEN', message: '无权限操作此歌单' },
-        },
-        { status: 403 },
-      );
+      return apiError('无权限操作此歌单', 403, 'FORBIDDEN');
 
     const { searchParams } = new URL(request.url);
     const songId = searchParams.get('songId');
     if (!songId) return badRequest('缺少 songId');
 
     await db.removeMusicV2PlaylistItem(playlistId, songId);
-    return NextResponse.json({ success: true });
+    return apiSuccess({ success: true });
   } catch (error) {
     return internalError('删除歌曲失败', (error as Error).message);
   }

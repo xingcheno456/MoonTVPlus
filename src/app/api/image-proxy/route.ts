@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 export const runtime = 'nodejs';
 
@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const imageUrl = searchParams.get('url');
 
   if (!imageUrl) {
-    return NextResponse.json({ error: 'Missing image URL' }, { status: 400 });
+    return apiError('Missing image URL', 400);
   }
 
   try {
@@ -22,19 +22,13 @@ export async function GET(request: Request) {
     });
 
     if (!imageResponse.ok) {
-      return NextResponse.json(
-        { error: imageResponse.statusText },
-        { status: imageResponse.status },
-      );
+      return apiError(imageResponse.statusText, imageResponse.status);
     }
 
     const contentType = imageResponse.headers.get('content-type');
 
     if (!imageResponse.body) {
-      return NextResponse.json(
-        { error: 'Image response has no body' },
-        { status: 500 },
-      );
+      return apiError('Image response has no body', 500);
     }
 
     // 创建响应头
@@ -55,9 +49,6 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Error fetching image' },
-      { status: 500 },
-    );
+    return apiError('Error fetching image', 500);
   }
 }

@@ -1,5 +1,7 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -9,18 +11,15 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
   if (storageType === 'localstorage') {
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '不支持本地存储进行用户列表查询',
-      },
-      { status: 400 },
-    );
+      }, { status: 400 });
   }
 
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     // 判定操作者角色
@@ -37,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     // 只有站长和管理员可以查看用户列表
     if (operatorRole !== 'owner' && operatorRole !== 'admin') {
-      return NextResponse.json({ error: '权限不足' }, { status: 401 });
+      return apiError('权限不足', 401);
     }
 
     // 获取分页参数
@@ -51,44 +50,35 @@ export async function GET(request: NextRequest) {
 
     if (result.users.length > 0) {
       // 使用新版本数据
-      return NextResponse.json(
-        {
+      return apiSuccess({
           users: result.users,
           total: result.total,
           page,
           limit,
           totalPages: Math.ceil(result.total / limit),
-        },
-        {
+        }, {
           headers: {
             'Cache-Control': 'no-store',
           },
-        },
-      );
+        });
     }
 
-    return NextResponse.json(
-      {
+    return apiSuccess({
         users: [],
         total: 0,
         page,
         limit,
         totalPages: 0,
-      },
-      {
+      }, {
         headers: {
           'Cache-Control': 'no-store',
         },
-      },
-    );
+      });
   } catch (error) {
     console.error('获取用户列表失败:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '获取用户列表失败',
         details: (error as Error).message,
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 
@@ -23,10 +25,7 @@ export async function GET(
 
   // 检查必要参数
   if (ac !== 'videolist' && ac !== 'list' && ac !== 'detail') {
-    return NextResponse.json(
-      { code: 400, msg: '不支持的操作' },
-      { status: 400 },
-    );
+    return apiSuccess({ code: 400, msg: '不支持的操作' }, { status: 400 });
   }
 
   // 验证 TVBox Token（从路径中获取）
@@ -52,8 +51,7 @@ export async function GET(
   }
 
   if (!isValidToken) {
-    return NextResponse.json(
-      {
+    return apiSuccess({
         code: 401,
         msg: '无效的访问token',
         page: 1,
@@ -61,9 +59,7 @@ export async function GET(
         limit: 0,
         total: 0,
         list: [],
-      },
-      { status: 401 },
-    );
+      }, { status: 401 });
   }
 
   try {
@@ -78,7 +74,7 @@ export async function GET(
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json({
+      return apiSuccess({
         code: 0,
         msg: 'OpenList 未配置或未启用',
         page: 1,
@@ -116,7 +112,7 @@ export async function GET(
     }
 
     if (!metaInfo || !metaInfo.folders) {
-      return NextResponse.json({
+      return apiSuccess({
         code: 0,
         msg: '未找到元数据',
         page: 1,
@@ -146,7 +142,7 @@ export async function GET(
     // 详情模式
     if (ids || ac === 'detail') {
       if (!ids) {
-        return NextResponse.json({
+        return apiSuccess({
           code: 0,
           msg: '缺少视频ID',
           page: 1,
@@ -170,8 +166,7 @@ export async function GET(
     return await handleSearch(metaInfo, '', request);
   } catch (error) {
     console.error('[OpenList CMS Proxy] 错误:', error);
-    return NextResponse.json(
-      {
+    return apiSuccess({
         code: 500,
         msg: (error as Error).message,
         page: 1,
@@ -179,9 +174,7 @@ export async function GET(
         limit: 0,
         total: 0,
         list: [],
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }
 
@@ -216,7 +209,7 @@ async function handleSearch(
       // 不在搜索结果中返回 vod_play_url，TVBox 会调用详情接口获取
     }));
 
-  return NextResponse.json({
+  return apiSuccess({
     code: 1,
     msg: '数据列表',
     page: 1,
@@ -250,7 +243,7 @@ async function handleDetailBySearch(
   );
 
   if (!matchedEntry) {
-    return NextResponse.json({
+    return apiSuccess({
       code: 0,
       msg: '未找到该视频',
       page: 1,
@@ -289,7 +282,7 @@ async function handleDetail(
   // 查找文件夹信息
   const folderMeta = metaInfo.folders?.[folderKey];
   if (!folderMeta) {
-    return NextResponse.json({
+    return apiSuccess({
       code: 0,
       msg: '未找到该视频',
       page: 1,
@@ -332,7 +325,7 @@ async function handleDetail(
     );
 
     if (listResponse.code !== 200) {
-      return NextResponse.json({
+      return apiSuccess({
         code: 0,
         msg: 'OpenList 列表获取失败2',
         page: 1,
@@ -464,7 +457,7 @@ async function handleDetail(
     .map((ep) => `${ep.title}$${ep.playUrl}`)
     .join('#');
 
-  return NextResponse.json({
+  return apiSuccess({
     code: 1,
     msg: '数据列表',
     page: 1,

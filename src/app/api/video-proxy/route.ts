@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
 
 export const runtime = 'nodejs';
@@ -9,16 +9,13 @@ export async function GET(request: Request) {
   const videoUrl = searchParams.get('url');
 
   if (!videoUrl) {
-    return NextResponse.json({ error: 'Missing video URL' }, { status: 400 });
+    return apiError('Missing video URL', 400);
   }
 
   // 安全校验：防 SSRF，只允许合法的公网 URL
   const isSafeUrl = await validateProxyUrlServerSide(videoUrl);
   if (!isSafeUrl) {
-    return NextResponse.json(
-      { error: 'Proxy request to local or invalid network is forbidden' },
-      { status: 403 },
-    );
+    return apiError('Proxy request to local or invalid network is forbidden', 403);
   }
 
   try {
@@ -42,17 +39,11 @@ export async function GET(request: Request) {
     });
 
     if (!videoResponse.ok) {
-      return NextResponse.json(
-        { error: videoResponse.statusText },
-        { status: videoResponse.status },
-      );
+      return apiError(videoResponse.statusText, videoResponse.status);
     }
 
     if (!videoResponse.body) {
-      return NextResponse.json(
-        { error: 'Video response has no body' },
-        { status: 500 },
-      );
+      return apiError('Video response has no body', 500);
     }
 
     // 创建响应头
@@ -93,9 +84,6 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Error proxying video:', error);
-    return NextResponse.json(
-      { error: 'Error fetching video' },
-      { status: 500 },
-    );
+    return apiError('Error fetching video', 500);
   }
 }

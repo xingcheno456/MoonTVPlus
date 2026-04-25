@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getCachedEmbyViews, setCachedEmbyViews } from '@/lib/emby-cache';
 import { embyManager } from '@/lib/emby-manager';
@@ -16,7 +18,7 @@ export async function GET(request: NextRequest) {
     const cacheKey = embyKey || 'default';
     const cached = getCachedEmbyViews(cacheKey);
     if (cached) {
-      return NextResponse.json(cached);
+      return apiSuccess(cached);
     }
 
     // 获取Emby客户端
@@ -43,10 +45,10 @@ export async function GET(request: NextRequest) {
     // 缓存结果
     setCachedEmbyViews(cacheKey, response);
 
-    return NextResponse.json(response);
+    return apiSuccess(response);
   } catch (error) {
     console.error('获取 Emby 媒体库列表失败:', error);
-    return NextResponse.json({
+    return apiSuccess({
       error: '获取 Emby 媒体库列表失败: ' + (error as Error).message,
       views: [],
     });

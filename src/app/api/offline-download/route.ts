@@ -3,7 +3,9 @@
  */
 
 import * as fs from 'fs';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 import * as path from 'path';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -121,7 +123,7 @@ function checkPermission(request: NextRequest): boolean {
  */
 export async function GET(request: NextRequest) {
   if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
+    return apiError('无权限', 403);
   }
 
   // 确保下载器已初始化（这会触发任务加载）
@@ -137,7 +139,7 @@ export async function GET(request: NextRequest) {
     const episodeIndex = searchParams.get('episodeIndex');
 
     if (!source || !videoId || episodeIndex === null) {
-      return NextResponse.json({ error: '参数不完整' }, { status: 400 });
+      return apiError('参数不完整', 400);
     }
 
     const downloader = getDownloader();
@@ -147,7 +149,7 @@ export async function GET(request: NextRequest) {
       parseInt(episodeIndex),
     );
 
-    return NextResponse.json({ downloaded });
+    return apiSuccess({ downloaded });
   }
 
   // 获取所有任务列表
@@ -158,7 +160,7 @@ export async function GET(request: NextRequest) {
     updatedAt: task.updatedAt.toISOString(),
   }));
 
-  return NextResponse.json({ tasks: taskList });
+  return apiSuccess({ tasks: taskList });
 }
 
 /**
@@ -166,7 +168,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
+    return apiError('无权限', 403);
   }
 
   try {
@@ -180,7 +182,7 @@ export async function POST(request: NextRequest) {
       !title ||
       !m3u8Url
     ) {
-      return NextResponse.json({ error: '参数不完整' }, { status: 400 });
+      return apiError('参数不完整', 400);
     }
 
     const downloader = getDownloader();
@@ -199,47 +201,38 @@ export async function POST(request: NextRequest) {
         existingTask.status === 'downloading' ||
         existingTask.status === 'pending'
       ) {
-        return NextResponse.json(
-          {
+        return apiSuccess({
             task: {
               ...existingTask,
               createdAt: existingTask.createdAt.toISOString(),
               updatedAt: existingTask.updatedAt.toISOString(),
             },
             message: '该任务正在下载中，请勿重复添加',
-          },
-          { status: 400 },
-        );
+          }, { status: 400 });
       }
 
       // 如果任务已完成，不允许重复创建
       if (existingTask.status === 'completed') {
-        return NextResponse.json(
-          {
+        return apiSuccess({
             task: {
               ...existingTask,
               createdAt: existingTask.createdAt.toISOString(),
               updatedAt: existingTask.updatedAt.toISOString(),
             },
             message: '该视频已下载完成，如需重新下载请先删除任务',
-          },
-          { status: 400 },
-        );
+          }, { status: 400 });
       }
 
       // 如果任务处于错误或暂停状态，提示用户使用重试功能
       if (existingTask.status === 'error' || existingTask.status === 'paused') {
-        return NextResponse.json(
-          {
+        return apiSuccess({
             task: {
               ...existingTask,
               createdAt: existingTask.createdAt.toISOString(),
               updatedAt: existingTask.updatedAt.toISOString(),
             },
             message: '该任务已存在但未完成，请使用重试功能继续下载',
-          },
-          { status: 400 },
-        );
+          }, { status: 400 });
       }
     }
 
@@ -250,13 +243,10 @@ export async function POST(request: NextRequest) {
       episodeIndex,
     );
     if (downloaded) {
-      return NextResponse.json(
-        {
+      return apiSuccess({
           message: '该视频文件已存在，无需重复下载',
           downloaded: true,
-        },
-        { status: 400 },
-      );
+        }, { status: 400 });
     }
 
     // 创建新任务
@@ -292,7 +282,7 @@ export async function POST(request: NextRequest) {
 
     activeDownloads.set(task.id, downloadPromise);
 
-    return NextResponse.json({
+    return apiSuccess({
       task: {
         ...task,
         createdAt: task.createdAt.toISOString(),
@@ -302,10 +292,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('创建任务失败:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '创建任务失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '创建任务失败', 500);
   }
 }
 
@@ -314,7 +301,7 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
+    return apiError('无权限', 403);
   }
 
   try {
@@ -322,12 +309,12 @@ export async function DELETE(request: NextRequest) {
     const taskId = searchParams.get('taskId');
 
     if (!taskId) {
-      return NextResponse.json({ error: '缺少任务ID' }, { status: 400 });
+      return apiError('缺少任务ID', 400);
     }
 
     const task = tasks.get(taskId);
     if (!task) {
-      return NextResponse.json({ error: '任务不存在' }, { status: 404 });
+      return apiError('任务不存在', 404);
     }
 
     const downloader = getDownloader();
@@ -354,13 +341,10 @@ export async function DELETE(request: NextRequest) {
     tasks.delete(taskId);
     saveTasks(); // 持久化任务
 
-    return NextResponse.json({ message: '任务已删除' });
+    return apiError('任务已删除', 400);
   } catch (error) {
     console.error('删除任务失败:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '删除任务失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '删除任务失败', 500);
   }
 }
 
@@ -369,7 +353,7 @@ export async function DELETE(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
+    return apiError('无权限', 403);
   }
 
   try {
@@ -378,29 +362,26 @@ export async function PUT(request: NextRequest) {
     const action = searchParams.get('action');
 
     if (!taskId) {
-      return NextResponse.json({ error: '缺少任务ID' }, { status: 400 });
+      return apiError('缺少任务ID', 400);
     }
 
     if (action !== 'retry') {
-      return NextResponse.json({ error: '无效的操作' }, { status: 400 });
+      return apiError('无效的操作', 400);
     }
 
     const task = tasks.get(taskId);
     if (!task) {
-      return NextResponse.json({ error: '任务不存在' }, { status: 404 });
+      return apiError('任务不存在', 404);
     }
 
     // 检查任务状态，只有错误、暂停或完成状态可以重试
     if (task.status === 'downloading' || task.status === 'pending') {
-      return NextResponse.json(
-        { error: '任务正在进行中，无法重试' },
-        { status: 400 },
-      );
+      return apiError('任务正在进行中，无法重试', 400);
     }
 
     // 检查是否已经在重试中
     if (activeDownloads.has(taskId)) {
-      return NextResponse.json({ error: '任务已在重试中' }, { status: 400 });
+      return apiError('任务已在重试中', 400);
     }
 
     const downloader = getDownloader();
@@ -434,7 +415,7 @@ export async function PUT(request: NextRequest) {
 
     activeDownloads.set(task.id, downloadPromise);
 
-    return NextResponse.json({
+    return apiSuccess({
       task: {
         ...task,
         createdAt: task.createdAt.toISOString(),
@@ -444,9 +425,6 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     console.error('重试任务失败:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '重试任务失败' },
-      { status: 500 },
-    );
+    return apiError(error instanceof Error ? error.message : '重试任务失败', 500);
   }
 }

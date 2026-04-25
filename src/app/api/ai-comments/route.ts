@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { generateAIComments, AIComment } from '@/lib/ai-comment-generator';
 import { getConfig } from '@/lib/config';
@@ -22,14 +24,11 @@ export async function GET(request: NextRequest) {
 
     // 参数验证
     if (!movieName) {
-      return NextResponse.json({ error: '缺少影片名称参数' }, { status: 400 });
+      return apiError('缺少影片名称参数', 400);
     }
 
     if (count < 1 || count > 50) {
-      return NextResponse.json(
-        { error: '评论数量必须在1-50之间' },
-        { status: 400 },
-      );
+      return apiError('评论数量必须在1-50之间', 400);
     }
 
     // 读取AI配置
@@ -38,12 +37,12 @@ export async function GET(request: NextRequest) {
 
     // 检查AI功能是否启用
     if (!aiConfig?.Enabled) {
-      return NextResponse.json({ error: 'AI功能未启用' }, { status: 403 });
+      return apiError('AI功能未启用', 403);
     }
 
     // 检查AI评论功能是否启用
     if (!aiConfig?.EnableAIComments) {
-      return NextResponse.json({ error: 'AI评论功能未启用' }, { status: 403 });
+      return apiError('AI评论功能未启用', 403);
     }
 
     // 检查必要的配置
@@ -52,10 +51,7 @@ export async function GET(request: NextRequest) {
       !aiConfig.CustomBaseURL ||
       !aiConfig.CustomModel
     ) {
-      return NextResponse.json(
-        { error: 'AI配置不完整，请在管理面板配置' },
-        { status: 500 },
-      );
+      return apiError('AI配置不完整，请在管理面板配置', 500);
     }
 
     // 生成AI评论
@@ -86,7 +82,7 @@ export async function GET(request: NextRequest) {
       generatedAt: new Date().toISOString(),
     };
 
-    return NextResponse.json(response);
+    return apiSuccess(response);
   } catch (error) {
     console.error('AI评论生成失败:', error);
 
@@ -94,13 +90,10 @@ export async function GET(request: NextRequest) {
     const errorMessage =
       error instanceof Error ? error.message : 'AI评论生成失败';
 
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: errorMessage,
         details:
           process.env.NODE_ENV === 'development' ? String(error) : undefined,
-      },
-      { status: 500 },
-    );
+      }, { status: 500 });
   }
 }

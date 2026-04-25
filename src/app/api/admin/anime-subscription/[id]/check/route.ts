@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { checkSubscription } from '@/lib/anime-subscription';
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -20,7 +22,7 @@ export async function POST(
     // 权限检查
     const authInfo = getAuthInfoFromCookie(req);
     if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
+      return apiError('无权限访问', 403);
     }
 
     const { id } = await params;
@@ -29,7 +31,7 @@ export async function POST(
 
     const subscription = subscriptions.find((sub) => sub.id === id);
     if (!subscription) {
-      return NextResponse.json({ error: '订阅不存在' }, { status: 404 });
+      return apiError('订阅不存在', 404);
     }
 
     // 执行检查逻辑（忽略时间间隔限制）
@@ -38,15 +40,9 @@ export async function POST(
     // 保存配置
     await db.saveAdminConfig(config);
 
-    return NextResponse.json({
-      success: true,
-      ...result,
-    });
+    return apiSuccess({ ...result, });
   } catch (error: any) {
     console.error('检查追番订阅失败:', error);
-    return NextResponse.json(
-      { error: error.message || '检查失败' },
-      { status: 500 },
-    );
+    return apiError('检查失败', 500);
   }
 }

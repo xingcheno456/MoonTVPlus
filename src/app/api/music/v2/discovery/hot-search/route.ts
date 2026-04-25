@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { isMusicSource, lxGetJson } from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
@@ -15,17 +17,14 @@ export async function GET(request: NextRequest) {
       Array<{ name: string; singer?: string; source: string }>
     >(`/api/music/hotSearch?source=${source}`, 'none');
 
-    return NextResponse.json({
-      success: true,
-      data: {
+    return apiSuccess({ data: {
         list: list.map((item) => ({
           keyword: item.name,
           name: item.name,
           artist: item.singer || '',
           source: item.source,
         })),
-      },
-    });
+      }, });
   } catch (error) {
     return internalError('获取热搜失败', (error as Error).message);
   }

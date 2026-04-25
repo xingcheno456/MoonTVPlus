@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import {
   isMusicSource,
@@ -32,15 +34,12 @@ export async function GET(request: NextRequest) {
       payload?.data?.data?.total ??
       list.length;
 
-    return NextResponse.json({
-      success: true,
-      data: {
+    return apiSuccess({ data: {
         board: { id: boardId },
         list: list.map(normalizeLxSong),
         total,
         page,
-      },
-    });
+      }, });
   } catch (error) {
     return internalError('获取榜单歌曲失败', (error as Error).message);
   }

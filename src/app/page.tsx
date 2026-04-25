@@ -304,7 +304,7 @@ function HomeClient() {
           try {
             const duanjuResponse = await fetch('/api/duanju/recommends');
             if (duanjuResponse.ok) {
-              const duanjuResult = await duanjuResponse.json();
+              const _apiRes_duanjuResult = await duanjuResponse.json(); const duanjuResult = _apiRes_duanjuResult.success === true ? _apiRes_duanjuResult.data : _apiRes_duanjuResult;
               if (
                 duanjuResult.code === 200 &&
                 duanjuResult.data &&
@@ -321,7 +321,7 @@ function HomeClient() {
           try {
             const response = await fetch('/api/tmdb/upcoming');
             if (response.ok) {
-              const result = await response.json();
+              const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
               if (
                 result.code === 200 &&
                 result.data &&

@@ -210,7 +210,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         throw new Error('获取照片墙失败');
       }
 
-      const data = await response.json();
+      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
       setGalleryImages(data.list || []);
       setGalleryTotal(data.total || 0);
     } catch (err) {
@@ -409,7 +409,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                 `/api/source-detail?id=${encodeURIComponent(sourceId)}&source=${encodeURIComponent(source)}&title=${encodeURIComponent(title)}`,
               );
               if (response.ok) {
-                const data = await response.json();
+                const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
                 const detailData = {
                   title: data.title || title,
                   intro: data.desc || '',
@@ -441,7 +441,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           if (!response.ok) {
             throw new Error('获取Bangumi详情失败');
           }
-          const data = await response.json();
+          const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
           const detailData = {
             title: data.name_cn || data.name,
@@ -472,7 +472,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           if (!response.ok) {
             throw new Error('获取豆瓣详情失败');
           }
-          const data = await response.json();
+          const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
           const detailData = {
             title: data.title,
@@ -563,7 +563,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       if (!searchResponse.ok) {
         throw new Error('搜索失败');
       }
-      const searchData = await searchResponse.json();
+      const _apiRes_searchData = await searchResponse.json(); const searchData = _apiRes_searchData.success === true ? _apiRes_searchData.data : _apiRes_searchData;
 
       if (searchData.results && searchData.results.length > 0) {
         const result = searchData.results[0];
@@ -577,7 +577,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         if (!detailResponse.ok) {
           throw new Error('获取TMDB详情失败');
         }
-        const detailResult = await detailResponse.json();
+        const _apiRes_detailResult = await detailResponse.json(); const detailResult = _apiRes_detailResult.success === true ? _apiRes_detailResult.data : _apiRes_detailResult;
 
         // 如果有季度信息,尝试获取季度详情
         let seasonData = null;
@@ -587,7 +587,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
               `/api/tmdb/seasons?id=${detailId}&season=${extractedSeasonNumber}`,
             );
             if (seasonResponse.ok) {
-              seasonData = await seasonResponse.json();
+              const _apiRes_seasonData = await seasonResponse.json();
+              seasonData = _apiRes_seasonData.success === true ? _apiRes_seasonData.data : _apiRes_seasonData;
             }
           } catch (err) {
             console.error('获取季度信息失败', err);
@@ -734,7 +735,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     if (!searchResponse.ok) {
       throw new Error('搜索失败');
     }
-    const searchData = await searchResponse.json();
+    const _apiRes_searchData = await searchResponse.json(); const searchData = _apiRes_searchData.success === true ? _apiRes_searchData.data : _apiRes_searchData;
 
     if (searchData.results && searchData.results.length > 0) {
       const result = searchData.results[0];
@@ -748,7 +749,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       if (!detailResponse.ok) {
         throw new Error('获取TMDB详情失败');
       }
-      const detailResult = await detailResponse.json();
+      const _apiRes_detailResult = await detailResponse.json(); const detailResult = _apiRes_detailResult.success === true ? _apiRes_detailResult.data : _apiRes_detailResult;
 
       // 如果有季度信息,尝试获取季度详情
       let seasonData = null;
@@ -758,7 +759,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
             `/api/tmdb/seasons?id=${detailId}&season=${extractedSeasonNumber}`,
           );
           if (seasonResponse.ok) {
-            seasonData = await seasonResponse.json();
+            const _apiRes_seasonData = await seasonResponse.json();
+            seasonData = _apiRes_seasonData.success === true ? _apiRes_seasonData.data : _apiRes_seasonData;
           }
         } catch (err) {
           console.error('获取季度信息失败', err);
@@ -831,7 +833,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           `/api/tmdb/seasons?tvId=${detailData.tmdbId}`,
         );
         if (!seasonsResponse.ok) return;
-        const seasonsData = await seasonsResponse.json();
+        const _apiRes_seasonsData = await seasonsResponse.json(); const seasonsData = _apiRes_seasonsData.success === true ? _apiRes_seasonsData.data : _apiRes_seasonsData;
 
         // 设置默认选中季度
         const defaultSeason = detailData.seasonNumber || 1;
@@ -842,7 +844,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           `/api/tmdb/episodes?id=${detailData.tmdbId}&season=${defaultSeason}`,
         );
         if (!episodesResponse.ok) return;
-        const episodesData = await episodesResponse.json();
+        const _apiRes_episodesData = await episodesResponse.json(); const episodesData = _apiRes_episodesData.success === true ? _apiRes_episodesData.data : _apiRes_episodesData;
 
         setSeasonData({
           seasons: seasonsData.seasons || [],
@@ -916,7 +918,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           `/api/tmdb/credits?id=${detailData.tmdbId}&type=${detailData.mediaType}`,
         );
         if (!creditsResponse.ok) return;
-        const creditsData = await creditsResponse.json();
+        const _apiRes_creditsData = await creditsResponse.json(); const creditsData = _apiRes_creditsData.success === true ? _apiRes_creditsData.data : _apiRes_creditsData;
 
         // 更新演员和导演信息
         setDetailData((prev) =>
@@ -964,7 +966,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         `/api/tmdb/episodes?id=${detailData.tmdbId}&season=${seasonNumber}`,
       );
       if (!episodesResponse.ok) return;
-      const episodesData = await episodesResponse.json();
+      const _apiRes_episodesData = await episodesResponse.json(); const episodesData = _apiRes_episodesData.success === true ? _apiRes_episodesData.data : _apiRes_episodesData;
 
       // 从当前 seasonData 中查找季度信息
       const season = seasonData?.seasons.find(

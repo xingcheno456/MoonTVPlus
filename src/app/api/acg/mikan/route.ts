@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { parseStringPromise } from 'xml2js';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -23,37 +25,28 @@ export async function POST(req: NextRequest) {
     // 检查权限
     const authInfo = getAuthInfoFromCookie(req);
     if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
+      return apiError('无权限访问', 403);
     }
 
     const { keyword, page = 1 } = await req.json();
 
     if (!keyword || typeof keyword !== 'string') {
-      return NextResponse.json(
-        { error: '搜索关键词不能为空' },
-        { status: 400 },
-      );
+      return apiError('搜索关键词不能为空', 400);
     }
 
     const trimmedKeyword = keyword.trim();
     if (!trimmedKeyword) {
-      return NextResponse.json(
-        { error: '搜索关键词不能为空' },
-        { status: 400 },
-      );
+      return apiError('搜索关键词不能为空', 400);
     }
 
     // 验证页码（Mikan RSS 不支持分页，这里仍接收 page 以保持接口一致）
     const pageNum = parseInt(String(page), 10);
     if (isNaN(pageNum) || pageNum < 1) {
-      return NextResponse.json(
-        { error: '页码必须是大于0的整数' },
-        { status: 400 },
-      );
+      return apiError('页码必须是大于0的整数', 400);
     }
 
     if (pageNum > 1) {
-      return NextResponse.json({
+      return apiSuccess({
         keyword: trimmedKeyword,
         page: pageNum,
         total: 0,
@@ -87,7 +80,7 @@ export async function POST(req: NextRequest) {
     const parsed = await parseStringPromise(xmlData);
 
     if (!parsed?.rss?.channel?.[0]?.item) {
-      return NextResponse.json({
+      return apiSuccess({
         keyword: trimmedKeyword,
         page: pageNum,
         total: 0,
@@ -142,7 +135,7 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({
+    return apiSuccess({
       keyword: trimmedKeyword,
       page: pageNum,
       total: results.length,
@@ -150,9 +143,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Mikan 搜索失败:', error);
-    return NextResponse.json(
-      { error: error.message || '搜索失败' },
-      { status: 500 },
-    );
+    return apiError(error.message || '搜索失败', 500);
   }
 }

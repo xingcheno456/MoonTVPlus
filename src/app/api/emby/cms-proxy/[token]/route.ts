@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getConfig } from '@/lib/config';
 import { EmbyClient } from '@/lib/emby.client';
@@ -24,10 +26,7 @@ export async function GET(
 
   // 检查必要参数
   if (ac !== 'videolist' && ac !== 'list' && ac !== 'detail') {
-    return NextResponse.json(
-      { code: 400, msg: '不支持的操作' },
-      { status: 400 },
-    );
+    return apiSuccess({ code: 400, msg: '不支持的操作' }, { status: 400 });
   }
 
   // 验证 TVBox Token（从路径中获取）
@@ -53,7 +52,7 @@ export async function GET(
   }
 
   if (!isValidToken) {
-    return NextResponse.json({
+    return apiSuccess({
       code: 401,
       msg: '无效的访问token',
       page: 1,
@@ -69,7 +68,7 @@ export async function GET(
 
     // 验证 Emby 配置（多源）
     if (!config.EmbyConfig?.Sources || config.EmbyConfig.Sources.length === 0) {
-      return NextResponse.json({
+      return apiSuccess({
         code: 0,
         msg: 'Emby 未配置或未启用',
         page: 1,
@@ -103,7 +102,7 @@ export async function GET(
     } else if (ids || ac === 'detail') {
       // 详情模式
       if (!ids) {
-        return NextResponse.json({
+        return apiSuccess({
           code: 0,
           msg: '缺少视频ID',
           page: 1,
@@ -120,7 +119,7 @@ export async function GET(
     }
   } catch (error) {
     console.error('[Emby CMS Proxy] 错误:', error);
-    return NextResponse.json({
+    return apiSuccess({
       code: 500,
       msg: (error as Error).message,
       page: 1,
@@ -154,7 +153,7 @@ async function handleSearch(client: EmbyClient, query: string, token: string) {
     type_name: item.Type === 'Movie' ? '电影' : '电视剧',
   }));
 
-  return NextResponse.json({
+  return apiSuccess({
     code: 1,
     msg: '数据列表',
     page: 1,
@@ -184,7 +183,7 @@ async function handleDetailBySearch(
   });
 
   if (result.Items.length === 0) {
-    return NextResponse.json({
+    return apiSuccess({
       code: 0,
       msg: '未找到该视频',
       page: 1,
@@ -253,7 +252,7 @@ async function handleDetail(
     vodPlayUrl = episodes.join('#');
   }
 
-  return NextResponse.json({
+  return apiSuccess({
     code: 1,
     msg: '数据列表',
     page: 1,

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -16,7 +18,7 @@ export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -26,10 +28,7 @@ export async function GET(request: NextRequest) {
     const xiaoyaConfig = config.XiaoyaConfig;
 
     if (!xiaoyaConfig || !xiaoyaConfig.Enabled || !xiaoyaConfig.ServerURL) {
-      return NextResponse.json(
-        { error: '小雅未配置或未启用' },
-        { status: 400 },
-      );
+      return apiError('小雅未配置或未启用', 400);
     }
 
     const client = new XiaoyaClient(
@@ -72,15 +71,12 @@ export async function GET(request: NextRequest) {
         path: `${path}${path.endsWith('/') ? '' : '/'}${item.name}`,
       }));
 
-    return NextResponse.json({
+    return apiSuccess({
       folders,
       files,
       currentPath: path,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 },
-    );
+    return apiError((error as Error).message, 500);
   }
 }

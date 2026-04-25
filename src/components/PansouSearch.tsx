@@ -148,7 +148,8 @@ export default function PansouSearch({
         }),
       });
 
-      const data = await response.json();
+      const _raw_data = await response.json();
+      const data = _raw_data.success === true ? _raw_data.data : _raw_data;
       if (!response.ok) {
         throw new Error(data.error || '转存失败');
       }
@@ -184,7 +185,8 @@ export default function PansouSearch({
         }),
       });
 
-      const data = await response.json();
+      const _raw_data = await response.json();
+      const data = _raw_data.success === true ? _raw_data.data : _raw_data;
       if (!response.ok) {
         throw new Error(data.error || '立即播放失败');
       }
