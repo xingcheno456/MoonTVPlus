@@ -168,8 +168,6 @@ export abstract class BaseRedisStorage implements IStorage {
     operation: () => Promise<T>,
     maxRetries?: number,
   ) => Promise<T>;
-  // 保留 client 属性用于向后兼容（数据迁移代码使用）
-  client: any;
 
   constructor(
     adapter: RedisAdapter,
@@ -180,32 +178,6 @@ export abstract class BaseRedisStorage implements IStorage {
   ) {
     this.adapter = adapter;
     this.withRetry = withRetryFn;
-    // 创建兼容层，同时支持驼峰和小写命名（用于数据迁移代码）
-    this.client = {
-      hSet: (key: string, ...args: any[]) => {
-        if (args.length === 1) {
-          return this.adapter.hSet(key, args[0]);
-        }
-        return this.adapter.hSet(key, args[0], args[1]);
-      },
-      hset: (key: string, ...args: any[]) => {
-        if (args.length === 1) {
-          return this.adapter.hSet(key, args[0]);
-        }
-        return this.adapter.hSet(key, args[0], args[1]);
-      },
-      hGet: (key: string, field: string) => this.adapter.hGet(key, field),
-      hget: (key: string, field: string) => this.adapter.hGet(key, field),
-      hGetAll: (key: string) => this.adapter.hGetAll(key),
-      hgetall: (key: string) => this.adapter.hGetAll(key),
-      zAdd: (key: string, member: { score: number; value: string }) =>
-        this.adapter.zAdd(key, member),
-      zadd: (key: string, member: { score: number; value: string }) =>
-        this.adapter.zAdd(key, member),
-      set: (key: string, value: string) => this.adapter.set(key, value),
-      get: (key: string) => this.adapter.get(key),
-      del: (...keys: string[]) => this.adapter.del(keys),
-    };
   }
 
   // ---------- 播放记录 ----------

@@ -241,10 +241,10 @@ export async function POST(req: NextRequest) {
               }
 
               await storage.withRetry(() =>
-                storage.client.hSet(userInfoKey, userInfo),
+                storage.adapter.hSet(userInfoKey, userInfo),
               );
               await storage.withRetry(() =>
-                storage.client.zAdd('user:list', {
+                storage.adapter.zAdd('user:list', {
                   score: createdAt,
                   value: username,
                 }),
@@ -253,7 +253,7 @@ export async function POST(req: NextRequest) {
               if (userV2?.oidcSub) {
                 const oidcSubKey = `oidc:sub:${userV2.oidcSub}`;
                 await storage.withRetry(() =>
-                  storage.client.set(oidcSubKey, username),
+                  storage.adapter.set(oidcSubKey, username),
                 );
               }
 

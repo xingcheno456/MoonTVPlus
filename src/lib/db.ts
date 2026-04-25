@@ -730,8 +730,8 @@ export class DbManager {
         // 尝试从旧的存储中获取密码
         else {
           try {
-            if ((this.storage as any).client) {
-              const storedPassword = await (this.storage as any).client.get(
+            if ((this.storage as any).adapter) {
+              const storedPassword = await (this.storage as any).adapter.get(
                 `u:${user.username}:pwd`,
               );
               if (storedPassword) {

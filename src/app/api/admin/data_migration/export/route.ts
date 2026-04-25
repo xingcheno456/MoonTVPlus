@@ -293,9 +293,9 @@ async function getUserPasswordV2(username: string): Promise<string | null> {
     // Redis 存储：直接调用hGetAll获取完整用户信息（包括密码）
     const userInfoKey = `user:${username}:info`;
 
-    if (typeof storage.withRetry === 'function' && storage.client?.hgetall) {
+    if (typeof storage.withRetry === 'function' && storage.adapter?.hGetAll) {
       const userInfo = await storage.withRetry(() =>
-        storage.client.hgetall(userInfoKey),
+        storage.adapter.hGetAll(userInfoKey),
       );
       if (userInfo && userInfo.password) {
         return userInfo.password;
