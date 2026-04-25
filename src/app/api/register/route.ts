@@ -3,18 +3,10 @@ import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
 import { lockManager } from '@/lib/lock';
 
 export const runtime = 'nodejs';
-
-const STORAGE_TYPE =
-  (process.env.NEXT_PUBLIC_STORAGE_TYPE as
-    | 'localstorage'
-    | 'redis'
-    | 'upstash'
-    | 'kvrocks'
-    | undefined) || 'localstorage';
 
 async function verifyTurnstileToken(
   token: string,

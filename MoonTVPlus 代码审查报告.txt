@@ -1,0 +1,251 @@
+# MoonTVPlus 代码审查报告
+
+## 项目概览
+
+这是一个基于 **Next.js 15 + React 19** 的影视聚合平台，支持多种存储后端（SQLite/PostgreSQL/Redis/D1/Upstash/Kvrocks），功能涵盖视频搜索、弹幕、直播、漫画、音乐、AI助手等。项目规模较大，约 100+ API 路由、80+ 组件、60+ lib 模块。
+
+---
+
+## 🔴 严重问题（需立即修复）
+
+### 1. `eval()` 使用 — 远程代码执行风险
+
+**位置**: [source-script.ts:13](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/lib/source-script.ts#L13), [music/route.ts:310](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/app/api/music/route.ts#L310), [music/route.ts:397](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/app/api/music/route.ts#L397)
+
+```ts
+// source-script.ts
+const _nodeRequire = eval('require') as NodeRequire;
+
+// music/route.ts
+result = eval(result);
+const transformFn = eval(`(${config.transform})`);
+```
+
+**风险**: `source-script.ts` 使用 `eval('require')` 绕过 webpack 静态分析，让用户提交的脚本可以访问完整的 Node.js `require`，这意味着脚本可以执行任意系统命令（`require('child_process').exec()`）。`music/route.ts` 中的 `eval` 直接执行用户配置的转换表达式。
+
+**建议**:
+- `source-script.ts`: 使用 `vm2` 或 `isolated-vm` 在沙箱中执行用户脚本，限制可访问的模块白名单
+- `music/route.ts`: 使用安全的表达式解析器（如 `jsonata` 或 `expr-eval`）替代 `eval`
+- 如果必须保留动态执行，至少添加严格的输入校验和权限限制
+
+### 2. 认证 Cookie 中包含明文密码
+
+**位置**: [login/route.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/app/api/login/route.ts)
+
+```ts
+if (includePassword && password) {
+  authData.password = password;
+}
+```
+
+localStorage 模式下，密码以明文存储在 Cookie 中。虽然这是为了兼容旧模式，但存在严重安全隐患：任何 XSS 漏洞都能窃取用户密码。
+
+**建议**:
+- localStorage 模式也应使用 HMAC 签名验证，而非存储明文密码
+- 设置迁移计划，逐步淘汰 localStorage 模式下的明文密码存储
+
+### 3. Cron 端点使用简单密码认证
+
+**位置**: [cron/[password]/route.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/app/api/cron/%5Bpassword%5D/route.ts)
+
+```ts
+const cronPassword = process.env.CRON_PASSWORD || 'mtvpls';
+if (password !== cronPassword) {
+  return apiError('Unauthorized', 401);
+}
+```
+
+默认密码 `mtvpls` 硬编码在代码中，且通过 URL 路径传递密码，会被记录在访问日志中。
+
+**建议**:
+- 移除默认密码，强制用户配置
+- 改用 HTTP Header（如 `Authorization: Bearer xxx`）传递凭证
+- 添加速率限制
+
+---
+
+## 🟠 重要问题（建议尽快修复）
+
+### 4. `config.ts` 过于庞大 — 近 1000 行
+
+**位置**: [config.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/lib/config.ts)
+
+这个文件承担了太多职责：配置解析、环境变量覆盖、自检、迁移、缓存管理、API 站点过滤等。
+
+**建议**:
+- 拆分为独立模块：`config/parser.ts`、`config/env-overrides.ts`、`config/self-check.ts`、`config/cache.ts`
+- `configSelfCheck()` 函数中大量重复的 `if (xxx === undefined) { xxx = defaultValue }` 模式，可以用一个默认值对象 + 深度合并来替代
+
+### 5. `as any` 滥用 — 316 处
+
+整个代码库中有 316 处 `as any` 类型断言，其中 [db.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/lib/db.ts) 中就有 110 处。这完全绕过了 TypeScript 的类型安全。
+
+**建议**:
+- 优先使用更精确的类型断言：`as unknown as TargetType` 或定义合适的接口
+- 对 `db.ts` 中的存储适配器定义统一的类型接口，而非到处 `as any`
+- 逐步减少 `as any`，设置 CI 门禁限制新增 `as any`
+
+### 6. `eslint-disable` 泛滥 — 105 处
+
+100 个文件中有 105 处 `eslint-disable`，很多是文件级别的全局禁用：
+
+```ts
+/* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion */
+```
+
+**建议**:
+- 使用行内 `// eslint-disable-next-line` 替代文件级禁用，精确控制范围
+- 将 `no-console` 规则改为 warn 级别，而非完全禁用
+- 引入统一的日志工具替代 `console.log`
+
+### 7. 内存缓存无上限控制
+
+**位置**: [search-cache.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/lib/search-cache.ts), [emby-cache.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/lib/emby-cache.ts), [user-cache.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/lib/user-cache.ts)
+
+多个模块使用 `Map` 做内存缓存，虽然 `search-cache.ts` 有 `MAX_CACHE_SIZE = 1000` 限制，但 `emby-cache.ts` 和 `user-cache.ts` 没有大小限制，长时间运行可能导致内存泄漏。
+
+**建议**:
+- 所有内存缓存统一使用 LRU 缓存（如 `lru-cache` 库）
+- 或提取一个通用的 `BoundedMap` 工具类，内置大小限制和 TTL 清理
+
+### 8. `console.log` 泛滥 — 782 处
+
+生产代码中有 782 处 `console.log/warn/error`，大量是调试日志。
+
+**建议**:
+- 引入结构化日志库（如 `pino` 或 `winston`）
+- 区分日志级别：开发环境输出 debug，生产环境只输出 warn/error
+- 敏感信息（如用户名、token）不应出现在日志中
+
+---
+
+## 🟡 一般问题（建议改进）
+
+### 9. 签名生成函数重复实现
+
+`generateSignature` 函数在以下文件中重复实现：
+- [middleware.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/middleware.ts)
+- [middleware-auth.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/lib/middleware-auth.ts)
+- [login/route.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/app/api/login/route.ts)
+- [oidc/callback/route.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/app/api/auth/oidc/callback/route.ts)
+
+**建议**: 提取到 `lib/crypto.ts` 或 `lib/signature.ts` 中统一使用。
+
+### 10. `STORAGE_TYPE` 重复读取
+
+`process.env.NEXT_PUBLIC_STORAGE_TYPE` 在 10+ 个文件中重复读取和解析：
+
+```ts
+const STORAGE_TYPE = (process.env.NEXT_PUBLIC_STORAGE_TYPE as ...) || 'localstorage';
+```
+
+**建议**: 在 `config.ts` 或 `db.ts` 中导出一个单例常量，其他文件引用即可。
+
+### 11. API 路由缺少统一的请求验证层
+
+大部分 API 路由手动解析请求体和验证参数，没有统一的验证中间件。
+
+**建议**:
+- 使用 Zod（项目已引入）定义请求 schema，在路由处理前统一验证
+- 可以创建一个 `withValidation` 高阶函数包装路由处理器
+
+### 12. `next.config.js` 中 `ignoreDuringBuilds: true`
+
+```js
+eslint: {
+  ignoreDuringBuilds: true,
+},
+```
+
+构建时跳过 ESLint 检查，意味着代码质量问题可以混入生产环境。
+
+**建议**: 修复现有 lint 错误后，改为 `false`。
+
+### 13. `reactStrictMode: false`
+
+```js
+reactStrictMode: false,
+```
+
+关闭了 React 严格模式，会错过潜在的状态问题和副作用警告。
+
+**建议**: 开启严格模式，修复由此暴露的问题。
+
+### 14. 图片代理完全开放
+
+```js
+images: {
+  unoptimized: true,
+  remotePatterns: [
+    { protocol: 'https', hostname: '**' },
+    { protocol: 'http', hostname: '**' },
+  ],
+},
+```
+
+允许代理任意域名图片，可能被滥用为开放代理。
+
+**建议**: 限制为已知需要的域名白名单。
+
+### 15. 缺少测试覆盖
+
+虽然有 Jest 配置，但 `src` 下没有看到 `__tests__` 目录或测试文件。
+
+**建议**:
+- 至少对核心模块（认证、配置、数据库适配器）添加单元测试
+- 对关键 API 路由添加集成测试
+- 设置 CI 中的测试覆盖率门禁
+
+---
+
+## 🟢 架构建议
+
+### 16. 服务层抽象不完整
+
+项目有 `src/services/` 目录（4个文件），但大量业务逻辑仍然直接写在 API 路由中（如 [cron/[password]/route.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/app/api/cron/%5Bpassword%5D/route.ts) 有 200+ 行业务逻辑）。
+
+**建议**: 将业务逻辑从路由处理器中提取到 service 层，路由只负责请求解析、验证和响应格式化。
+
+### 17. 数据库适配器接口不统一
+
+`IStorage` 接口定义在 `types.ts` 中，但实际使用中大量 `(storage as any).xxx` 调用，说明接口定义不完整或实现不一致。
+
+**建议**:
+- 完善 `IStorage` 接口，覆盖所有实际使用的方法
+- 各适配器实现严格遵循接口，消除 `as any`
+
+### 18. 错误处理不一致
+
+有些 API 返回 `apiError()`，有些直接 `throw`，有些返回原始 `NextResponse.json()`。
+
+**建议**: 统一使用 `apiError/apiSuccess` 响应格式，添加全局错误处理中间件。
+
+---
+
+## 📊 量化总结
+
+| 指标 | 数值 | 严重程度 |
+|------|------|----------|
+| `eval()` 使用 | 3 处 | 🔴 严重 |
+| 明文密码存储 | 1 处 | 🔴 严重 |
+| `as any` 类型断言 | 316 处 | 🟠 重要 |
+| `eslint-disable` | 105 处 | 🟠 重要 |
+| `console.log` | 782 处 | 🟡 一般 |
+| 重复代码（签名函数等） | 4+ 处 | 🟡 一般 |
+| 内存缓存无上限 | 2 处 | 🟠 重要 |
+| 测试文件 | ~0 | 🟠 重要 |
+
+---
+
+## 🏆 优先修复建议（按影响排序）
+
+1. **沙箱化 `source-script.ts` 的脚本执行** — 这是最大的安全风险
+2. **移除 Cookie 中的明文密码** — 改用签名验证
+3. **加固 Cron 端点认证** — 移除默认密码，改用 Header 认证
+4. **拆分 `config.ts`** — 提高可维护性
+5. **引入结构化日志** — 替代 `console.log`，控制日志级别
+6. **统一内存缓存策略** — 使用 LRU 缓存，防止内存泄漏
+7. **添加核心模块测试** — 认证、配置、数据库适配器
+8. **逐步消除 `as any`** — 从 `db.ts` 开始，定义完整接口
+
+项目整体功能丰富、架构合理，SSRF 防护（[ssrf.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/lib/server/ssrf.ts)）做得不错，API 响应格式也做了统一（[api-response.ts](file:///e:/Users/zhao/Documents/GitHub/MoonTVplus/MoonTVPlus/src/lib/api-response.ts)），Token 刷新机制设计合理。主要改进方向在安全性加固和代码可维护性提升上。

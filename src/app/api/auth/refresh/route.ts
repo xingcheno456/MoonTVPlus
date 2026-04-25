@@ -4,18 +4,12 @@ import { NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie, parseAuthInfo } from '@/lib/auth';
+import { generateHmacSignature } from '@/lib/crypto';
+import { STORAGE_TYPE } from '@/lib/db';
 import { refreshAccessToken } from '@/lib/middleware-auth';
 import { TOKEN_CONFIG } from '@/lib/refresh-token';
 
 export const runtime = 'nodejs';
-
-const STORAGE_TYPE =
-  (process.env.NEXT_PUBLIC_STORAGE_TYPE as
-    | 'localstorage'
-    | 'redis'
-    | 'upstash'
-    | 'kvrocks'
-    | undefined) || 'localstorage';
 
 function buildRefreshResponse(authToken?: string | null) {
   const body: Record<string, unknown> = { ok: true };
@@ -40,7 +34,28 @@ export async function POST(request: NextRequest) {
   }
 
   if (STORAGE_TYPE === 'localstorage') {
-    if (!authInfo.password || authInfo.password !== process.env.PASSWORD) {
+    // localstorage mode: verify HMAC signature instead of comparing stored password
+    if (
+      !authInfo.username ||
+      !authInfo.role ||
+      !authInfo.timestamp ||
+      !authInfo.signature
+    ) {
+      return apiError('Unauthorized', 401);
+    }
+
+    // Recompute the signature and compare
+    const dataToSign = JSON.stringify({
+      username: authInfo.username,
+      role: authInfo.role,
+      timestamp: authInfo.timestamp,
+    });
+    const expectedSignature = await generateHmacSignature(
+      dataToSign,
+      process.env.PASSWORD || '',
+    );
+
+    if (authInfo.signature !== expectedSignature) {
       return apiError('Unauthorized', 401);
     }
 

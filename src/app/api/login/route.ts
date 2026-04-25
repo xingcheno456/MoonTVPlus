@@ -4,7 +4,8 @@ import { NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { parseAuthInfo } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { db } from '@/lib/db';
+import { generateHmacSignature } from '@/lib/crypto';
+import { db, STORAGE_TYPE } from '@/lib/db';
 import {
   generateRefreshToken,
   generateTokenId,
@@ -13,15 +14,6 @@ import {
 } from '@/lib/refresh-token';
 
 export const runtime = 'nodejs';
-
-// 读取存储类型环境变量，默认 localstorage
-const STORAGE_TYPE =
-  (process.env.NEXT_PUBLIC_STORAGE_TYPE as
-    | 'localstorage'
-    | 'redis'
-    | 'upstash'
-    | 'kvrocks'
-    | undefined) || 'localstorage';
 
 function buildLoginResponse(authToken?: string | null) {
   const data: Record<string, unknown> = {};
@@ -38,55 +30,26 @@ function buildLoginResponse(authToken?: string | null) {
   return apiSuccess(data);
 }
 
-// 生成签名
-async function generateSignature(
-  data: string,
-  secret: string,
-): Promise<string> {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-  const messageData = encoder.encode(data);
-
-  // 导入密钥
-  const key = await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-
-  // 生成签名
-  const signature = await crypto.subtle.sign('HMAC', key, messageData);
-
-  // 转换为十六进制字符串
-  return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
 // 生成认证Cookie（带签名和 Refresh Token）
 async function generateAuthCookie(
   username?: string,
   password?: string,
   role?: 'owner' | 'admin' | 'user',
-  includePassword = false,
+  includePassword?: boolean,
   deviceInfo?: string,
 ): Promise<string> {
   const now = Date.now();
   const authData: any = { role: role || 'user' };
 
-  // 只在需要时包含 password
-  if (includePassword && password) {
-    authData.password = password;
-  }
+  // note: includePassword parameter is retained for backward compatibility
+  // but password is NEVER stored in the cookie — only validated server-side
 
   if (username && process.env.PASSWORD) {
     authData.username = username;
     authData.timestamp = now; // Access Token 时间戳
 
     // 生成 Refresh Token（仅数据库模式）
-    if (!includePassword && STORAGE_TYPE !== 'localstorage') {
+    if (STORAGE_TYPE !== 'localstorage') {
       const tokenId = generateTokenId();
       const refreshToken = generateRefreshToken();
       const refreshExpires = now + TOKEN_CONFIG.REFRESH_TOKEN_AGE;
@@ -115,7 +78,7 @@ async function generateAuthCookie(
       role: authData.role,
       timestamp: authData.timestamp,
     });
-    const signature = await generateSignature(dataToSign, process.env.PASSWORD);
+    const signature = await generateHmacSignature(dataToSign, process.env.PASSWORD);
     authData.signature = signature;
   }
 
@@ -225,7 +188,7 @@ export async function POST(req: NextRequest) {
         'owner',
         true,
         deviceInfo,
-      ); // localstorage 模式包含 password
+      );
       const response = buildLoginResponse(cookieValue);
       const expires = new Date();
       expires.setDate(expires.getDate() + 60); // 60天过期（Refresh Token 有效期）
@@ -285,7 +248,7 @@ export async function POST(req: NextRequest) {
         'owner',
         false,
         deviceInfo,
-      ); // 数据库模式不包含 password
+      );
       const response = buildLoginResponse(cookieValue);
       const expires = new Date();
       expires.setDate(expires.getDate() + 60); // 60天过期（Refresh Token 有效期）
@@ -335,7 +298,7 @@ export async function POST(req: NextRequest) {
       userRole,
       false,
       deviceInfo,
-    ); // 数据库模式不包含 password
+    );
     const response = buildLoginResponse(cookieValue);
     const expires = new Date();
     expires.setDate(expires.getDate() + 60); // 60天过期（Refresh Token 有效期）

@@ -6,7 +6,7 @@ import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
 import { EmbyClient } from '@/lib/emby.client';
 import { clearEmbyCache } from '@/lib/emby-cache';
 
@@ -19,7 +19,7 @@ export const runtime = 'nodejs';
  * - clearCache: 清除 Emby 缓存
  */
 export async function POST(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
     return apiError('不支持本地存储进行管理员配置', 400);
   }

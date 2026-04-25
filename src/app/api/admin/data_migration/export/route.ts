@@ -8,7 +8,7 @@ import { gzip } from 'zlib';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { SimpleCrypto } from '@/lib/crypto';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
 import { CURRENT_VERSION } from '@/lib/version';
 import { updateProgress, clearProgress } from '@/lib/data-migration-progress';
 
@@ -19,7 +19,7 @@ const gzipAsync = promisify(gzip);
 export async function POST(req: NextRequest) {
   try {
     // 检查存储类型
-    const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+    const storageType = STORAGE_TYPE;
     if (storageType === 'localstorage') {
       return apiError('不支持本地存储进行数据迁移', 400);
     }
@@ -272,7 +272,7 @@ async function getUserPasswordV2(username: string): Promise<string | null> {
     if (!storage) return null;
 
     // 检查存储类型
-    const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+    const storageType = STORAGE_TYPE;
 
     // PostgreSQL 存储：使用 getUserPasswordHash 方法
     if (storageType === 'postgres') {

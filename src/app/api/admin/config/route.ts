@@ -7,11 +7,12 @@ import { apiError, apiSuccess } from '@/lib/api-response';
 import { AdminConfigResult } from '@/lib/admin.types';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { STORAGE_TYPE } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
     return apiSuccess({
         error: '不支持本地存储进行管理员配置',
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
     return apiError('不支持本地存储进行管理员配置', 400);
   }

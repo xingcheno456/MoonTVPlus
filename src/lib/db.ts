@@ -19,16 +19,18 @@ import {
 } from './types';
 import { UpstashRedisStorage } from './upstash.db';
 
-// storage type 常量: 'localstorage' | 'redis' | 'upstash' | 'kvrocks' | 'd1' | 'postgres'，默认 'localstorage'
-const STORAGE_TYPE =
-  (process.env.NEXT_PUBLIC_STORAGE_TYPE as
-    | 'localstorage'
-    | 'redis'
-    | 'upstash'
-    | 'kvrocks'
-    | 'd1'
-    | 'postgres'
-    | undefined) || 'localstorage';
+export type StorageType =
+  | 'localstorage'
+  | 'redis'
+  | 'upstash'
+  | 'kvrocks'
+  | 'd1'
+  | 'postgres';
+
+// storage type 常量，默认 'localstorage'
+export const STORAGE_TYPE: StorageType =
+  (process.env.NEXT_PUBLIC_STORAGE_TYPE as StorageType | undefined) ||
+  'localstorage';
 
 // 创建存储实例
 function createStorage(): IStorage {

@@ -18,7 +18,7 @@
  * - window.RUNTIME_CONFIG：服务端注入到客户端的运行时配置
  */
 
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
 
 import { AdminConfig } from './admin.types';
 
@@ -371,7 +371,7 @@ export async function getConfig(): Promise<AdminConfig> {
 
   // 创建初始化 Promise
   configInitPromise = (async () => {
-    const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+    const storageType = STORAGE_TYPE;
 
     // localStorage 模式下直接从环境变量初始化
     if (storageType === 'localstorage') {
@@ -931,7 +931,7 @@ export async function getAvailableApiSites(user?: string): Promise<ApiSite[]> {
   }
 
   // localStorage 模式下直接返回所有可用源
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
     return allApiSites;
   }

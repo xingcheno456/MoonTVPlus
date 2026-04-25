@@ -1,6 +1,98 @@
 import CryptoJS from 'crypto-js';
 
 /**
+ * 生成 HMAC-SHA256 签名
+ * @param data 要签名的数据字符串
+ * @param secret 签名密钥
+ * @returns 十六进制格式的签名字符串
+ */
+export async function generateHmacSignature(
+  data: string,
+  secret: string,
+): Promise<string> {
+  if (!secret) {
+    throw new Error('generateHmacSignature: secret is required');
+  }
+
+  try {
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(secret);
+    const messageData = encoder.encode(data);
+
+    const key = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign'],
+    );
+
+    const signature = await crypto.subtle.sign('HMAC', key, messageData);
+
+    return Array.from(new Uint8Array(signature))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  } catch (error) {
+    throw new Error(
+      `generateHmacSignature failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/**
+ * 验证 HMAC-SHA256 签名
+ * @param data 原始数据字符串
+ * @param signature 十六进制格式的签名
+ * @param secret 签名密钥
+ * @returns 签名是否有效
+ */
+export async function verifyHmacSignature(
+  data: string,
+  signature: string,
+  secret: string,
+): Promise<boolean> {
+  if (!secret || !signature) {
+    return false;
+  }
+
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(data);
+
+  try {
+    const key = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify'],
+    );
+
+    const hexPairs = signature.match(/.{1,2}/g);
+    if (!hexPairs || hexPairs.length === 0) {
+      return false;
+    }
+
+    const signatureBuffer = new Uint8Array(
+      hexPairs.map((byte) => parseInt(byte, 16)),
+    );
+
+    if (signatureBuffer.length === 0) {
+      return false;
+    }
+
+    return await crypto.subtle.verify(
+      'HMAC',
+      key,
+      signatureBuffer,
+      messageData,
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
  * 生成 SHA256 哈希值
  * @param data 要哈希的数据
  * @returns SHA256 哈希值（十六进制字符串）

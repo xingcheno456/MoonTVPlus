@@ -161,20 +161,64 @@ async function fetchMangaCoverAsDataUri(
 let lastExecutionTime = 0;
 const COOLDOWN_MS = 10 * 60 * 1000; // 10分钟冷却时间
 
+// 认证失败速率限制
+const authFailures = new Map<string, { count: number; resetAt: number }>();
+const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15分钟窗口
+const AUTH_RATE_LIMIT_MAX_FAILURES = 5; // 窗口内最多5次失败
+
+if (!process.env.CRON_PASSWORD) {
+  console.warn(
+    '[Cron] CRON_PASSWORD is not set. Cron endpoint will be unavailable. Set CRON_PASSWORD in your environment to enable scheduled tasks.',
+  );
+}
+
+function extractPassword(request: NextRequest): string | null {
+  // Priority 1: Authorization Bearer header
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.slice('Bearer '.length).trim();
+  }
+  // Priority 2 (fallback): URL path parameter (for backward compatibility)
+  return null;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ password: string }> },
 ) {
   console.log(request.url);
 
-  const { password } = await params;
-  const cronPassword = process.env.CRON_PASSWORD || 'mtvpls';
-  if (password !== cronPassword) {
+  const cronPassword = process.env.CRON_PASSWORD;
+  if (!cronPassword) {
+    console.error('CRON_PASSWORD environment variable is not set');
     return apiError('Unauthorized', 401);
   }
 
-  // 检查冷却时间
+  const { password: pathPassword } = await params;
+  const headerPassword = extractPassword(request);
+  const password = headerPassword ?? pathPassword;
+
+  const clientKey = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+
   const now = Date.now();
+  const failure = authFailures.get(clientKey);
+  if (failure && now < failure.resetAt && failure.count >= AUTH_RATE_LIMIT_MAX_FAILURES) {
+    return apiError('Too many authentication failures', 429);
+  }
+
+  if (password !== cronPassword) {
+    const existing = authFailures.get(clientKey);
+    if (existing && now < existing.resetAt) {
+      existing.count++;
+    } else {
+      authFailures.set(clientKey, { count: 1, resetAt: now + AUTH_RATE_LIMIT_WINDOW_MS });
+    }
+    return apiError('Unauthorized', 401);
+  }
+
+  authFailures.delete(clientKey);
+
+  // 检查冷却时间
   const timeSinceLastExecution = now - lastExecutionTime;
 
   if (lastExecutionTime > 0 && timeSinceLastExecution < COOLDOWN_MS) {

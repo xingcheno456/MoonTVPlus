@@ -57,7 +57,7 @@ export async function savePlayRecord(
 
   await db.savePlayRecord(username, source, id, finalRecord);
 
-  (db as any).storage.cleanupOldPlayRecords(username).catch((err: Error) => {
+  (db as unknown as { storage: { cleanupOldPlayRecords: (username: string) => Promise<void> } }).storage.cleanupOldPlayRecords(username).catch((err: Error) => {
     console.error('异步清理播放记录失败:', err);
   });
 }

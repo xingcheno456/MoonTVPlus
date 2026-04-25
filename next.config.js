@@ -9,11 +9,10 @@ const nextConfig = {
   output: isCloudflare ? undefined : 'standalone',
   eslint: {
     dirs: ['src'],
-    // 在生产构建时忽略 ESLint 错误
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
 
-  reactStrictMode: false,
+  reactStrictMode: true,
 
   experimental: {
     instrumentationHook: process.env.NODE_ENV === 'production' && !isCloudflare,

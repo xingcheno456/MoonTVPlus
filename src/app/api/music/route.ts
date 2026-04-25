@@ -280,52 +280,50 @@ async function executeMethod(
       const expressionRegex = /\{\{(.+?)\}\}/g;
       return value.replace(expressionRegex, (match, expression) => {
         try {
-          // 在 Cloudflare 环境下，使用简单的表达式替换
+          const SAFE_EXPR_REGEX = /^[\w\s+\-*/().%]+$/;
+
           if (isCloudflare) {
             const expr = expression.trim();
 
-            // 检查是否是单个变量（没有运算符）
             if (evalContext.hasOwnProperty(expr)) {
-              // 直接返回变量值
               return String(evalContext[expr]);
             }
 
-            // 处理包含运算的表达式（如 page - 1）
-            let result: any = expr;
+            let substituted: any = expr;
 
-            // 替换变量为其值
             for (const [key, val] of Object.entries(evalContext)) {
               const regex = new RegExp(`\\b${key}\\b`, 'g');
-              // 对于数字直接替换，对于字符串需要加引号以便 eval
               const replacement =
                 typeof val === 'number'
                   ? String(val)
                   : `"${String(val).replace(/"/g, '\\"')}"`;
-              result = result.replace(regex, replacement);
+              substituted = substituted.replace(regex, replacement);
             }
 
-            // 尝试计算表达式
             try {
-              // eslint-disable-next-line no-eval
-              result = eval(result);
+              if (!SAFE_EXPR_REGEX.test(substituted)) {
+                console.error(
+                  `[executeMethod] 表达式包含不安全字符，拒绝执行: ${substituted}`,
+                );
+                return '0';
+              }
+              const fn = new Function(`return ${substituted}`);
+              substituted = fn();
             } catch (err) {
               console.error(
                 `[executeMethod] Cloudflare 环境执行表达式失败: ${expr}`,
                 err,
               );
-              // 如果计算失败，尝试直接返回替换后的结果（去掉可能的引号）
-              result = result.replace(/^["']|["']$/g, '');
+              substituted = String(substituted).replace(/^["']|["']$/g, '');
             }
 
-            return String(result);
+            return String(substituted);
           } else {
-            // 在 Node.js 环境下，使用 Function 构造器
-            // eslint-disable-next-line no-new-func
-            const func = new Function(
+            const fn = new Function(
               ...Object.keys(evalContext),
               `return ${expression}`,
             );
-            const result = func(...Object.values(evalContext));
+            const result = fn(...Object.values(evalContext));
             return String(result);
           }
         } catch (err) {
@@ -393,8 +391,7 @@ async function executeMethod(
     } else {
       // 在 Node.js 环境下，直接执行 transform
       try {
-        // eslint-disable-next-line no-eval
-        const transformFn = eval(`(${config.transform})`);
+        const transformFn = new Function('data', `return (${config.transform})(data)`);
         data = transformFn(data);
       } catch (err) {
         console.error('[executeMethod] Transform 函数执行失败:', err);

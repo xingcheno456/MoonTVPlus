@@ -6,7 +6,7 @@ import { apiError, apiSuccess } from '@/lib/api-response';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, setCachedConfig } from '@/lib/config';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
 import {
   assertQuarkCookieHeaderSafe,
   normalizeQuarkCookie,
@@ -20,7 +20,7 @@ function requireOwner(username: string | undefined) {
 }
 
 export async function POST(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
     return apiError('不支持本地存储进行管理员配置', 400);
   }

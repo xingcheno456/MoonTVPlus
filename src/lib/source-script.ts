@@ -2,15 +2,12 @@
 
 import * as cheerio from 'cheerio/slim';
 import { nanoid } from 'nanoid';
+import vm from 'vm';
 
 import { db } from '@/lib/db';
 
 const SOURCE_SCRIPT_REGISTRY_KEY = 'source-script:registry';
 const DEFAULT_TIMEOUT_MS = 20000;
-
-// 绕过 webpack 静态分析，获取真正的 Node.js require
-// eslint-disable-next-line no-eval
-const _nodeRequire = eval('require') as NodeRequire;
 
 // ---- 内存缓存 ----
 let _registryCache: { data: SourceScriptRegistry; ts: number } | null = null;
@@ -295,9 +292,19 @@ function createUtils() {
 }
 
 function createScriptFactory(code: string) {
-  return new Function('require', `"use strict";\n${code}`) as (
-    req: NodeRequire,
-  ) => any;
+  // 使用 vm 模块创建沙箱执行环境，用户脚本无法访问 Node.js 全局 API
+  const script = new vm.Script(
+    `"use strict";\n(function() {\n${code}\n})();`,
+    { filename: 'source-script.js' },
+  );
+
+  return (sandbox: Record<string, any>) => {
+    const context = vm.createContext(sandbox);
+    return script.runInContext(context, {
+      timeout: DEFAULT_TIMEOUT_MS / 2,
+      breakOnSigint: true,
+    });
+  };
 }
 
 async function createScriptContext(
@@ -458,7 +465,8 @@ function getOrCompileScript(script: SourceScriptRecord) {
   if (cached) return cached;
 
   const factory = createScriptFactory(script.code);
-  const compiled = normalizeScript(factory(_nodeRequire));
+  // 在空沙箱中执行脚本——脚本只能通过 ctx 与外部交互
+  const compiled = normalizeScript(factory({}));
 
   if (_compiledCache.size >= MAX_COMPILED_CACHE_SIZE) {
     const firstKey = _compiledCache.keys().next().value;
@@ -678,7 +686,7 @@ export async function testSourceScript(input: {
     };
 
     const factory = createScriptFactory(input.code);
-    const compiled = normalizeScript(factory(_nodeRequire));
+    const compiled = normalizeScript(factory({}));
     const hook = compiled[input.hook];
     if (typeof hook !== 'function') {
       throw new Error(`脚本未实现 ${input.hook} hook`);

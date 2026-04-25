@@ -9,7 +9,7 @@ import { gunzip } from 'zlib';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { configSelfCheck, setCachedConfig } from '@/lib/config';
 import { SimpleCrypto } from '@/lib/crypto';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
 import { updateProgress, clearProgress } from '@/lib/data-migration-progress';
 
 export const runtime = 'nodejs';
@@ -19,7 +19,7 @@ const gunzipAsync = promisify(gunzip);
 export async function POST(req: NextRequest) {
   try {
     // 检查存储类型
-    const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+    const storageType = STORAGE_TYPE;
     if (storageType === 'localstorage') {
       return apiError('不支持本地存储进行数据迁移', 400);
     }
