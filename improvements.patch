@@ -1,0 +1,213 @@
+diff --git a/src/app/api/cron/[password]/route.ts b/src/app/api/cron/[password]/route.ts
+--- a/src/app/api/cron/[password]/route.ts
++++ b/src/app/api/cron/[password]/route.ts
+@@ -186,7 +186,8 @@
+ export async function GET(
+   request: NextRequest,
+   { params }: { params: Promise<{ password: string }> },
+ ) {
+-  console.log(request.url);
++  // SECURITY: 不打印完整 URL，避免认证凭据泄露到日志
++  logger.info('[Cron] Request received');
+ 
+   const cronPassword = process.env.CRON_PASSWORD;
+   if (!cronPassword) {
+@@ -206,7 +207,11 @@
+     return apiError('Too many authentication failures', 429);
+   }
+ 
+-  if (password !== cronPassword) {
++  // SECURITY: 使用常量时间比较防止时序攻击
++  const passwordBuffer = Buffer.from(password || '');
++  const cronPasswordBuffer = Buffer.from(cronPassword);
++  if (passwordBuffer.length !== cronPasswordBuffer.length ||
++      !crypto.timingSafeEqual(passwordBuffer, cronPasswordBuffer)) {
+     const existing = authFailures.get(clientKey);
+     if (existing && now < existing.resetAt) {
+       existing.count++;
+
+diff --git a/src/app/api/login/route.ts b/src/app/api/login/route.ts
+--- a/src/app/api/login/route.ts
++++ b/src/app/api/login/route.ts
+@@ -35,7 +35,10 @@
+ async function generateAuthCookie(
+   username?: string,
+-  password?: string,
++  /** @deprecated Password is never stored in cookies. Retained for backward compatibility only. */
++  password?: string,
+   role?: 'owner' | 'admin' | 'user',
+-  includePassword?: boolean,
++  /** @deprecated IncludePassword is no longer used. HMAC signature is used instead. Will be removed in next major version. */
++  includePassword?: boolean,
+   deviceInfo?: string,
+ ): Promise<string> {
+
+diff --git a/src/lib/openlist-cache.ts b/src/lib/openlist-cache.ts
+--- a/src/lib/openlist-cache.ts
++++ b/src/lib/openlist-cache.ts
+@@ -14,6 +14,9 @@
+ const VIDEOINFO_CACHE_TTL_MS =
+   parseInt(process.env.VIDEOINFO_CACHE_MINUTES || '1440', 10) * 60 * 1000; // 默认1天
+ 
++// 添加缓存大小上限，防止内存泄漏
++const MAX_VIDEOINFO_CACHE_SIZE = parseInt(process.env.VIDEOINFO_CACHE_MAX || '500', 10);
++
+ const METAINFO_CACHE: Map<string, MetaInfoCacheEntry> = new Map();
+ const VIDEOINFO_CACHE: Map<string, VideoInfoCacheEntry> = new Map();
+ 
+@@ -90,6 +93,13 @@
+ 
+ export function setCachedVideoInfo(folderPath: string, data: VideoInfo): void {
++  // 超过上限时清理最旧的条目
++  if (VIDEOINFO_CACHE.size >= MAX_VIDEOINFO_CACHE_SIZE) {
++    const entries = Array.from(VIDEOINFO_CACHE.entries());
++    entries.sort((a, b) => a[1].expiresAt - b[1].expiresAt);
++    const toDelete = entries.slice(0, Math.ceil(MAX_VIDEOINFO_CACHE_SIZE * 0.2));
++    toDelete.forEach(([key]) => VIDEOINFO_CACHE.delete(key));
++  }
+   VIDEOINFO_CACHE.set(folderPath, {
+     expiresAt: Date.now() + VIDEOINFO_CACHE_TTL_MS,
+     data,
+
+diff --git a/src/lib/user-cache.ts b/src/lib/user-cache.ts
+--- a/src/lib/user-cache.ts
++++ b/src/lib/user-cache.ts
+@@ -14,6 +14,9 @@
+   cachedAt: number;
+ }
+ 
++// 用户缓存大小上限
++const MAX_USER_CACHE_SIZE = parseInt(process.env.USER_CACHE_MAX || '1000', 10);
++const MAX_OWNER_CACHE_SIZE = parseInt(process.env.OWNER_CACHE_MAX || '100', 10);
++
+ class UserInfoCache {
+   private cache: Map<string, CachedUserInfo> = new Map();
+   private readonly TTL = 6 * 60 * 60 * 1000; // 6小时过期
+@@ -30,6 +33,12 @@
+ 
+   set(username: string, userInfo: Omit<CachedUserInfo, 'cachedAt'>): void {
++    // 超过上限时先清理
++    if (this.cache.size >= MAX_USER_CACHE_SIZE) {
++      this.cleanup();
++      if (this.cache.size >= MAX_USER_CACHE_SIZE) {
++        const firstKey = this.cache.keys().next().value;
++        if (firstKey) this.cache.delete(firstKey);
++      }
++    }
+     this.cache.set(username, {
+       ...userInfo,
+       cachedAt: Date.now(),
+@@ -75,6 +84,12 @@
+ 
+   set(ownerUsername: string, exists: boolean): void {
++    // 超过上限时先清理
++    if (this.cache.size >= MAX_OWNER_CACHE_SIZE) {
++      this.cleanup();
++      if (this.cache.size >= MAX_OWNER_CACHE_SIZE) {
++        const firstKey = this.cache.keys().next().value;
++        if (firstKey) this.cache.delete(firstKey);
++      }
++    }
+     this.cache.set(ownerUsername, {
+       exists,
+       cachedAt: Date.now(),
+
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -263,7 +263,12 @@
+       {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+       <script
+         dangerouslySetInnerHTML={{
+-          __html: `window.RUNTIME_CONFIG = ${JSON.stringify(runtimeConfig)};`,
++          // SECURITY: 对 runtimeConfig 的值进行 HTML 转义，防止 XSS
++          __html: `window.RUNTIME_CONFIG = ${JSON.stringify(runtimeConfig).replace(
++            /</g, '\\u003c'
++          ).replace(
++            />/g, '\\u003e'
++          ).replace(
++            /\//g, '\\u002f'
++          )};`,
+         }}
+       />
+
+diff --git a/src/components/DataMigration.tsx b/src/components/DataMigration.tsx
+--- a/src/components/DataMigration.tsx
++++ b/src/components/DataMigration.tsx
+@@ -1,5 +1,6 @@
+ 'use client';
+ /* eslint-disable @typescript-eslint/no-explicit-any */
++import DOMPurify from 'dompurify';
+ 
+ // ... existing imports ...
+ 
+@@ -109,7 +110,7 @@
+         {html && (
+           <div
+             className='mb-4 text-left text-gray-600 dark:text-gray-400'
+-            dangerouslySetInnerHTML={{ __html: html }}
++            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+           />
+         )}
+
+diff --git a/next.config.js b/next.config.js
+--- a/next.config.js
++++ b/next.config.js
+@@ -20,10 +20,18 @@
+   // Uncomment to add domain whitelist
+   images: {
+     unoptimized: true,
+-    remotePatterns: [
+-      {
+-        protocol: 'https',
+-        hostname: '**',
+-      },
+-      {
+-        protocol: 'http',
+-        hostname: '**',
+-      },
+-    ],
++    // SECURITY: 限制图片代理域名，防止被滥用为开放代理
++    // 如需添加新域名，请在此列表中追加
++    remotePatterns: [
++      { protocol: 'https', hostname: 'image.tmdb.org' },
++      { protocol: 'https', hostname: 'img.doubanio.com' },
++      { protocol: 'https', hostname: '**.alicdn.com' },
++      { protocol: 'https', hostname: '**.qiniucdn.com' },
++      { protocol: 'https', hostname: '**.cloudfront.net' },
++      { protocol: 'https', hostname: '**.netlify.app' },
++      { protocol: 'https', hostname: '**.netlifyusercontent.com' },
++      // 自定义源站图片（如需要可取消注释）
++      // { protocol: 'https', hostname: '**' },
++    ],
+   },
+
+diff --git a/src/app/api/cron/[password]/route.ts b/src/app/api/cron/[password]/route.ts
+--- a/src/app/api/cron/[password]/route.ts
++++ b/src/app/api/cron/[password]/route.ts
+@@ -168,8 +168,6 @@
+ const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15分钟窗口
+ const AUTH_RATE_LIMIT_MAX_FAILURES = 5; // 窗口内最多5次失败
+ 
+-if (!process.env.CRON_PASSWORD) {
+-  console.warn(
+-    '[Cron] CRON_PASSWORD is not set. Cron endpoint will be unavailable. Set CRON_PASSWORD in your environment to enable scheduled tasks.',
+-  );
+-}
++// 使用 logger 替代 console.warn，与项目日志策略一致
++if (!process.env.CRON_PASSWORD) {
++  logger.warn(
++    '[Cron] CRON_PASSWORD is not set. Cron endpoint will be unavailable. Set CRON_PASSWORD in your environment to enable scheduled tasks.',
++  );
++}
+
+diff --git a/src/lib/config.ts b/src/lib/config.ts
+--- a/src/lib/config.ts
++++ b/src/lib/config.ts
+@@ -1,3 +1,4 @@
+-/* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion */
++// TODO: 逐步移除文件级 eslint-disable，改用行内禁用
++/* eslint-disable @typescript-eslint/no-explicit-any */
++/* eslint-disable @typescript-eslint/no-non-null-assertion */
++// NOTE: no-console 已移除，改用 logger 统一日志
+ import { db, STORAGE_TYPE } from '@/lib/db';

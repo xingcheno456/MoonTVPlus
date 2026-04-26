@@ -1,11 +1,11 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getScanTask } from '@/lib/scan-task';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess({ task, });
   } catch (error) {
-    console.error('获取扫描进度失败:', error);
+    logger.error('获取扫描进度失败:', error);
     return apiError('获取失败: ' + (error as Error).message, 500);
   }
 }

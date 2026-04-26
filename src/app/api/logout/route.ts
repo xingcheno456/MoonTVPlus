@@ -4,6 +4,8 @@ import { apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { revokeRefreshToken } from '@/lib/refresh-token';
 
+import { logger } from '../../../lib/logger';
+
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
@@ -13,7 +15,7 @@ export async function POST(request: NextRequest) {
     try {
       await revokeRefreshToken(authInfo.username, authInfo.tokenId);
     } catch (error) {
-      console.error('Failed to revoke refresh token:', error);
+      logger.error('Failed to revoke refresh token:', error);
     }
   }
 

@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { API_CONFIG, getAvailableApiSites, getConfig } from '@/lib/config';
 import { yellowWords } from '@/lib/yellow';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error('Failed to get categories:', error);
+    logger.error('Failed to get categories:', error);
     return apiError('获取分类列表失败', 500);
   }
 }

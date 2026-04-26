@@ -1,12 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getTMDBImages } from '@/lib/tmdb.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
       list,
     });
   } catch (error) {
-    console.error('TMDB图片信息获取失败:', error);
+    logger.error('TMDB图片信息获取失败:', error);
     return apiError('获取图片信息失败: ' + (error as Error).message, 500);
   }
 }

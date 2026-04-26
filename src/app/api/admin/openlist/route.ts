@@ -1,13 +1,13 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db, STORAGE_TYPE } from '@/lib/db';
 import { OpenListClient } from '@/lib/openlist.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -117,11 +117,11 @@ export async function POST(request: NextRequest) {
 
       // 验证账号密码是否正确
       try {
-        console.log('[OpenList Config] 验证账号密码');
+        logger.info('[OpenList Config] 验证账号密码');
         await OpenListClient.login(URL, Username, Password);
-        console.log('[OpenList Config] 账号密码验证成功');
+        logger.info('[OpenList Config] 账号密码验证成功');
       } catch (error) {
-        console.error('[OpenList Config] 账号密码验证失败:', error);
+        logger.error('[OpenList Config] 账号密码验证失败:', error);
         return apiError('账号密码验证失败: ' + (error as Error).message, 400);
       }
 
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
 
     return apiError('未知操作', 400);
   } catch (error) {
-    console.error('OpenList 配置操作失败:', error);
+    logger.error('OpenList 配置操作失败:', error);
     return apiError('操作失败: ' + (error as Error).message, 500);
   }
 }

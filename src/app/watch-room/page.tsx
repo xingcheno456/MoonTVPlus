@@ -17,6 +17,8 @@ import PageLayout from '@/components/PageLayout';
 import Toast, { ToastProps } from '@/components/Toast';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
+import { logger } from '../../lib/logger';
+
 import type { Room, RoomType } from '@/types/watch-room';
 
 type TabType = 'create' | 'join' | 'list';
@@ -117,7 +119,7 @@ export default function WatchRoomPage() {
       const roomList = await getRoomList();
       setRooms(roomList);
     } catch (error) {
-      console.error('[WatchRoom] Failed to load rooms:', error);
+      logger.error('[WatchRoom] Failed to load rooms:', error);
     } finally {
       if (showLoading) {
         setLoading(false);

@@ -1,13 +1,13 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
 import { invalidateVideoInfoCache } from '@/lib/openlist-cache';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess({ message: '刷新成功', });
   } catch (error) {
-    console.error('刷新视频失败:', error);
+    logger.error('刷新视频失败:', error);
     return apiError('刷新失败: ' + (error as Error).message, 500);
   }
 }

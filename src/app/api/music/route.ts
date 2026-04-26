@@ -3,9 +3,10 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -84,7 +85,7 @@ async function cacheAudioToOpenList(
       const audioResponse = await fetch(audioUrl);
 
       if (!audioResponse.ok) {
-        console.error('[Music Cache] 下载音频失败:', audioResponse.status);
+        logger.error('[Music Cache] 下载音频失败:', audioResponse.status);
         return;
       }
 
@@ -109,7 +110,7 @@ async function cacheAudioToOpenList(
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
-        console.error(
+        logger.error(
           '[Music Cache] 上传音频失败:',
           uploadResponse.status,
           errorText,
@@ -117,7 +118,7 @@ async function cacheAudioToOpenList(
         return;
       }
     } catch (error) {
-      console.error('[Music Cache] 缓存音频到 OpenList 失败:', error);
+      logger.error('[Music Cache] 缓存音频到 OpenList 失败:', error);
     } finally {
       downloadingTasks.delete(taskKey);
     }
@@ -190,7 +191,7 @@ async function replaceAudioUrlsWithOpenList(
           quality,
           cachePath,
         ).catch((error) => {
-          console.error('[Music Cache] 异步缓存音频失败:', error);
+          logger.error('[Music Cache] 异步缓存音频失败:', error);
         });
       }
     } catch (error) {
@@ -204,7 +205,7 @@ async function replaceAudioUrlsWithOpenList(
         quality,
         cachePath,
       ).catch((err) => {
-        console.error('[Music Cache] 异步缓存音频失败:', err);
+        logger.error('[Music Cache] 异步缓存音频失败:', err);
       });
     }
   }
@@ -229,7 +230,7 @@ async function proxyRequest(
 
     return response;
   } catch (error) {
-    console.error('TuneHub API 请求失败:', error);
+    logger.error('TuneHub API 请求失败:', error);
     throw error;
   }
 }
@@ -302,7 +303,7 @@ async function executeMethod(
 
             try {
               if (!SAFE_EXPR_REGEX.test(substituted)) {
-                console.error(
+                logger.error(
                   `[executeMethod] 表达式包含不安全字符，拒绝执行: ${substituted}`,
                 );
                 return '0';
@@ -310,7 +311,7 @@ async function executeMethod(
               const fn = new Function(`return ${substituted}`);
               substituted = fn();
             } catch (err) {
-              console.error(
+              logger.error(
                 `[executeMethod] Cloudflare 环境执行表达式失败: ${expr}`,
                 err,
               );
@@ -327,7 +328,7 @@ async function executeMethod(
             return String(result);
           }
         } catch (err) {
-          console.error(`[executeMethod] 执行表达式失败: ${expression}`, err);
+          logger.error(`[executeMethod] 执行表达式失败: ${expression}`, err);
           return '0'; // 默认值
         }
       });
@@ -394,7 +395,7 @@ async function executeMethod(
         const transformFn = new Function('data', `return (${config.transform})(data)`);
         data = transformFn(data);
       } catch (err) {
-        console.error('[executeMethod] Transform 函数执行失败:', err);
+        logger.error('[executeMethod] Transform 函数执行失败:', err);
       }
     }
   }
@@ -569,7 +570,7 @@ export async function GET(request: NextRequest) {
         return apiError('不支持的 action', 400);
     }
   } catch (error) {
-    console.error('音乐 API 错误:', error);
+    logger.error('音乐 API 错误:', error);
     return apiError(
       '请求失败: ' + (error as Error).message,
       500,
@@ -736,7 +737,7 @@ export async function POST(request: NextRequest) {
             openListClient
               .uploadFile(jsonPath, JSON.stringify(finalData, null, 2))
               .catch((error) => {
-                console.error(
+                logger.error(
                   '[Music Cache] 缓存解析结果到 OpenList 失败:',
                   error,
                 );
@@ -745,7 +746,7 @@ export async function POST(request: NextRequest) {
 
           return apiSuccess(finalData);
         } catch (error) {
-          console.error('解析歌曲失败:', error);
+          logger.error('解析歌曲失败:', error);
           return apiSuccess({
             code: -1,
             message: '解析请求失败',
@@ -758,7 +759,7 @@ export async function POST(request: NextRequest) {
         return apiError('不支持的 action', 400);
     }
   } catch (error) {
-    console.error('音乐 API 错误:', error);
+    logger.error('音乐 API 错误:', error);
     return apiSuccess({
         error: '请求失败',
         details: (error as Error).message,

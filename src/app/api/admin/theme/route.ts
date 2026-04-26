@@ -1,12 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db, STORAGE_TYPE } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -138,7 +139,7 @@ export async function POST(request: NextRequest) {
         },
       });
   } catch (error) {
-    console.error('更新主题配置失败:', error);
+    logger.error('更新主题配置失败:', error);
     return apiSuccess({
         error: '更新主题配置失败',
         details: (error as Error).message,

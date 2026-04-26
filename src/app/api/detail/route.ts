@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { detailQuerySchema } from '@/lib/api-schemas';
+import { parseSearchParams, validateAuth } from '@/lib/api-validation';
 import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
 import { getDetailFromApi } from '@/lib/downstream';
 import {
@@ -14,18 +15,13 @@ import {
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return apiError('Unauthorized', 401);
-  }
+  const authResult = validateAuth(request);
+  if ('status' in authResult) return authResult;
+  const { username } = authResult;
 
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id');
-  const sourceCode = searchParams.get('source');
-
-  if (!id || !sourceCode) {
-    return apiError('缺少必要参数', 400);
-  }
+  const paramResult = parseSearchParams(request, detailQuerySchema);
+  if ('error' in paramResult) return paramResult.error;
+  const { id, source: sourceCode } = paramResult.data;
 
   const parsedScriptSource = parseScriptSourceValue(sourceCode);
   if (parsedScriptSource) {
@@ -288,7 +284,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const apiSites = await getAvailableApiSites(authInfo.username);
+    const apiSites = await getAvailableApiSites(username);
     const apiSite = apiSites.find((site) => site.key === sourceCode);
 
     if (!apiSite) {

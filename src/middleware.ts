@@ -1,10 +1,9 @@
-/* eslint-disable no-console */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { verifyHmacSignature } from '@/lib/crypto';
 import { STORAGE_TYPE } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { TOKEN_CONFIG } from '@/lib/refresh-token';
 
 export async function middleware(request: NextRequest) {
@@ -54,7 +53,7 @@ export async function middleware(request: NextRequest) {
       process.env.PASSWORD || '',
     );
   } catch (error) {
-    console.error('签名验证异常:', error);
+    logger.error('签名验证异常:', error);
   }
 
   if (!isValidSignature) {
@@ -64,7 +63,7 @@ export async function middleware(request: NextRequest) {
   // 数据库模式：额外验证双 Token 和过期时间
   if (STORAGE_TYPE !== 'localstorage') {
     if (!authInfo.tokenId || !authInfo.refreshToken || !authInfo.refreshExpires) {
-      console.log(
+      logger.info(
         `Old cookie format detected for ${authInfo.username}, forcing re-login`,
       );
       return handleAuthFailure(request, pathname);
@@ -73,7 +72,7 @@ export async function middleware(request: NextRequest) {
     const now = Date.now();
 
     if (now >= authInfo.refreshExpires) {
-      console.log(
+      logger.info(
         `Refresh token expired for ${authInfo.username}, redirecting to login`,
       );
       return handleAuthFailure(request, pathname);
@@ -83,11 +82,11 @@ export async function middleware(request: NextRequest) {
     const age = now - authInfo.timestamp;
 
     if (age > ACCESS_TOKEN_AGE) {
-      console.log(`Access token expired for ${authInfo.username}`);
+      logger.info(`Access token expired for ${authInfo.username}`);
       if (pathname.startsWith('/api')) {
         return new NextResponse('Access token expired', { status: 401 });
       }
-      console.log(`Allowing page request to pass, frontend will refresh token`);
+      logger.info(`Allowing page request to pass, frontend will refresh token`);
     }
   }
 

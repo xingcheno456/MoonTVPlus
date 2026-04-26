@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any,react-hooks/exhaustive-deps,@typescript-eslint/no-empty-function */
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 
 import {
   ExternalLink,
@@ -32,10 +32,10 @@ import {
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 import {
-  processImageUrl,
   base58Decode,
-  tryApplyDoubanImageFallback,
   getDoubanImageFallbackUrl,
+  processImageUrl,
+  tryApplyDoubanImageFallback,
 } from '@/lib/utils';
 import { useLongPress } from '@/hooks/useLongPress';
 

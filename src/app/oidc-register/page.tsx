@@ -8,6 +8,8 @@ import { CURRENT_VERSION } from '@/lib/version';
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
+import { logger } from '../../lib/logger';
+
 function OIDCRegisterPageClient() {
   const router = useRouter();
   const [username, setUsername] = useState('');
@@ -32,7 +34,7 @@ function OIDCRegisterPageClient() {
           );
         }
       } catch (error) {
-        console.error('检查session失败:', error);
+        logger.error('检查session失败:', error);
         router.replace('/login');
       }
     };

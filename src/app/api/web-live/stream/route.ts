@@ -3,6 +3,8 @@ import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 
+import { logger } from '../../../../lib/logger';
+
 function getAntiCode(oldAntiCode: string, streamName: string): string {
   const paramsT = 100;
   const sdkVersion = 2403051612;
@@ -79,7 +81,7 @@ async function getBilibiliStream(roomId: string) {
       ownerName = userData.data?.info?.uname || '';
     }
   } catch (err) {
-    console.warn('获取主播信息失败:', err);
+    logger.warn('获取主播信息失败:', err);
   }
 
   // 获取房间详细信息（包含标题）
@@ -96,7 +98,7 @@ async function getBilibiliStream(roomId: string) {
       title = roomInfoData.data?.title || '';
     }
   } catch (err) {
-    console.warn('获取房间标题失败:', err);
+    logger.warn('获取房间标题失败:', err);
   }
 
   // 获取播放地址 (原画质量 qn=10000)

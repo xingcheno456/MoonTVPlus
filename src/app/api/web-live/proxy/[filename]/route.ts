@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { apiError, apiSuccess } from '@/lib/api-response';
+import { apiError } from '@/lib/api-response';
 
 function getBaseUrl(url: string): string {
   const urlObj = new URL(url);

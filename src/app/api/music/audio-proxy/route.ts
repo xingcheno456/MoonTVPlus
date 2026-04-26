@@ -1,11 +1,12 @@
-/* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
+import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -100,7 +101,14 @@ export async function GET(request: NextRequest) {
     }
 
     // 从OpenList获取音频流
-    const response = await fetch(fileResponse.data.raw_url, {
+    const rawUrl = fileResponse.data.raw_url;
+
+    const isSafeUrl = await validateProxyUrlServerSide(rawUrl);
+    if (!isSafeUrl) {
+      return apiError('Proxy request to local or invalid network is forbidden', 403);
+    }
+
+    const response = await fetch(rawUrl, {
       headers: upstreamHeaders,
     });
 
@@ -164,7 +172,7 @@ export async function GET(request: NextRequest) {
       headers,
     });
   } catch (error) {
-    console.error('代理OpenList音频失败:', error);
+    logger.error('代理OpenList音频失败:', error);
     return apiSuccess({
         error: '代理请求失败',
         details: (error as Error).message,

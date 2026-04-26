@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { WatchRoomSocket } from '@/lib/watch-room-socket';
 
+import { logger } from '../lib/logger';
+
 import type { Member } from '@/types/watch-room';
 
 interface UseVoiceChatOptions {
@@ -82,10 +84,10 @@ export function useVoiceChat({
         },
       });
       localStreamRef.current = stream;
-      console.log('[VoiceChat] Got local stream');
+      logger.info('[VoiceChat] Got local stream');
       return stream;
     } catch (err) {
-      console.error('[VoiceChat] Failed to get local stream:', err);
+      logger.error('[VoiceChat] Failed to get local stream:', err);
       setError('无法访问麦克风，请检查权限设置');
       throw err;
     }
@@ -96,7 +98,7 @@ export function useVoiceChat({
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
-      console.log('[VoiceChat] Stopped local stream');
+      logger.info('[VoiceChat] Stopped local stream');
     }
   }, []);
 
@@ -106,7 +108,7 @@ export function useVoiceChat({
       localStreamRef.current.getTracks().forEach((track) => {
         track.enabled = false;
       });
-      console.log('[VoiceChat] Muted local stream');
+      logger.info('[VoiceChat] Muted local stream');
     }
   }, []);
 
@@ -116,7 +118,7 @@ export function useVoiceChat({
       localStreamRef.current.getTracks().forEach((track) => {
         track.enabled = true;
       });
-      console.log('[VoiceChat] Unmuted local stream');
+      logger.info('[VoiceChat] Unmuted local stream');
     }
   }, []);
 
@@ -139,7 +141,7 @@ export function useVoiceChat({
 
       // 接收远程音频流
       pc.ontrack = (event) => {
-        console.log('[VoiceChat] Received remote track from', peerId);
+        logger.info('[VoiceChat] Received remote track from', peerId);
         const remoteStream = event.streams[0];
         remoteStreamsRef.current.set(peerId, remoteStream);
 
@@ -151,7 +153,7 @@ export function useVoiceChat({
 
       // ICE 连接状态变化 - 更准确地反映连接质量
       pc.oniceconnectionstatechange = () => {
-        console.log(
+        logger.info(
           '[VoiceChat] ICE connection state with',
           peerId,
           ':',
@@ -172,7 +174,7 @@ export function useVoiceChat({
           setIsConnecting(false);
         } else if (pc.iceConnectionState === 'disconnected') {
           // 连接断开，但给它5秒恢复时间
-          console.log(
+          logger.info(
             '[VoiceChat] ICE disconnected for',
             peerId,
             ', waiting for recovery...',
@@ -186,7 +188,7 @@ export function useVoiceChat({
 
           // 设置新的定时器
           const timer = setTimeout(() => {
-            console.log(
+            logger.info(
               '[VoiceChat] ICE connection recovery timeout for',
               peerId,
             );
@@ -212,12 +214,12 @@ export function useVoiceChat({
 
               // 只有当所有连接都断开时才切换到服务器中转
               if (!hasActiveConnection) {
-                console.log(
+                logger.info(
                   '[VoiceChat] All ICE connections failed, switching to server relay',
                 );
                 switchToServerRelayRef.current?.();
               } else {
-                console.log(
+                logger.info(
                   '[VoiceChat] Other connections still active, not switching to server relay',
                 );
                 // 只关闭这个失败的连接
@@ -231,7 +233,7 @@ export function useVoiceChat({
           disconnectionTimersRef.current.set(peerId, timer);
         } else if (pc.iceConnectionState === 'failed') {
           // ICE 连接彻底失败
-          console.log('[VoiceChat] ICE connection failed for', peerId);
+          logger.info('[VoiceChat] ICE connection failed for', peerId);
           if (strategy === 'webrtc-fallback') {
             // 检查是否还有其他活跃的连接
             let hasActiveConnection = false;
@@ -249,12 +251,12 @@ export function useVoiceChat({
             });
 
             if (!hasActiveConnection) {
-              console.log(
+              logger.info(
                 '[VoiceChat] All ICE connections failed, switching to server relay',
               );
               switchToServerRelayRef.current?.();
             } else {
-              console.log(
+              logger.info(
                 '[VoiceChat] Other connections still active, not switching to server relay',
               );
               // 只关闭这个失败的连接
@@ -267,7 +269,7 @@ export function useVoiceChat({
 
       // 连接状态变化 - 作为辅助监控
       pc.onconnectionstatechange = () => {
-        console.log(
+        logger.info(
           '[VoiceChat] Connection state with',
           peerId,
           ':',
@@ -279,7 +281,7 @@ export function useVoiceChat({
         } else if (pc.connectionState === 'failed') {
           // 只在 failed 状态时切换，不在 disconnected 时切换
           if (strategy === 'webrtc-fallback') {
-            console.log(
+            logger.info(
               '[VoiceChat] Connection failed, falling back to server relay',
             );
             switchToServerRelayRef.current?.();
@@ -341,7 +343,7 @@ export function useVoiceChat({
     });
     peerConnectionsRef.current.clear();
 
-    console.log('[VoiceChat] WebRTC cleaned up');
+    logger.info('[VoiceChat] WebRTC cleaned up');
   }, [stopRemoteStream]);
 
   // 向对等端发起连接（创建offer）
@@ -349,7 +351,7 @@ export function useVoiceChat({
     async (peerId: string) => {
       if (!socket || !localStreamRef.current) return;
 
-      console.log('[VoiceChat] Initiating connection to', peerId);
+      logger.info('[VoiceChat] Initiating connection to', peerId);
       const pc = createPeerConnection(peerId);
 
       // 添加本地流
@@ -368,9 +370,9 @@ export function useVoiceChat({
           targetUserId: peerId,
           offer: offer,
         });
-        console.log('[VoiceChat] Sent offer to', peerId);
+        logger.info('[VoiceChat] Sent offer to', peerId);
       } catch (err) {
-        console.error('[VoiceChat] Failed to create offer:', err);
+        logger.error('[VoiceChat] Failed to create offer:', err);
       }
     },
     [socket, createPeerConnection],
@@ -381,7 +383,7 @@ export function useVoiceChat({
     async (data: { userId: string; offer: RTCSessionDescriptionInit }) => {
       if (!socket) return;
 
-      console.log('[VoiceChat] Received offer from', data.userId);
+      logger.info('[VoiceChat] Received offer from', data.userId);
       const pc = createPeerConnection(data.userId);
 
       // 如果有本地流，添加音频轨道
@@ -389,11 +391,11 @@ export function useVoiceChat({
         localStreamRef.current.getTracks().forEach((track) => {
           if (localStreamRef.current) {
             pc.addTrack(track, localStreamRef.current);
-            console.log('[VoiceChat] Added local track to answer');
+            logger.info('[VoiceChat] Added local track to answer');
           }
         });
       } else {
-        console.log(
+        logger.info(
           '[VoiceChat] No local stream, creating answer without sending audio',
         );
       }
@@ -407,9 +409,9 @@ export function useVoiceChat({
           targetUserId: data.userId,
           answer: answer,
         });
-        console.log('[VoiceChat] Sent answer to', data.userId);
+        logger.info('[VoiceChat] Sent answer to', data.userId);
       } catch (err) {
-        console.error('[VoiceChat] Failed to handle offer:', err);
+        logger.error('[VoiceChat] Failed to handle offer:', err);
       }
     },
     [socket, createPeerConnection],
@@ -418,14 +420,14 @@ export function useVoiceChat({
   // 处理接收到的answer
   const handleAnswer = useCallback(
     async (data: { userId: string; answer: RTCSessionDescriptionInit }) => {
-      console.log('[VoiceChat] Received answer from', data.userId);
+      logger.info('[VoiceChat] Received answer from', data.userId);
       const pc = peerConnectionsRef.current.get(data.userId);
       if (!pc) return;
 
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
       } catch (err) {
-        console.error('[VoiceChat] Failed to handle answer:', err);
+        logger.error('[VoiceChat] Failed to handle answer:', err);
       }
     },
     [],
@@ -440,7 +442,7 @@ export function useVoiceChat({
       try {
         await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
       } catch (err) {
-        console.error('[VoiceChat] Failed to add ICE candidate:', err);
+        logger.error('[VoiceChat] Failed to add ICE candidate:', err);
       }
     },
     [],
@@ -451,18 +453,18 @@ export function useVoiceChat({
   // 启动服务器中转
   const startServerRelay = useCallback(() => {
     if (!socket || !localStreamRef.current) {
-      console.error(
+      logger.error(
         '[VoiceChat] Cannot start server relay - missing socket or stream',
       );
       return;
     }
 
     if (!roomId) {
-      console.error('[VoiceChat] Cannot start server relay - missing roomId');
+      logger.error('[VoiceChat] Cannot start server relay - missing roomId');
       return;
     }
 
-    console.log('[VoiceChat] Starting server relay');
+    logger.info('[VoiceChat] Starting server relay');
 
     try {
       // 创建AudioContext来处理音频
@@ -540,9 +542,9 @@ export function useVoiceChat({
       audioContextRef.current = audioContext;
       mediaRecorderRef.current = processor as any; // 存储processor用于清理
 
-      console.log('[VoiceChat] Server relay started');
+      logger.info('[VoiceChat] Server relay started');
     } catch (err) {
-      console.error('[VoiceChat] Failed to start server relay:', err);
+      logger.error('[VoiceChat] Failed to start server relay:', err);
       setError('服务器中转启动失败');
     }
   }, [socket, roomId]);
@@ -556,13 +558,13 @@ export function useVoiceChat({
         processor.disconnect();
       }
       mediaRecorderRef.current = null;
-      console.log('[VoiceChat] Server relay stopped');
+      logger.info('[VoiceChat] Server relay stopped');
     }
   }, []);
 
   // 切换到服务器中转模式
   const switchToServerRelay = useCallback(async () => {
-    console.log('[VoiceChat] Switching to server relay mode');
+    logger.info('[VoiceChat] Switching to server relay mode');
     setError('P2P连接失败，切换到服务器中转模式');
 
     // 清理WebRTC连接
@@ -579,13 +581,13 @@ export function useVoiceChat({
       if (hasEnabledTrack) {
         startServerRelay();
       } else {
-        console.error(
+        logger.error(
           '[VoiceChat] Cannot start server relay - no enabled audio tracks',
         );
         setError('服务器中转启动失败：麦克风未启用');
       }
     } else {
-      console.error(
+      logger.error(
         '[VoiceChat] Cannot start server relay - mic disabled or no stream',
       );
       setError('服务器中转启动失败：麦克风未开启');
@@ -643,7 +645,7 @@ export function useVoiceChat({
 
         if (queueDelay > MAX_QUEUE_DELAY) {
           // 播放队列堆积太多，丢弃这个音频包并重置队列
-          console.warn(
+          logger.warn(
             `[VoiceChat] Dropping audio from ${userId} due to queue buildup: ${(queueDelay * 1000).toFixed(0)}ms`,
           );
           nextPlayTimeRef.current.set(userId, currentTime);
@@ -664,7 +666,7 @@ export function useVoiceChat({
         // 更新下一个播放时间
         nextPlayTimeRef.current.set(userId, nextPlayTime + duration);
       } catch (err) {
-        console.error('[VoiceChat] Failed to play audio:', err);
+        logger.error('[VoiceChat] Failed to play audio:', err);
         setError('音频播放失败: ' + (err as Error).message);
       }
     },
@@ -691,7 +693,7 @@ export function useVoiceChat({
     setIsConnecting(false);
     setError(null);
 
-    console.log('[VoiceChat] All cleaned up');
+    logger.info('[VoiceChat] All cleaned up');
   }, [stopLocalStream, cleanupWebRTC, stopServerRelay]);
 
   // ==================== 主要控制逻辑 ====================
@@ -705,7 +707,7 @@ export function useVoiceChat({
       // 检查是否已经有本地流（可能只是被静音了）
       if (localStreamRef.current) {
         // 已有本地流，只需取消静音
-        console.log('[VoiceChat] Unmuting existing local stream');
+        logger.info('[VoiceChat] Unmuting existing local stream');
         unmuteLocalStream();
         // 重新启动服务器中转（如果需要）
         if (
@@ -723,20 +725,20 @@ export function useVoiceChat({
 
       getLocalStream()
         .then(() => {
-          console.log('[VoiceChat] Local stream ready');
+          logger.info('[VoiceChat] Local stream ready');
 
           if (strategy === 'server-only') {
             // 仅使用服务器中转
             startServerRelay();
           } else {
             // 使用WebRTC P2P连接
-            console.log(
+            logger.info(
               '[VoiceChat] WebRTC mode - initiating peer connections',
             );
 
             // 向房间内的其他成员发起连接
             const otherMembers = members.filter((m) => m.id !== socket.id);
-            console.log(
+            logger.info(
               '[VoiceChat] Found',
               otherMembers.length,
               'other members, initiating connections',
@@ -744,7 +746,7 @@ export function useVoiceChat({
 
             if (otherMembers.length > 0) {
               otherMembers.forEach((member) => {
-                console.log(
+                logger.info(
                   '[VoiceChat] Initiating connection to',
                   member.name,
                   member.id,
@@ -753,7 +755,7 @@ export function useVoiceChat({
               });
             } else {
               // 如果没有其他成员，先启动服务器中转作为后备
-              console.log(
+              logger.info(
                 '[VoiceChat] No other members, using server relay as fallback',
               );
               startServerRelay();
@@ -823,7 +825,7 @@ export function useVoiceChat({
 
     // 监听其他用户开启麦克风的通知
     socket.on('voice:mic-enabled', (data: { userId: string }) => {
-      console.log('[VoiceChat] User', data.userId, 'enabled microphone');
+      logger.info('[VoiceChat] User', data.userId, 'enabled microphone');
       // 其他用户开启了麦克风，我们不需要做任何事，等待接收他们的offer即可
     });
 
@@ -891,14 +893,14 @@ export function useVoiceChat({
     const newMemberIds = memberIds.filter((id) => !currentPeerIds.includes(id));
 
     if (newMemberIds.length > 0) {
-      console.log(
+      logger.info(
         '[VoiceChat] New members joined, initiating connections:',
         newMemberIds,
       );
       newMemberIds.forEach((memberId) => {
         const member = members.find((m) => m.id === memberId);
         if (member) {
-          console.log(
+          logger.info(
             '[VoiceChat] Initiating connection to new member:',
             member.name,
             member.id,

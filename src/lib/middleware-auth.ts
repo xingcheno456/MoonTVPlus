@@ -1,6 +1,6 @@
-/* eslint-disable no-console */
 
 import { generateHmacSignature } from './crypto';
+import { logger } from './logger';
 import { TOKEN_CONFIG, verifyRefreshToken } from './refresh-token';
 
 // 刷新 Access Token
@@ -14,7 +14,7 @@ export async function refreshAccessToken(
   const isValid = await verifyRefreshToken(username, tokenId, refreshToken);
 
   if (!isValid) {
-    console.log(`Refresh token invalid for ${username}:${tokenId}`);
+    logger.info(`Refresh token invalid for ${username}:${tokenId}`);
     return null;
   }
 
@@ -41,7 +41,7 @@ export async function refreshAccessToken(
     signature,
   };
 
-  console.log(`Refreshed access token for ${username}`);
+  logger.info(`Refreshed access token for ${username}`);
 
   return encodeURIComponent(JSON.stringify(authData));
 }

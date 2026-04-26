@@ -1,8 +1,9 @@
-/* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (!isAllowed) {
-      console.warn(`拒绝代理音频请求: ${urlObj.hostname}`);
+      logger.warn(`拒绝代理音频请求: ${urlObj.hostname}`);
       return apiError('不允许的目标域名', 403);
     }
 
@@ -101,7 +102,7 @@ export async function GET(request: NextRequest) {
       headers,
     });
   } catch (error) {
-    console.error('代理音频失败:', error);
+    logger.error('代理音频失败:', error);
     return apiSuccess({
         error: '代理请求失败',
         details: (error as Error).message,

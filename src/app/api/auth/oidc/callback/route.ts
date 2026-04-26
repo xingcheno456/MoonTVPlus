@@ -1,4 +1,4 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -10,6 +10,8 @@ import {
   storeRefreshToken,
   TOKEN_CONFIG,
 } from '@/lib/refresh-token';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -104,7 +106,7 @@ export async function GET(request: NextRequest) {
 
     // 检查是否有错误
     if (error) {
-      console.error('OIDC认证错误:', error);
+      logger.error('OIDC认证错误:', error);
       return NextResponse.redirect(
         new URL(`/login?error=${encodeURIComponent('OIDC认证失败')}`, origin),
       );
@@ -158,7 +160,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenResponse.ok) {
-      console.error('获取token失败:', await tokenResponse.text());
+      logger.error('获取token失败:', await tokenResponse.text());
       return NextResponse.redirect(
         new URL('/login?error=' + encodeURIComponent('获取token失败'), origin),
       );
@@ -182,7 +184,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!userInfoResponse.ok) {
-      console.error('获取用户信息失败:', await userInfoResponse.text());
+      logger.error('获取用户信息失败:', await userInfoResponse.text());
       return NextResponse.redirect(
         new URL(
           '/login?error=' + encodeURIComponent('获取用户信息失败'),
@@ -277,7 +279,7 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('OIDC回调处理失败:', error);
+    logger.error('OIDC回调处理失败:', error);
     const origin = process.env.SITE_BASE || request.nextUrl.origin;
     return NextResponse.redirect(
       new URL('/login?error=' + encodeURIComponent('服务器错误'), origin),

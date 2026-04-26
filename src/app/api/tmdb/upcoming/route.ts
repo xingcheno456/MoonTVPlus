@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getConfig } from '@/lib/config';
 import { getTMDBUpcomingContent } from '@/lib/tmdb.client';
+
+import { logger } from '../../../../lib/logger';
 
 // 内存缓存对象
 interface CacheItem {
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
       cached: false,
     });
   } catch (error) {
-    console.error('获取TMDB即将上映数据失败:', error);
+    logger.error('获取TMDB即将上映数据失败:', error);
     return apiError(
       '服务器内部错误: ' + (error instanceof Error ? error.message : '未知错误'),
       500,

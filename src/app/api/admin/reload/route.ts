@@ -1,9 +1,7 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { clearConfigCache } from '@/lib/config';
 import { STORAGE_TYPE } from '@/lib/db';

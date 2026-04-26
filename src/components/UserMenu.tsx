@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 
 import {
@@ -51,6 +51,7 @@ import { OfflineDownloadPanel } from './OfflineDownloadPanel';
 import { PersonalCenterPanel } from './PersonalCenterPanel';
 import { useVersionCheck } from './VersionCheckProvider';
 import { VersionPanel } from './VersionPanel';
+import { logger } from '../lib/logger';
 
 interface AuthInfo {
   username?: string;
@@ -323,7 +324,7 @@ export const UserMenu: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('加载未读通知数量失败:', error);
+      logger.error('加载未读通知数量失败:', error);
     }
   };
 
@@ -338,7 +339,7 @@ export const UserMenu: React.FC = () => {
       const stats = await getDanmakuCacheStats();
       setDanmakuCacheUsage(formatCacheSize(stats.totalSize));
     } catch (error) {
-      console.error('获取弹幕缓存占用失败:', error);
+      logger.error('获取弹幕缓存占用失败:', error);
       setDanmakuCacheUsage('获取失败');
     }
   }, [formatCacheSize]);
@@ -431,7 +432,7 @@ export const UserMenu: React.FC = () => {
         );
       }
     } catch (error) {
-      console.error('获取订阅URL失败:', error);
+      logger.error('获取订阅URL失败:', error);
     } finally {
       setIsLoadingSubscribeUrl(false);
     }
@@ -485,7 +486,7 @@ export const UserMenu: React.FC = () => {
             }
           }
         } catch (error) {
-          console.error('重置token失败:', error);
+          logger.error('重置token失败:', error);
           const messageEl = document.getElementById('tvbox-token-message');
           if (messageEl) {
             messageEl.textContent = '重置失败，请重试';
@@ -704,7 +705,7 @@ export const UserMenu: React.FC = () => {
         try {
           setHomeModules(JSON.parse(savedHomeModules));
         } catch (error) {
-          console.error('解析首页模块配置失败:', error);
+          logger.error('解析首页模块配置失败:', error);
         }
       }
 
@@ -771,7 +772,7 @@ export const UserMenu: React.FC = () => {
         setEmailNotifications(data.emailNotifications || false);
       }
     } catch (error) {
-      console.error('加载邮件设置失败:', error);
+      logger.error('加载邮件设置失败:', error);
     } finally {
       setEmailSettingsLoading(false);
     }
@@ -805,7 +806,7 @@ export const UserMenu: React.FC = () => {
         setEmailSettingsMessageType('error');
       }
     } catch (error) {
-      console.error('保存邮件设置失败:', error);
+      logger.error('保存邮件设置失败:', error);
       setEmailSettingsMessage('保存失败，请重试');
       setEmailSettingsMessageType('error');
     } finally {
@@ -823,7 +824,7 @@ export const UserMenu: React.FC = () => {
         setDevices(data.devices || []);
       }
     } catch (error) {
-      console.error('加载设备列表失败:', error);
+      logger.error('加载设备列表失败:', error);
     } finally {
       setDevicesLoading(false);
     }
@@ -852,7 +853,7 @@ export const UserMenu: React.FC = () => {
             alert('撤销失败，请重试');
           }
         } catch (error) {
-          console.error('撤销设备失败:', error);
+          logger.error('撤销设备失败:', error);
           alert('撤销失败，请重试');
         } finally {
           setRevoking(null);
@@ -882,7 +883,7 @@ export const UserMenu: React.FC = () => {
             alert('操作失败，请重试');
           }
         } catch (error) {
-          console.error('登出所有设备失败:', error);
+          logger.error('登出所有设备失败:', error);
           alert('操作失败，请重试');
         }
       },
@@ -992,7 +993,7 @@ export const UserMenu: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
       });
     } catch (error) {
-      console.error('注销请求失败:', error);
+      logger.error('注销请求失败:', error);
     }
     window.location.href = '/';
   };
@@ -1037,7 +1038,7 @@ export const UserMenu: React.FC = () => {
         setCopySuccess(false);
       }, 2000);
     } catch (error) {
-      console.error('复制失败:', error);
+      logger.error('复制失败:', error);
     }
   };
 
@@ -1251,7 +1252,7 @@ export const UserMenu: React.FC = () => {
         };
       });
     } catch (err) {
-      console.error('选择目录失败:', err);
+      logger.error('选择目录失败:', err);
     }
   };
 
@@ -1566,14 +1567,14 @@ export const UserMenu: React.FC = () => {
       await clearAllDanmakuCache();
       setClearCacheMessage('弹幕缓存已清除成功！');
       setDanmakuCacheUsage('0 B');
-      console.log('弹幕缓存已清除');
+      logger.info('弹幕缓存已清除');
 
       // 3秒后自动清除提示
       setTimeout(() => {
         setClearCacheMessage(null);
       }, 3000);
     } catch (error) {
-      console.error('清除弹幕缓存失败:', error);
+      logger.error('清除弹幕缓存失败:', error);
       setClearCacheMessage('清除失败，请重试');
 
       // 3秒后自动清除提示

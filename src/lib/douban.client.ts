@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console,no-case-declarations */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { logger } from './logger';
 import { DoubanItem, DoubanResult } from './types';
 
 interface DoubanCategoriesParams {
@@ -142,7 +143,7 @@ async function fetchWithTimeout(
       'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
       Referer: 'https://movie.douban.com/',
-      Accept: 'application/json, text/plain, */*',
+      Accept: 'application/json, text/plain */*',
     },
   };
 
@@ -284,7 +285,7 @@ async function requestDoubanWithFallback<T>(
       throw primaryError;
     }
 
-    console.warn(
+    logger.warn(
       `[Douban] 主渠道失败，切换备用渠道: ${primary.proxyType} -> ${backup.proxyType}`,
       primaryError,
     );
@@ -643,7 +644,7 @@ async function fetchDoubanRecommends(
     reqParams.append('sort', sort);
   }
   const target = `${baseUrl}?${reqParams.toString()}`;
-  console.log(target);
+  logger.info(target);
   try {
     const response = await fetchWithTimeout(
       target,

@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { logger } from './logger';
+ 
 
 // Token 内存缓存
 const tokenCache = new Map<string, { token: string; expiresAt: number }>();
@@ -80,7 +81,7 @@ export class XiaoyaClient {
     }
 
     // 否则重新登录
-    console.log('[XiaoyaClient] Token 不存在或已过期，重新登录');
+    logger.info('[XiaoyaClient] Token 不存在或已过期，重新登录');
     this.token = await XiaoyaClient.login(
       this.baseURL,
       this.username,

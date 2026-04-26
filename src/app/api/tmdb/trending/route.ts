@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getConfig } from '@/lib/config';
 import { fetchDoubanData } from '@/lib/douban';
 import { getTMDBTrendingContent, getTMDBVideos } from '@/lib/tmdb.client';
+
+import { logger } from '../../../../lib/logger';
 
 // 缓存配置 - 服务器内存缓存3小时
 const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3小时
@@ -99,7 +100,7 @@ export async function GET() {
 
     return apiSuccess(result);
   } catch (error) {
-    console.error('获取热门内容失败:', error);
+    logger.error('获取热门内容失败:', error);
     return apiError(
       '获取热门内容失败: ' + (error instanceof Error ? error.message : '未知错误'),
       500,
@@ -161,7 +162,7 @@ async function getTXBannerContent(): Promise<{ code: number; list: any[] }> {
     });
 
     if (!response.ok) {
-      console.error('TX API 请求失败:', response.status, response.statusText);
+      logger.error('TX API 请求失败:', response.status, response.statusText);
       return { code: response.status, list: [] };
     }
 
@@ -175,7 +176,7 @@ async function getTXBannerContent(): Promise<{ code: number; list: any[] }> {
       list: bannerItems,
     };
   } catch (error) {
-    console.error('获取 TX 轮播图数据失败:', error);
+    logger.error('获取 TX 轮播图数据失败:', error);
     return { code: 500, list: [] };
   }
 }
@@ -258,7 +259,7 @@ function parseTXBannerData(data: any): any[] {
     // 所有 pc_shelves 卡片都没有有效数据
     return [];
   } catch (error) {
-    console.error('解析 TX 轮播图数据失败:', error);
+    logger.error('解析 TX 轮播图数据失败:', error);
     return [];
   }
 }
@@ -364,7 +365,7 @@ async function getDoubanBannerContent(): Promise<{
             video_key: null, // 豆瓣不使用YouTube key
           };
         } catch (error) {
-          console.error(`获取豆瓣电影 ${movie.id} 详情失败:`, error);
+          logger.error(`获取豆瓣电影 ${movie.id} 详情失败:`, error);
 
           // 从card_subtitle提取标签（只读取第二个部分，通过空格分割）
           let tags: string[] = [];
@@ -406,7 +407,7 @@ async function getDoubanBannerContent(): Promise<{
       list: validBannerItems,
     };
   } catch (error) {
-    console.error('获取豆瓣轮播图数据失败:', error);
+    logger.error('获取豆瓣轮播图数据失败:', error);
     return { code: 500, list: [] };
   }
 }

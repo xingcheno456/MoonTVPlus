@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { apiError, apiSuccess } from '@/lib/api-response';
+import { apiError } from '@/lib/api-response';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -13,7 +15,7 @@ export async function GET(request: NextRequest) {
       return apiError('缺少EPG URL参数', 400);
     }
 
-    console.log('[EPG Download] Fetching:', epgUrl);
+    logger.info('[EPG Download] Fetching:', epgUrl);
 
     // 获取EPG文件
     const response = await fetch(epgUrl, {
@@ -32,7 +34,7 @@ export async function GET(request: NextRequest) {
       response.headers.get('content-encoding') === 'gzip';
 
     if (isGzip) {
-      console.log('[EPG Download] Decompressing gzip...');
+      logger.info('[EPG Download] Decompressing gzip...');
 
       // 读取所有数据
       const reader = response.body?.getReader();
@@ -56,14 +58,14 @@ export async function GET(request: NextRequest) {
         offset += chunk.length;
       }
 
-      console.log('[EPG Download] Compressed size:', totalLength, 'bytes');
+      logger.info('[EPG Download] Compressed size:', totalLength, 'bytes');
 
       // 解压
       const zlib = await import('zlib');
       const decompressed = zlib.gunzipSync(Buffer.from(allChunks));
       const decompressedText = decompressed.toString('utf-8');
 
-      console.log(
+      logger.info(
         '[EPG Download] Decompressed size:',
         decompressedText.length,
         'bytes',
@@ -87,7 +89,7 @@ export async function GET(request: NextRequest) {
       });
     }
   } catch (error) {
-    console.error('[EPG Download] Error:', error);
+    logger.error('[EPG Download] Error:', error);
     return apiError('下载EPG文件失败', 500);
   }
 }

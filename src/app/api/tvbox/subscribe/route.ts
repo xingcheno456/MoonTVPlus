@@ -1,12 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { getCachedLiveChannels } from '@/lib/live';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
   if (globalToken && token === globalToken) {
     // 全局token（管理员订阅）
     isGlobalToken = true;
-    console.log('使用全局token访问TVBox订阅');
+    logger.info('使用全局token访问TVBox订阅');
   } else {
     // 用户token，查询用户名
     username = (await db.getUsernameByTvboxToken(token)) || undefined;
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
       return apiError('用户已被封禁', 403);
     }
 
-    console.log(`用户 ${username} 访问TVBox订阅`);
+    logger.info(`用户 ${username} 访问TVBox订阅`);
   }
 
   try {
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
       baseUrl = `${proto}://${host}`;
     }
 
-    console.log(
+    logger.info(
       'TVBOX 订阅 baseUrl:',
       baseUrl,
       'adFilter:',
@@ -207,7 +208,7 @@ export async function GET(request: NextRequest) {
       tvboxSubscription.sites = tvboxSubscription.sites.filter(
         (site) => !blockedSources.includes(site.key),
       );
-      console.log('TVBOX 订阅已屏蔽源:', blockedSources);
+      logger.info('TVBOX 订阅已屏蔽源:', blockedSources);
     }
 
     return apiSuccess(tvboxSubscription, {
@@ -217,7 +218,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('生成TVBOX订阅失败:', error);
+    logger.error('生成TVBOX订阅失败:', error);
     return apiSuccess({
         error: '生成订阅失败',
         details: (error as Error).message,

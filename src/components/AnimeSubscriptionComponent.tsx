@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { AdminConfig } from '@/lib/admin.types';
+
 import { AnimeSubscription } from '@/types/anime-subscription';
 
 interface AnimeSubscriptionComponentProps {

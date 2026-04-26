@@ -1,3 +1,4 @@
+import { logger } from './logger';
 export interface RetryOptions {
   maxRetries?: number;
   baseDelayMs?: number;
@@ -26,7 +27,7 @@ export async function withRetry<T>(
       const canRetry = shouldRetry(error);
 
       if (isLastAttempt || !canRetry) {
-        console.error(
+        logger.error(
           `[${logPrefix}] 最终失败 (尝试 ${attempt}/${maxRetries}):`,
           error instanceof Error ? error.message : error,
         );
@@ -34,10 +35,10 @@ export async function withRetry<T>(
       }
 
       const delay = baseDelayMs * attempt;
-      console.warn(
+      logger.warn(
         `[${logPrefix}] 尝试 ${attempt}/${maxRetries} 失败，${delay}ms 后重试...`,
       );
-      console.error(`[${logPrefix}] Error:`, error instanceof Error ? error.message : error);
+      logger.error(`[${logPrefix}] Error:`, error instanceof Error ? error.message : error);
 
       if (onRetry) {
         onRetry(attempt, error, delay);

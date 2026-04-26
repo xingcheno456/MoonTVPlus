@@ -1,29 +1,29 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { parseSearchParams, validateAuth } from '@/lib/api-validation';
+import { commonSchemas } from '@/lib/api-schemas';
 import {
   executeSavedSourceScript,
   normalizeScriptRecommendResults,
   normalizeScriptSources,
 } from '@/lib/source-script';
+import { z } from 'zod';
+
+const recommendQuerySchema = z.object({
+  source: commonSchemas.source,
+  page: commonSchemas.page,
+});
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return apiError('Unauthorized', 401);
-  }
+  const authResult = validateAuth(request);
+  if ('status' in authResult) return authResult;
 
-  const { searchParams } = new URL(request.url);
-  const sourceKey = searchParams.get('source');
-  const page = Number(searchParams.get('page') || '1');
-
-  if (!sourceKey) {
-    return apiError('缺少参数: source', 400);
-  }
+  const paramResult = parseSearchParams(request, recommendQuerySchema);
+  if ('error' in paramResult) return paramResult.error;
+  const { source: sourceKey, page } = paramResult.data;
 
   try {
     let sources = [{ id: 'default', name: '默认源' }];

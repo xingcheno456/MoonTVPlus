@@ -4,6 +4,8 @@ import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getStorage } from '@/lib/db';
 
+import { logger } from '../../../lib/logger';
+
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess({ notifications, unreadCount });
   } catch (error) {
-    console.error('获取通知失败:', error);
+    logger.error('获取通知失败:', error);
     return apiError((error as Error).message, 500);
   }
 }
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     return apiError('无效的操作', 400);
   } catch (error) {
-    console.error('操作通知失败:', error);
+    logger.error('操作通知失败:', error);
     return apiError((error as Error).message, 500);
   }
 }

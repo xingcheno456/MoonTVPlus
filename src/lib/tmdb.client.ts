@@ -1,7 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import nodeFetch from 'node-fetch';
+
+import { logger } from './logger';
 
 // TMDB API 默认 Base URL（不包含 /3/，由程序拼接）
 const DEFAULT_TMDB_BASE_URL = 'https://api.themoviedb.org';
@@ -145,7 +147,7 @@ export async function getTMDBUpcomingMovies(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error('TMDB API 请求失败:', response.status, response.statusText);
+      logger.error('TMDB API 请求失败:', response.status, response.statusText);
       return { code: response.status, list: [] };
     }
 
@@ -157,7 +159,7 @@ export async function getTMDBUpcomingMovies(
       list: data.results,
     };
   } catch (error) {
-    console.error('获取 TMDB 即将上映电影失败:', error);
+    logger.error('获取 TMDB 即将上映电影失败:', error);
     return { code: 500, list: [] };
   }
 }
@@ -190,7 +192,7 @@ export async function getTMDBUpcomingTVShows(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error(
+      logger.error(
         'TMDB TV API 请求失败:',
         response.status,
         response.statusText,
@@ -206,7 +208,7 @@ export async function getTMDBUpcomingTVShows(
       list: data.results,
     };
   } catch (error) {
-    console.error('获取 TMDB 正在播出电视剧失败:', error);
+    logger.error('获取 TMDB 正在播出电视剧失败:', error);
     return { code: 500, list: [] };
   }
 }
@@ -290,7 +292,7 @@ export async function getTMDBUpcomingContent(
       list: allContent,
     };
   } catch (error) {
-    console.error('获取 TMDB 即将上映内容失败:', error);
+    logger.error('获取 TMDB 即将上映内容失败:', error);
     return { code: 500, list: [] };
   }
 }
@@ -336,7 +338,7 @@ export async function getTMDBVideos(
 
     return trailer?.key || null;
   } catch (error) {
-    console.error('获取 TMDB 视频失败:', error);
+    logger.error('获取 TMDB 视频失败:', error);
     return null;
   }
 }
@@ -366,7 +368,7 @@ export async function getTMDBTrendingContent(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error(
+      logger.error(
         'TMDB Trending API 请求失败:',
         response.status,
         response.statusText,
@@ -397,7 +399,7 @@ export async function getTMDBTrendingContent(
       list: items,
     };
   } catch (error) {
-    console.error('获取 TMDB 热门内容失败:', error);
+    logger.error('获取 TMDB 热门内容失败:', error);
     return { code: 500, list: [] };
   }
 }
@@ -491,7 +493,7 @@ export async function searchTMDBMulti(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error(
+      logger.error(
         'TMDB Search API 请求失败:',
         response.status,
         response.statusText,
@@ -506,7 +508,7 @@ export async function searchTMDBMulti(
       results: data.results || [],
     };
   } catch (error) {
-    console.error('搜索 TMDB 内容失败:', error);
+    logger.error('搜索 TMDB 内容失败:', error);
     return { code: 500, results: [] };
   }
 }
@@ -537,7 +539,7 @@ export async function getTMDBMovieRecommendations(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error(
+      logger.error(
         'TMDB Movie Recommendations API 请求失败:',
         response.status,
         response.statusText,
@@ -552,7 +554,7 @@ export async function getTMDBMovieRecommendations(
       results: data.results || [],
     };
   } catch (error) {
-    console.error('获取 TMDB 电影推荐失败:', error);
+    logger.error('获取 TMDB 电影推荐失败:', error);
     return { code: 500, results: [] };
   }
 }
@@ -583,7 +585,7 @@ export async function getTMDBTVRecommendations(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error(
+      logger.error(
         'TMDB TV Recommendations API 请求失败:',
         response.status,
         response.statusText,
@@ -598,7 +600,7 @@ export async function getTMDBTVRecommendations(
       results: data.results || [],
     };
   } catch (error) {
-    console.error('获取 TMDB 电视剧推荐失败:', error);
+    logger.error('获取 TMDB 电视剧推荐失败:', error);
     return { code: 500, results: [] };
   }
 }
@@ -629,7 +631,7 @@ export async function getTMDBMovieDetails(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error('TMDB API 请求失败:', response.status, response.statusText);
+      logger.error('TMDB API 请求失败:', response.status, response.statusText);
       return { code: response.status, details: null };
     }
 
@@ -640,7 +642,7 @@ export async function getTMDBMovieDetails(
       details: data,
     };
   } catch (error) {
-    console.error('获取 TMDB 电影详情失败:', error);
+    logger.error('获取 TMDB 电影详情失败:', error);
     return { code: 500, details: null };
   }
 }
@@ -671,7 +673,7 @@ export async function getTMDBTVDetails(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error('TMDB API 请求失败:', response.status, response.statusText);
+      logger.error('TMDB API 请求失败:', response.status, response.statusText);
       return { code: response.status, details: null };
     }
 
@@ -682,7 +684,7 @@ export async function getTMDBTVDetails(
       details: data,
     };
   } catch (error) {
-    console.error('获取 TMDB 电视剧详情失败:', error);
+    logger.error('获取 TMDB 电视剧详情失败:', error);
     return { code: 500, details: null };
   }
 }
@@ -715,7 +717,7 @@ export async function getTMDBCredits(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error(
+      logger.error(
         'TMDB Credits API 请求失败:',
         response.status,
         response.statusText,
@@ -730,7 +732,7 @@ export async function getTMDBCredits(
       credits: data,
     };
   } catch (error) {
-    console.error('获取 TMDB 演职人员信息失败:', error);
+    logger.error('获取 TMDB 演职人员信息失败:', error);
     return { code: 500, credits: null };
   }
 }
@@ -763,7 +765,7 @@ export async function getTMDBImages(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error(
+      logger.error(
         'TMDB Images API 请求失败:',
         response.status,
         response.statusText,
@@ -778,7 +780,7 @@ export async function getTMDBImages(
       images: data,
     };
   } catch (error) {
-    console.error('获取 TMDB 图片信息失败:', error);
+    logger.error('获取 TMDB 图片信息失败:', error);
     return { code: 500, images: null };
   }
 }

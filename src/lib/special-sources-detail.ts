@@ -3,6 +3,8 @@
 import { getConfig } from '@/lib/config';
 import { SearchResult } from '@/lib/types';
 
+import { logger } from './logger';
+
 /**
  * 获取 Emby 源的视频详情
  */
@@ -405,7 +407,7 @@ export async function getSpecialSourceDetail(
     // 不是特殊源，返回 null
     return null;
   } catch (error) {
-    console.error(`获取特殊源详情失败 (${source}+${id}):`, error);
+    logger.error(`获取特殊源详情失败 (${source}+${id}):`, error);
     throw error;
   }
 }

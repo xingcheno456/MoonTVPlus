@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 
 import {
@@ -32,6 +32,8 @@ import PageLayout from '@/components/PageLayout';
 import ScrollableRow from '@/components/ScrollableRow';
 import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
+
+import { logger } from '../lib/logger';
 
 // 首页模块配置接口
 interface HomeModule {
@@ -104,7 +106,7 @@ function HomeClient() {
       try {
         setHomeModules(JSON.parse(savedHomeModules));
       } catch (error) {
-        console.error('解析首页模块配置失败:', error);
+        logger.error('解析首页模块配置失败:', error);
       }
     }
 
@@ -315,7 +317,7 @@ function HomeClient() {
               }
             }
           } catch (error) {
-            console.error('获取热播短剧数据失败:', error);
+            logger.error('获取热播短剧数据失败:', error);
           }
 
           try {
@@ -341,12 +343,12 @@ function HomeClient() {
               }
             }
           } catch (error) {
-            console.error('获取TMDB即将上映数据失败:', error);
+            logger.error('获取TMDB即将上映数据失败:', error);
           }
 
           setLoading(false);
         } catch (error) {
-          console.error('获取推荐数据失败:', error);
+          logger.error('获取推荐数据失败:', error);
           setLoading(false);
         }
       })();

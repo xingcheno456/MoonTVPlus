@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { checkSubscription } from '@/lib/anime-subscription';
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+
+import { logger } from '../../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -42,7 +43,7 @@ export async function POST(
 
     return apiSuccess({ ...result, });
   } catch (error: any) {
-    console.error('检查追番订阅失败:', error);
+    logger.error('检查追番订阅失败:', error);
     return apiError('检查失败', 500);
   }
 }

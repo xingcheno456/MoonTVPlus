@@ -13,6 +13,8 @@ import {
 
 import VideoCard from '@/components/VideoCard';
 
+import { logger } from '../lib/logger';
+
 type PlayRecordItem = PlayRecord & {
   key: string;
 };
@@ -52,7 +54,7 @@ export default function PlayRecordsPanel({
         .sort((a, b) => b.save_time - a.save_time);
       setPlayRecords(sorted);
     } catch (error) {
-      console.error('加载播放记录失败:', error);
+      logger.error('加载播放记录失败:', error);
       setPlayRecords([]);
     } finally {
       setLoading(false);
@@ -65,7 +67,7 @@ export default function PlayRecordsPanel({
       setPlayRecords([]);
       setShowConfirmDialog(false);
     } catch (error) {
-      console.error('清空播放记录失败:', error);
+      logger.error('清空播放记录失败:', error);
     }
   };
 

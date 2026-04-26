@@ -1,15 +1,15 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import {
   getUserDevices,
   revokeAllRefreshTokens,
   revokeRefreshToken,
 } from '@/lib/refresh-token';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess({ devices: devicesWithCurrent });
   } catch (error) {
-    console.error('Failed to get devices:', error);
+    logger.error('Failed to get devices:', error);
     return apiError('Server error', 500);
   }
 }
@@ -56,7 +56,7 @@ export async function DELETE(request: NextRequest) {
 
     return apiSuccess({ ok: true });
   } catch (error) {
-    console.error('Failed to revoke device:', error);
+    logger.error('Failed to revoke device:', error);
     return apiError('Server error', 500);
   }
 }
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Failed to revoke all devices:', error);
+    logger.error('Failed to revoke all devices:', error);
     return apiError('Server error', 500);
   }
 }

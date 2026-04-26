@@ -1,10 +1,12 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';
 import { db, STORAGE_TYPE } from '@/lib/db';
 import { lockManager } from '@/lib/lock';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -30,7 +32,7 @@ async function verifyTurnstileToken(
     const data = await response.json();
     return data.success === true;
   } catch (error) {
-    console.error('Turnstile验证失败:', error);
+    logger.error('Turnstile验证失败:', error);
     return false;
   }
 }
@@ -104,7 +106,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (!siteConfig.TurnstileSecretKey) {
-          console.error('Turnstile Secret Key未配置');
+          logger.error('Turnstile Secret Key未配置');
           return apiError('服务器配置错误', 500);
         }
 
@@ -127,7 +129,7 @@ export async function POST(req: NextRequest) {
 
         return apiSuccess({ message: '注册成功' });
       } catch (err: any) {
-        console.error('创建用户失败', err);
+        logger.error('创建用户失败', err);
         if (err.message === '用户已存在') {
           return apiError('用户名已存在', 409);
         }
@@ -139,7 +141,7 @@ export async function POST(req: NextRequest) {
       }
     }
   } catch (error) {
-    console.error('注册接口异常', error);
+    logger.error('注册接口异常', error);
     return apiError('服务器错误', 500);
   }
 }

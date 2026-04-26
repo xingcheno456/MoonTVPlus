@@ -1,7 +1,10 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { getComments } from '@/services/danmaku.service';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -17,7 +20,7 @@ export async function GET(request: NextRequest) {
     );
     return apiSuccess(result);
   } catch (error) {
-    console.error('获取弹幕失败:', error);
+    logger.error('获取弹幕失败:', error);
     return apiError(
       error instanceof Error ? error.message : '获取弹幕失败',
       500,

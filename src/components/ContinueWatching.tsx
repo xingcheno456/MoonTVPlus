@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable no-console */
 
 import { AlertTriangle, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -8,14 +7,16 @@ import { createPortal } from 'react-dom';
 import type { PlayRecord } from '@/lib/db.client';
 import {
   clearAllPlayRecords,
-  getCachedPlayRecordsSnapshot,
   getAllPlayRecords,
+  getCachedPlayRecordsSnapshot,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 
 import PlayRecordsPanel from '@/components/PlayRecordsPanel';
 import VideoCard from '@/components/VideoCard';
 import VirtualScrollableRow from '@/components/VirtualScrollableRow';
+
+import { logger } from '../lib/logger';
 
 interface ContinueWatchingProps {
   className?: string;
@@ -76,7 +77,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
         const allRecords = await getAllPlayRecords();
         updatePlayRecords(allRecords);
       } catch (error) {
-        console.error('获取播放记录失败:', error);
+        logger.error('获取播放记录失败:', error);
         setPlayRecords([]);
       } finally {
         setLoading(false);

@@ -1,12 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getTVSeasons } from '@/lib/tmdb.search';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
       return apiError('获取季度列表失败', result.code, String(result.code));
     }
   } catch (error) {
-    console.error('获取季度列表失败:', error);
+    logger.error('获取季度列表失败:', error);
     return apiError('获取失败: ' + (error as Error).message, 500);
   }
 }

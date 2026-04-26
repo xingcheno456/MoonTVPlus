@@ -1,8 +1,8 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
-import { apiError, apiSuccess } from '@/lib/api-response';
+import { apiSuccess } from '@/lib/api-response';
+
 import { handleServiceError, validateAuthenticatedUser } from '@/services/auth.service';
 import { getSearchResources } from '@/services/search.service';
 

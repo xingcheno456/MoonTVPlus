@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import parseTorrentName from 'parse-torrent-name';
 
@@ -21,6 +21,8 @@ import {
 } from '@/lib/scan-task';
 import { parseSeasonFromTitle } from '@/lib/season-parser';
 import { getTVSeasonDetails, searchTMDB } from '@/lib/tmdb.search';
+
+import { logger } from './logger';
 
 /**
  * 获取根目录列表（兼容新旧配置）
@@ -64,7 +66,7 @@ async function migrateToMultiRoot(
 ): Promise<void> {
   const oldRootPath = openListConfig.RootPath!;
 
-  console.log('[OpenList Migration] 检测到旧版配置，开始迁移...');
+  logger.info('[OpenList Migration] 检测到旧版配置，开始迁移...');
 
   // 1. 读取现有 metainfo
   const metainfoContent = await db.getGlobalValue('video.metainfo');
@@ -77,12 +79,12 @@ async function migrateToMultiRoot(
       const newFolderName = `${oldRootPath}${oldRootPath.endsWith('/') ? '' : '/'}${oldFolderName}`;
       info.folderName = newFolderName;
 
-      console.log(`[Migration] ${oldFolderName} -> ${newFolderName}`);
+      logger.info(`[Migration] ${oldFolderName} -> ${newFolderName}`);
     }
 
     // 3. 保存迁移后的 metainfo
     await db.setGlobalValue('video.metainfo', JSON.stringify(metaInfo));
-    console.log('[OpenList Migration] MetaInfo 迁移完成');
+    logger.info('[OpenList Migration] MetaInfo 迁移完成');
   }
 
   // 4. 更新配置：RootPath -> RootPaths
@@ -91,7 +93,7 @@ async function migrateToMultiRoot(
   delete config.OpenListConfig!.RootPath;
   await db.saveAdminConfig(config);
 
-  console.log('[OpenList Migration] 配置迁移完成');
+  logger.info('[OpenList Migration] 配置迁移完成');
 }
 
 /**
@@ -147,7 +149,7 @@ export async function startOpenListRefresh(
     clearMetaInfo,
     openListConfig.ScanMode || 'hybrid',
   ).catch((error) => {
-    console.error('[OpenList Refresh] 后台扫描失败:', error);
+    logger.error('[OpenList Refresh] 后台扫描失败:', error);
     failScanTask(taskId, (error as Error).message);
   });
 
@@ -172,7 +174,7 @@ async function performMultiRootScan(
   for (let i = 0; i < rootPaths.length; i++) {
     const rootPath = rootPaths[i];
 
-    console.log(
+    logger.info(
       `[OpenList Refresh] 扫描根目录 (${i + 1}/${rootPaths.length}): ${rootPath}`,
     );
     try {
@@ -189,7 +191,7 @@ async function performMultiRootScan(
         scanMode,
       );
     } catch (error) {
-      console.error(`[OpenList Refresh] 根目录 ${rootPath} 扫描失败:`, error);
+      logger.error(`[OpenList Refresh] 根目录 ${rootPath} 扫描失败:`, error);
       // 继续扫描其他根目录
     }
   }
@@ -234,7 +236,7 @@ async function performScan(
           };
         }
       } catch (error) {
-        console.error('[OpenList Refresh] 读取现有 metainfo 失败:', error);
+        logger.error('[OpenList Refresh] 读取现有 metainfo 失败:', error);
         metaInfo = {
           folders: {},
           last_refresh: Date.now(),
@@ -256,7 +258,7 @@ async function performScan(
         pageSize,
         true,
       );
-      console.log(listResponse);
+      logger.info(listResponse);
       if (listResponse.code !== 200) {
         throw new Error('OpenList 列表获取失败5');
       }
@@ -319,8 +321,8 @@ async function performScan(
           seasonNumber = torrentInfo.season || null;
           year = torrentInfo.year || null;
 
-          console.log(`[OpenList Refresh] 种子库模式 - 文件夹: ${folder.name}`);
-          console.log(
+          logger.info(`[OpenList Refresh] 种子库模式 - 文件夹: ${folder.name}`);
+          logger.info(
             `[OpenList Refresh] 解析结果 - 标题: ${searchQuery}, 季度: ${seasonNumber}, 年份: ${year}`,
           );
 
@@ -345,10 +347,10 @@ async function performScan(
           seasonNumber = seasonInfo.seasonNumber;
           year = seasonInfo.year;
 
-          console.log(
+          logger.info(
             `[OpenList Refresh] 名字匹配模式 - 文件夹: ${folder.name}`,
           );
-          console.log(
+          logger.info(
             `[OpenList Refresh] 清理后标题: ${searchQuery}, 季度: ${seasonNumber}, 年份: ${year}`,
           );
 
@@ -405,13 +407,13 @@ async function performScan(
                   folderInfo.release_date = seasonDetails.season.air_date;
                 }
               } else {
-                console.warn(
+                logger.warn(
                   `[OpenList Refresh] 获取季度 ${seasonNumber} 详情失败`,
                 );
                 folderInfo.season_number = seasonNumber;
               }
             } catch (error) {
-              console.error(`[OpenList Refresh] 获取季度详情异常:`, error);
+              logger.error(`[OpenList Refresh] 获取季度详情异常:`, error);
               folderInfo.season_number = seasonNumber;
             }
           }
@@ -436,7 +438,7 @@ async function performScan(
 
         await new Promise((resolve) => setTimeout(resolve, 300));
       } catch (error) {
-        console.error(
+        logger.error(
           `[OpenList Refresh] 处理文件夹失败: ${folder.name}`,
           error,
         );
@@ -476,7 +478,7 @@ async function performScan(
       errors: errorCount,
     });
   } catch (error) {
-    console.error('[OpenList Refresh] 扫描失败:', error);
+    logger.error('[OpenList Refresh] 扫描失败:', error);
     failScanTask(taskId, (error as Error).message);
     throw error;
   }

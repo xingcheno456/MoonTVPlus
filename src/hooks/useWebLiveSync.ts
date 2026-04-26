@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
+import { logger } from '../lib/logger';
+
 import type { LiveState } from '@/types/watch-room';
 
 interface UseWebLiveSyncOptions {
@@ -55,7 +57,7 @@ export function useWebLiveSync({
       channelUrl: `${currentSourcePlatform}:${currentSourceRoomId}`,
     };
 
-    console.log('[WebLiveSync] Broadcasting source change:', state);
+    logger.info('[WebLiveSync] Broadcasting source change:', state);
     watchRoom.changeLiveChannel(state);
   }, [
     isOwner,
@@ -74,7 +76,7 @@ export function useWebLiveSync({
     const handleLiveChange = (state: LiveState) => {
       if (syncingRef.current) return;
 
-      console.log('[WebLiveSync] Received source change:', state);
+      logger.info('[WebLiveSync] Received source change:', state);
       syncingRef.current = true;
 
       try {

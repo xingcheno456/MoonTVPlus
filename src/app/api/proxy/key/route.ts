@@ -1,8 +1,9 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
+import { apiError } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
 
   try {
     const decodedUrl = decodeURIComponent(url);
-    console.log(decodedUrl);
+    logger.info(decodedUrl);
     const response = await fetch(decodedUrl, {
       headers: {
         'User-Agent': ua,

@@ -1,13 +1,13 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { refreshLiveChannels } from '@/lib/live';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess({ message: '直播源刷新成功', });
   } catch (error) {
-    console.error('直播源刷新失败:', error);
+    logger.error('直播源刷新失败:', error);
     return apiError(error instanceof Error ? error.message : '刷新失败', 500);
   }
 }

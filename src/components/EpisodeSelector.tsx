@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @next/next/no-img-element */
+ 
 
 import { Link as LinkIcon, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -24,6 +24,8 @@ import { getVideoResolutionFromM3u8 } from '@/lib/utils';
 import DanmakuPanel from '@/components/DanmakuPanel';
 import EpisodeFilterSettings from '@/components/EpisodeFilterSettings';
 import ProxyImage from '@/components/ProxyImage';
+
+import { logger } from '../lib/logger';
 
 // 定义视频信息类型
 interface VideoInfo {
@@ -156,7 +158,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
           watched.add(record.index);
         }
       } catch (error) {
-        console.warn(
+        logger.warn(
           '[EpisodeSelector] Failed to read cached play records:',
           error,
         );
@@ -176,7 +178,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
           }
         }
       } catch (error) {
-        console.warn(
+        logger.warn(
           '[EpisodeSelector] Failed to read local episode progress:',
           error,
         );

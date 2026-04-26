@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
+import { apiSuccess } from '@/lib/api-response';
 import { isMusicSource, lxGetJson, unwrapLxArray } from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
+
+import { logger } from '../../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
       } catch (error) {
         const message = (error as Error).message;
         errors.push(`${candidate}: ${message}`);
-        console.error(`[music-v2] 获取榜单源失败: ${candidate}`, error);
+        logger.error(`[music-v2] 获取榜单源失败: ${candidate}`, error);
       }
     }
 
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
         errors,
       }, });
   } catch (error) {
-    console.error('[music-v2] 获取榜单失败:', error);
+    logger.error('[music-v2] 获取榜单失败:', error);
     return internalError('获取榜单失败', (error as Error).message);
   }
 }

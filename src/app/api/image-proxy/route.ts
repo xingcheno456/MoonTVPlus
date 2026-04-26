@@ -1,4 +1,4 @@
-import { apiError, apiSuccess } from '@/lib/api-response';
+import { apiError } from '@/lib/api-response';
 
 export const runtime = 'nodejs';
 
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        Accept: 'image/jpeg,image/png,image/gif,*/*;q=0.8',
+        Accept: 'image/jpeg,image/png,image/gif */*;q=0.8',
         Referer: 'https://movie.douban.com/',
       },
     });

@@ -1,13 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+ 
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { orchestrateDataSources, VideoContext } from '@/lib/ai-orchestrator';
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -159,7 +160,7 @@ function transformToSSE(
               } catch (e) {
                 // 只在非空数据解析失败时打印错误
                 if (data.length > 0) {
-                  console.error(
+                  logger.error(
                     'Parse stream chunk error:',
                     e,
                     'Data:',
@@ -203,13 +204,13 @@ function transformToSSE(
                   }
                 }
               } catch (e) {
-                console.error('Parse final buffer error:', e);
+                logger.error('Parse final buffer error:', e);
               }
             }
           }
         }
       } catch (error) {
-        console.error('Stream error:', error);
+        logger.error('Stream error:', error);
         controller.error(error);
       } finally {
         controller.close();
@@ -259,7 +260,7 @@ export async function POST(request: NextRequest) {
       return apiError('消息内容不能为空', 400);
     }
 
-    console.log('📨 收到AI聊天请求:', {
+    logger.info('📨 收到AI聊天请求:', {
       message: message.slice(0, 50),
       context,
       historyLength: history.length,
@@ -284,7 +285,7 @@ export async function POST(request: NextRequest) {
       decisionModel: aiConfig.DecisionCustomModel,
     });
 
-    console.log(
+    logger.info(
       '🎯 数据协调完成, systemPrompt长度:',
       orchestrationResult.systemPrompt.length,
     );
@@ -346,7 +347,7 @@ export async function POST(request: NextRequest) {
       return apiSuccess({ content });
     }
   } catch (error) {
-    console.error('❌ AI聊天API错误:', error);
+    logger.error('❌ AI聊天API错误:', error);
     return apiError(
       'AI聊天请求失败: ' + (error as Error).message,
       500,

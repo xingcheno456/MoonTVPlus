@@ -1,7 +1,8 @@
-/* eslint-disable no-console */
 
 import { db } from '@/lib/db';
 import { DanmakuFilterConfig, Favorite, PlayRecord, SkipConfig } from '@/lib/types';
+
+import { logger } from '../lib/logger';
 
 export function parseCompositeKey(key: string): { source: string; id: string } {
   const [source, id] = key.split('+');
@@ -14,7 +15,7 @@ export function parseCompositeKey(key: string): { source: string; id: string } {
 export async function ensurePlayRecordsMigrated(username: string): Promise<void> {
   const userInfoV2 = await db.getUserInfoV2(username);
   if (!userInfoV2?.playrecord_migrated) {
-    console.log(`用户 ${username} 播放记录未迁移，开始执行迁移...`);
+    logger.info(`用户 ${username} 播放记录未迁移，开始执行迁移...`);
     await db.migratePlayRecords(username);
   }
 }
@@ -22,7 +23,7 @@ export async function ensurePlayRecordsMigrated(username: string): Promise<void>
 export async function ensureFavoritesMigrated(username: string): Promise<void> {
   const userInfoV2 = await db.getUserInfoV2(username);
   if (!userInfoV2?.favorite_migrated) {
-    console.log(`用户 ${username} 收藏未迁移，开始执行迁移...`);
+    logger.info(`用户 ${username} 收藏未迁移，开始执行迁移...`);
     await db.migrateFavorites(username);
   }
 }
@@ -58,7 +59,7 @@ export async function savePlayRecord(
   await db.savePlayRecord(username, source, id, finalRecord);
 
   (db as unknown as { storage: { cleanupOldPlayRecords: (username: string) => Promise<void> } }).storage.cleanupOldPlayRecords(username).catch((err: Error) => {
-    console.error('异步清理播放记录失败:', err);
+    logger.error('异步清理播放记录失败:', err);
   });
 }
 

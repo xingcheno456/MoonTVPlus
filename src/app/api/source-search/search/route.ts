@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { API_CONFIG, getAvailableApiSites } from '@/lib/config';
 import { SearchResult } from '@/lib/types';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -115,7 +116,7 @@ export async function GET(request: NextRequest) {
       pageCount: searchData.pagecount || 0,
     });
   } catch (error) {
-    console.error('Failed to search videos:', error);
+    logger.error('Failed to search videos:', error);
     return apiError('搜索失败', 500);
   }
 }

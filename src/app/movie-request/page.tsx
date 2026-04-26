@@ -10,6 +10,8 @@ import { processImageUrl } from '@/lib/utils';
 
 import PageLayout from '@/components/PageLayout';
 
+import { logger } from '../../lib/logger';
+
 interface TMDBResult {
   id: number;
   title?: string;
@@ -81,7 +83,7 @@ export default function MovieRequestPage() {
         setSearchResults([]);
       }
     } catch (err) {
-      console.error('搜索失败:', err);
+      logger.error('搜索失败:', err);
       setAlertModal({
         isOpen: true,
         type: 'error',
@@ -118,7 +120,7 @@ export default function MovieRequestPage() {
           }
         }
       } catch (err) {
-        console.error('加载季度失败:', err);
+        logger.error('加载季度失败:', err);
       } finally {
         setLoadingSeasons(false);
       }
@@ -181,7 +183,7 @@ export default function MovieRequestPage() {
         });
       }
     } catch (err) {
-      console.error('求片失败:', err);
+      logger.error('求片失败:', err);
       setAlertModal({
         isOpen: true,
         type: 'error',
@@ -211,7 +213,7 @@ export default function MovieRequestPage() {
           setMyRequests(data.requests);
         }
       } catch (err) {
-        console.error('加载求片列表失败:', err);
+        logger.error('加载求片列表失败:', err);
       } finally {
         setLoadingMyRequests(false);
       }
@@ -229,7 +231,7 @@ export default function MovieRequestPage() {
         setMyRequests(data.requests);
       }
     } catch (err) {
-      console.error('刷新求片列表失败:', err);
+      logger.error('刷新求片列表失败:', err);
     }
   };
 

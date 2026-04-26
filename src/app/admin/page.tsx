@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion,react-hooks/exhaustive-deps,@typescript-eslint/no-empty-function */
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 
 
 import {
@@ -64,6 +64,8 @@ import AnimeSubscriptionComponent from '@/components/AnimeSubscriptionComponent'
 import CorrectDialog from '@/components/CorrectDialog';
 import DataMigration from '@/components/DataMigration';
 import PageLayout from '@/components/PageLayout';
+
+import { logger } from '../../lib/logger';
 
 // 统一按钮样式系统
 const buttonStyles = {
@@ -281,7 +283,7 @@ const showError = (message: string, showAlert?: (config: any) => void) => {
   if (showAlert) {
     showAlert({ type: 'error', title: '错误', message, showConfirm: true });
   } else {
-    console.error(message);
+    logger.error(message);
   }
 };
 
@@ -289,7 +291,7 @@ const showSuccess = (message: string, showAlert?: (config: any) => void) => {
   if (showAlert) {
     showAlert({ type: 'success', title: '成功', message, timer: 2000 });
   } else {
-    console.log(message);
+    logger.info(message);
   }
 };
 
@@ -1079,7 +1081,7 @@ const UserConfig = ({
                             });
                             await refreshConfig();
                           } catch (error: any) {
-                            console.error('迁移用户数据失败:', error);
+                            logger.error('迁移用户数据失败:', error);
                             showAlert({
                               type: 'error',
                               title: '迁移失败',
@@ -2916,7 +2918,7 @@ const OpenListConfigComponent = ({
         setVideos(data.list || []);
       }
     } catch (error) {
-      console.error('获取视频列表失败:', error);
+      logger.error('获取视频列表失败:', error);
     } finally {
       setRefreshing(false);
     }
@@ -3548,8 +3550,8 @@ const OpenListConfigComponent = ({
                             )}
                             <button
                               onClick={() => {
-                                console.log('Video object:', video);
-                                console.log(
+                                logger.info('Video object:', video);
+                                logger.info(
                                   'Video poster field:',
                                   video.poster,
                                 );
@@ -4999,7 +5001,7 @@ const VideoSourceConfig = ({
     withLoading(`toggleSource_${key}`, () =>
       callSourceApi({ action, key }),
     ).catch(() => {
-      console.error('操作失败', action, key);
+      logger.error('操作失败', action, key);
     });
   };
 
@@ -5007,7 +5009,7 @@ const VideoSourceConfig = ({
     withLoading(`deleteSource_${key}`, () =>
       callSourceApi({ action: 'delete', key }),
     ).catch(() => {
-      console.error('操作失败', 'delete', key);
+      logger.error('操作失败', 'delete', key);
     });
   };
 
@@ -5052,7 +5054,7 @@ const VideoSourceConfig = ({
         throw error;
       }
     }).catch(() => {
-      console.error('操作失败', 'toggle_proxy_mode', key);
+      logger.error('操作失败', 'toggle_proxy_mode', key);
     });
   };
 
@@ -5097,7 +5099,7 @@ const VideoSourceConfig = ({
         throw error;
       }
     }).catch(() => {
-      console.error('操作失败', 'update_weight', key, weight);
+      logger.error('操作失败', 'update_weight', key, weight);
     });
   };
 
@@ -5121,7 +5123,7 @@ const VideoSourceConfig = ({
       });
       setShowAddForm(false);
     }).catch(() => {
-      console.error('操作失败', 'add', newSource);
+      logger.error('操作失败', 'add', newSource);
     });
   };
 
@@ -5143,7 +5145,7 @@ const VideoSourceConfig = ({
         setOrderChanged(false);
       })
       .catch(() => {
-        console.error('操作失败', 'sort', order);
+        logger.error('操作失败', 'sort', order);
       });
   };
 
@@ -5187,7 +5189,7 @@ const VideoSourceConfig = ({
 
             switch (data.type) {
               case 'start':
-                console.log(`开始检测 ${data.totalSources} 个视频源`);
+                logger.info(`开始检测 ${data.totalSources} 个视频源`);
                 break;
 
               case 'source_result':
@@ -5237,7 +5239,7 @@ const VideoSourceConfig = ({
                 break;
 
               case 'complete':
-                console.log(
+                logger.info(
                   `检测完成，共检测 ${data.completedSources} 个视频源`,
                 );
                 eventSource.close();
@@ -5245,12 +5247,12 @@ const VideoSourceConfig = ({
                 break;
             }
           } catch (error) {
-            console.error('解析EventSource数据失败:', error);
+            logger.error('解析EventSource数据失败:', error);
           }
         };
 
         eventSource.onerror = (error) => {
-          console.error('EventSource错误:', error);
+          logger.error('EventSource错误:', error);
           eventSource.close();
           setIsValidating(false);
           showAlert({
@@ -6128,7 +6130,7 @@ const CategoryConfig = ({
     withLoading(`toggleCategory_${query}_${type}`, () =>
       callCategoryApi({ action, query, type }),
     ).catch(() => {
-      console.error('操作失败', action, query, type);
+      logger.error('操作失败', action, query, type);
     });
   };
 
@@ -6136,7 +6138,7 @@ const CategoryConfig = ({
     withLoading(`deleteCategory_${query}_${type}`, () =>
       callCategoryApi({ action: 'delete', query, type }),
     ).catch(() => {
-      console.error('操作失败', 'delete', query, type);
+      logger.error('操作失败', 'delete', query, type);
     });
   };
 
@@ -6158,7 +6160,7 @@ const CategoryConfig = ({
       });
       setShowAddForm(false);
     }).catch(() => {
-      console.error('操作失败', 'add', newCategory);
+      logger.error('操作失败', 'add', newCategory);
     });
   };
 
@@ -6184,7 +6186,7 @@ const CategoryConfig = ({
         setOrderChanged(false);
       })
       .catch(() => {
-        console.error('操作失败', 'sort', order);
+        logger.error('操作失败', 'sort', order);
       });
   };
 
@@ -10352,7 +10354,7 @@ const CustomAdFilterConfig = ({
       // 如果数据库没有保存的代码，使用默认代码
       setAdFilterCode(defaultAdFilterCode);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [config]);
 
   // 移除 TypeScript 类型注解，转换为纯 JavaScript
@@ -10392,7 +10394,7 @@ const CustomAdFilterConfig = ({
             jsCode + '\nreturn filterAdsFromM3U8(type, m3u8Content);',
           );
         } catch (parseError) {
-          console.error('代码验证失败:', parseError);
+          logger.error('代码验证失败:', parseError);
           showError(
             '代码语法错误：' +
               (parseError instanceof Error
@@ -11555,7 +11557,7 @@ const MovieRequestsComponent = ({
         allRequests.filter((r: any) => r.status === 'fulfilled').length,
       );
     } catch (error) {
-      console.error('加载求片数量失败:', error);
+      logger.error('加载求片数量失败:', error);
     }
   };
 
@@ -11568,7 +11570,7 @@ const MovieRequestsComponent = ({
       const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
       setRequests(data.requests || []);
     } catch (error) {
-      console.error('加载求片列表失败:', error);
+      logger.error('加载求片列表失败:', error);
     } finally {
       setLoading(false);
     }
@@ -12717,7 +12719,7 @@ const LiveSourceConfig = ({
     withLoading(`toggleLiveSource_${key}`, () =>
       callLiveSourceApi({ action, key }),
     ).catch(() => {
-      console.error('操作失败', action, key);
+      logger.error('操作失败', action, key);
     });
   };
 
@@ -12763,7 +12765,7 @@ const LiveSourceConfig = ({
         throw error;
       }
     }).catch(() => {
-      console.error('操作失败', 'set_proxy_mode', key);
+      logger.error('操作失败', 'set_proxy_mode', key);
     });
   };
 
@@ -12771,7 +12773,7 @@ const LiveSourceConfig = ({
     withLoading(`deleteLiveSource_${key}`, () =>
       callLiveSourceApi({ action: 'delete', key }),
     ).catch(() => {
-      console.error('操作失败', 'delete', key);
+      logger.error('操作失败', 'delete', key);
     });
   };
 
@@ -12831,7 +12833,7 @@ const LiveSourceConfig = ({
       });
       setShowAddForm(false);
     }).catch(() => {
-      console.error('操作失败', 'add', newLiveSource);
+      logger.error('操作失败', 'add', newLiveSource);
     });
   };
 
@@ -12849,7 +12851,7 @@ const LiveSourceConfig = ({
       });
       setEditingLiveSource(null);
     }).catch(() => {
-      console.error('操作失败', 'edit', editingLiveSource);
+      logger.error('操作失败', 'edit', editingLiveSource);
     });
   };
 
@@ -12875,7 +12877,7 @@ const LiveSourceConfig = ({
         setOrderChanged(false);
       })
       .catch(() => {
-        console.error('操作失败', 'sort', order);
+        logger.error('操作失败', 'sort', order);
       });
   };
 
@@ -13909,7 +13911,7 @@ function AdminPageClient() {
         setUserPage(page);
       }
     } catch (err) {
-      console.error('获取新版本用户列表失败:', err);
+      logger.error('获取新版本用户列表失败:', err);
     } finally {
       setUserListLoading(false);
     }

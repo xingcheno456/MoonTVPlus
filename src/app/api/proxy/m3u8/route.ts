@@ -1,9 +1,10 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
+import { apiError } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';
 import { getBaseUrl, resolveUrl } from '@/lib/live';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -111,7 +112,7 @@ export async function GET(request: Request) {
         response.body?.cancel();
       } catch (error) {
         // 忽略关闭时的错误
-        console.warn('Failed to close response body:', error);
+        logger.warn('Failed to close response body:', error);
       }
     }
   }

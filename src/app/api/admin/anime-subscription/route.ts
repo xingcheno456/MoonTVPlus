@@ -2,10 +2,12 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
+
 import { AnimeSubscription } from '@/types/anime-subscription';
 
 export const runtime = 'nodejs';
@@ -30,7 +32,7 @@ export async function GET(req: NextRequest) {
 
     return apiSuccess(animeConfig);
   } catch (error: any) {
-    console.error('获取追番订阅配置失败:', error);
+    logger.error('获取追番订阅配置失败:', error);
     return apiError(error.message || '获取配置失败', 500);
   }
 }
@@ -93,7 +95,7 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess(newSubscription);
   } catch (error: any) {
-    console.error('创建追番订阅失败:', error);
+    logger.error('创建追番订阅失败:', error);
     return apiError(error.message || '创建订阅失败', 500);
   }
 }

@@ -1,4 +1,4 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -12,6 +12,8 @@ import {
   storeRefreshToken,
   TOKEN_CONFIG,
 } from '@/lib/refresh-token';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -68,7 +70,7 @@ async function generateAuthCookie(
           lastUsed: now,
         });
       } catch (error) {
-        console.error('Failed to store refresh token:', error);
+        logger.error('Failed to store refresh token:', error);
       }
     }
 
@@ -108,7 +110,7 @@ async function verifyTurnstileToken(
     const data = await response.json();
     return data.success === true;
   } catch (error) {
-    console.error('Turnstile验证失败:', error);
+    logger.error('Turnstile验证失败:', error);
     return false;
   }
 }
@@ -221,7 +223,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (!siteConfig.TurnstileSecretKey) {
-        console.error('Turnstile Secret Key未配置');
+        logger.error('Turnstile Secret Key未配置');
         return apiError('服务器配置错误', 500);
       }
 
@@ -310,11 +312,11 @@ export async function POST(req: NextRequest) {
       httpOnly: false, // 允许客户端访问
     });
 
-    console.log(`Cookie已设置`);
+    logger.info(`Cookie已设置`);
 
     return response;
   } catch (error) {
-    console.error('登录接口异常', error);
+    logger.error('登录接口异常', error);
     return apiError('服务器错误', 500);
   }
 }

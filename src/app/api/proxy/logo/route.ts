@@ -1,18 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
+import { apiError } from '@/lib/api-response';
+import { commonSchemas } from '@/lib/api-schemas';
+import { parseSearchParams } from '@/lib/api-validation';
 import { getConfig } from '@/lib/config';
+import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
+import { z } from 'zod';
+
+const logoQuerySchema = z.object({
+  url: commonSchemas.url,
+  'moontv-source': z.string().optional(),
+});
 
 export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const imageUrl = searchParams.get('url');
-  const source = searchParams.get('moontv-source');
+  const paramResult = parseSearchParams(request as any, logoQuerySchema);
+  if ('error' in paramResult) return paramResult.error;
+  const { url: imageUrl, 'moontv-source': source } = paramResult.data;
 
-  if (!imageUrl) {
-    return apiError('Missing image URL', 400);
+  const decodedUrl = decodeURIComponent(imageUrl);
+
+  const isSafeUrl = await validateProxyUrlServerSide(decodedUrl);
+  if (!isSafeUrl) {
+    return apiError('Proxy request to local or invalid network is forbidden', 403);
   }
 
   const config = await getConfig();
@@ -20,7 +31,6 @@ export async function GET(request: Request) {
   const ua = liveSource?.ua || 'AptvPlayer/1.4.10';
 
   try {
-    const decodedUrl = decodeURIComponent(imageUrl);
     const imageResponse = await fetch(decodedUrl, {
       cache: 'no-cache',
       redirect: 'follow',

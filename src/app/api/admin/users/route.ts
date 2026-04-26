@@ -1,10 +1,11 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+ 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db, STORAGE_TYPE } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
         },
       });
   } catch (error) {
-    console.error('获取用户列表失败:', error);
+    logger.error('获取用户列表失败:', error);
     return apiSuccess({
         error: '获取用户列表失败',
         details: (error as Error).message,

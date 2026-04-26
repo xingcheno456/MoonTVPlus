@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 import {
   AlertCircle,
@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+
+import { logger } from '../lib/logger';
 
 interface DataMigrationProps {
   onRefreshConfig?: () => Promise<void>;
@@ -217,7 +219,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
           const progress = JSON.parse(event.data);
           setExportProgress(progress);
         } catch (e) {
-          console.error('Failed to parse progress:', e);
+          logger.error('Failed to parse progress:', e);
         }
       };
 
@@ -322,7 +324,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
           const progress = JSON.parse(event.data);
           setImportProgress(progress);
         } catch (e) {
-          console.error('Failed to parse progress:', e);
+          logger.error('Failed to parse progress:', e);
         }
       };
 

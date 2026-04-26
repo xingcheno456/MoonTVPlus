@@ -1,13 +1,10 @@
-/* eslint-disable no-console */
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie, parseAuthInfo } from '@/lib/auth';
 import { generateHmacSignature } from '@/lib/crypto';
 import { STORAGE_TYPE } from '@/lib/db';
 import { refreshAccessToken } from '@/lib/middleware-auth';
-import { TOKEN_CONFIG } from '@/lib/refresh-token';
 
 export const runtime = 'nodejs';
 

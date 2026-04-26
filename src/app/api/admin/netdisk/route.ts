@@ -1,9 +1,7 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, setCachedConfig } from '@/lib/config';
 import { db, STORAGE_TYPE } from '@/lib/db';
@@ -12,6 +10,8 @@ import {
   normalizeQuarkCookie,
   validateQuarkCookieReadable,
 } from '@/lib/netdisk/quark.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     return apiError('未知操作', 400);
   } catch (error) {
-    console.error('[Admin NetDisk] 操作失败:', error);
+    logger.error('[Admin NetDisk] 操作失败:', error);
     return apiError(error instanceof Error ? error.message : '操作失败', 500);
   }
 }

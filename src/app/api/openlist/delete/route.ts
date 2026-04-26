@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
@@ -12,6 +11,8 @@ import {
   MetaInfo,
   setCachedMetaInfo,
 } from '@/lib/openlist-cache';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess({ message: '删除成功', });
   } catch (error) {
-    console.error('删除视频记录失败:', error);
+    logger.error('删除视频记录失败:', error);
     return apiError('删除失败: ' + (error as Error).message, 500);
   }
 }

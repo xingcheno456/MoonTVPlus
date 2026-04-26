@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-import { handleServiceError, validateAuthenticatedUser } from '@/services/auth.service';
+
+import { validateAuthenticatedUser } from '@/services/auth.service';
 import {
   buildCacheHeaders,
   searchSingleSource,

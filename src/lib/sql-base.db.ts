@@ -1,22 +1,23 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import {
-  IStorage,
-  PlayRecord,
-  Favorite,
-  SkipConfig,
-  DanmakuFilterConfig,
-  Notification,
-  MovieRequest,
-} from './types';
 import { AdminConfig } from './admin.types';
-import { MangaReadRecord, MangaShelfItem } from './manga.types';
 import { DatabaseAdapter } from './d1-adapter';
+import { logger } from './logger';
+import { MangaReadRecord, MangaShelfItem } from './manga.types';
 import {
   MusicV2HistoryRecord,
   MusicV2PlaylistItem,
   MusicV2PlaylistRecord,
 } from './music-v2';
+import {
+  DanmakuFilterConfig,
+  Favorite,
+  IStorage,
+  MovieRequest,
+  Notification,
+  PlayRecord,
+  SkipConfig,
+} from './types';
 import { userInfoCache } from './user-cache';
 
 export abstract class SQLStorageBase implements IStorage {
@@ -42,7 +43,7 @@ export abstract class SQLStorageBase implements IStorage {
       try {
         const result = await this.db.prepare(statement).run();
         if (!result.success && result.error) {
-          console.warn(
+          logger.warn(
             'SQLStorageBase.ensureMangaShelfColumns warning:',
             result.error,
           );
@@ -50,7 +51,7 @@ export abstract class SQLStorageBase implements IStorage {
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         if (!/duplicate column|already exists|no such table/i.test(message)) {
-          console.warn('SQLStorageBase.ensureMangaShelfColumns warning:', err);
+          logger.warn('SQLStorageBase.ensureMangaShelfColumns warning:', err);
         }
       }
     }
@@ -73,7 +74,7 @@ export abstract class SQLStorageBase implements IStorage {
       if (!result) return null;
       return this.rowToPlayRecord(result);
     } catch (err) {
-      console.error('SQLStorageBase.getPlayRecord error:', err);
+      logger.error('SQLStorageBase.getPlayRecord error:', err);
       throw err;
     }
   }
@@ -124,7 +125,7 @@ export abstract class SQLStorageBase implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.setPlayRecord error:', err);
+      logger.error('SQLStorageBase.setPlayRecord error:', err);
       throw err;
     }
   }
@@ -149,7 +150,7 @@ export abstract class SQLStorageBase implements IStorage {
       }
       return records;
     } catch (err) {
-      console.error('SQLStorageBase.getAllPlayRecords error:', err);
+      logger.error('SQLStorageBase.getAllPlayRecords error:', err);
       throw err;
     }
   }
@@ -161,7 +162,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.deletePlayRecord error:', err);
+      logger.error('SQLStorageBase.deletePlayRecord error:', err);
       throw err;
     }
   }
@@ -200,11 +201,11 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, userName, maxRecords)
         .run();
 
-      console.log(
+      logger.info(
         `SQLStorageBase: Cleaned up old play records for user ${userName}`,
       );
     } catch (err) {
-      console.error('SQLStorageBase.cleanupOldPlayRecords error:', err);
+      logger.error('SQLStorageBase.cleanupOldPlayRecords error:', err);
       throw err;
     }
   }
@@ -218,7 +219,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('SQLStorageBase.migratePlayRecords error:', err);
+      logger.error('SQLStorageBase.migratePlayRecords error:', err);
     }
   }
 
@@ -234,7 +235,7 @@ export abstract class SQLStorageBase implements IStorage {
       if (!result) return null;
       return this.rowToFavorite(result);
     } catch (err) {
-      console.error('SQLStorageBase.getFavorite error:', err);
+      logger.error('SQLStorageBase.getFavorite error:', err);
       throw err;
     }
   }
@@ -283,7 +284,7 @@ export abstract class SQLStorageBase implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.setFavorite error:', err);
+      logger.error('SQLStorageBase.setFavorite error:', err);
       throw err;
     }
   }
@@ -308,7 +309,7 @@ export abstract class SQLStorageBase implements IStorage {
       }
       return favorites;
     } catch (err) {
-      console.error('SQLStorageBase.getAllFavorites error:', err);
+      logger.error('SQLStorageBase.getAllFavorites error:', err);
       throw err;
     }
   }
@@ -320,7 +321,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.deleteFavorite error:', err);
+      logger.error('SQLStorageBase.deleteFavorite error:', err);
       throw err;
     }
   }
@@ -334,7 +335,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('SQLStorageBase.migrateFavorites error:', err);
+      logger.error('SQLStorageBase.migrateFavorites error:', err);
     }
   }
 
@@ -363,7 +364,7 @@ export abstract class SQLStorageBase implements IStorage {
         save_time: result.save_time,
       };
     } catch (err) {
-      console.error('SQLStorageBase.getMusicPlayRecord error:', err);
+      logger.error('SQLStorageBase.getMusicPlayRecord error:', err);
       return null;
     }
   }
@@ -404,7 +405,7 @@ export abstract class SQLStorageBase implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.setMusicPlayRecord error:', err);
+      logger.error('SQLStorageBase.setMusicPlayRecord error:', err);
       throw err;
     }
   }
@@ -453,7 +454,7 @@ export abstract class SQLStorageBase implements IStorage {
         await this.db.batch(statements);
       }
     } catch (err) {
-      console.error('SQLStorageBase.batchSetMusicPlayRecords error:', err);
+      logger.error('SQLStorageBase.batchSetMusicPlayRecords error:', err);
       throw err;
     }
   }
@@ -487,7 +488,7 @@ export abstract class SQLStorageBase implements IStorage {
       }
       return records;
     } catch (err) {
-      console.error('SQLStorageBase.getAllMusicPlayRecords error:', err);
+      logger.error('SQLStorageBase.getAllMusicPlayRecords error:', err);
       throw err;
     }
   }
@@ -501,7 +502,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.deleteMusicPlayRecord error:', err);
+      logger.error('SQLStorageBase.deleteMusicPlayRecord error:', err);
       throw err;
     }
   }
@@ -513,7 +514,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.clearAllMusicPlayRecords error:', err);
+      logger.error('SQLStorageBase.clearAllMusicPlayRecords error:', err);
       throw err;
     }
   }
@@ -549,7 +550,7 @@ export abstract class SQLStorageBase implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.createMusicPlaylist error:', err);
+      logger.error('SQLStorageBase.createMusicPlaylist error:', err);
       throw err;
     }
   }
@@ -573,7 +574,7 @@ export abstract class SQLStorageBase implements IStorage {
         updated_at: result.updated_at,
       };
     } catch (err) {
-      console.error('SQLStorageBase.getMusicPlaylist error:', err);
+      logger.error('SQLStorageBase.getMusicPlaylist error:', err);
       return null;
     }
   }
@@ -599,7 +600,7 @@ export abstract class SQLStorageBase implements IStorage {
         updated_at: row.updated_at,
       }));
     } catch (err) {
-      console.error('SQLStorageBase.getUserMusicPlaylists error:', err);
+      logger.error('SQLStorageBase.getUserMusicPlaylists error:', err);
       return [];
     }
   }
@@ -640,7 +641,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(...values)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.updateMusicPlaylist error:', err);
+      logger.error('SQLStorageBase.updateMusicPlaylist error:', err);
       throw err;
     }
   }
@@ -652,7 +653,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(playlistId)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.deleteMusicPlaylist error:', err);
+      logger.error('SQLStorageBase.deleteMusicPlaylist error:', err);
       throw err;
     }
   }
@@ -726,7 +727,7 @@ export abstract class SQLStorageBase implements IStorage {
           .run();
       }
     } catch (err) {
-      console.error('SQLStorageBase.addSongToPlaylist error:', err);
+      logger.error('SQLStorageBase.addSongToPlaylist error:', err);
       throw err;
     }
   }
@@ -749,7 +750,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(Date.now(), playlistId)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.removeSongFromPlaylist error:', err);
+      logger.error('SQLStorageBase.removeSongFromPlaylist error:', err);
       throw err;
     }
   }
@@ -777,7 +778,7 @@ export abstract class SQLStorageBase implements IStorage {
         sort_order: row.sort_order,
       }));
     } catch (err) {
-      console.error('SQLStorageBase.getPlaylistSongs error:', err);
+      logger.error('SQLStorageBase.getPlaylistSongs error:', err);
       return [];
     }
   }
@@ -813,7 +814,7 @@ export abstract class SQLStorageBase implements IStorage {
         updatedAt: row.updated_at,
       }));
     } catch (err) {
-      console.error('SQLStorageBase.listMusicV2History error:', err);
+      logger.error('SQLStorageBase.listMusicV2History error:', err);
       return [];
     }
   }
@@ -867,7 +868,7 @@ export abstract class SQLStorageBase implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.upsertMusicV2History error:', err);
+      logger.error('SQLStorageBase.upsertMusicV2History error:', err);
       throw err;
     }
   }
@@ -1212,7 +1213,7 @@ export abstract class SQLStorageBase implements IStorage {
       const hashedPassword = await this.hashPassword(password);
       return user.password_hash === hashedPassword;
     } catch (err) {
-      console.error('SQLStorageBase.verifyUser error:', err);
+      logger.error('SQLStorageBase.verifyUser error:', err);
       return false;
     }
   }
@@ -1230,7 +1231,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return result !== null;
     } catch (err) {
-      console.error('SQLStorageBase.checkUserExist error:', err);
+      logger.error('SQLStorageBase.checkUserExist error:', err);
       return false;
     }
   }
@@ -1244,7 +1245,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(passwordHash, userName)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.changePassword error:', err);
+      logger.error('SQLStorageBase.changePassword error:', err);
       throw err;
     }
   }
@@ -1256,7 +1257,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.deleteUser error:', err);
+      logger.error('SQLStorageBase.deleteUser error:', err);
       throw err;
     }
   }
@@ -1270,7 +1271,7 @@ export abstract class SQLStorageBase implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => row.username as string);
     } catch (err) {
-      console.error('SQLStorageBase.getAllUsers error:', err);
+      logger.error('SQLStorageBase.getAllUsers error:', err);
       return [];
     }
   }
@@ -1339,9 +1340,9 @@ export abstract class SQLStorageBase implements IStorage {
             )
             .bind(userName, '', 'owner', ownerInfo.created_at)
             .run();
-          console.log(`Created database record for site owner: ${userName}`);
+          logger.info(`Created database record for site owner: ${userName}`);
         } catch (insertErr) {
-          console.error('Failed to create owner record:', insertErr);
+          logger.error('Failed to create owner record:', insertErr);
         }
 
         userInfoCache?.set(userName, ownerInfo);
@@ -1350,7 +1351,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return null;
     } catch (err) {
-      console.error('SQLStorageBase.getUserInfoV2 error:', err);
+      logger.error('SQLStorageBase.getUserInfoV2 error:', err);
       return null;
     }
   }
@@ -1390,7 +1391,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('SQLStorageBase.createUserV2 error:', err);
+      logger.error('SQLStorageBase.createUserV2 error:', err);
       throw err;
     }
   }
@@ -1487,7 +1488,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return { users, total };
     } catch (err) {
-      console.error('SQLStorageBase.getUserListV2 error:', err);
+      logger.error('SQLStorageBase.getUserListV2 error:', err);
       return { users: [], total: 0 };
     }
   }
@@ -1504,7 +1505,7 @@ export abstract class SQLStorageBase implements IStorage {
       const hashedPassword = await this.hashPassword(password);
       return user.password_hash === hashedPassword;
     } catch (err) {
-      console.error('SQLStorageBase.verifyUserV2 error:', err);
+      logger.error('SQLStorageBase.verifyUserV2 error:', err);
       return false;
     }
   }
@@ -1555,7 +1556,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('SQLStorageBase.updateUserInfoV2 error:', err);
+      logger.error('SQLStorageBase.updateUserInfoV2 error:', err);
       throw err;
     }
   }
@@ -1571,7 +1572,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('SQLStorageBase.changePasswordV2 error:', err);
+      logger.error('SQLStorageBase.changePasswordV2 error:', err);
       throw err;
     }
   }
@@ -1585,7 +1586,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return !!user;
     } catch (err) {
-      console.error('SQLStorageBase.checkUserExistV2 error:', err);
+      logger.error('SQLStorageBase.checkUserExistV2 error:', err);
       return false;
     }
   }
@@ -1599,7 +1600,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return user ? (user.username as string) : null;
     } catch (err) {
-      console.error('SQLStorageBase.getUserByOidcSub error:', err);
+      logger.error('SQLStorageBase.getUserByOidcSub error:', err);
       return null;
     }
   }
@@ -1613,7 +1614,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('SQLStorageBase.deleteUserV2 error:', err);
+      logger.error('SQLStorageBase.deleteUserV2 error:', err);
       throw err;
     }
   }
@@ -1627,7 +1628,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return user ? (user.password_hash as string) : null;
     } catch (err) {
-      console.error('SQLStorageBase.getUserPasswordHash error:', err);
+      logger.error('SQLStorageBase.getUserPasswordHash error:', err);
       return null;
     }
   }
@@ -1642,7 +1643,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(passwordHash, userName)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.setUserPasswordHash error:', err);
+      logger.error('SQLStorageBase.setUserPasswordHash error:', err);
       throw err;
     }
   }
@@ -1681,7 +1682,7 @@ export abstract class SQLStorageBase implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.createUserWithHashedPassword error:', err);
+      logger.error('SQLStorageBase.createUserWithHashedPassword error:', err);
       throw err;
     }
   }
@@ -1695,7 +1696,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return result?.email as string | null;
     } catch (err) {
-      console.error('SQLStorageBase.getUserEmail error:', err);
+      logger.error('SQLStorageBase.getUserEmail error:', err);
       return null;
     }
   }
@@ -1709,7 +1710,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('SQLStorageBase.setUserEmail error:', err);
+      logger.error('SQLStorageBase.setUserEmail error:', err);
       throw err;
     }
   }
@@ -1723,7 +1724,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return result?.email_notifications === 1;
     } catch (err) {
-      console.error(
+      logger.error(
         'SQLStorageBase.getEmailNotificationPreference error:',
         err,
       );
@@ -1743,7 +1744,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error(
+      logger.error(
         'SQLStorageBase.setEmailNotificationPreference error:',
         err,
       );
@@ -1762,7 +1763,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return result?.tvbox_subscribe_token || null;
     } catch (err) {
-      console.error('SQLStorageBase.getTvboxSubscribeToken error:', err);
+      logger.error('SQLStorageBase.getTvboxSubscribeToken error:', err);
       return null;
     }
   }
@@ -1778,7 +1779,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('SQLStorageBase.setTvboxSubscribeToken error:', err);
+      logger.error('SQLStorageBase.setTvboxSubscribeToken error:', err);
       throw err;
     }
   }
@@ -1792,7 +1793,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return result?.username || null;
     } catch (err) {
-      console.error('SQLStorageBase.getUsernameByTvboxToken error:', err);
+      logger.error('SQLStorageBase.getUsernameByTvboxToken error:', err);
       return null;
     }
   }
@@ -1811,7 +1812,7 @@ export abstract class SQLStorageBase implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => row.keyword as string);
     } catch (err) {
-      console.error('SQLStorageBase.getSearchHistory error:', err);
+      logger.error('SQLStorageBase.getSearchHistory error:', err);
       return [];
     }
   }
@@ -1857,7 +1858,7 @@ export abstract class SQLStorageBase implements IStorage {
           .run();
       }
     } catch (err) {
-      console.error('SQLStorageBase.addSearchHistory error:', err);
+      logger.error('SQLStorageBase.addSearchHistory error:', err);
       throw err;
     }
   }
@@ -1878,7 +1879,7 @@ export abstract class SQLStorageBase implements IStorage {
           .run();
       }
     } catch (err) {
-      console.error('SQLStorageBase.deleteSearchHistory error:', err);
+      logger.error('SQLStorageBase.deleteSearchHistory error:', err);
       throw err;
     }
   }
@@ -1923,7 +1924,7 @@ export abstract class SQLStorageBase implements IStorage {
             : Number(result.unread_chapter_count),
       };
     } catch (err) {
-      console.error('SQLStorageBase.getMangaShelf error:', err);
+      logger.error('SQLStorageBase.getMangaShelf error:', err);
       throw err;
     }
   }
@@ -1983,7 +1984,7 @@ export abstract class SQLStorageBase implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.setMangaShelf error:', err);
+      logger.error('SQLStorageBase.setMangaShelf error:', err);
       throw err;
     }
   }
@@ -2033,7 +2034,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return shelves;
     } catch (err) {
-      console.error('SQLStorageBase.getAllMangaShelf error:', err);
+      logger.error('SQLStorageBase.getAllMangaShelf error:', err);
       throw err;
     }
   }
@@ -2045,7 +2046,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.deleteMangaShelf error:', err);
+      logger.error('SQLStorageBase.deleteMangaShelf error:', err);
       throw err;
     }
   }
@@ -2078,7 +2079,7 @@ export abstract class SQLStorageBase implements IStorage {
         saveTime: Number(result.save_time || 0),
       };
     } catch (err) {
-      console.error('SQLStorageBase.getMangaReadRecord error:', err);
+      logger.error('SQLStorageBase.getMangaReadRecord error:', err);
       throw err;
     }
   }
@@ -2126,7 +2127,7 @@ export abstract class SQLStorageBase implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.setMangaReadRecord error:', err);
+      logger.error('SQLStorageBase.setMangaReadRecord error:', err);
       throw err;
     }
   }
@@ -2162,7 +2163,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return records;
     } catch (err) {
-      console.error('SQLStorageBase.getAllMangaReadRecords error:', err);
+      logger.error('SQLStorageBase.getAllMangaReadRecords error:', err);
       throw err;
     }
   }
@@ -2176,7 +2177,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.deleteMangaReadRecord error:', err);
+      logger.error('SQLStorageBase.deleteMangaReadRecord error:', err);
       throw err;
     }
   }
@@ -2214,7 +2215,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, userName, maxRecords)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.cleanupOldMangaReadRecords error:', err);
+      logger.error('SQLStorageBase.cleanupOldMangaReadRecords error:', err);
       throw err;
     }
   }
@@ -2240,7 +2241,7 @@ export abstract class SQLStorageBase implements IStorage {
         outro_time: result.outro_time as number,
       };
     } catch (err) {
-      console.error('SQLStorageBase.getSkipConfig error:', err);
+      logger.error('SQLStorageBase.getSkipConfig error:', err);
       return null;
     }
   }
@@ -2273,7 +2274,7 @@ export abstract class SQLStorageBase implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.setSkipConfig error:', err);
+      logger.error('SQLStorageBase.setSkipConfig error:', err);
       throw err;
     }
   }
@@ -2290,7 +2291,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.deleteSkipConfig error:', err);
+      logger.error('SQLStorageBase.deleteSkipConfig error:', err);
       throw err;
     }
   }
@@ -2316,7 +2317,7 @@ export abstract class SQLStorageBase implements IStorage {
       }
       return configs;
     } catch (err) {
-      console.error('SQLStorageBase.getAllSkipConfigs error:', err);
+      logger.error('SQLStorageBase.getAllSkipConfigs error:', err);
       return {};
     }
   }
@@ -2330,7 +2331,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('SQLStorageBase.migrateSkipConfigs error:', err);
+      logger.error('SQLStorageBase.migrateSkipConfigs error:', err);
     }
   }
 
@@ -2348,7 +2349,7 @@ export abstract class SQLStorageBase implements IStorage {
       if (!result) return null;
       return JSON.parse(result.rules as string);
     } catch (err) {
-      console.error('SQLStorageBase.getDanmakuFilterConfig error:', err);
+      logger.error('SQLStorageBase.getDanmakuFilterConfig error:', err);
       return null;
     }
   }
@@ -2369,7 +2370,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, JSON.stringify(config))
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.setDanmakuFilterConfig error:', err);
+      logger.error('SQLStorageBase.setDanmakuFilterConfig error:', err);
       throw err;
     }
   }
@@ -2381,7 +2382,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.deleteDanmakuFilterConfig error:', err);
+      logger.error('SQLStorageBase.deleteDanmakuFilterConfig error:', err);
       throw err;
     }
   }
@@ -2408,7 +2409,7 @@ export abstract class SQLStorageBase implements IStorage {
         metadata: row.metadata ? JSON.parse(row.metadata as string) : undefined,
       }));
     } catch (err) {
-      console.error('SQLStorageBase.getNotifications error:', err);
+      logger.error('SQLStorageBase.getNotifications error:', err);
       return [];
     }
   }
@@ -2437,7 +2438,7 @@ export abstract class SQLStorageBase implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.addNotification error:', err);
+      logger.error('SQLStorageBase.addNotification error:', err);
       throw err;
     }
   }
@@ -2454,7 +2455,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, notificationId)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.markNotificationAsRead error:', err);
+      logger.error('SQLStorageBase.markNotificationAsRead error:', err);
       throw err;
     }
   }
@@ -2469,7 +2470,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, notificationId)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.deleteNotification error:', err);
+      logger.error('SQLStorageBase.deleteNotification error:', err);
       throw err;
     }
   }
@@ -2481,7 +2482,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.clearAllNotifications error:', err);
+      logger.error('SQLStorageBase.clearAllNotifications error:', err);
       throw err;
     }
   }
@@ -2497,7 +2498,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return (result?.count as number) || 0;
     } catch (err) {
-      console.error('SQLStorageBase.getUnreadNotificationCount error:', err);
+      logger.error('SQLStorageBase.getUnreadNotificationCount error:', err);
       return 0;
     }
   }
@@ -2513,7 +2514,7 @@ export abstract class SQLStorageBase implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => this.rowToMovieRequest(row));
     } catch (err) {
-      console.error('SQLStorageBase.getAllMovieRequests error:', err);
+      logger.error('SQLStorageBase.getAllMovieRequests error:', err);
       return [];
     }
   }
@@ -2528,7 +2529,7 @@ export abstract class SQLStorageBase implements IStorage {
       if (!result) return null;
       return this.rowToMovieRequest(result);
     } catch (err) {
-      console.error('SQLStorageBase.getMovieRequest error:', err);
+      logger.error('SQLStorageBase.getMovieRequest error:', err);
       return null;
     }
   }
@@ -2566,7 +2567,7 @@ export abstract class SQLStorageBase implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.createMovieRequest error:', err);
+      logger.error('SQLStorageBase.createMovieRequest error:', err);
       throw err;
     }
   }
@@ -2614,7 +2615,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(...values)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.updateMovieRequest error:', err);
+      logger.error('SQLStorageBase.updateMovieRequest error:', err);
       throw err;
     }
   }
@@ -2626,7 +2627,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(requestId)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.deleteMovieRequest error:', err);
+      logger.error('SQLStorageBase.deleteMovieRequest error:', err);
       throw err;
     }
   }
@@ -2643,7 +2644,7 @@ export abstract class SQLStorageBase implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => row.request_id as string);
     } catch (err) {
-      console.error('SQLStorageBase.getUserMovieRequests error:', err);
+      logger.error('SQLStorageBase.getUserMovieRequests error:', err);
       return [];
     }
   }
@@ -2660,7 +2661,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, requestId)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.addUserMovieRequest error:', err);
+      logger.error('SQLStorageBase.addUserMovieRequest error:', err);
       throw err;
     }
   }
@@ -2677,7 +2678,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, requestId)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.removeUserMovieRequest error:', err);
+      logger.error('SQLStorageBase.removeUserMovieRequest error:', err);
       throw err;
     }
   }
@@ -2714,7 +2715,7 @@ export abstract class SQLStorageBase implements IStorage {
       if (!result) return null;
       return JSON.parse(result.config as string);
     } catch (err) {
-      console.error('SQLStorageBase.getAdminConfig error:', err);
+      logger.error('SQLStorageBase.getAdminConfig error:', err);
       return null;
     }
   }
@@ -2732,7 +2733,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(JSON.stringify(config), Date.now())
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.setAdminConfig error:', err);
+      logger.error('SQLStorageBase.setAdminConfig error:', err);
       throw err;
     }
   }
@@ -2764,7 +2765,7 @@ export abstract class SQLStorageBase implements IStorage {
         await this.db.prepare(`DELETE FROM ${table}`).run();
       }
     } catch (err) {
-      console.error('SQLStorageBase.clearAllData error:', err);
+      logger.error('SQLStorageBase.clearAllData error:', err);
       throw err;
     }
   }
@@ -2778,7 +2779,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return result ? (result.value as string) : null;
     } catch (err) {
-      console.error('SQLStorageBase.getGlobalValue error:', err);
+      logger.error('SQLStorageBase.getGlobalValue error:', err);
       return null;
     }
   }
@@ -2796,7 +2797,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(key, value, Date.now())
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.setGlobalValue error:', err);
+      logger.error('SQLStorageBase.setGlobalValue error:', err);
       throw err;
     }
   }
@@ -2808,7 +2809,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(key)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.deleteGlobalValue error:', err);
+      logger.error('SQLStorageBase.deleteGlobalValue error:', err);
       throw err;
     }
   }
@@ -2824,7 +2825,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       return (result?.last_check_time as number) || 0;
     } catch (err) {
-      console.error('SQLStorageBase.getLastFavoriteCheckTime error:', err);
+      logger.error('SQLStorageBase.getLastFavoriteCheckTime error:', err);
       return 0;
     }
   }
@@ -2845,7 +2846,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName, timestamp)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.setLastFavoriteCheckTime error:', err);
+      logger.error('SQLStorageBase.setLastFavoriteCheckTime error:', err);
       throw err;
     }
   }
@@ -2862,7 +2863,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(timestamp, userName)
         .run();
     } catch (err) {
-      console.error('SQLStorageBase.updateLastMovieRequestTime error:', err);
+      logger.error('SQLStorageBase.updateLastMovieRequestTime error:', err);
       throw err;
     }
   }

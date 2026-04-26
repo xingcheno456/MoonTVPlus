@@ -1,12 +1,12 @@
-/* eslint-disable no-console */
 
+import { randomUUID } from 'crypto';
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-import { randomUUID } from 'crypto';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess({ playlists });
   } catch (error) {
-    console.error('GET /api/music/playlists error:', error);
+    logger.error('GET /api/music/playlists error:', error);
     return apiError('Internal server error', 500);
   }
 }
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess({ playlist });
   } catch (error) {
-    console.error('POST /api/music/playlists error:', error);
+    logger.error('POST /api/music/playlists error:', error);
     return apiError('Internal server error', 500);
   }
 }
@@ -130,7 +130,7 @@ export async function PUT(request: NextRequest) {
 
     return apiSuccess({ playlist: updatedPlaylist });
   } catch (error) {
-    console.error('PUT /api/music/playlists error:', error);
+    logger.error('PUT /api/music/playlists error:', error);
     return apiError('Internal server error', 500);
   }
 }
@@ -175,7 +175,7 @@ export async function DELETE(request: NextRequest) {
 
     return apiSuccess({ success: true });
   } catch (error) {
-    console.error('DELETE /api/music/playlists error:', error);
+    logger.error('DELETE /api/music/playlists error:', error);
     return apiError('Internal server error', 500);
   }
 }

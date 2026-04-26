@@ -1,11 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 import { NextRequest } from 'next/server';
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
+import { apiSuccess } from '@/lib/api-response';
 import { getCachedEmbyViews, setCachedEmbyViews } from '@/lib/emby-cache';
 import { embyManager } from '@/lib/emby-manager';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess(response);
   } catch (error) {
-    console.error('获取 Emby 媒体库列表失败:', error);
+    logger.error('获取 Emby 媒体库列表失败:', error);
     return apiSuccess({
       error: '获取 Emby 媒体库列表失败: ' + (error as Error).message,
       views: [],

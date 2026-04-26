@@ -4,9 +4,10 @@ import { Check, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { downloadDB, CompletedTask } from '@/lib/download-db';
+import { CompletedTask,downloadDB } from '@/lib/download-db';
 
 import { ConfirmDialog } from './ConfirmDialog';
+import { logger } from '../lib/logger';
 
 interface DownloadManagementPanelProps {
   isOpen: boolean;
@@ -38,7 +39,7 @@ export function DownloadManagementPanel({
       const tasks = await downloadDB.getCompletedTasks();
       setCompletedTasks(tasks);
     } catch (error) {
-      console.error('加载已完成任务失败:', error);
+      logger.error('加载已完成任务失败:', error);
     }
   };
 
@@ -125,7 +126,7 @@ export function DownloadManagementPanel({
                 mode: 'readwrite',
               });
               if (permission !== 'granted') {
-                console.error('未获得写权限，无法删除文件');
+                logger.error('未获得写权限，无法删除文件');
                 continue;
               }
 
@@ -143,14 +144,14 @@ export function DownloadManagementPanel({
                   `ep${task.episodeIndex + 1}`,
                   { recursive: true },
                 );
-                console.log(
+                logger.info(
                   '已删除文件:',
                   task.source,
                   task.videoId,
                   `ep${task.episodeIndex + 1}`,
                 );
               } catch (deleteError) {
-                console.error('删除目录失败:', deleteError);
+                logger.error('删除目录失败:', deleteError);
                 // 如果目录不存在，也算成功
                 if ((deleteError as Error).name !== 'NotFoundError') {
                   throw deleteError;
@@ -158,7 +159,7 @@ export function DownloadManagementPanel({
               }
             }
           } catch (error) {
-            console.error('删除文件失败:', task.title, error);
+            logger.error('删除文件失败:', task.title, error);
           }
         }
       }
@@ -168,7 +169,7 @@ export function DownloadManagementPanel({
       await loadCompletedTasks();
       setSelectedIds(new Set());
     } catch (error) {
-      console.error('删除任务失败:', error);
+      logger.error('删除任务失败:', error);
       alert('删除失败，请重试');
     } finally {
       setIsDeleting(false);

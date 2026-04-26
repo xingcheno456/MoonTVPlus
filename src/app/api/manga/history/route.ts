@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { db } from '@/lib/db';
 import { MangaReadRecord } from '@/lib/manga.types';
 
 import { getAuthorizedUsername } from '../_utils';
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       (db as any).storage
         .cleanupOldMangaReadRecords(username)
         .catch((err: Error) => {
-          console.error('异步清理漫画阅读历史失败:', err);
+          logger.error('异步清理漫画阅读历史失败:', err);
         });
     }
 

@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
   AlertCircle,
@@ -11,8 +11,11 @@ import {
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
-import Toast, { ToastProps } from '@/components/Toast';
 import { PansouLink, PansouSearchResult } from '@/lib/pansou.client';
+
+import Toast, { ToastProps } from '@/components/Toast';
+
+import { logger } from '../lib/logger';
 
 interface PansouSearchProps {
   keyword: string;
@@ -126,7 +129,7 @@ export default function PansouSearch({
       setCopiedUrl(url);
       setTimeout(() => setCopiedUrl(null), 2000);
     } catch (err) {
-      console.error('复制失败:', err);
+      logger.error('复制失败:', err);
     }
   };
 

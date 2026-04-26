@@ -1,11 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { OpenListClient } from '@/lib/openlist.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
         }, { status: 400 });
     }
   } catch (error) {
-    console.error('检查 OpenList 连通性失败:', error);
+    logger.error('检查 OpenList 连通性失败:', error);
     return apiSuccess({
         success: false,
         error: error instanceof Error ? error.message : '检查失败',

@@ -18,17 +18,44 @@ const nextConfig = {
     instrumentationHook: process.env.NODE_ENV === 'production' && !isCloudflare,
   },
 
-  // Uncoment to add domain whitelist
   images: {
     unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: '**.tmdb.org',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.doubanio.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.hdslb.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.bilivideo.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.douyinpic.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.byteimg.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.douyinvod.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'localhost',
       },
       {
         protocol: 'http',
-        hostname: '**',
+        hostname: 'localhost',
       },
     ],
   },

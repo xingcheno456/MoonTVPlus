@@ -4,11 +4,12 @@
 
 import * as fs from 'fs';
 import { NextRequest, NextResponse } from 'next/server';
-
-import { apiError, apiSuccess } from '@/lib/api-response';
 import * as path from 'path';
 
+import { apiError } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
+
+import { logger } from '../../../../lib/logger';
 
 // 检查是否启用离线下载功能
 const OFFLINE_DOWNLOAD_ENABLED =
@@ -127,7 +128,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('代理本地文件失败:', error);
+    logger.error('代理本地文件失败:', error);
     return apiError(error instanceof Error ? error.message : '代理失败', 500);
   }
 }

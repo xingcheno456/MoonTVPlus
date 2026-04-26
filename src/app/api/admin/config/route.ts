@@ -1,13 +1,13 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { AdminConfigResult } from '@/lib/admin.types';
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { STORAGE_TYPE } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('获取管理员配置失败:', error);
+    logger.error('获取管理员配置失败:', error);
     return apiError('获取管理员配置失败: ' + (error as Error).message, 500);
   }
 }
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess({ message: '配置已保存' });
   } catch (error) {
-    console.error('保存配置失败:', error);
+    logger.error('保存配置失败:', error);
     return apiError('保存配置失败: ' + (error as Error).message, 500);
   }
 }
