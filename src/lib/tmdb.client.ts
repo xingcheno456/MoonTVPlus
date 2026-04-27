@@ -1,54 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import nodeFetch, { RequestInit as NodeFetchRequestInit } from 'node-fetch';
+import { universalFetch } from './universal-fetch';
 
 import { logger } from './logger';
 
-// TMDB API 默认 Base URL（不包含 /3/，由程序拼接）
 const DEFAULT_TMDB_BASE_URL = 'https://api.themoviedb.org';
 
-// TMDB API Key 轮询管理
 let currentKeyIndex = 0;
-
-/**
- * 检测是否在 Cloudflare 环境中运行
- */
-function isCloudflareEnvironment(): boolean {
-  return (
-    process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare'
-  );
-}
-
-/**
- * 统一的 fetch 函数，根据环境选择使用 node-fetch 或原生 fetch
- */
-async function universalFetch(url: string, proxy?: string): Promise<Response> {
-  const isCloudflare = isCloudflareEnvironment();
-
-  if (isCloudflare) {
-    // Cloudflare 环境：使用原生 fetch，忽略 proxy 参数
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(15000),
-    });
-    return response as unknown as Response;
-  } else {
-    // Node.js 环境：使用 node-fetch，支持 proxy
-    const fetchOptions: NodeFetchRequestInit = (proxy
-      ? {
-          agent: new HttpsProxyAgent(proxy, {
-            timeout: 30000,
-            keepAlive: false,
-          }),
-          signal: AbortSignal.timeout(30000),
-        }
-      : {
-          signal: AbortSignal.timeout(15000),
-        }) as NodeFetchRequestInit;
-
-    return nodeFetch(url, fetchOptions) as unknown as Response;
-  }
-}
 
 /**
  * 解析并获取下一个可用的 TMDB API Key
@@ -144,7 +100,7 @@ export async function getTMDBUpcomingMovies(
     const url = `${baseUrl}/3/movie/upcoming?api_key=${actualKey}&language=zh-CN&page=${page}&region=${region}`;
 
     // 使用统一的 fetch 函数
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
 
     if (!response.ok) {
       logger.error('TMDB API 请求失败:', response.status, response.statusText);
@@ -189,7 +145,7 @@ export async function getTMDBUpcomingTVShows(
     const url = `${baseUrl}/3/tv/on_the_air?api_key=${actualKey}&language=zh-CN&page=${page}`;
 
     // 使用统一的 fetch 函数
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
 
     if (!response.ok) {
       logger.error(
@@ -322,7 +278,7 @@ export async function getTMDBVideos(
     const baseUrl = reverseProxyBaseUrl || DEFAULT_TMDB_BASE_URL;
     const url = `${baseUrl}/3/${mediaType}/${mediaId}/videos?api_key=${actualKey}`;
 
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
 
     if (!response.ok) {
       return null;
@@ -365,7 +321,7 @@ export async function getTMDBTrendingContent(
     const baseUrl = reverseProxyBaseUrl || DEFAULT_TMDB_BASE_URL;
     const url = `${baseUrl}/3/trending/all/week?api_key=${actualKey}&language=zh-CN`;
 
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
 
     if (!response.ok) {
       logger.error(
@@ -490,7 +446,7 @@ export async function searchTMDBMulti(
     const baseUrl = reverseProxyBaseUrl || DEFAULT_TMDB_BASE_URL;
     const url = `${baseUrl}/3/search/multi?api_key=${actualKey}&language=zh-CN&query=${encodeURIComponent(query)}&page=1`;
 
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
 
     if (!response.ok) {
       logger.error(
@@ -536,7 +492,7 @@ export async function getTMDBMovieRecommendations(
     const baseUrl = reverseProxyBaseUrl || DEFAULT_TMDB_BASE_URL;
     const url = `${baseUrl}/3/movie/${movieId}/recommendations?api_key=${actualKey}&language=zh-CN&page=1`;
 
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
 
     if (!response.ok) {
       logger.error(
@@ -582,7 +538,7 @@ export async function getTMDBTVRecommendations(
     const baseUrl = reverseProxyBaseUrl || DEFAULT_TMDB_BASE_URL;
     const url = `${baseUrl}/3/tv/${tvId}/recommendations?api_key=${actualKey}&language=zh-CN&page=1`;
 
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
 
     if (!response.ok) {
       logger.error(
@@ -628,7 +584,7 @@ export async function getTMDBMovieDetails(
     const baseUrl = reverseProxyBaseUrl || DEFAULT_TMDB_BASE_URL;
     const url = `${baseUrl}/3/movie/${movieId}?api_key=${actualKey}&language=zh-CN`;
 
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
 
     if (!response.ok) {
       logger.error('TMDB API 请求失败:', response.status, response.statusText);
@@ -670,7 +626,7 @@ export async function getTMDBTVDetails(
     const baseUrl = reverseProxyBaseUrl || DEFAULT_TMDB_BASE_URL;
     const url = `${baseUrl}/3/tv/${tvId}?api_key=${actualKey}&language=zh-CN`;
 
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
 
     if (!response.ok) {
       logger.error('TMDB API 请求失败:', response.status, response.statusText);
@@ -714,7 +670,7 @@ export async function getTMDBCredits(
     const baseUrl = reverseProxyBaseUrl || DEFAULT_TMDB_BASE_URL;
     const url = `${baseUrl}/3/${mediaType}/${mediaId}/credits?api_key=${actualKey}&language=zh-CN`;
 
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
 
     if (!response.ok) {
       logger.error(
@@ -762,7 +718,7 @@ export async function getTMDBImages(
     const baseUrl = reverseProxyBaseUrl || DEFAULT_TMDB_BASE_URL;
     const url = `${baseUrl}/3/${mediaType}/${mediaId}/images?api_key=${actualKey}`;
 
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
 
     if (!response.ok) {
       logger.error(

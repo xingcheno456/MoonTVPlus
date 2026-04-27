@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * AI数据源协调器
  * 负责协调AI与联网搜索、豆瓣API、TMDB API之间的数据交互

@@ -1,5 +1,4 @@
 import { logger } from './logger';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * Pansou 网盘搜索 API 客户端

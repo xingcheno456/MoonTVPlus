@@ -70,6 +70,3 @@ if (typeof globalThis.Request === 'undefined') {
     }
   };
 }
-
-// Allow router mocks.
-jest.mock('next/router', () => require('next-router-mock'));

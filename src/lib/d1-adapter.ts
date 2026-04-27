@@ -1,5 +1,4 @@
 import { logger } from './logger';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * 统一的数据库适配器接口

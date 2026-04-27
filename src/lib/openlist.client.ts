@@ -1,5 +1,4 @@
 import { logger } from './logger';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Token 内存缓存
 const tokenCache = new Map<string, { token: string; expiresAt: number }>();

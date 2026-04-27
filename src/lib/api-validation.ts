@@ -85,3 +85,99 @@ export async function parseJsonBody<T>(
     return { error: apiError('请求体解析失败', 400) };
   }
 }
+
+export interface ValidatedRequest<T> {
+  body: T;
+  searchParams: URLSearchParams;
+  request: NextRequest;
+}
+
+type RouteHandler<T, R> = (
+  req: NextRequest,
+  validated: ValidatedRequest<T>,
+  context?: unknown,
+) => Promise<NextResponse<R>>;
+
+export function withValidation<T, R = unknown>(
+  schema: ZodSchema<T>,
+  handler: RouteHandler<T, R>,
+): (req: NextRequest, context?: unknown) => Promise<NextResponse> {
+  return async (req: NextRequest, context?: unknown) => {
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return apiError('Invalid JSON body', 400);
+    }
+
+    const result = schema.safeParse(body);
+    if (!result.success) {
+      const errors = result.error.errors.map(
+        (e) => `${e.path.join('.')}: ${e.message}`,
+      );
+      return apiError(`Validation failed: ${errors.join('; ')}`, 400);
+    }
+
+    return handler(req, {
+      body: result.data,
+      searchParams: req.nextUrl.searchParams,
+      request: req,
+    }, context);
+  };
+}
+
+export function withQueryValidation<T, R = unknown>(
+  schema: ZodSchema<T>,
+  handler: (
+    req: NextRequest,
+    query: T,
+    context?: unknown,
+  ) => Promise<NextResponse<R>>,
+): (req: NextRequest, context?: unknown) => Promise<NextResponse> {
+  return async (req: NextRequest, context?: unknown) => {
+    const params = Object.fromEntries(req.nextUrl.searchParams.entries());
+    const result = schema.safeParse(params);
+    if (!result.success) {
+      const errors = result.error.errors.map(
+        (e) => `${e.path.join('.')}: ${e.message}`,
+      );
+      return apiError(`Query validation failed: ${errors.join('; ')}`, 400);
+    }
+
+    return handler(req, result.data, context);
+  };
+}
+
+type SimpleHandler<R = unknown> = (
+  req: NextRequest,
+  context?: unknown,
+) => Promise<NextResponse<R>>;
+
+export function withErrorHandler<R = unknown>(
+  handler: SimpleHandler<R>,
+): SimpleHandler {
+  return async (req: NextRequest, context?: unknown) => {
+    try {
+      return await handler(req, context);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const errors = error.errors.map(
+          (e) => `${e.path.join('.')}: ${e.message}`,
+        );
+        return apiError(`Validation failed: ${errors.join('; ')}`, 400);
+      }
+
+      if (error instanceof Error) {
+        if (error.message.includes('not found') || error.message.includes('不存在')) {
+          return apiError(error.message, 404);
+        }
+        if (error.message.includes('Unauthorized') || error.message.includes('无权限')) {
+          return apiError(error.message, 401);
+        }
+        return apiError(error.message, 500);
+      }
+
+      return apiError('Internal server error', 500);
+    }
+  };
+}

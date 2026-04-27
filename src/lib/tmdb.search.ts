@@ -1,52 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import nodeFetch from 'node-fetch';
+import { universalFetch } from './universal-fetch';
 
 import { logger } from './logger';
 import { getNextApiKey } from './tmdb.client';
 
-// TMDB API 默认 Base URL（不包含 /3/，由程序拼接）
 const DEFAULT_TMDB_BASE_URL = 'https://api.themoviedb.org';
-
-/**
- * 检测是否在 Cloudflare 环境中运行
- */
-function isCloudflareEnvironment(): boolean {
-  return (
-    process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare'
-  );
-}
-
-/**
- * 统一的 fetch 函数，根据环境选择使用 node-fetch 或原生 fetch
- */
-async function universalFetch(url: string, proxy?: string): Promise<Response> {
-  const isCloudflare = isCloudflareEnvironment();
-
-  if (isCloudflare) {
-    // Cloudflare 环境：使用原生 fetch，忽略 proxy 参数
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(15000),
-    });
-    return response as unknown as Response;
-  } else {
-    // Node.js 环境：使用 node-fetch，支持 proxy
-    const fetchOptions: any = proxy
-      ? {
-          agent: new HttpsProxyAgent(proxy, {
-            timeout: 30000,
-            keepAlive: false,
-          }),
-          signal: AbortSignal.timeout(30000),
-        }
-      : {
-          signal: AbortSignal.timeout(15000),
-        };
-
-    return nodeFetch(url, fetchOptions) as unknown as Response;
-  }
-}
 
 export interface TMDBSearchResult {
   id: number;
@@ -92,8 +49,7 @@ export async function searchTMDB(
       url += `&year=${year}`;
     }
 
-    // 使用统一的 fetch 函数
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
 
     if (!response.ok) {
       logger.error('TMDB 搜索失败:', response.status, response.statusText);
@@ -167,7 +123,7 @@ export async function getTVSeasons(
     const baseUrl = reverseProxyBaseUrl || DEFAULT_TMDB_BASE_URL;
     const url = `${baseUrl}/3/tv/${tvId}?api_key=${actualKey}&language=zh-CN`;
 
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
 
     if (!response.ok) {
       logger.error(
@@ -214,7 +170,8 @@ export async function getTVSeasonDetails(
     const baseUrl = reverseProxyBaseUrl || DEFAULT_TMDB_BASE_URL;
     const url = `${baseUrl}/3/tv/${tvId}/season/${seasonNumber}?api_key=${actualKey}&language=zh-CN`;
 
-    const response = await universalFetch(url, proxy);
+    const response = await universalFetch(url, { proxy });
+
 
     if (!response.ok) {
       logger.error(

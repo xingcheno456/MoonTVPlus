@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Bot, Loader2, Send, Sparkles, Trash2, X } from 'lucide-react';
 import Link from 'next/link';

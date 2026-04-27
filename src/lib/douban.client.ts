@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { logger } from './logger';
 import { DoubanItem, DoubanResult } from './types';

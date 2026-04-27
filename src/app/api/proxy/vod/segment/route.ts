@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { apiError } from '@/lib/api-response';
 import { commonSchemas } from '@/lib/api-schemas';

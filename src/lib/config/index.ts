@@ -1,5 +1,4 @@
 // TODO: 逐步移除文件级 eslint-disable，改用行内禁用
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 // NOTE: no-console 已移除，改用 logger 统一日志
 

@@ -25,6 +25,14 @@ export async function POST(request: NextRequest) {
     path: '/',
     expires: new Date(0),
     sameSite: 'lax',
+    httpOnly: true,
+    secure: false,
+  });
+
+  response.cookies.set('user_info', '', {
+    path: '/',
+    expires: new Date(0),
+    sameSite: 'lax',
     httpOnly: false,
     secure: false,
   });

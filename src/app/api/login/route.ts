@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { parseAuthInfo } from '@/lib/auth';
@@ -173,6 +172,13 @@ export async function POST(req: NextRequest) {
           httpOnly: true,
         });
 
+        response.cookies.set('user_info', '', {
+          path: '/',
+          expires: new Date(0),
+          sameSite: 'lax',
+          httpOnly: false,
+        });
+
         return response;
       }
 
@@ -203,6 +209,17 @@ export async function POST(req: NextRequest) {
         expires,
         sameSite: 'lax',
         httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+      });
+
+      const userInfoValue = encodeURIComponent(
+        JSON.stringify({ username, role: 'owner' }),
+      );
+      response.cookies.set('user_info', userInfoValue, {
+        path: '/',
+        expires,
+        sameSite: 'lax',
+        httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
       });
 
@@ -265,8 +282,18 @@ export async function POST(req: NextRequest) {
         secure: process.env.NODE_ENV === 'production',
       });
 
+      const ownerInfoValue = encodeURIComponent(
+        JSON.stringify({ username, role: 'owner' }),
+      );
+      response.cookies.set('user_info', ownerInfoValue, {
+        path: '/',
+        expires,
+        sameSite: 'lax',
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+      });
+
       return response;
-    } else if (username === process.env.USERNAME) {
       return apiError('用户名或密码错误', 401);
     }
 
@@ -312,6 +339,17 @@ export async function POST(req: NextRequest) {
       expires,
       sameSite: 'lax',
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    });
+
+    const userInfoValue = encodeURIComponent(
+      JSON.stringify({ username, role: userRole }),
+    );
+    response.cookies.set('user_info', userInfoValue, {
+      path: '/',
+      expires,
+      sameSite: 'lax',
+      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
     });
 

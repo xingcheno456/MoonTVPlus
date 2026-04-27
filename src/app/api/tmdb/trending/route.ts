@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';

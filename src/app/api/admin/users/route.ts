@@ -12,9 +12,7 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
-    return apiSuccess({
-        error: '不支持本地存储进行用户列表查询',
-      }, { status: 400 });
+    return apiError('不支持本地存储进行用户列表查询', 400);
   }
 
   try {

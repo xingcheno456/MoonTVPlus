@@ -87,34 +87,42 @@ export function getAuthInfoFromBrowserCookie(): AuthInfo | null {
   }
 
   try {
-    // 解析 document.cookie
-    const cookies = document.cookie.split(';').reduce(
-      (acc, cookie) => {
-        const trimmed = cookie.trim();
-        const firstEqualIndex = trimmed.indexOf('=');
-
-        if (firstEqualIndex > 0) {
-          const key = trimmed.substring(0, firstEqualIndex);
-          const value = trimmed.substring(firstEqualIndex + 1);
-          if (key && value) {
-            acc[key] = value;
-          }
-        }
-
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
+    const cookies = parseDocumentCookies();
 
     const authCookie = cookies['auth'];
-    if (!authCookie) {
-      return null;
+    if (authCookie) {
+      return parseAuthInfo(authCookie);
     }
 
-    return parseAuthInfo(authCookie);
+    const userInfoCookie = cookies['user_info'];
+    if (userInfoCookie) {
+      return parseAuthInfo(userInfoCookie);
+    }
+
+    return null;
   } catch (error) {
     return null;
   }
+}
+
+function parseDocumentCookies(): Record<string, string> {
+  return document.cookie.split(';').reduce(
+    (acc, cookie) => {
+      const trimmed = cookie.trim();
+      const firstEqualIndex = trimmed.indexOf('=');
+
+      if (firstEqualIndex > 0) {
+        const key = trimmed.substring(0, firstEqualIndex);
+        const value = trimmed.substring(firstEqualIndex + 1);
+        if (key && value) {
+          acc[key] = value;
+        }
+      }
+
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
 }
 
 // 清除浏览器中的认证cookie (客户端使用)
@@ -124,14 +132,13 @@ export function clearAuthCookie(): void {
   }
 
   try {
-    // 清除 auth cookie，设置过期时间为过去
-    document.cookie =
-      'auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
-    // 如果有其他域名或路径的cookie，也尝试清除
-    document.cookie =
-      'auth=; path=/; domain=' +
-      window.location.hostname +
-      '; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    const expireStr = '; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    const domainCookie = `; domain=${window.location.hostname}${expireStr}`;
+
+    document.cookie = `auth=${expireStr}`;
+    document.cookie = `auth=${domainCookie}`;
+    document.cookie = `user_info=${expireStr}`;
+    document.cookie = `user_info=${domainCookie}`;
   } catch (error) {
     logger.error('[Auth] Failed to clear cookie:', error);
   }

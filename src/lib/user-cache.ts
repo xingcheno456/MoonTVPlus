@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 // 用户信息缓存
 interface CachedUserInfo {
