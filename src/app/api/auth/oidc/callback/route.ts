@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { generateHmacSignature } from '@/lib/crypto';
+import { AuthInfo } from '@/lib/auth';
 import { db } from '@/lib/db';
 import {
   generateRefreshToken,
@@ -91,6 +92,19 @@ async function generateAuthCookie(
   }
 
   return encodeURIComponent(JSON.stringify(authData));
+}
+
+function buildUserInfoValue(cookieValue: string): string {
+  try {
+    const decoded = decodeURIComponent(cookieValue);
+    const authInfo = JSON.parse(decoded) as AuthInfo;
+    const { username, role, timestamp, refreshExpires, tokenId } = authInfo;
+    return encodeURIComponent(
+      JSON.stringify({ username, role, timestamp, refreshExpires, tokenId }),
+    );
+  } catch {
+    return '';
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -232,6 +246,16 @@ export async function GET(request: NextRequest) {
       const expires = new Date(Date.now() + TOKEN_CONFIG.REFRESH_TOKEN_AGE);
 
       response.cookies.set('auth', cookieValue, {
+        path: '/',
+        expires,
+        sameSite: 'lax',
+        httpOnly: false,
+        secure: false,
+      });
+
+      const userInfoValue = buildUserInfoValue(cookieValue) ||
+        encodeURIComponent(JSON.stringify({ username, role: userRole }));
+      response.cookies.set('user_info', userInfoValue, {
         path: '/',
         expires,
         sameSite: 'lax',

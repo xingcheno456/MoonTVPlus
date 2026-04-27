@@ -36,11 +36,9 @@ import {
   ExternalLink,
   FileText,
   FolderOpen,
-  Globe,
   Mail,
   Palette,
   Settings,
-  Tv,
   UserPlus,
   Users,
   Video,
@@ -682,7 +680,7 @@ const UserConfig = ({
       await handleUserGroupAction('delete', deletingUserGroup.name);
       setShowDeleteUserGroupModal(false);
       setDeletingUserGroup(null);
-    } catch (err) {
+    } catch {
       // 错误处理已在 handleUserGroupAction 中处理
     }
   };
@@ -824,7 +822,7 @@ const UserConfig = ({
           setShowConfigureUserGroupModal(false);
           setSelectedUserForGroup(null);
           setSelectedUserGroups([]);
-        } catch (err) {
+        } catch {
           // 错误处理已在 handleAssignUserGroup 中处理
         }
       },
@@ -991,7 +989,7 @@ const UserConfig = ({
         await handleUserAction('deleteUser', deletingUser);
         setShowDeleteUserModal(false);
         setDeletingUser(null);
-      } catch (err) {
+      } catch {
         // 错误处理已在 handleUserAction 中处理
       }
     });
@@ -7111,7 +7109,7 @@ const ConfigFileComponent = ({
         let parsedConfig;
         try {
           parsedConfig = JSON.parse(fileContent);
-        } catch (parseError) {
+        } catch {
           showError('JSON格式错误，请检查文件内容', showAlert);
           return;
         }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-import { parseAuthInfo } from '@/lib/auth';
+import { AuthInfo, parseAuthInfo } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { generateHmacSignature } from '@/lib/crypto';
 import { db, STORAGE_TYPE } from '@/lib/db';
@@ -118,6 +118,13 @@ async function verifyTurnstileToken(
   }
 }
 
+function buildUserInfoValue(authInfo: AuthInfo): string {
+  const { username, role, timestamp, refreshExpires, tokenId } = authInfo;
+  return encodeURIComponent(
+    JSON.stringify({ username, role, timestamp, refreshExpires, tokenId }),
+  );
+}
+
 // 获取设备信息
 function getDeviceInfo(request: NextRequest): string {
   const userAgent = request.headers.get('user-agent') || 'Unknown';
@@ -212,9 +219,10 @@ export async function POST(req: NextRequest) {
         secure: process.env.NODE_ENV === 'production',
       });
 
-      const userInfoValue = encodeURIComponent(
-        JSON.stringify({ username, role: 'owner' }),
-      );
+      const decodedCookie = parseAuthInfo(cookieValue);
+      const userInfoValue = decodedCookie
+        ? buildUserInfoValue(decodedCookie)
+        : encodeURIComponent(JSON.stringify({ username, role: 'owner' }));
       response.cookies.set('user_info', userInfoValue, {
         path: '/',
         expires,
@@ -282,10 +290,11 @@ export async function POST(req: NextRequest) {
         secure: process.env.NODE_ENV === 'production',
       });
 
-      const ownerInfoValue = encodeURIComponent(
-        JSON.stringify({ username, role: 'owner' }),
-      );
-      response.cookies.set('user_info', ownerInfoValue, {
+      const decodedCookie = parseAuthInfo(cookieValue);
+      const userInfoValue = decodedCookie
+        ? buildUserInfoValue(decodedCookie)
+        : encodeURIComponent(JSON.stringify({ username, role: 'owner' }));
+      response.cookies.set('user_info', userInfoValue, {
         path: '/',
         expires,
         sameSite: 'lax',
@@ -294,7 +303,6 @@ export async function POST(req: NextRequest) {
       });
 
       return response;
-      return apiError('用户名或密码错误', 401);
     }
 
     // 使用新版本的用户验证
@@ -342,9 +350,10 @@ export async function POST(req: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
     });
 
-    const userInfoValue = encodeURIComponent(
-      JSON.stringify({ username, role: userRole }),
-    );
+    const decodedCookie = parseAuthInfo(cookieValue);
+    const userInfoValue = decodedCookie
+      ? buildUserInfoValue(decodedCookie)
+      : encodeURIComponent(JSON.stringify({ username, role: userRole }));
     response.cookies.set('user_info', userInfoValue, {
       path: '/',
       expires,

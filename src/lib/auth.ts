@@ -81,6 +81,7 @@ export function getAuthInfoFromCookie(request: NextRequest): AuthInfo | null {
 }
 
 // 从cookie获取认证信息 (客户端使用)
+// auth Cookie 为 httpOnly，客户端无法读取；user_info Cookie 包含非敏感字段
 export function getAuthInfoFromBrowserCookie(): AuthInfo | null {
   if (typeof window === 'undefined') {
     return null;
@@ -88,11 +89,6 @@ export function getAuthInfoFromBrowserCookie(): AuthInfo | null {
 
   try {
     const cookies = parseDocumentCookies();
-
-    const authCookie = cookies['auth'];
-    if (authCookie) {
-      return parseAuthInfo(authCookie);
-    }
 
     const userInfoCookie = cookies['user_info'];
     if (userInfoCookie) {
