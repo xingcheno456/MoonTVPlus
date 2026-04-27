@@ -3,9 +3,8 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
 import {
   deleteSourceScript,
   getDefaultSourceScriptTemplate,
@@ -19,7 +18,7 @@ import {
 export const runtime = 'nodejs';
 
 async function assertAdmin(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
     throw new Error('不支持本地存储进行管理员配置');
   }
@@ -61,7 +60,7 @@ export async function GET(request: NextRequest) {
           'Cache-Control': 'no-store',
         },
       });
-  } catch (error) {
+  } catch (_error) {
     return apiError('获取脚本列表失败', 500);
   }
 }

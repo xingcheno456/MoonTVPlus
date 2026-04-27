@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
+ 
 
 import { Loader2, Search } from 'lucide-react';
 import { Suspense, useEffect, useRef, useState } from 'react';
@@ -10,6 +10,8 @@ import { SearchResult } from '@/lib/types';
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
+
+import { logger } from '../../lib/logger';
 
 interface Category {
   id: string;
@@ -49,7 +51,7 @@ function SourceSearchPageClient() {
           }
         }
       } catch (error) {
-        console.error('Failed to load API sources:', error);
+        logger.error('Failed to load API sources:', error);
       } finally {
         setIsLoadingSources(false);
       }
@@ -82,7 +84,7 @@ function SourceSearchPageClient() {
           }
         }
       } catch (error) {
-        console.error('Failed to load categories:', error);
+        logger.error('Failed to load categories:', error);
       } finally {
         setIsLoadingCategories(false);
       }
@@ -111,7 +113,7 @@ function SourceSearchPageClient() {
           setHasMore(data.page < data.pageCount);
         }
       } catch (error) {
-        console.error('Failed to load videos:', error);
+        logger.error('Failed to load videos:', error);
       } finally {
         setIsLoadingVideos(false);
       }
@@ -140,7 +142,7 @@ function SourceSearchPageClient() {
           setHasMore(data.page < data.pageCount);
         }
       } catch (error) {
-        console.error('Failed to search videos:', error);
+        logger.error('Failed to search videos:', error);
       } finally {
         setIsLoadingVideos(false);
       }

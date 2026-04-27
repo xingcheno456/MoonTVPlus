@@ -1,10 +1,10 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -42,14 +42,14 @@ export async function POST(request: NextRequest) {
       const decodedBytes = bs58.decode(configContent);
       decodedContent = new TextDecoder().decode(decodedBytes);
     } catch (decodeError) {
-      console.warn('Base58 解码失败', decodeError);
+      logger.warn('Base58 解码失败', decodeError);
       throw decodeError;
     }
 
     return apiSuccess({ configContent: decodedContent,
       message: '配置拉取成功', });
   } catch (error) {
-    console.error('拉取配置失败:', error);
+    logger.error('拉取配置失败:', error);
     return apiError('拉取配置失败', 500);
   }
 }

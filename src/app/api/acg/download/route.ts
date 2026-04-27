@@ -2,10 +2,11 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
     return apiSuccess({ message: '已添加到离线下载队列',
       path: downloadPath, });
   } catch (error: any) {
-    console.error('添加离线下载任务失败:', error);
+    logger.error('添加离线下载任务失败:', error);
     return apiError(error.message || '添加离线下载任务失败', 500);
   }
 }

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { MangaRecommendType } from '@/lib/manga.types';
 import { suwayomiClient } from '@/lib/suwayomi.client';
 

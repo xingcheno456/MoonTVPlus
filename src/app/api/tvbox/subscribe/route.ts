@@ -1,12 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { getCachedLiveChannels } from '@/lib/live';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
   if (globalToken && token === globalToken) {
     // 全局token（管理员订阅）
     isGlobalToken = true;
-    console.log('使用全局token访问TVBox订阅');
+    logger.info('使用全局token访问TVBox订阅');
   } else {
     // 用户token，查询用户名
     username = (await db.getUsernameByTvboxToken(token)) || undefined;
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       return apiError('用户已被封禁', 403);
     }
 
-    console.log(`用户 ${username} 访问TVBox订阅`);
+    logger.info(`用户 ${username} 访问TVBox订阅`);
   }
 
   try {
@@ -64,10 +64,6 @@ export async function GET(request: NextRequest) {
     // 获取视频源
     // 全局token返回所有源，用户token返回该用户有权限的源
     const apiSites = await getAvailableApiSites(username);
-
-    // 获取直播源
-    const liveConfig =
-      config.LiveConfig?.filter((live) => !live.disabled) || [];
 
     // 获取当前请求的 origin，用于构建代理链接
     // 优先级：SITE_BASE 环境变量 > origin 参数 > 从请求头构建
@@ -85,7 +81,7 @@ export async function GET(request: NextRequest) {
       baseUrl = `${proto}://${host}`;
     }
 
-    console.log(
+    logger.info(
       'TVBOX 订阅 baseUrl:',
       baseUrl,
       'adFilter:',
@@ -162,29 +158,7 @@ export async function GET(request: NextRequest) {
       ],
 
       // 直播源
-      lives: await Promise.all(
-        liveConfig.map(async (live) => {
-          try {
-            const liveChannels = await getCachedLiveChannels(live.key);
-            return {
-              name: live.name,
-              type: 0,
-              url: live.url,
-              epg: live.epg || liveChannels?.epgUrl || '',
-              logo: '',
-            };
-          } catch (error) {
-            return {
-              name: live.name,
-              type: 0,
-              playerType: 1,
-              url: live.url,
-              epg: live.epg || '',
-              logo: '',
-            };
-          }
-        }),
-      ),
+      lives: [],
 
       // 解析器
       parses: [],
@@ -207,7 +181,7 @@ export async function GET(request: NextRequest) {
       tvboxSubscription.sites = tvboxSubscription.sites.filter(
         (site) => !blockedSources.includes(site.key),
       );
-      console.log('TVBOX 订阅已屏蔽源:', blockedSources);
+      logger.info('TVBOX 订阅已屏蔽源:', blockedSources);
     }
 
     return apiSuccess(tvboxSubscription, {
@@ -217,7 +191,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('生成TVBOX订阅失败:', error);
+    logger.error('生成TVBOX订阅失败:', error);
     return apiSuccess({
         error: '生成订阅失败',
         details: (error as Error).message,

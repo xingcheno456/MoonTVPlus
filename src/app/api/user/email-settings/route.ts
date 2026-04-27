@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getStorage } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
       emailNotifications,
     });
   } catch (error) {
-    console.error('获取用户邮箱设置失败:', error);
+    logger.error('获取用户邮箱设置失败:', error);
     return apiError((error as Error).message, 500);
   }
 }
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess({ message: '邮箱设置保存成功', });
   } catch (error) {
-    console.error('保存用户邮箱设置失败:', error);
+    logger.error('保存用户邮箱设置失败:', error);
     return apiError((error as Error).message, 500);
   }
 }

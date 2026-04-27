@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
@@ -14,6 +13,8 @@ import {
   MetaInfo,
   setCachedMetaInfo,
 } from '@/lib/openlist-cache';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -72,14 +73,14 @@ export async function POST(request: NextRequest) {
 
     if (!metaInfo) {
       try {
-        console.log('[OpenList Correct] 尝试从数据库读取 metainfo');
+        logger.info('[OpenList Correct] 尝试从数据库读取 metainfo');
         const metainfoJson = await db.getGlobalValue('video.metainfo');
 
         if (metainfoJson) {
           metaInfo = JSON.parse(metainfoJson);
         }
       } catch (error) {
-        console.error('[OpenList Correct] 从数据库读取 metainfo 失败:', error);
+        logger.error('[OpenList Correct] 从数据库读取 metainfo 失败:', error);
         return apiError('metainfo 读取失败', 500);
       }
     }
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess({ message: '纠错成功', });
   } catch (error) {
-    console.error('视频纠错失败:', error);
+    logger.error('视频纠错失败:', error);
     return apiError('纠错失败: ' + (error as Error).message, 500);
   }
 }

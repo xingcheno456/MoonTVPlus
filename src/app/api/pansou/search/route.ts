@@ -1,11 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getConfig } from '@/lib/config';
 import { PansouLink, searchPansou } from '@/lib/pansou.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     const username = config.SiteConfig.PansouUsername;
     const password = config.SiteConfig.PansouPassword;
 
-    console.log('Pansou 搜索请求:', {
+    logger.info('Pansou 搜索请求:', {
       keyword,
       apiUrl: apiUrl ? '已配置' : '未配置',
       hasAuth: !!(username && password),
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    console.log('Pansou 搜索结果:', {
+    logger.info('Pansou 搜索结果:', {
       total: filteredResults.total,
       hasData: !!filteredResults.merged_by_type,
       types: filteredResults.merged_by_type
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess(filteredResults);
   } catch (error: any) {
-    console.error('Pansou 搜索失败:', error);
+    logger.error('Pansou 搜索失败:', error);
     return apiError(error.message || '搜索失败', 500);
   }
 }

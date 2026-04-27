@@ -1,10 +1,11 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Redis } from '@upstash/redis';
 
-import { isUpstashError, withRetry } from './retry';
+import { logger } from './logger';
 import { UpstashRedisAdapter } from './redis-adapter';
 import { BaseRedisStorage } from './redis-base.db';
+import { isUpstashError, withRetry } from './retry';
 
 const createUpstashRetry = () => {
   return <T>(fn: () => Promise<T>, maxRetries?: number) => {
@@ -53,7 +54,7 @@ function getUpstashRedisClient(): Redis {
       },
     });
 
-    console.log('Upstash Redis client created successfully');
+    logger.info('Upstash Redis client created successfully');
 
     (global as any)[globalKey] = client;
   }

@@ -1,9 +1,7 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
@@ -14,6 +12,8 @@ import {
   setCachedMetaInfo,
 } from '@/lib/openlist-cache';
 import { getTMDBImageUrl } from '@/lib/tmdb.search';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -84,14 +84,14 @@ export async function GET(request: NextRequest) {
               setCachedMetaInfo(metaInfo);
             }
           } catch (parseError) {
-            console.error('[OpenList List] JSON 解析或验证失败:', parseError);
+            logger.error('[OpenList List] JSON 解析或验证失败:', parseError);
             throw new Error(`JSON 解析失败: ${(parseError as Error).message}`);
           }
         } else {
           throw new Error('数据库中没有 metainfo 数据');
         }
       } catch (error) {
-        console.error('[OpenList List] 从数据库读取 metainfo 失败:', error);
+        logger.error('[OpenList List] 从数据库读取 metainfo 失败:', error);
         return apiSuccess({
             error: 'metainfo 读取失败',
             details: (error as Error).message,
@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
       pageSize,
       totalPages: Math.ceil(total / pageSize), });
   } catch (error) {
-    console.error('获取视频列表失败:', error);
+    logger.error('获取视频列表失败:', error);
     return apiSuccess({
         error: '获取失败',
         details: (error as Error).message,

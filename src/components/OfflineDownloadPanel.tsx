@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { logger } from '../lib/logger';
+
 interface OfflineDownloadTask {
   id: string;
   source: string;
@@ -56,7 +58,7 @@ export function OfflineDownloadPanel({
         setTasks(data.tasks || []);
       }
     } catch (error) {
-      console.error('获取离线下载任务列表失败:', error);
+      logger.error('获取离线下载任务列表失败:', error);
     }
   };
 
@@ -75,7 +77,7 @@ export function OfflineDownloadPanel({
         alert(`删除失败: ${data.error}`);
       }
     } catch (error) {
-      console.error('删除任务失败:', error);
+      logger.error('删除任务失败:', error);
       alert('删除任务失败');
     }
   };
@@ -112,7 +114,7 @@ export function OfflineDownloadPanel({
         alert(`重试失败: ${data.error}`);
       }
     } catch (error) {
-      console.error('重试任务失败:', error);
+      logger.error('重试任务失败:', error);
       alert('重试任务失败');
     }
   };

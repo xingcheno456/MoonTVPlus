@@ -1,16 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextRequest } from 'next/server';
-
-import { apiError, apiSuccess } from '@/lib/api-response';
 import { promisify } from 'util';
 import { gunzip } from 'zlib';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { configSelfCheck, setCachedConfig } from '@/lib/config';
 import { SimpleCrypto } from '@/lib/crypto';
-import { db } from '@/lib/db';
-import { updateProgress, clearProgress } from '@/lib/data-migration-progress';
+import { clearProgress,updateProgress } from '@/lib/data-migration-progress';
+import { db, STORAGE_TYPE } from '@/lib/db';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -19,7 +20,7 @@ const gunzipAsync = promisify(gunzip);
 export async function POST(req: NextRequest) {
   try {
     // 检查存储类型
-    const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+    const storageType = STORAGE_TYPE;
     if (storageType === 'localstorage') {
       return apiError('不支持本地存储进行数据迁移', 400);
     }
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest) {
     for (const user of existingUsers.users) {
       await db.deleteUserV2(user.username);
     }
-    console.log(`已清除 ${existingUsers.users.length} 个现有V2用户`);
+    logger.info(`已清除 ${existingUsers.users.length} 个现有V2用户`);
 
     // 导入管理员配置
     importData.data.adminConfig = configSelfCheck(importData.data.adminConfig);
@@ -106,9 +107,9 @@ export async function POST(req: NextRequest) {
     // 清除短剧视频源缓存（因为导入的配置可能包含不同的视频源）
     try {
       await db.deleteGlobalValue('duanju');
-      console.log('已清除短剧视频源缓存');
+      logger.info('已清除短剧视频源缓存');
     } catch (error) {
-      console.error('清除短剧视频源缓存失败:', error);
+      logger.error('清除短剧视频源缓存失败:', error);
       // 不影响主流程，继续执行
     }
 
@@ -121,7 +122,7 @@ export async function POST(req: NextRequest) {
     );
 
     const userCount = Object.keys(userData).length;
-    console.log(`准备导入 ${userCount} 个用户的数据`);
+    logger.info(`准备导入 ${userCount} 个用户的数据`);
     updateProgress(
       username,
       'import',
@@ -141,7 +142,7 @@ export async function POST(req: NextRequest) {
 
     for (let i = 0; i < usernames.length; i += CHUNK_SIZE) {
       const chunk = usernames.slice(i, i + CHUNK_SIZE);
-      console.log(
+      logger.info(
         `处理第 ${Math.floor(i / CHUNK_SIZE) + 1} 批用户 (${chunk.length} 个)`,
       );
       updateProgress(
@@ -191,9 +192,9 @@ export async function POST(req: NextRequest) {
                   userV2?.enabledApis,
                   userV2?.banned,
                 );
-                console.log(`用户 ${username} 导入成功 (D1)`);
+                logger.info(`用户 ${username} 导入成功 (D1)`);
               } else {
-                console.error(
+                logger.error(
                   `D1 storage 缺少 createUserWithHashedPassword 方法`,
                 );
                 return false;
@@ -211,9 +212,9 @@ export async function POST(req: NextRequest) {
                   userV2?.enabledApis,
                   userV2?.banned,
                 );
-                console.log(`用户 ${username} 导入成功 (Postgres)`);
+                logger.info(`用户 ${username} 导入成功 (Postgres)`);
               } else {
-                console.error(
+                logger.error(
                   `Postgres storage 缺少 createUserWithHashedPassword 方法`,
                 );
                 return false;
@@ -257,10 +258,10 @@ export async function POST(req: NextRequest) {
                 );
               }
 
-              console.log(`用户 ${username} 导入成功 (Redis)`);
+              logger.info(`用户 ${username} 导入成功 (Redis)`);
             }
           } else {
-            console.log(`跳过用户 ${username}：没有passwordV2`);
+            logger.info(`跳过用户 ${username}：没有passwordV2`);
             return false;
           }
 
@@ -428,7 +429,7 @@ export async function POST(req: NextRequest) {
 
           return true;
         } catch (error) {
-          console.error(`导入用户 ${username} 失败:`, error);
+          logger.error(`导入用户 ${username} 失败:`, error);
           return false;
         }
       });
@@ -437,7 +438,7 @@ export async function POST(req: NextRequest) {
       const results = await Promise.all(importPromises);
       importedCount += results.filter((r) => r).length;
 
-      console.log(`已完成 ${importedCount}/${userCount} 个用户`);
+      logger.info(`已完成 ${importedCount}/${userCount} 个用户`);
       updateProgress(
         username,
         'import',
@@ -448,7 +449,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log(`成功导入 ${importedCount} 个用户的user:info`);
+    logger.info(`成功导入 ${importedCount} 个用户的user:info`);
     updateProgress(
       username,
       'import',
@@ -470,7 +471,7 @@ export async function POST(req: NextRequest) {
           : '未知版本',
     });
   } catch (error) {
-    console.error('数据导入失败:', error);
+    logger.error('数据导入失败:', error);
     // 清除进度信息
     const authInfo = getAuthInfoFromCookie(req);
     if (authInfo?.username) {

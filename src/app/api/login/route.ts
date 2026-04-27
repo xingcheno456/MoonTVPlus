@@ -1,27 +1,23 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { parseAuthInfo } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { db } from '@/lib/db';
+import { generateHmacSignature } from '@/lib/crypto';
+import { db, STORAGE_TYPE } from '@/lib/db';
 import {
   generateRefreshToken,
   generateTokenId,
   storeRefreshToken,
   TOKEN_CONFIG,
 } from '@/lib/refresh-token';
+import { loginBodySchema } from '@/lib/api-schemas';
+import { parseJsonBody } from '@/lib/api-validation';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
-
-// 读取存储类型环境变量，默认 localstorage
-const STORAGE_TYPE =
-  (process.env.NEXT_PUBLIC_STORAGE_TYPE as
-    | 'localstorage'
-    | 'redis'
-    | 'upstash'
-    | 'kvrocks'
-    | undefined) || 'localstorage';
 
 function buildLoginResponse(authToken?: string | null) {
   const data: Record<string, unknown> = {};
@@ -38,55 +34,28 @@ function buildLoginResponse(authToken?: string | null) {
   return apiSuccess(data);
 }
 
-// 生成签名
-async function generateSignature(
-  data: string,
-  secret: string,
-): Promise<string> {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-  const messageData = encoder.encode(data);
-
-  // 导入密钥
-  const key = await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-
-  // 生成签名
-  const signature = await crypto.subtle.sign('HMAC', key, messageData);
-
-  // 转换为十六进制字符串
-  return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
 // 生成认证Cookie（带签名和 Refresh Token）
 async function generateAuthCookie(
   username?: string,
+  /** @deprecated Password is never stored in cookies. Retained for backward compatibility only. */
   password?: string,
   role?: 'owner' | 'admin' | 'user',
-  includePassword = false,
+  /** @deprecated IncludePassword is no longer used. HMAC signature is used instead. Will be removed in next major version. */
+  includePassword?: boolean,
   deviceInfo?: string,
 ): Promise<string> {
   const now = Date.now();
   const authData: any = { role: role || 'user' };
 
-  // 只在需要时包含 password
-  if (includePassword && password) {
-    authData.password = password;
-  }
+  // note: includePassword parameter is retained for backward compatibility
+  // but password is NEVER stored in the cookie — only validated server-side
 
   if (username && process.env.PASSWORD) {
     authData.username = username;
     authData.timestamp = now; // Access Token 时间戳
 
     // 生成 Refresh Token（仅数据库模式）
-    if (!includePassword && STORAGE_TYPE !== 'localstorage') {
+    if (STORAGE_TYPE !== 'localstorage') {
       const tokenId = generateTokenId();
       const refreshToken = generateRefreshToken();
       const refreshExpires = now + TOKEN_CONFIG.REFRESH_TOKEN_AGE;
@@ -105,7 +74,7 @@ async function generateAuthCookie(
           lastUsed: now,
         });
       } catch (error) {
-        console.error('Failed to store refresh token:', error);
+        logger.error('Failed to store refresh token:', error);
       }
     }
 
@@ -115,7 +84,7 @@ async function generateAuthCookie(
       role: authData.role,
       timestamp: authData.timestamp,
     });
-    const signature = await generateSignature(dataToSign, process.env.PASSWORD);
+    const signature = await generateHmacSignature(dataToSign, process.env.PASSWORD);
     authData.signature = signature;
   }
 
@@ -145,7 +114,7 @@ async function verifyTurnstileToken(
     const data = await response.json();
     return data.success === true;
   } catch (error) {
-    console.error('Turnstile验证失败:', error);
+    logger.error('Turnstile验证失败:', error);
     return false;
   }
 }
@@ -201,16 +170,15 @@ export async function POST(req: NextRequest) {
           path: '/',
           expires: new Date(0),
           sameSite: 'lax',
-          httpOnly: false,
+          httpOnly: true,
         });
 
         return response;
       }
 
-      const { password } = await req.json();
-      if (typeof password !== 'string') {
-        return apiError('密码不能为空', 400);
-      }
+      const bodyResult = await parseJsonBody(req, loginBodySchema);
+      if ('error' in bodyResult) return bodyResult.error;
+      const { password } = bodyResult.data;
 
       if (password !== envPassword) {
         return apiError('密码错误', 401);
@@ -225,7 +193,7 @@ export async function POST(req: NextRequest) {
         'owner',
         true,
         deviceInfo,
-      ); // localstorage 模式包含 password
+      );
       const response = buildLoginResponse(cookieValue);
       const expires = new Date();
       expires.setDate(expires.getDate() + 60); // 60天过期（Refresh Token 有效期）
@@ -234,21 +202,20 @@ export async function POST(req: NextRequest) {
         path: '/',
         expires,
         sameSite: 'lax',
-        httpOnly: false, // 允许客户端访问
-        secure: false,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
       });
 
       return response;
     }
 
     // 数据库 / redis 模式——校验用户名并尝试连接数据库
-    const { username, password, turnstileToken } = await req.json();
+    const bodyResult = await parseJsonBody(req, loginBodySchema);
+    if ('error' in bodyResult) return bodyResult.error;
+    const { username, password, turnstileToken } = bodyResult.data;
 
-    if (!username || typeof username !== 'string') {
+    if (!username) {
       return apiError('用户名不能为空', 400);
-    }
-    if (!password || typeof password !== 'string') {
-      return apiError('密码不能为空', 400);
     }
 
     // 如果开启了Turnstile验证
@@ -258,7 +225,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (!siteConfig.TurnstileSecretKey) {
-        console.error('Turnstile Secret Key未配置');
+        logger.error('Turnstile Secret Key未配置');
         return apiError('服务器配置错误', 500);
       }
 
@@ -285,7 +252,7 @@ export async function POST(req: NextRequest) {
         'owner',
         false,
         deviceInfo,
-      ); // 数据库模式不包含 password
+      );
       const response = buildLoginResponse(cookieValue);
       const expires = new Date();
       expires.setDate(expires.getDate() + 60); // 60天过期（Refresh Token 有效期）
@@ -294,8 +261,8 @@ export async function POST(req: NextRequest) {
         path: '/',
         expires,
         sameSite: 'lax',
-        httpOnly: false, // 允许客户端访问
-        secure: false,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
       });
 
       return response;
@@ -335,7 +302,7 @@ export async function POST(req: NextRequest) {
       userRole,
       false,
       deviceInfo,
-    ); // 数据库模式不包含 password
+    );
     const response = buildLoginResponse(cookieValue);
     const expires = new Date();
     expires.setDate(expires.getDate() + 60); // 60天过期（Refresh Token 有效期）
@@ -344,14 +311,15 @@ export async function POST(req: NextRequest) {
       path: '/',
       expires,
       sameSite: 'lax',
-      httpOnly: false, // 允许客户端访问
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
     });
 
-    console.log(`Cookie已设置`);
+    logger.info(`Cookie已设置`);
 
     return response;
   } catch (error) {
-    console.error('登录接口异常', error);
+    logger.error('登录接口异常', error);
     return apiError('服务器错误', 500);
   }
 }

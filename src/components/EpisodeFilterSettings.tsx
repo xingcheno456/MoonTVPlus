@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 import { Plus, ToggleLeft, ToggleRight, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -11,6 +11,8 @@ import {
 } from '@/lib/db.client';
 import { normalizeEpisodeFilterConfig } from '@/lib/episode-filter';
 import { EpisodeFilterConfig, EpisodeFilterRule } from '@/lib/types';
+
+import { logger } from '../lib/logger';
 
 interface EpisodeFilterSettingsProps {
   isOpen: boolean;
@@ -141,7 +143,7 @@ export default function EpisodeFilterSettings({
         setConfig(normalizeEpisodeFilterConfig());
       }
     } catch (error) {
-      console.error('加载集数过滤配置失败:', error);
+      logger.error('加载集数过滤配置失败:', error);
     } finally {
       setLoading(false);
     }
@@ -181,7 +183,7 @@ export default function EpisodeFilterSettings({
         onClose();
       }, 300);
     } catch (error) {
-      console.error('保存集数过滤配置失败:', error);
+      logger.error('保存集数过滤配置失败:', error);
       if (onShowToast) {
         onShowToast('保存失败，请重试', 'error');
       }

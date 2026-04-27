@@ -1,12 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getTMDBCredits } from '@/lib/tmdb.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess(response.credits);
   } catch (error) {
-    console.error('TMDB演职人员信息获取失败:', error);
+    logger.error('TMDB演职人员信息获取失败:', error);
     return apiError('获取演职人员信息失败: ' + (error as Error).message, 500);
   }
 }

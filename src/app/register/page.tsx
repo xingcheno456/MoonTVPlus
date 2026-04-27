@@ -7,8 +7,8 @@ import {
   CheckCircle,
   Eye,
   EyeOff,
-  User,
   Lock,
+  User,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';

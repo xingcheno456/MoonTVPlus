@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
-
-import { apiError, apiSuccess } from '@/lib/api-response';
 import { parseStringPromise } from 'xml2js';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getMagnetBaseUrl, universalMagnetFetch } from '@/lib/magnet.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -126,7 +127,7 @@ export async function POST(req: NextRequest) {
       items: results,
     });
   } catch (error: any) {
-    console.error('DMHY 搜索失败:', error);
+    logger.error('DMHY 搜索失败:', error);
     return apiError(error.message || '搜索失败', 500);
   }
 }

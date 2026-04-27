@@ -1,13 +1,13 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { MusicPlayRecord } from '@/lib/db.client';
 import { getCachedSongs, setCachedSong } from '@/lib/music-song-cache';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess(enrichedRecords, { status: 200 });
   } catch (err) {
-    console.error('获取音乐播放记录失败', err);
+    logger.error('获取音乐播放记录失败', err);
     return apiError('Internal Server Error', 500);
   }
 }
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
       return apiSuccess({ success: true }, { status: 200 });
     }
   } catch (err) {
-    console.error('保存音乐播放记录失败', err);
+    logger.error('保存音乐播放记录失败', err);
     return apiError('Internal Server Error', 500);
   }
 }
@@ -197,7 +197,7 @@ export async function DELETE(request: NextRequest) {
 
     return apiSuccess({ success: true }, { status: 200 });
   } catch (err) {
-    console.error('删除音乐播放记录失败', err);
+    logger.error('删除音乐播放记录失败', err);
     return apiError('Internal Server Error', 500);
   }
 }

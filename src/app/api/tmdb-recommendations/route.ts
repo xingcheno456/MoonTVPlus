@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getConfig } from '@/lib/config';
 import {
   getTMDBImageUrl,
@@ -9,6 +8,8 @@ import {
   getTMDBTVRecommendations,
   searchTMDBMulti,
 } from '@/lib/tmdb.client';
+
+import { logger } from '../../../lib/logger';
 
 // 服务器端缓存（1天）
 const searchCache = new Map<string, { data: any; timestamp: number }>();
@@ -191,7 +192,7 @@ export async function GET(request: NextRequest) {
         },
       });
   } catch (error) {
-    console.error('获取 TMDB 推荐失败:', error);
+    logger.error('获取 TMDB 推荐失败:', error);
     return apiError('获取推荐失败', 500);
   }
 }

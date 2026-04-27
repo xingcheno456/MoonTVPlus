@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * Vercel Postgres Storage Implementation
@@ -9,6 +9,7 @@
  */
 
 import { DatabaseAdapter } from './d1-adapter';
+import { logger } from './logger';
 import { SQLStorageBase } from './sql-base.db';
 
 /**
@@ -45,7 +46,7 @@ export class PostgresStorage extends SQLStorageBase {
 
       return result.results.map((row: any) => row.username as string);
     } catch (err) {
-      console.error('PostgresStorage.getUsersByTag error:', err);
+      logger.error('PostgresStorage.getUsersByTag error:', err);
       return [];
     }
   }
@@ -72,7 +73,7 @@ export class PostgresStorage extends SQLStorageBase {
         .bind(Date.now(), playlistId)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.updatePlaylistSongOrder error:', err);
+      logger.error('PostgresStorage.updatePlaylistSongOrder error:', err);
       throw err;
     }
   }

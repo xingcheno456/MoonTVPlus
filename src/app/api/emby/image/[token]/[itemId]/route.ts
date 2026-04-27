@@ -1,11 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+ 
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
+import { apiError } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
+
+import { logger } from '../../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -97,6 +99,11 @@ export async function GET(
       'User-Agent': client.getUserAgent(),
     };
 
+    const isSafeUrl = await validateProxyUrlServerSide(imageUrl);
+    if (!isSafeUrl) {
+      return apiError('Proxy request to local or invalid network is forbidden', 403);
+    }
+
     // 创建 AbortController 用于超时控制
     const abortController = new AbortController();
     const timeoutId = setTimeout(() => abortController.abort(), 20000); // 20秒超时
@@ -112,7 +119,7 @@ export async function GET(
       clearTimeout(timeoutId);
 
       if (!imageResponse.ok) {
-        console.error('[Emby Image] 获取图片失败:', {
+        logger.error('[Emby Image] 获取图片失败:', {
           itemId,
           imageType,
           status: imageResponse.status,
@@ -148,13 +155,13 @@ export async function GET(
       clearTimeout(timeoutId);
 
       if (error instanceof Error && error.name === 'AbortError') {
-        console.error('[Emby Image] 请求超时');
+        logger.error('[Emby Image] 请求超时');
         return apiError('请求超时', 504);
       }
       throw error;
     }
   } catch (error) {
-    console.error('[Emby Image] 错误:', error);
+    logger.error('[Emby Image] 错误:', error);
     return apiError('获取图片失败: ' + (error as Error).message, 500);
   }
 }

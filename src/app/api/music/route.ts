@@ -3,11 +3,46 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
+import { safeMathEval, safeEvalMathExpression } from '@/lib/safe-math-eval';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
+
+function safeResolveTransformPath(data: any, expr: string): any {
+  const trimmed = expr.replace(/^return\s+/, '').trim();
+  if (!trimmed.startsWith('data')) {
+    throw new Error('Transform must start with "data"');
+  }
+  const pathStr = trimmed.slice(4);
+  if (pathStr.length === 0) return data;
+  const PROPERTY_ACCESS_REGEX = /^(\.[a-zA-Z_$][a-zA-Z0-9_$]*|\[\s*"[^"]+"\s*\])/g;
+  let match;
+  let current = data;
+  let lastIndex = 0;
+  while ((match = PROPERTY_ACCESS_REGEX.exec(pathStr)) !== null) {
+    if (match.index !== lastIndex) {
+      throw new Error(`Invalid transform expression at position ${match.index}`);
+    }
+    lastIndex = match.index + match[0].length;
+    const segment = match[0];
+    if (segment.startsWith('.')) {
+      const key = segment.slice(1);
+      current = current?.[key];
+    } else {
+      const keyMatch = segment.match(/^\[\s*"([^"]+)"\s*\]$/);
+      if (!keyMatch) throw new Error(`Invalid bracket access: ${segment}`);
+      current = current?.[keyMatch[1]];
+    }
+    if (current === undefined || current === null) return current;
+  }
+  if (lastIndex !== pathStr.length) {
+    throw new Error(`Trailing characters in transform: "${pathStr.slice(lastIndex)}"`);
+  }
+  return current;
+}
 
 // 检测是否为 Cloudflare 环境
 const isCloudflare =
@@ -84,7 +119,7 @@ async function cacheAudioToOpenList(
       const audioResponse = await fetch(audioUrl);
 
       if (!audioResponse.ok) {
-        console.error('[Music Cache] 下载音频失败:', audioResponse.status);
+        logger.error('[Music Cache] 下载音频失败:', audioResponse.status);
         return;
       }
 
@@ -109,7 +144,7 @@ async function cacheAudioToOpenList(
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
-        console.error(
+        logger.error(
           '[Music Cache] 上传音频失败:',
           uploadResponse.status,
           errorText,
@@ -117,7 +152,7 @@ async function cacheAudioToOpenList(
         return;
       }
     } catch (error) {
-      console.error('[Music Cache] 缓存音频到 OpenList 失败:', error);
+      logger.error('[Music Cache] 缓存音频到 OpenList 失败:', error);
     } finally {
       downloadingTasks.delete(taskKey);
     }
@@ -190,7 +225,7 @@ async function replaceAudioUrlsWithOpenList(
           quality,
           cachePath,
         ).catch((error) => {
-          console.error('[Music Cache] 异步缓存音频失败:', error);
+          logger.error('[Music Cache] 异步缓存音频失败:', error);
         });
       }
     } catch (error) {
@@ -204,7 +239,7 @@ async function replaceAudioUrlsWithOpenList(
         quality,
         cachePath,
       ).catch((err) => {
-        console.error('[Music Cache] 异步缓存音频失败:', err);
+        logger.error('[Music Cache] 异步缓存音频失败:', err);
       });
     }
   }
@@ -229,7 +264,7 @@ async function proxyRequest(
 
     return response;
   } catch (error) {
-    console.error('TuneHub API 请求失败:', error);
+    logger.error('TuneHub API 请求失败:', error);
     throw error;
   }
 }
@@ -273,64 +308,16 @@ async function executeMethod(
     evalContext[key] = isNaN(numValue) ? value : numValue;
   }
 
-  // 递归处理对象中的模板变量
+  // 递归处理对象中的模板变量（使用安全求值器，无 new Function/eval）
   function processTemplateValue(value: any): any {
     if (typeof value === 'string') {
-      // 处理包含模板变量的表达式
       const expressionRegex = /\{\{(.+?)\}\}/g;
-      return value.replace(expressionRegex, (match, expression) => {
+      return value.replace(expressionRegex, (_match, expression) => {
         try {
-          // 在 Cloudflare 环境下，使用简单的表达式替换
-          if (isCloudflare) {
-            const expr = expression.trim();
-
-            // 检查是否是单个变量（没有运算符）
-            if (evalContext.hasOwnProperty(expr)) {
-              // 直接返回变量值
-              return String(evalContext[expr]);
-            }
-
-            // 处理包含运算的表达式（如 page - 1）
-            let result: any = expr;
-
-            // 替换变量为其值
-            for (const [key, val] of Object.entries(evalContext)) {
-              const regex = new RegExp(`\\b${key}\\b`, 'g');
-              // 对于数字直接替换，对于字符串需要加引号以便 eval
-              const replacement =
-                typeof val === 'number'
-                  ? String(val)
-                  : `"${String(val).replace(/"/g, '\\"')}"`;
-              result = result.replace(regex, replacement);
-            }
-
-            // 尝试计算表达式
-            try {
-              // eslint-disable-next-line no-eval
-              result = eval(result);
-            } catch (err) {
-              console.error(
-                `[executeMethod] Cloudflare 环境执行表达式失败: ${expr}`,
-                err,
-              );
-              // 如果计算失败，尝试直接返回替换后的结果（去掉可能的引号）
-              result = result.replace(/^["']|["']$/g, '');
-            }
-
-            return String(result);
-          } else {
-            // 在 Node.js 环境下，使用 Function 构造器
-            // eslint-disable-next-line no-new-func
-            const func = new Function(
-              ...Object.keys(evalContext),
-              `return ${expression}`,
-            );
-            const result = func(...Object.values(evalContext));
-            return String(result);
-          }
+return safeEvalMathExpression(expression, evalContext);
         } catch (err) {
-          console.error(`[executeMethod] 执行表达式失败: ${expression}`, err);
-          return '0'; // 默认值
+          logger.error(`[executeMethod] 表达式处理失败: ${expression}`, err);
+          return '0';
         }
       });
     } else if (Array.isArray(value)) {
@@ -386,18 +373,17 @@ async function executeMethod(
 
   // 5. 执行 transform 函数（如果有）
   if (config.transform) {
-    // 在 Cloudflare 环境下，将 transform 函数返回给前端执行
-    if (isCloudflare) {
-      // 将 transform 函数字符串附加到响应数据中
-      data.__transform = config.transform;
+    const MAX_TRANSFORM_LENGTH = 200;
+
+    if (config.transform.length > MAX_TRANSFORM_LENGTH) {
+      logger.error(
+        `[executeMethod] Transform 函数过长 (${config.transform.length} > ${MAX_TRANSFORM_LENGTH})，拒绝执行`,
+      );
     } else {
-      // 在 Node.js 环境下，直接执行 transform
-      try {
-        // eslint-disable-next-line no-eval
-        const transformFn = eval(`(${config.transform})`);
-        data = transformFn(data);
+try {
+        data = safeResolveTransformPath(data, config.transform);
       } catch (err) {
-        console.error('[executeMethod] Transform 函数执行失败:', err);
+        logger.error('[executeMethod] Transform 函数执行失败:', err);
       }
     }
   }
@@ -572,7 +558,7 @@ export async function GET(request: NextRequest) {
         return apiError('不支持的 action', 400);
     }
   } catch (error) {
-    console.error('音乐 API 错误:', error);
+    logger.error('音乐 API 错误:', error);
     return apiError(
       '请求失败: ' + (error as Error).message,
       500,
@@ -739,7 +725,7 @@ export async function POST(request: NextRequest) {
             openListClient
               .uploadFile(jsonPath, JSON.stringify(finalData, null, 2))
               .catch((error) => {
-                console.error(
+                logger.error(
                   '[Music Cache] 缓存解析结果到 OpenList 失败:',
                   error,
                 );
@@ -748,7 +734,7 @@ export async function POST(request: NextRequest) {
 
           return apiSuccess(finalData);
         } catch (error) {
-          console.error('解析歌曲失败:', error);
+          logger.error('解析歌曲失败:', error);
           return apiSuccess({
             code: -1,
             message: '解析请求失败',
@@ -761,7 +747,7 @@ export async function POST(request: NextRequest) {
         return apiError('不支持的 action', 400);
     }
   } catch (error) {
-    console.error('音乐 API 错误:', error);
+    logger.error('音乐 API 错误:', error);
     return apiSuccess({
         error: '请求失败',
         details: (error as Error).message,

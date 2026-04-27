@@ -1,8 +1,8 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { handleServiceError, validateAuthenticatedUser } from '@/services/auth.service';
 import {
   deleteFavorite,
@@ -10,6 +10,8 @@ import {
   getFavorite,
   saveFavorite,
 } from '@/services/playrecord.service';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -28,7 +30,7 @@ export async function GET(request: NextRequest) {
     const favorites = await getAllFavorites(username);
     return apiSuccess(favorites);
   } catch (err) {
-    console.error('获取收藏失败', err);
+    logger.error('获取收藏失败', err);
     return handleServiceError(err);
   }
 }
@@ -49,7 +51,7 @@ export async function POST(request: NextRequest) {
     if (err instanceof Error && (err.message === 'Invalid key format' || err.message === 'Invalid favorite data')) {
       return apiError(err.message, 400);
     }
-    console.error('保存收藏失败', err);
+    logger.error('保存收藏失败', err);
     return handleServiceError(err);
   }
 }
@@ -67,7 +69,7 @@ export async function DELETE(request: NextRequest) {
     if (err instanceof Error && err.message === 'Invalid key format') {
       return apiError(err.message, 400);
     }
-    console.error('删除收藏失败', err);
+    logger.error('删除收藏失败', err);
     return handleServiceError(err);
   }
 }

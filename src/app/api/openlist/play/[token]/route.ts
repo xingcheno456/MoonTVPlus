@@ -1,12 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+ 
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
+import { apiError } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -90,7 +91,7 @@ export async function GET(
     const fileResponse = await client.getFile(filePath);
 
     if (fileResponse.code !== 200 || !fileResponse.data.raw_url) {
-      console.error('[OpenList Play] 获取播放URL失败:', {
+      logger.error('[OpenList Play] 获取播放URL失败:', {
         fileName,
         code: fileResponse.code,
         message: fileResponse.message,
@@ -101,7 +102,7 @@ export async function GET(
     // 返回重定向到真实播放 URL
     return NextResponse.redirect(fileResponse.data.raw_url);
   } catch (error) {
-    console.error('获取播放链接失败:', error);
+    logger.error('获取播放链接失败:', error);
     return apiError('获取失败: ' + (error as Error).message, 500);
   }
 }

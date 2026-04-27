@@ -1,12 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getTMDBImages } from '@/lib/tmdb.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -60,11 +61,11 @@ export async function GET(request: NextRequest) {
       return apiError('TMDB 图片信息获取失败', response.code, String(response.code));
     }
 
-    const backdrops = (response.images.backdrops || []).map((item: any) => ({
+    const backdrops = ((response.images.backdrops as any[]) || []).map((item: any) => ({
       ...item,
       imageType: 'backdrop' as const,
     }));
-    const posters = (response.images.posters || []).map((item: any) => ({
+    const posters = ((response.images.posters as any[]) || []).map((item: any) => ({
       ...item,
       imageType: 'poster' as const,
     }));
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
       list,
     });
   } catch (error) {
-    console.error('TMDB图片信息获取失败:', error);
+    logger.error('TMDB图片信息获取失败:', error);
     return apiError('获取图片信息失败: ' + (error as Error).message, 500);
   }
 }

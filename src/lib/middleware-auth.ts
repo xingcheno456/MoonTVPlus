@@ -1,30 +1,7 @@
-/* eslint-disable no-console */
 
+import { generateHmacSignature } from './crypto';
+import { logger } from './logger';
 import { TOKEN_CONFIG, verifyRefreshToken } from './refresh-token';
-
-// 生成签名
-export async function generateSignatureForMiddleware(
-  data: string,
-  secret: string,
-): Promise<string> {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-  const messageData = encoder.encode(data);
-
-  const key = await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-
-  const signature = await crypto.subtle.sign('HMAC', key, messageData);
-
-  return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
 
 // 刷新 Access Token
 export async function refreshAccessToken(
@@ -34,24 +11,22 @@ export async function refreshAccessToken(
   refreshToken: string,
   refreshExpires: number,
 ): Promise<string | null> {
-  // 验证 Refresh Token
   const isValid = await verifyRefreshToken(username, tokenId, refreshToken);
 
   if (!isValid) {
-    console.log(`Refresh token invalid for ${username}:${tokenId}`);
+    logger.info(`Refresh token invalid for ${username}:${tokenId}`);
     return null;
   }
 
   const now = Date.now();
 
-  // 生成新的签名
   const dataToSign = JSON.stringify({
     username,
     role,
     timestamp: now,
   });
 
-  const signature = await generateSignatureForMiddleware(
+  const signature = await generateHmacSignature(
     dataToSign,
     process.env.PASSWORD || '',
   );
@@ -59,14 +34,14 @@ export async function refreshAccessToken(
   const authData = {
     username,
     role,
-    timestamp: now, // 新的 Access Token 时间戳
+    timestamp: now,
     tokenId,
     refreshToken,
     refreshExpires,
     signature,
   };
 
-  console.log(`Refreshed access token for ${username}`);
+  logger.info(`Refreshed access token for ${username}`);
 
   return encodeURIComponent(JSON.stringify(authData));
 }

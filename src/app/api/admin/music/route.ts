@@ -1,17 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, setCachedConfig } from '@/lib/config';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
     return apiSuccess({
         error: '不支持本地存储进行管理员配置',
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
         },
       });
   } catch (error) {
-    console.error('更新音乐配置失败:', error);
+    logger.error('更新音乐配置失败:', error);
     return apiSuccess({
         error: '更新音乐配置失败',
         details: (error as Error).message,

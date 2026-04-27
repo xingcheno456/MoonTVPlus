@@ -1,12 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { startOpenListRefresh } from '@/lib/openlist-refresh';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
     return apiSuccess({ taskId,
       message: '扫描任务已启动', });
   } catch (error) {
-    console.error('启动刷新任务失败:', error);
+    logger.error('启动刷新任务失败:', error);
     return apiError('启动失败: ' + (error as Error).message, 500);
   }
 }

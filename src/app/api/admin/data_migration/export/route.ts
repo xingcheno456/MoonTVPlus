@@ -1,16 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextRequest, NextResponse } from 'next/server';
-
-import { apiError, apiSuccess } from '@/lib/api-response';
 import { promisify } from 'util';
 import { gzip } from 'zlib';
 
+import { apiError } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { SimpleCrypto } from '@/lib/crypto';
-import { db } from '@/lib/db';
+import { clearProgress,updateProgress } from '@/lib/data-migration-progress';
+import { db, STORAGE_TYPE } from '@/lib/db';
 import { CURRENT_VERSION } from '@/lib/version';
-import { updateProgress, clearProgress } from '@/lib/data-migration-progress';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -19,7 +20,7 @@ const gzipAsync = promisify(gzip);
 export async function POST(req: NextRequest) {
   try {
     // 检查存储类型
-    const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+    const storageType = STORAGE_TYPE;
     if (storageType === 'localstorage') {
       return apiError('不支持本地存储进行数据迁移', 400);
     }
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
       process.env.USERNAME,
     );
     exportData.data.usersV2 = usersV2Result.users;
-    console.log(`从getUserListV2获取到 ${usersV2Result.users.length} 个用户`);
+    logger.info(`从getUserListV2获取到 ${usersV2Result.users.length} 个用户`);
 
     // 获取所有用户（getAllUsers返回的是V2用户）
     let allUsers = await db.getAllUsers();
@@ -81,10 +82,10 @@ export async function POST(req: NextRequest) {
       }
     });
     allUsers = Array.from(new Set(allUsers));
-    console.log(`准备导出 ${allUsers.length} 个V2用户（包括站长）`);
+    logger.info(`准备导出 ${allUsers.length} 个V2用户（包括站长）`);
 
     // 为每个用户收集数据（只导出V2用户）- 使用并行处理
-    console.log(`开始并行导出 ${allUsers.length} 个用户的数据...`);
+    logger.info(`开始并行导出 ${allUsers.length} 个用户的数据...`);
     updateProgress(
       username,
       'export',
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
 
     for (let i = 0; i < allUsers.length; i += CHUNK_SIZE) {
       const chunk = allUsers.slice(i, i + CHUNK_SIZE);
-      console.log(
+      logger.info(
         `处理第 ${Math.floor(i / CHUNK_SIZE) + 1} 批用户 (${chunk.length} 个)`,
       );
 
@@ -121,7 +122,7 @@ export async function POST(req: NextRequest) {
 
           // 跳过没有V2密码的用户
           if (!finalPasswordV2) {
-            console.log(`跳过用户 ${username}：没有V2密码`);
+            logger.info(`跳过用户 ${username}：没有V2密码`);
             return null;
           }
 
@@ -163,7 +164,7 @@ export async function POST(req: NextRequest) {
             },
           };
         } catch (error) {
-          console.error(`导出用户 ${username} 数据失败:`, error);
+          logger.error(`导出用户 ${username} 数据失败:`, error);
           return null;
         }
       });
@@ -188,10 +189,10 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      console.log(`已完成 ${exportedCount}/${allUsers.length} 个用户`);
+      logger.info(`已完成 ${exportedCount}/${allUsers.length} 个用户`);
     }
 
-    console.log(`成功导出 ${exportedCount} 个用户的数据`);
+    logger.info(`成功导出 ${exportedCount} 个用户的数据`);
 
     // 将数据转换为JSON字符串
     updateProgress(
@@ -255,7 +256,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('数据导出失败:', error);
+    logger.error('数据导出失败:', error);
     // 清除进度信息
     const authInfo = getAuthInfoFromCookie(req);
     if (authInfo?.username) {
@@ -272,7 +273,7 @@ async function getUserPasswordV2(username: string): Promise<string | null> {
     if (!storage) return null;
 
     // 检查存储类型
-    const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+    const storageType = STORAGE_TYPE;
 
     // PostgreSQL 存储：使用 getUserPasswordHash 方法
     if (storageType === 'postgres') {
@@ -304,7 +305,7 @@ async function getUserPasswordV2(username: string): Promise<string | null> {
 
     return null;
   } catch (error) {
-    console.error(`获取用户 ${username} V2密码失败:`, error);
+    logger.error(`获取用户 ${username} V2密码失败:`, error);
     return null;
   }
 }

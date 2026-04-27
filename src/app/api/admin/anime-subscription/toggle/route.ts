@@ -2,10 +2,11 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -37,7 +38,7 @@ export async function PUT(req: NextRequest) {
 
     return apiSuccess({ enabled });
   } catch (error: any) {
-    console.error('切换追番功能状态失败:', error);
+    logger.error('切换追番功能状态失败:', error);
     return apiError('切换状态失败', 500);
   }
 }

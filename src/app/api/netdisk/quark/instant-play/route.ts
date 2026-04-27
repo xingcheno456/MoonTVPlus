@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { createQuarkInstantPlayFolder } from '@/lib/netdisk/quark.client';
 import { base58Encode } from '@/lib/utils';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
         );
         await openListClient.refreshDirectory(openlistFolderPath);
       } catch (refreshError) {
-        console.warn(
+        logger.warn(
           '[quark instant-play] 刷新 OpenList 临时目录失败:',
           refreshError,
         );

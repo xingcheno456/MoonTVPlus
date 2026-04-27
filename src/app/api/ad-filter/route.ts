@@ -1,6 +1,7 @@
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getConfig } from '@/lib/config';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'; // 禁用缓存
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
       });
     }
   } catch (error) {
-    console.error('获取去广告代码配置失败:', error);
+    logger.error('获取去广告代码配置失败:', error);
     return apiError('获取配置失败: ' + (error as Error).message, 500);
   }
 }

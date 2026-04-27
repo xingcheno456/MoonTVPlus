@@ -1,11 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+ 
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
+import { apiSuccess } from '@/lib/api-response';
 import { API_CONFIG, getCacheTime } from '@/lib/config';
 import { getDuanjuSources } from '@/lib/duanju';
 import { SearchResult } from '@/lib/types';
 import { cleanHtmlTags } from '@/lib/utils';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -45,7 +46,7 @@ export async function GET() {
     const CACHE_DURATION = 60 * 60 * 1000; // 1小时
 
     if (cachedRecommends && now - cachedRecommends.timestamp < CACHE_DURATION) {
-      console.log('使用缓存的短剧推荐数据');
+      logger.info('使用缓存的短剧推荐数据');
       const cacheTime = await getCacheTime();
       return apiSuccess({
           code: 200,
@@ -71,7 +72,7 @@ export async function GET() {
 
     // 取第一个视频源
     const firstSource = sources[0];
-    console.log(`使用视频源: ${firstSource.name}`);
+    logger.info(`使用视频源: ${firstSource.name}`);
 
     // 获取该视频源的分类列表，找到短剧分类的ID
     const classUrl = `${firstSource.api}?ac=list`;
@@ -110,7 +111,7 @@ export async function GET() {
       });
     }
 
-    console.log(`短剧分类ID: ${duanjuTypeId}`);
+    logger.info(`短剧分类ID: ${duanjuTypeId}`);
 
     // 请求该分类下的视频列表
     const videoListUrl = `${firstSource.api}?ac=videolist&t=${duanjuTypeId}&pg=1`;
@@ -193,7 +194,7 @@ export async function GET() {
       .filter((video) => video.episodes.length > 0)
       .slice(0, 20);
 
-    console.log(`返回 ${filteredVideos.length} 个短剧视频`);
+    logger.info(`返回 ${filteredVideos.length} 个短剧视频`);
 
     // 保存到内存缓存
     cachedRecommends = {
@@ -212,7 +213,7 @@ export async function GET() {
         },
       });
   } catch (error) {
-    console.error('获取热播短剧推荐失败:', error);
+    logger.error('获取热播短剧推荐失败:', error);
     return apiSuccess({
         code: 500,
         message: '获取热播短剧推荐失败',

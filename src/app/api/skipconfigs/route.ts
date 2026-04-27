@@ -1,8 +1,8 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
+
 import { handleServiceError, validateAuthenticatedUser } from '@/services/auth.service';
 import {
   deleteSkipConfig,
@@ -10,6 +10,8 @@ import {
   getSkipConfig,
   saveSkipConfig,
 } from '@/services/playrecord.service';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -29,7 +31,7 @@ export async function GET(request: NextRequest) {
     const configs = await getAllSkipConfigs(username);
     return apiSuccess(configs);
   } catch (error) {
-    console.error('获取跳过片头片尾配置失败:', error);
+    logger.error('获取跳过片头片尾配置失败:', error);
     return handleServiceError(error);
   }
 }
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error && (error.message === 'Invalid key format')) {
       return apiError(error.message, 400);
     }
-    console.error('保存跳过片头片尾配置失败:', error);
+    logger.error('保存跳过片头片尾配置失败:', error);
     return handleServiceError(error);
   }
 }
@@ -71,7 +73,7 @@ export async function DELETE(request: NextRequest) {
     if (error instanceof Error && error.message === 'Invalid key format') {
       return apiError(error.message, 400);
     }
-    console.error('删除跳过片头片尾配置失败:', error);
+    logger.error('删除跳过片头片尾配置失败:', error);
     return handleServiceError(error);
   }
 }

@@ -1,12 +1,13 @@
 import { NextRequest } from 'next/server';
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
 import type { AdminConfig } from '@/lib/admin.types';
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getStorage } from '@/lib/db';
 import { EmailService } from '@/lib/email.service';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess(safeConfig);
   } catch (error) {
-    console.error('获取邮件配置失败:', error);
+    logger.error('获取邮件配置失败:', error);
     return apiError('获取邮件配置失败: ' + (error as Error).message, 500);
   }
 }
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
         await EmailService.sendTestEmail(emailConfig, testEmail, siteName);
         return apiSuccess({ message: '测试邮件发送成功', });
       } catch (error) {
-        console.error('发送测试邮件失败:', error);
+        logger.error('发送测试邮件失败:', error);
         return apiError(`发送失败: ${(error as Error).message}`, 500);
       }
     }
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
 
     return apiError('无效的操作', 400);
   } catch (error) {
-    console.error('处理邮件配置失败:', error);
+    logger.error('处理邮件配置失败:', error);
     return apiError((error as Error).message, 500);
   }
 }

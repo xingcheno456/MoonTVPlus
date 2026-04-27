@@ -1,11 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
       try {
         path = decodeURIComponent(path);
       } catch (e) {
-        console.error('URL 解码失败:', path, e);
+        logger.error('URL 解码失败:', path, e);
       }
 
       // 提取文件名（路径的最后一部分）
@@ -88,7 +89,7 @@ export async function GET(request: NextRequest) {
       total: results.length,
     });
   } catch (error) {
-    console.error('小雅搜索失败:', error);
+    logger.error('小雅搜索失败:', error);
     return apiError((error as Error).message, 500);
   }
 }

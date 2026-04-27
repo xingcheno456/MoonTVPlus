@@ -1,10 +1,8 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { db } from '@/lib/db';
 import {
-  badRequest,
   getMusicV2Username,
   internalError,
   unauthorized,

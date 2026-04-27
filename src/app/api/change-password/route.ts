@@ -1,32 +1,32 @@
-/* eslint-disable no-console*/
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
 import { getUserDevices, revokeRefreshToken } from '@/lib/refresh-token';
+import { parseJsonBody } from '@/lib/api-validation';
+import { changePasswordBodySchema } from '@/lib/api-schemas';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
 
   if (storageType === 'localstorage') {
     return apiError('不支持本地存储模式修改密码', 400);
   }
 
   try {
-    const body = await request.json();
-    const { newPassword } = body;
+    const bodyResult = await parseJsonBody(request, changePasswordBodySchema);
+    if ('error' in bodyResult) return bodyResult.error;
+    const { newPassword } = bodyResult.data;
 
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
       return apiError('Unauthorized', 401);
-    }
-
-    if (!newPassword || typeof newPassword !== 'string') {
-      return apiError('新密码不得为空', 400);
     }
 
     const username = authInfo.username;
@@ -44,17 +44,17 @@ export async function POST(request: NextRequest) {
       for (const device of devices) {
         if (device.tokenId !== currentTokenId) {
           await revokeRefreshToken(username, device.tokenId);
-          console.log(
+          logger.info(
             `Revoked token ${device.tokenId} for ${username} after password change`,
           );
         }
       }
 
-      console.log(
+      logger.info(
         `Password changed for ${username}, revoked ${devices.length - 1} other devices`,
       );
     } catch (error) {
-      console.error(
+      logger.error(
         'Failed to revoke other devices after password change:',
         error,
       );
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess(null);
   } catch (error) {
-    console.error('修改密码失败:', error);
+    logger.error('修改密码失败:', error);
     return apiError('修改密码失败', 500);
   }
 }

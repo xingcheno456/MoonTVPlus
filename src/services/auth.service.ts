@@ -4,6 +4,8 @@ import { apiError } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
 
+import { logger } from '../lib/logger';
+
 export class AuthenticationError extends Error {
   public status: number;
 
@@ -39,6 +41,6 @@ export function handleServiceError(error: unknown) {
   if (error instanceof AuthenticationError) {
     return apiError(error.message, error.status);
   }
-  console.error('Service error:', error);
+  logger.error('Service error:', error);
   return apiError('Internal Server Error', 500);
 }

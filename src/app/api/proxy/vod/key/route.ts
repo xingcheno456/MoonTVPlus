@@ -1,27 +1,25 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
+import { apiError } from '@/lib/api-response';
+import { commonSchemas } from '@/lib/api-schemas';
+import { parseSearchParams } from '@/lib/api-validation';
 import { getConfig } from '@/lib/config';
-import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
 import { buildProxyStreamHeaders } from '@/lib/server/proxy-headers';
+import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
+import { z } from 'zod';
 
 export const runtime = 'nodejs';
 
+const vodProxyKeySchema = z.object({
+  url: commonSchemas.url,
+  source: commonSchemas.source,
+});
+
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const url = searchParams.get('url');
-  const source = searchParams.get('source');
+  const paramResult = parseSearchParams(request as any, vodProxyKeySchema);
+  if ('error' in paramResult) return paramResult.error;
+  const { url, source } = paramResult.data;
 
-  if (!url) {
-    return apiError('Missing url', 400);
-  }
-
-  if (!source) {
-    return apiError('Missing source', 400);
-  }
-
-  // 检查该视频源是否启用了代理模式
   const config = await getConfig();
   const videoSource = config.SourceConfig?.find((s: any) => s.key === source);
 

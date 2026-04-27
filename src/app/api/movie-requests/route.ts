@@ -2,10 +2,11 @@ import { nanoid } from 'nanoid';
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getStorage } from '@/lib/db';
 import { MovieRequest } from '@/lib/types';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess({ requests });
   } catch (error) {
-    console.error('获取求片列表失败:', error);
+    logger.error('获取求片列表失败:', error);
     return apiError((error as Error).message, 500);
   }
 }
@@ -202,7 +203,7 @@ export async function POST(request: NextRequest) {
       request: newRequest,
     });
   } catch (error) {
-    console.error('创建求片失败:', error);
+    logger.error('创建求片失败:', error);
     return apiError((error as Error).message, 500);
   }
 }

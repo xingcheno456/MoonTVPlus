@@ -1,17 +1,17 @@
-/* eslint-disable no-console */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, setCachedConfig } from '@/lib/config';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
 import {
   assertQuarkCookieHeaderSafe,
   normalizeQuarkCookie,
   validateQuarkCookieReadable,
 } from '@/lib/netdisk/quark.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -20,7 +20,7 @@ function requireOwner(username: string | undefined) {
 }
 
 export async function POST(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
     return apiError('不支持本地存储进行管理员配置', 400);
   }
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     return apiError('未知操作', 400);
   } catch (error) {
-    console.error('[Admin NetDisk] 操作失败:', error);
+    logger.error('[Admin NetDisk] 操作失败:', error);
     return apiError(error instanceof Error ? error.message : '操作失败', 500);
   }
 }

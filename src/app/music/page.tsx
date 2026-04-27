@@ -4,9 +4,12 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
-import Toast, { ToastProps } from '@/components/Toast';
 import LyricsPiPWindow from '@/components/LyricsPiPWindow';
+import Toast, { ToastProps } from '@/components/Toast';
+
+import { logger } from '../../lib/logger';
 
 type MusicSource = 'wy' | 'tx' | 'kw' | 'kg' | 'mg';
 
@@ -423,7 +426,7 @@ export default function MusicPage() {
                 }
               })
               .catch((error) => {
-                console.error('加载歌词失败:', error);
+                logger.error('加载歌词失败:', error);
               });
           } else {
             const data = await fetchPlayData(
@@ -455,7 +458,7 @@ export default function MusicPage() {
           }
         }
       } catch (error) {
-        console.error('加载播放记录失败:', error);
+        logger.error('加载播放记录失败:', error);
       }
     };
 
@@ -560,11 +563,11 @@ export default function MusicPage() {
           })),
         );
       } else {
-        console.error('加载排行榜失败:', boardsData);
+        logger.error('加载排行榜失败:', boardsData);
         setPlaylists([]);
       }
     } catch (error) {
-      console.error('加载排行榜失败:', error);
+      logger.error('加载排行榜失败:', error);
       setPlaylists([]);
     } finally {
       setLoading(false);
@@ -588,7 +591,7 @@ export default function MusicPage() {
       setCurrentPlaylistTitle(playlistName);
       setCurrentView('songs');
     } catch (error) {
-      console.error('加载歌单失败:', error);
+      logger.error('加载歌单失败:', error);
       setSongs([]);
     } finally {
       setLoading(false);
@@ -609,7 +612,7 @@ export default function MusicPage() {
       setCurrentPlaylistTitle(`搜索: ${searchKeyword}`);
       setCurrentView('songs');
     } catch (error) {
-      console.error('搜索失败:', error);
+      logger.error('搜索失败:', error);
       setSongs([]);
     } finally {
       setLoading(false);
@@ -633,7 +636,7 @@ export default function MusicPage() {
         setUserPlaylists(data.data?.playlists || []);
       }
     } catch (error) {
-      console.error('加载歌单失败:', error);
+      logger.error('加载歌单失败:', error);
     } finally {
       setLoadingUserPlaylists(false);
     }
@@ -659,7 +662,7 @@ export default function MusicPage() {
         );
       }
     } catch (error) {
-      console.error('加载歌单歌曲失败:', error);
+      logger.error('加载歌单歌曲失败:', error);
     } finally {
       setLoadingUserPlaylistSongs(false);
     }
@@ -760,7 +763,7 @@ export default function MusicPage() {
         onClose: () => setToast(null),
       });
     } catch (error) {
-      console.error('播放全部失败:', error);
+      logger.error('播放全部失败:', error);
       setToast({
         message: '播放全部失败',
         type: 'error',
@@ -815,7 +818,7 @@ export default function MusicPage() {
             });
           }
         } catch (error) {
-          console.error('删除歌单失败:', error);
+          logger.error('删除歌单失败:', error);
           setToast({
             message: '删除歌单失败',
             type: 'error',
@@ -868,7 +871,7 @@ export default function MusicPage() {
             });
           }
         } catch (error) {
-          console.error('移除歌曲失败:', error);
+          logger.error('移除歌曲失败:', error);
           setToast({
             message: '移除歌曲失败',
             type: 'error',
@@ -962,7 +965,7 @@ export default function MusicPage() {
           audioRef.current.src = streamUrl;
           audioRef.current.load();
           audioRef.current.play().catch((err) => {
-            console.error('播放失败:', err);
+            logger.error('播放失败:', err);
           });
           setIsPlaying(true);
         }
@@ -986,11 +989,11 @@ export default function MusicPage() {
                 setLyrics(parsedLyrics);
               }
             } else {
-              console.error('播放信息获取失败:', data);
+              logger.error('播放信息获取失败:', data);
             }
           })
           .catch((error) => {
-            console.error('加载歌词失败:', error);
+            logger.error('加载歌词失败:', error);
           });
       } else {
         const data = await fetchPlayData(song, platform, quality, true);
@@ -1017,16 +1020,16 @@ export default function MusicPage() {
             audioRef.current.src = data.data.play.directUrl;
             audioRef.current.load();
             audioRef.current.play().catch((err) => {
-              console.error('播放失败:', err);
+              logger.error('播放失败:', err);
             });
             setIsPlaying(true);
           }
         } else {
-          console.error('播放信息获取失败:', data);
+          logger.error('播放信息获取失败:', data);
         }
       }
     } catch (error) {
-      console.error('播放失败:', error);
+      logger.error('播放失败:', error);
     } finally {
       endResolving();
     }
@@ -1101,12 +1104,12 @@ export default function MusicPage() {
             audioRef.current.currentTime,
             audioRef.current.duration || 0,
           ).catch((err) => {
-            console.error('暂停时保存播放记录失败:', err);
+            logger.error('暂停时保存播放记录失败:', err);
           });
         }
       } else {
         audioRef.current.play().catch((err) => {
-          console.error('播放失败:', err);
+          logger.error('播放失败:', err);
         });
         setIsPlaying(true);
       }
@@ -1250,7 +1253,7 @@ export default function MusicPage() {
                 audio.currentTime,
                 audio.duration || 0,
               ).catch((err) => {
-                console.error('保存播放记录到数据库失败:', err);
+                logger.error('保存播放记录到数据库失败:', err);
               });
             }
             return updated;
@@ -1295,7 +1298,7 @@ export default function MusicPage() {
               record.playTime,
               audio.duration,
             ).catch((err) => {
-              console.error('保存播放记录到数据库失败:', err);
+              logger.error('保存播放记录到数据库失败:', err);
             });
           }
           return updated;
@@ -2767,7 +2770,7 @@ export default function MusicPage() {
                             setPlayRecords([]);
                             setPlaylistIndex(-1);
                           } catch (error) {
-                            console.error('清空播放记录失败:', error);
+                            logger.error('清空播放记录失败:', error);
                           }
                         }
                       }}
@@ -2896,7 +2899,7 @@ export default function MusicPage() {
                                 setPlaylistIndex(playlistIndex - 1);
                               }
                             } catch (error) {
-                              console.error('删除播放记录失败:', error);
+                              logger.error('删除播放记录失败:', error);
                             }
                           }}
                           className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-500/20 opacity-0 transition-colors hover:bg-red-500/30 group-hover:opacity-100'

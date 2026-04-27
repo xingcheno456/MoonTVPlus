@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any,@typescript-eslint/no-non-null-assertion,no-empty */
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 
 import {
   ChevronUp,
@@ -45,6 +45,8 @@ import SearchResultFilter, {
 import SearchSuggestions from '@/components/SearchSuggestions';
 import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
 import VirtualScrollableGrid from '@/components/VirtualScrollableGrid';
+
+import { logger } from '../../lib/logger';
 
 function SearchPageClient() {
   // 搜索历史
@@ -115,7 +117,7 @@ function SearchPageClient() {
         return JSON.parse(cached);
       }
     } catch (error) {
-      console.error('Failed to get cached results:', error);
+      logger.error('Failed to get cached results:', error);
     }
     return null;
   };
@@ -127,7 +129,7 @@ function SearchPageClient() {
       const cacheKey = getCacheKey(query);
       sessionStorage.setItem(cacheKey, JSON.stringify(results));
     } catch (error) {
-      console.error('Failed to cache results:', error);
+      logger.error('Failed to cache results:', error);
     }
   };
 
@@ -138,7 +140,7 @@ function SearchPageClient() {
       const cacheKey = getCacheKey(query);
       sessionStorage.removeItem(cacheKey);
     } catch (error) {
-      console.error('Failed to clear cached results:', error);
+      logger.error('Failed to clear cached results:', error);
     }
   };
 
@@ -989,7 +991,7 @@ function SearchPageClient() {
     }
 
     // 无搜索参数时聚焦搜索框
-    !searchParams.get('q') && document.getElementById('searchInput')?.focus();
+    if (!searchParams.get('q')) document.getElementById('searchInput')?.focus();
 
     // 获取用户权限
     const authInfo = getAuthInfoFromBrowserCookie();
@@ -1005,12 +1007,12 @@ function SearchPageClient() {
             converterRef.current = converter;
             setConverterReady(true);
           } catch (error) {
-            console.error('初始化繁体转简体转换器失败:', error);
+            logger.error('初始化繁体转简体转换器失败:', error);
             setConverterReady(true); // 即使失败也设置为 true，避免阻塞
           }
         })
         .catch((error) => {
-          console.error('加载 opencc-js 失败:', error);
+          logger.error('加载 opencc-js 失败:', error);
           setConverterReady(true); // 即使失败也设置为 true，避免阻塞
         });
     } else {
@@ -1118,7 +1120,7 @@ function SearchPageClient() {
             return; // 等待 URL 更新后重新触发此 effect
           }
         } catch (error) {
-          console.error('[URL参数监听] 繁体转简体转换失败:', error);
+          logger.error('[URL参数监听] 繁体转简体转换失败:', error);
         }
       }
     }
@@ -1390,7 +1392,7 @@ function SearchPageClient() {
         try {
           trimmed = converterRef.current(trimmed);
         } catch (error) {
-          console.error('繁体转简体转换失败:', error);
+          logger.error('繁体转简体转换失败:', error);
         }
       }
     }
@@ -1430,7 +1432,7 @@ function SearchPageClient() {
         try {
           processedSuggestion = converterRef.current(suggestion);
         } catch (error) {
-          console.error('繁体转简体转换失败:', error);
+          logger.error('繁体转简体转换失败:', error);
         }
       }
     }

@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable no-console,react-hooks/exhaustive-deps,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 
 
 import { useSearchParams } from 'next/navigation';
@@ -19,6 +19,8 @@ import DoubanCustomSelector from '@/components/DoubanCustomSelector';
 import DoubanSelector from '@/components/DoubanSelector';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
+
+import { logger } from '../../lib/logger';
 
 function DoubanPageClient() {
   const searchParams = useSearchParams();
@@ -385,14 +387,14 @@ function DoubanPageClient() {
           setHasMore(data.list.length !== 0);
           setLoading(false);
         } else {
-          console.log('参数不一致，不执行任何操作，避免设置过期数据');
+          logger.info('参数不一致，不执行任何操作，避免设置过期数据');
         }
         // 如果参数不一致，不执行任何操作，避免设置过期数据
       } else {
         throw new Error(data.message || '获取数据失败');
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setLoading(false); // 发生错误时总是停止loading状态
     }
   }, [
@@ -544,13 +546,13 @@ function DoubanPageClient() {
               setDoubanData((prev) => [...prev, ...data.list]);
               setHasMore(data.list.length !== 0);
             } else {
-              console.log('参数不一致，不执行任何操作，避免设置过期数据');
+              logger.info('参数不一致，不执行任何操作，避免设置过期数据');
             }
           } else {
             throw new Error(data.message || '获取数据失败');
           }
         } catch (err) {
-          console.error(err);
+          logger.error(err);
         } finally {
           setIsLoadingMore(false);
         }

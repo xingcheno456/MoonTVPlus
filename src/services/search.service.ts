@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextRequest } from 'next/server';
 
@@ -13,6 +13,8 @@ import {
 } from '@/lib/source-script';
 import { SearchResult } from '@/lib/types';
 import { yellowWords } from '@/lib/yellow';
+
+import { logger } from '../lib/logger';
 
 export interface SearchOptions {
   username: string;
@@ -121,7 +123,7 @@ async function searchEmbySources(
             douban_id: 0,
           }));
         } catch (error) {
-          console.error(`[Search] 搜索 ${embyConfig.name} 失败:`, error);
+          logger.error(`[Search] 搜索 ${embyConfig.name} 失败:`, error);
           return [];
         }
       })(),
@@ -129,7 +131,7 @@ async function searchEmbySources(
         setTimeout(() => reject(new Error(`${embyConfig.name} timeout`)), timeout),
       ),
     ]).catch((error) => {
-      console.error(`[Search] 搜索 ${embyConfig.name} 超时:`, error);
+      logger.error(`[Search] 搜索 ${embyConfig.name} 超时:`, error);
       return [];
     }),
   );
@@ -196,7 +198,7 @@ async function searchOpenList(
         }
         return [];
       } catch (error) {
-        console.error('[Search] 搜索 OpenList 失败:', error);
+        logger.error('[Search] 搜索 OpenList 失败:', error);
         return [];
       }
     })(),
@@ -204,7 +206,7 @@ async function searchOpenList(
       setTimeout(() => reject(new Error('OpenList timeout')), timeout),
     ),
   ]).catch((error) => {
-    console.error('[Search] 搜索 OpenList 超时:', error);
+    logger.error('[Search] 搜索 OpenList 超时:', error);
     return [];
   });
 }
@@ -223,7 +225,7 @@ async function searchApiSites(
         setTimeout(() => reject(new Error(`${site.name} timeout`)), timeout),
       ),
     ]).catch((err) => {
-      console.warn(`搜索失败 ${site.name}:`, err.message);
+      logger.warn(`搜索失败 ${site.name}:`, err.message);
       return [];
     }),
   );
@@ -268,7 +270,7 @@ async function searchSourceScripts(
 
           return searchResults.flat();
         } catch (error) {
-          console.error(`[Search] 搜索脚本 ${script.name} 失败:`, error);
+          logger.error(`[Search] 搜索脚本 ${script.name} 失败:`, error);
           return [];
         }
       })(),
@@ -276,7 +278,7 @@ async function searchSourceScripts(
         setTimeout(() => reject(new Error(`${script.name} timeout`)), timeout),
       ),
     ]).catch((error) => {
-      console.error(`[Search] 搜索脚本 ${script.name} 超时:`, error);
+      logger.error(`[Search] 搜索脚本 ${script.name} 超时:`, error);
       return [];
     }),
   );
@@ -364,7 +366,7 @@ export async function searchSingleSource(
         setTimeout(() => reject(new Error(`${targetSite.name} timeout`)), timeout),
       ),
     ]).catch((err) => {
-      console.warn(`搜索失败 ${targetSite.name}:`, err.message);
+      logger.warn(`搜索失败 ${targetSite.name}:`, err.message);
       return [];
     });
   }

@@ -7,6 +7,8 @@
 import { fetchDoubanData as fetchDoubanAPI } from '@/lib/douban';
 import { getNextApiKey } from '@/lib/tmdb.client';
 
+import { logger } from './logger';
+
 export interface VideoContext {
   title?: string;
   year?: string;
@@ -25,6 +27,8 @@ export interface IntentAnalysisResult {
   needTMDB: boolean;
   keywords: string[];
   entities: Array<{ type: string; value: string }>;
+  optimizedWebSearchQuery?: string;
+  optimizedDoubanQuery?: string;
 }
 
 export interface DecisionResult {
@@ -36,11 +40,41 @@ export interface DecisionResult {
   reasoning?: string;
 }
 
+export interface WebSearchFormatted {
+  title: string;
+  content?: string;
+  snippet?: string;
+  url?: string;
+  link?: string;
+}
+
+export interface DoubanListItem {
+  title: string;
+  rating: number | string;
+  year: string;
+  genres?: string[];
+  directors?: string[];
+  actors?: string[];
+}
+
+export interface TmdbDetailData {
+  title?: string;
+  name?: string;
+  overview?: string;
+  vote_average?: number;
+  genres?: Array<{ name: string }>;
+  release_date?: string;
+  first_air_date?: string;
+  poster_path?: string;
+  backdrop_path?: string;
+  [key: string]: unknown;
+}
+
 export interface OrchestrationResult {
   systemPrompt: string;
-  webSearchResults?: any;
-  doubanData?: any;
-  tmdbData?: any;
+  webSearchResults?: string | null;
+  doubanData?: { list?: DoubanListItem[]; items?: unknown[]; title?: string; rating?: number | string; year?: string; genres?: string[]; directors?: string[]; actors?: string[]; intro?: string; reviews?: unknown[] } | null;
+  tmdbData?: TmdbDetailData | null;
 }
 
 /**
@@ -156,7 +190,7 @@ async function fetchWebSearch(
   query: string,
   provider: 'tavily' | 'serper' | 'serpapi',
   apiKey: string,
-): Promise<any> {
+): Promise<{ results?: WebSearchFormatted[]; organic?: WebSearchFormatted[]; organic_results?: WebSearchFormatted[] } | null> {
   try {
     if (provider === 'tavily') {
       const response = await fetch('https://api.tavily.com/search', {
@@ -212,8 +246,10 @@ async function fetchWebSearch(
 
       return await response.json();
     }
+
+    throw new Error(`Unsupported web search provider: ${provider}`);
   } catch (error) {
-    console.error('Web search error:', error);
+    logger.error('Web search error:', error);
     return null;
   }
 }
@@ -228,19 +264,19 @@ async function fetchDoubanData(params: {
   kind?: string;
   category?: string;
   type?: string;
-}): Promise<any> {
+}): Promise<OrchestrationResult['doubanData'] | null> {
   try {
     // 1. 通过 ID 获取详情
     if (params.id) {
       const url = `https://m.douban.com/rexxar/api/v2/subject/${params.id}`;
-      console.log('📡 获取豆瓣详情:', params.id);
+      logger.info('📡 获取豆瓣详情:', params.id);
       return await fetchDoubanAPI(url);
     }
 
     // 2. 通过分类获取热门列表
     if (params.kind && params.category && params.type) {
       const url = `https://m.douban.com/rexxar/api/v2/subject/recent_hot/${params.kind}?start=0&limit=20&category=${encodeURIComponent(params.category)}&type=${encodeURIComponent(params.type)}`;
-      console.log(
+      logger.info(
         '📡 获取豆瓣分类:',
         params.kind,
         params.category,
@@ -253,14 +289,14 @@ async function fetchDoubanData(params: {
     if (params.query) {
       const kind = params.kind || 'movie';
       const url = `https://movie.douban.com/j/search_subjects?type=${kind}&tag=${encodeURIComponent(params.query)}&sort=recommend&page_limit=20&page_start=0`;
-      console.log('📡 搜索豆瓣:', params.query, kind);
+      logger.info('📡 搜索豆瓣:', params.query, kind);
       return await fetchDoubanAPI(url);
     }
 
-    console.log('⚠️ 豆瓣数据获取参数不完整:', params);
+    logger.info('⚠️ 豆瓣数据获取参数不完整:', params);
     return null;
   } catch (error) {
-    console.error('❌ 豆瓣数据获取失败:', error);
+    logger.error('❌ 豆瓣数据获取失败:', error);
     return null;
   }
 }
@@ -277,16 +313,16 @@ async function fetchTMDBData(
   tmdbApiKey?: string,
   tmdbProxy?: string,
   tmdbReverseProxy?: string,
-): Promise<any> {
+): Promise<TmdbDetailData | null> {
   try {
     const actualKey = getNextApiKey(tmdbApiKey || '');
     if (!actualKey) {
-      console.log('⚠️ TMDB API Key 未配置，跳过TMDB数据获取');
+      logger.info('⚠️ TMDB API Key 未配置，跳过TMDB数据获取');
       return null;
     }
 
     if (!params.id || !params.type) {
-      console.log('⚠️ TMDB数据获取参数不完整:', params);
+      logger.info('⚠️ TMDB数据获取参数不完整:', params);
       return null;
     }
 
@@ -296,11 +332,10 @@ async function fetchTMDBData(
     // TMDB API: https://api.themoviedb.org/3/{type}/{id}
     const url = `${baseUrl}/3/${params.type}/${params.id}?api_key=${actualKey}&language=zh-CN&append_to_response=keywords,similar`;
 
-    console.log('📡 获取TMDB详情:', params.type, params.id);
+    logger.info('📡 获取TMDB详情:', params.type, params.id);
 
-    const fetchOptions: any = tmdbProxy
+    const fetchOptions: RequestInit = tmdbProxy
       ? {
-          // 如果有代理，使用 node-fetch 和代理
           signal: AbortSignal.timeout(15000),
         }
       : {
@@ -310,7 +345,7 @@ async function fetchTMDBData(
     const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
-      console.error(
+      logger.error(
         '❌ TMDB API 请求失败:',
         response.status,
         response.statusText,
@@ -320,7 +355,7 @@ async function fetchTMDBData(
 
     return await response.json();
   } catch (error) {
-    console.error('❌ TMDB数据获取失败:', error);
+    logger.error('❌ TMDB数据获取失败:', error);
     return null;
   }
 }
@@ -329,7 +364,7 @@ async function fetchTMDBData(
  * 格式化搜索结果为文本
  */
 function formatSearchResults(
-  results: any,
+  results: { results?: WebSearchFormatted[]; organic?: WebSearchFormatted[]; organic_results?: WebSearchFormatted[] },
   provider: 'tavily' | 'serper' | 'serpapi',
 ): string {
   if (!results) return '';
@@ -338,7 +373,7 @@ function formatSearchResults(
     if (provider === 'tavily' && results.results) {
       return results.results
         .map(
-          (r: any) => `
+          (r: WebSearchFormatted) => `
 标题: ${r.title}
 内容: ${r.content}
 来源: ${r.url}
@@ -348,7 +383,7 @@ function formatSearchResults(
     } else if (provider === 'serper' && results.organic) {
       return results.organic
         .map(
-          (r: any) => `
+          (r: WebSearchFormatted) => `
 标题: ${r.title}
 摘要: ${r.snippet}
 来源: ${r.link}
@@ -358,7 +393,7 @@ function formatSearchResults(
     } else if (provider === 'serpapi' && results.organic_results) {
       return results.organic_results
         .map(
-          (r: any) => `
+          (r: WebSearchFormatted) => `
 标题: ${r.title}
 摘要: ${r.snippet}
 来源: ${r.link}
@@ -367,7 +402,7 @@ function formatSearchResults(
         .join('\n');
     }
   } catch (error) {
-    console.error('Format search results error:', error);
+    logger.error('Format search results error:', error);
   }
 
   return '';
@@ -411,7 +446,7 @@ async function callDecisionModel(
     douban: boolean;
     tmdb: boolean;
   },
-): Promise<DecisionResult> {
+): Promise<DecisionResult | null> {
   // 构建可用数据源列表
   const availableSources: string[] = [];
   if (availableDataSources.webSearch) {
@@ -539,13 +574,12 @@ ${availableSources.length === 0 ? '⚠️ 没有可用的数据源，请返回�
       return JSON.parse(cleanedContent);
     }
   } catch (error) {
-    console.error('❌ 决策模型调用失败:', error);
+    logger.error('❌ 决策模型调用失败:', error);
     // 失败时返回null，由调用方降级到传统意图分析
-    return null as any;
+    return null;
   }
 
-  // 不应该到达这里
-  return null as any;
+  return null;
 }
 
 /**
@@ -582,7 +616,7 @@ export async function orchestrateDataSources(
     config.decisionApiKey &&
     config.decisionModel
   ) {
-    console.log('🤖 使用决策模型分析...');
+    logger.info('🤖 使用决策模型分析...');
 
     // 确定哪些数据源是可用的
     const hasWebSearchProvider = !!(
@@ -611,17 +645,17 @@ export async function orchestrateDataSources(
       },
     );
 
-    console.log('🎯 决策模型结果:', decision);
+    logger.info('🎯 决策模型结果:', decision);
   }
 
   // 如果决策模型失败或未启用，降级到传统意图分析
   if (!decision) {
     if (config?.enableDecisionModel) {
-      console.log('⚠️ 决策模型失败，降级到传统意图分析');
+      logger.info('⚠️ 决策模型失败，降级到传统意图分析');
     }
     // 传统关键词匹配分析
     intent = analyzeIntent(userMessage, context);
-    console.log('📊 意图分析结果:', intent);
+    logger.info('📊 意图分析结果:', intent);
   } else {
     // 将决策结果转换为 IntentAnalysisResult 格式
     // 保留决策模型的查询优化
@@ -640,16 +674,16 @@ export async function orchestrateDataSources(
       mediaType: context?.type,
     };
     // 保存优化的查询字符串
-    (intent as any).optimizedWebSearchQuery = decision.webSearchQuery;
-    (intent as any).optimizedDoubanQuery = decision.doubanQuery;
+    intent.optimizedWebSearchQuery = decision.webSearchQuery;
+    intent.optimizedDoubanQuery = decision.doubanQuery;
   }
 
   // 2. 并行获取所需的数据源
-  const dataPromises: Promise<any>[] = [];
+  const dataPromises: Promise<unknown>[] = [];
 
-  let webSearchPromise: Promise<any> | null = null;
-  let doubanPromise: Promise<any> | null = null;
-  let tmdbPromise: Promise<any> | null = null;
+  let webSearchPromise: Promise<{ results?: WebSearchFormatted[]; organic?: WebSearchFormatted[]; organic_results?: WebSearchFormatted[] } | null> | null = null;
+  let doubanPromise: Promise<OrchestrationResult['doubanData']> | null = null;
+  let tmdbPromise: Promise<TmdbDetailData | null> | null = null;
 
   // 联网搜索
   if (
@@ -668,7 +702,7 @@ export async function orchestrateDataSources(
     if (apiKey) {
       // 使用决策模型优化的查询，如果没有则使用原始消息
       const searchQuery =
-        (intent as any).optimizedWebSearchQuery || userMessage;
+        intent.optimizedWebSearchQuery || userMessage;
       webSearchPromise = fetchWebSearch(searchQuery, provider, apiKey);
       dataPromises.push(webSearchPromise);
     }
@@ -684,10 +718,10 @@ export async function orchestrateDataSources(
         category: '热门',
         type: intent.genre || '全部',
       });
-    } else if ((intent as any).optimizedDoubanQuery) {
+    } else if (intent.optimizedDoubanQuery) {
       // 使用决策模型优化的豆瓣查询
       doubanPromise = fetchDoubanData({
-        query: (intent as any).optimizedDoubanQuery,
+        query: intent.optimizedDoubanQuery,
         kind: intent.mediaType || context?.type,
       });
     } else if (context?.title) {
@@ -719,27 +753,28 @@ export async function orchestrateDataSources(
   // 3. 等待所有数据获取完成
   const results = await Promise.allSettled(dataPromises);
 
-  let webSearchData = null;
-  let doubanData = null;
-  let tmdbData = null;
+  type DoubanDataType = NonNullable<OrchestrationResult['doubanData']>;
+  let webSearchData: { results?: WebSearchFormatted[]; organic?: WebSearchFormatted[]; organic_results?: WebSearchFormatted[] } | null = null;
+  let doubanData: DoubanDataType | null = null;
+  let tmdbData: TmdbDetailData | null = null;
 
   let resultIndex = 0;
   if (webSearchPromise) {
     const result = results[resultIndex++];
     if (result.status === 'fulfilled') {
-      webSearchData = result.value;
+      webSearchData = result.value as typeof webSearchData;
     }
   }
   if (doubanPromise) {
     const result = results[resultIndex++];
     if (result.status === 'fulfilled') {
-      doubanData = result.value;
+      doubanData = result.value as NonNullable<typeof doubanData>;
     }
   }
   if (tmdbPromise) {
     const result = results[resultIndex++];
     if (result.status === 'fulfilled') {
-      tmdbData = result.value;
+      tmdbData = result.value as TmdbDetailData;
     }
   }
 
@@ -779,11 +814,11 @@ ${today}
 
   // 添加豆瓣数据
   if (doubanData) {
+    const dd = doubanData as DoubanDataType;
     systemPrompt += `\n## 【豆瓣数据】（权威中文评分和信息）\n`;
-    if (doubanData.list) {
-      // 列表数据
-      systemPrompt += `推荐列表（${doubanData.list.length}部）:\n${JSON.stringify(
-        doubanData.list.slice(0, 10).map((item: any) => ({
+    if (dd.list) {
+      systemPrompt += `推荐列表（${dd.list.length}部）:\n${JSON.stringify(
+        dd.list.slice(0, 10).map((item: DoubanListItem) => ({
           title: item.title,
           rating: item.rating,
           year: item.year,
@@ -794,25 +829,23 @@ ${today}
         null,
         2,
       )}\n`;
-    } else if (doubanData.items) {
-      // 搜索结果
+    } else if (dd.items) {
       systemPrompt += `搜索结果:\n${JSON.stringify(
-        doubanData.items.slice(0, 5),
+        dd.items.slice(0, 5),
         null,
         2,
       )}\n`;
     } else {
-      // 详情数据
       systemPrompt += JSON.stringify(
         {
-          title: doubanData.title,
-          rating: doubanData.rating,
-          year: doubanData.year,
-          genres: doubanData.genres,
-          directors: doubanData.directors,
-          actors: doubanData.actors,
-          intro: doubanData.intro,
-          reviews: doubanData.reviews?.slice(0, 2),
+          title: dd.title,
+          rating: dd.rating,
+          year: dd.year,
+          genres: dd.genres,
+          directors: dd.directors,
+          actors: dd.actors,
+          intro: dd.intro,
+          reviews: Array.isArray(dd.reviews) ? dd.reviews.slice(0, 2) : undefined,
         },
         null,
         2,
@@ -831,7 +864,7 @@ ${today}
         vote_average: tmdbData.vote_average,
         genres: tmdbData.genres,
         keywords: tmdbData.keywords,
-        similar: tmdbData.similar?.slice(0, 5),
+        similar: Array.isArray(tmdbData.similar) ? tmdbData.similar.slice(0, 5) : undefined,
       },
       null,
       2,
@@ -859,7 +892,7 @@ ${today}
 
 现在请回答用户的问题。`;
 
-  console.log('📝 生成的系统提示词长度:', systemPrompt.length);
+  logger.info('📝 生成的系统提示词长度:', systemPrompt.length);
 
   return {
     systemPrompt,

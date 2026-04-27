@@ -2,10 +2,11 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -67,7 +68,7 @@ export async function PUT(
 
     return apiSuccess(subscription);
   } catch (error: any) {
-    console.error('更新追番订阅失败:', error);
+    logger.error('更新追番订阅失败:', error);
     return apiError(error.message || '更新订阅失败', 500);
   }
 }
@@ -101,7 +102,7 @@ export async function DELETE(
 
     return apiSuccess({ success: true });
   } catch (error: any) {
-    console.error('删除追番订阅失败:', error);
+    logger.error('删除追番订阅失败:', error);
     return apiError('删除订阅失败', 500);
   }
 }

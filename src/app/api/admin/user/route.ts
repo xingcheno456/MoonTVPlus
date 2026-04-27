@@ -1,12 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console,@typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -26,7 +27,7 @@ const ACTIONS = [
 ] as const;
 
 export async function POST(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
     return apiSuccess({
         error: '不支持本地存储进行管理员配置',
@@ -362,7 +363,7 @@ export async function POST(request: NextRequest) {
             adminConfig.UserConfig.Tags.splice(groupIndex, 1);
 
             // 记录删除操作的影响
-            console.log(
+            logger.info(
               `删除用户组 "${groupName}"，影响用户: ${affectedUsers.length > 0 ? affectedUsers.join(', ') : '无'}`,
             );
 
@@ -450,10 +451,7 @@ export async function POST(request: NextRequest) {
         },
       });
   } catch (error) {
-    console.error('用户管理操作失败:', error);
-    return apiSuccess({
-        error: '用户管理操作失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    logger.error('用户管理操作失败:', error);
+    return apiError('用户管理操作失败', 500);
   }
 }

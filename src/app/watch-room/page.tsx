@@ -17,6 +17,8 @@ import PageLayout from '@/components/PageLayout';
 import Toast, { ToastProps } from '@/components/Toast';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
+import { logger } from '../../lib/logger';
+
 import type { Room, RoomType } from '@/types/watch-room';
 
 type TabType = 'create' | 'join' | 'list';
@@ -117,7 +119,7 @@ export default function WatchRoomPage() {
       const roomList = await getRoomList();
       setRooms(roomList);
     } catch (error) {
-      console.error('[WatchRoom] Failed to load rooms:', error);
+      logger.error('[WatchRoom] Failed to load rooms:', error);
     } finally {
       if (showLoading) {
         setLoading(false);
@@ -259,16 +261,7 @@ export default function WatchRoomPage() {
 
     const handleLiveChange = (state: any) => {
       if (state.type === 'live') {
-        // 判断是否为 weblive 格式（channelUrl 包含 platform:roomId）
-        if (state.channelUrl && state.channelUrl.includes(':')) {
-          // weblive 格式，导航到 web-live 页面
-          // channelId 是 sourceKey，channelUrl 是 platform:roomId
-          const [platform, roomId] = state.channelUrl.split(':');
-          router.push(`/web-live?platform=${platform}&roomId=${roomId}`);
-        } else {
-          // 普通 live 格式，导航到 live 页面
-          router.push(`/live?id=${state.channelId}`);
-        }
+        // 直播功能已移除
       }
     };
 
@@ -385,17 +378,7 @@ export default function WatchRoomPage() {
                         params.set('stitle', state.searchTitle);
                       router.push(`/play?${params.toString()}`);
                     } else if (state.type === 'live') {
-                      // 判断是否为 weblive 格式（channelUrl 包含 platform:roomId）
-                      if (state.channelUrl && state.channelUrl.includes(':')) {
-                        // weblive 格式，导航到 web-live 页面
-                        const [platform, roomId] = state.channelUrl.split(':');
-                        router.push(
-                          `/web-live?platform=${platform}&roomId=${roomId}`,
-                        );
-                      } else {
-                        // 普通 live 格式，导航到 live 页面
-                        router.push(`/live?id=${state.channelId}`);
-                      }
+                      // 直播功能已移除
                     } else if (state.type === 'screen') {
                       router.push('/watch-room/screen');
                     }

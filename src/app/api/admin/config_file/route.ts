@@ -1,17 +1,18 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, refineConfig } from '@/lib/config';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
     return apiSuccess({
         error: '不支持本地存储进行管理员配置',
@@ -73,15 +74,15 @@ export async function POST(request: NextRequest) {
     // 清除短剧视频源缓存（因为配置文件可能包含新的视频源）
     try {
       await db.deleteGlobalValue('duanju');
-      console.log('已清除短剧视频源缓存');
+      logger.info('已清除短剧视频源缓存');
     } catch (error) {
-      console.error('清除短剧视频源缓存失败:', error);
+      logger.error('清除短剧视频源缓存失败:', error);
       // 不影响主流程，继续执行
     }
 
     return apiSuccess({ message: '配置文件更新成功', });
   } catch (error) {
-    console.error('更新配置文件失败:', error);
+    logger.error('更新配置文件失败:', error);
     return apiSuccess({
         error: '更新配置文件失败',
         details: (error as Error).message,

@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { fetchDoubanData } from '@/lib/douban';
 
 export const runtime = 'nodejs';

@@ -3,10 +3,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { XiaoyaClient } from '@/lib/xiaoya.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -52,7 +53,7 @@ async function getFinalUrl(url: string, maxRedirects = 5): Promise<string> {
         return currentUrl;
       }
     } catch (error) {
-      console.error('[xiaoya/play] 获取最终 URL 失败:', error);
+      logger.error('[xiaoya/play] 获取最终 URL 失败:', error);
       return currentUrl;
     }
   }
@@ -193,7 +194,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(qualities[0].url);
     } catch (error) {
       // 视频预览流失败，降级到直连方法
-      console.log(
+      logger.info(
         '[xiaoya/play] 视频预览流失败，降级到直连方法:',
         (error as Error).message,
       );

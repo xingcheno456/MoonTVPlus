@@ -1,14 +1,14 @@
-/* eslint-disable no-console */
 
 import { getConfig } from '@/lib/config';
 import { getDanmakuApiBaseUrl } from '@/lib/danmaku/config';
 import type {
-  DanmakuComment,
   DanmakuCommentsResponse,
   DanmakuEpisodesResponse,
   DanmakuMatchResponse,
   DanmakuSearchResponse,
 } from '@/lib/danmaku/types';
+
+import { logger } from '../lib/logger';
 
 export function parseXmlDanmaku(
   xmlText: string,
@@ -85,7 +85,7 @@ export async function searchAnime(keyword: string): Promise<DanmakuSearchRespons
     const apiUrl = `${baseUrl}/api/v2/search/anime?keyword=${encodeURIComponent(keyword)}`;
     return await fetchDanmakuApi<DanmakuSearchResponse>(apiUrl);
   } catch (error) {
-    console.error('弹幕搜索代理错误:', error);
+    logger.error('弹幕搜索代理错误:', error);
     return {
       errorCode: -1,
       success: false,
@@ -114,7 +114,7 @@ export async function matchAnime(fileName: string): Promise<DanmakuMatchResponse
       body: JSON.stringify({ fileName }),
     });
   } catch (error) {
-    console.error('自动匹配代理错误:', error);
+    logger.error('自动匹配代理错误:', error);
     return {
       errorCode: -1,
       success: false,
@@ -144,7 +144,7 @@ export async function getEpisodes(animeId: string): Promise<DanmakuEpisodesRespo
     const apiUrl = `${baseUrl}/api/v2/bangumi/${animeId}`;
     return await fetchDanmakuApi<DanmakuEpisodesResponse>(apiUrl);
   } catch (error) {
-    console.error('获取剧集列表代理错误:', error);
+    logger.error('获取剧集列表代理错误:', error);
     return {
       errorCode: -1,
       success: false,
@@ -212,7 +212,7 @@ export async function getComments(
       throw fetchError;
     }
   } catch (error) {
-    console.error('获取弹幕代理错误:', error);
+    logger.error('获取弹幕代理错误:', error);
     return { count: 0, comments: [] };
   }
 }

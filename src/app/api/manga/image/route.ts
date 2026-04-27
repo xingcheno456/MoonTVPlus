@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { apiError, apiSuccess } from '@/lib/api-response';
+import { apiError } from '@/lib/api-response';
+import { getSuwayomiConfig, loginWithSimpleAuth } from '@/lib/suwayomi.client';
 
 import { getAuthorizedUsername } from '../_utils';
-import { getSuwayomiConfig, loginWithSimpleAuth } from '@/lib/suwayomi.client';
 
 export const runtime = 'nodejs';
 

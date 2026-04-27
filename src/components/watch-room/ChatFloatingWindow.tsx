@@ -25,6 +25,8 @@ import { useVoiceChat } from '@/hooks/useVoiceChat';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
+import { logger } from '../../lib/logger';
+
 const EMOJI_LIST = [
   '😀',
   '😂',
@@ -136,7 +138,7 @@ export default function ChatFloatingWindow() {
     try {
       await watchRoom.manualReconnect();
     } catch (error) {
-      console.error('[ChatFloatingWindow] Reconnect failed:', error);
+      logger.error('[ChatFloatingWindow] Reconnect failed:', error);
     } finally {
       setIsReconnecting(false);
     }

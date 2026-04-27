@@ -33,17 +33,6 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
   const searchParams = useSearchParams();
   const watchRoomContext = useWatchRoomContextSafe();
 
-  // 直接使用当前路由状态，确保立即响应路由变化
-  const getCurrentFullPath = () => {
-    const queryString = searchParams.toString();
-    return queryString ? `${pathname}?${queryString}` : pathname;
-  };
-  const currentActive = activePath ?? getCurrentFullPath();
-
-  if (pathname === '/watch-room/screen') {
-    return null;
-  }
-
   const [navItems, setNavItems] = useState([
     { icon: Home, label: '首页', href: '/' },
     {
@@ -66,22 +55,11 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
       label: '综艺',
       href: '/douban?type=show',
     },
-    {
-      icon: TvMinimalPlay,
-      label: '电视直播',
-      href: '/live',
-    },
-    {
-      icon: Globe,
-      label: '网络直播',
-      href: '/web-live',
-    },
   ]);
 
   useEffect(() => {
     const runtimeConfig = (window as any).RUNTIME_CONFIG;
 
-    // 基础导航项（不包括观影室）
     const items = [
       { icon: Home, label: '首页', href: '/' },
       {
@@ -99,28 +77,13 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
         label: '动漫',
         href: '/douban?type=anime',
       },
-      {
-        icon: Clover,
-        label: '综艺',
-        href: '/douban?type=show',
-      },
-      {
-        icon: TvMinimalPlay,
-        label: '电视直播',
-        href: '/live',
-      },
-    ];
+       {
+         icon: Clover,
+         label: '综艺',
+         href: '/douban?type=show',
+       },
+     ];
 
-    // 如果启用网络直播，添加网络直播入口
-    if (runtimeConfig?.WEB_LIVE_ENABLED) {
-      items.push({
-        icon: Globe,
-        label: '网络直播',
-        href: '/web-live',
-      });
-    }
-
-    // 如果配置了 OpenList 或 Emby，添加私人影库入口
     if (runtimeConfig?.PRIVATE_LIBRARY_ENABLED) {
       items.push({
         icon: Container,
@@ -137,7 +100,6 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
       });
     }
 
-    // 如果启用观影室，添加观影室入口
     if (watchRoomContext?.isEnabled) {
       items.push({
         icon: Users,
@@ -146,7 +108,6 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
       });
     }
 
-    // 添加自定义分类（如果有）
     if (runtimeConfig?.CUSTOM_CATEGORIES?.length > 0) {
       items.push({
         icon: Star,
@@ -158,10 +119,19 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
     setNavItems(items);
   }, [watchRoomContext?.isEnabled]);
 
+  const getCurrentFullPath = () => {
+    const queryString = searchParams.toString();
+    return queryString ? `${pathname}?${queryString}` : pathname;
+  };
+  const currentActive = activePath ?? getCurrentFullPath();
+
+  if (pathname === '/watch-room/screen') {
+    return null;
+  }
+
   const isActive = (href: string) => {
     const typeMatch = href.match(/type=([^&]+)/)?.[1];
 
-    // 解码URL以进行正确的比较
     const decodedActive = decodeURIComponent(currentActive);
     const decodedItemHref = decodeURIComponent(href);
 
@@ -176,7 +146,6 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
     <nav
       className='fixed left-0 right-0 z-[600] overflow-hidden border-t border-gray-200/50 bg-white/90 backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-900/80 md:hidden'
       style={{
-        /* 紧贴视口底部，同时在内部留出安全区高度 */
         bottom: 0,
         paddingBottom: 'env(safe-area-inset-bottom)',
         minHeight: 'calc(3.5rem + env(safe-area-inset-bottom))',

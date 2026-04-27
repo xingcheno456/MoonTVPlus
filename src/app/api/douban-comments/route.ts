@@ -2,8 +2,9 @@ import * as cheerio from 'cheerio/slim';
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { fetchDoubanWithVerification } from '@/lib/douban-anti-crawler';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     const comments: DoubanComment[] = [];
 
-    console.log('开始解析豆瓣评论，start:', start, 'limit:', limit);
+    logger.info('开始解析豆瓣评论，start:', start, 'limit:', limit);
 
     // 解析每条短评
     $('.comment-item').each((index, element) => {
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    console.log('解析到评论数:', comments.length);
+    logger.info('解析到评论数:', comments.length);
 
     // 获取总评论数 - 尝试多种方式
     let total = 0;
@@ -131,7 +132,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log('豆瓣评论统计:', {
+    logger.info('豆瓣评论统计:', {
       total,
       commentsCount: comments.length,
       start,
@@ -157,7 +158,7 @@ export async function GET(request: NextRequest) {
         },
       });
   } catch (error) {
-    console.error('Douban comments fetch error:', error);
+    logger.error('Douban comments fetch error:', error);
     return apiError('Failed to parse douban comments', 500);
   }
 }

@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
@@ -13,6 +12,8 @@ import {
   VideoInfo,
 } from '@/lib/openlist-cache';
 import { parseVideoFileName } from '@/lib/video-parser';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -83,7 +84,7 @@ export async function GET(request: NextRequest) {
           }
         }
       } catch (error) {
-        console.log('videoinfo.json 不存在，将解析文件名');
+        logger.info('videoinfo.json 不存在，将解析文件名');
       }
     }
 
@@ -240,7 +241,7 @@ export async function GET(request: NextRequest) {
       episodes,
       videoInfo, });
   } catch (error) {
-    console.error('获取视频详情失败:', error);
+    logger.error('获取视频详情失败:', error);
     return apiError('获取失败: ' + (error as Error).message, 500);
   }
 }

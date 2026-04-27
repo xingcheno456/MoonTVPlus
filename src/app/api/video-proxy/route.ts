@@ -1,21 +1,31 @@
-import { apiError, apiSuccess } from '@/lib/api-response';
+import { apiError } from '@/lib/api-response';
+import { commonSchemas } from '@/lib/api-schemas';
+import { parseSearchParams } from '@/lib/api-validation';
+import { validateProxyDomain } from '@/lib/server/proxy-whitelist';
 import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
+
+import { logger } from '../../../lib/logger';
+
+import { z } from 'zod';
+
+const videoProxySchema = z.object({
+  url: commonSchemas.url,
+});
 
 export const runtime = 'nodejs';
 
-// 视频代理接口，支持Range请求
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const videoUrl = searchParams.get('url');
+  const paramResult = parseSearchParams(request as any, videoProxySchema);
+  if ('error' in paramResult) return paramResult.error;
+  const { url: videoUrl } = paramResult.data;
 
-  if (!videoUrl) {
-    return apiError('Missing video URL', 400);
-  }
-
-  // 安全校验：防 SSRF，只允许合法的公网 URL
   const isSafeUrl = await validateProxyUrlServerSide(videoUrl);
   if (!isSafeUrl) {
     return apiError('Proxy request to local or invalid network is forbidden', 403);
+  }
+
+  if (!validateProxyDomain(videoUrl)) {
+    return apiError('Domain not allowed for proxy', 403);
   }
 
   try {
@@ -83,7 +93,7 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (error) {
-    console.error('Error proxying video:', error);
+    logger.error('Error proxying video:', error);
     return apiError('Error fetching video', 500);
   }
 }

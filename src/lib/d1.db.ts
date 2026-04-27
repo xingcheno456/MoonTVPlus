@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * D1 Storage Implementation
@@ -7,6 +7,7 @@
  */
 
 import { DatabaseAdapter } from './d1-adapter';
+import { logger } from './logger';
 import { SQLStorageBase } from './sql-base.db';
 
 /**
@@ -43,7 +44,7 @@ export class D1Storage extends SQLStorageBase {
 
       return result.results.map((row: any) => row.username as string);
     } catch (err) {
-      console.error('D1Storage.getUsersByTag error:', err);
+      logger.error('D1Storage.getUsersByTag error:', err);
       return [];
     }
   }
@@ -63,7 +64,7 @@ export class D1Storage extends SQLStorageBase {
 
       return result !== null;
     } catch (err) {
-      console.error('D1Storage.isSongInPlaylist error:', err);
+      logger.error('D1Storage.isSongInPlaylist error:', err);
       return false;
     }
   }

@@ -3,8 +3,8 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { detailQuerySchema } from '@/lib/api-schemas';
+import { parseSearchParams, validateAuth } from '@/lib/api-validation';
 import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
 import { getDetailFromApiV2 } from '@/lib/downstream';
 import { getProxyToken } from '@/lib/emby-token';
@@ -15,6 +15,8 @@ import {
   parseScriptSourceValue,
 } from '@/lib/source-script';
 
+import { logger } from '../../../lib/logger';
+
 export const runtime = 'nodejs';
 
 /**
@@ -22,20 +24,16 @@ export const runtime = 'nodejs';
  * 这个API专门用于play页面快速获取当前源的详情
  */
 export async function GET(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return apiError('Unauthorized', 401);
-  }
+  const authResult = validateAuth(request);
+  if ('status' in authResult) return authResult;
+  const { username: _username } = authResult;
 
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id');
-  const sourceCode = searchParams.get('source');
-  const fileName = searchParams.get('fileName'); // 小雅源：用户点击的文件名
-  const title = searchParams.get('title');
+  const paramResult = parseSearchParams(request, detailQuerySchema);
+  if ('error' in paramResult) return paramResult.error;
+  const { id, source: sourceCode } = paramResult.data;
 
-  if (!id || !sourceCode) {
-    return apiError('缺少必要参数', 400);
-  }
+  const fileName = new URL(request.url).searchParams.get('fileName');
+  const title = new URL(request.url).searchParams.get('title');
 
   const parsedScriptSource = parseScriptSourceValue(sourceCode);
   if (parsedScriptSource) {
@@ -218,9 +216,9 @@ export async function GET(request: NextRequest) {
       let decodedDirPath: string;
       try {
         decodedDirPath = base58Decode(id);
-        console.log('[xiaoya] 解码目录路径:', decodedDirPath);
+        logger.info('[xiaoya] 解码目录路径:', decodedDirPath);
       } catch (decodeError) {
-        console.error('[xiaoya] Base58解码失败:', decodeError);
+        logger.error('[xiaoya] Base58解码失败:', decodeError);
         throw new Error('无效的视频ID');
       }
 
@@ -234,7 +232,7 @@ export async function GET(request: NextRequest) {
       if (fileName) {
         // 拼接目录路径和文件名
         clickedFilePath = `${decodedDirPath}${decodedDirPath.endsWith('/') ? '' : '/'}${fileName}`;
-        console.log('[xiaoya] 用户点击的文件路径:', clickedFilePath);
+        logger.info('[xiaoya] 用户点击的文件路径:', clickedFilePath);
       }
 
       // 获取元数据（使用目录路径或点击的文件路径）
@@ -256,7 +254,7 @@ export async function GET(request: NextRequest) {
         clickedFileIndex = episodes.findIndex(
           (ep) => ep.path === clickedFilePath,
         );
-        console.log('[xiaoya] 文件在集数列表中的索引:', clickedFileIndex);
+        logger.info('[xiaoya] 文件在集数列表中的索引:', clickedFileIndex);
       }
 
       const result = {
@@ -284,7 +282,7 @@ export async function GET(request: NextRequest) {
 
       return apiSuccess(result);
     } catch (error) {
-      console.error('[xiaoya] 获取详情失败:', error);
+      logger.error('[xiaoya] 获取详情失败:', error);
       return apiError((error as Error).message, 500);
     }
   }
@@ -682,7 +680,7 @@ export async function GET(request: NextRequest) {
 
   // 对于其他采集源，直接按 id 获取详情。
   try {
-    const apiSites = await getAvailableApiSites(authInfo.username);
+    const apiSites = await getAvailableApiSites(_username);
     const apiSite = apiSites.find((site) => site.key === sourceCode);
 
     if (!apiSite) {

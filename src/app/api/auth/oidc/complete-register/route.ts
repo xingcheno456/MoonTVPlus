@@ -1,9 +1,9 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getConfig } from '@/lib/config';
+import { generateHmacSignature } from '@/lib/crypto';
 import { db } from '@/lib/db';
 import {
   generateRefreshToken,
@@ -12,31 +12,9 @@ import {
   TOKEN_CONFIG,
 } from '@/lib/refresh-token';
 
+import { logger } from '../../../../../lib/logger';
+
 export const runtime = 'nodejs';
-
-// 生成签名
-async function generateSignature(
-  data: string,
-  secret: string,
-): Promise<string> {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-  const messageData = encoder.encode(data);
-
-  const key = await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-
-  const signature = await crypto.subtle.sign('HMAC', key, messageData);
-
-  return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
 
 // 获取设备信息
 function getDeviceInfo(userAgent: string): string {
@@ -91,7 +69,7 @@ async function generateAuthCookie(
       role: authData.role,
       timestamp: authData.timestamp,
     });
-    const signature = await generateSignature(dataToSign, process.env.PASSWORD);
+    const signature = await generateHmacSignature(dataToSign, process.env.PASSWORD);
     authData.signature = signature;
 
     // 生成双 Token
@@ -229,11 +207,11 @@ export async function POST(request: NextRequest) {
 
       return response;
     } catch (err) {
-      console.error('创建用户失败', err);
+      logger.error('创建用户失败', err);
       return apiError('注册失败，请稍后重试', 500);
     }
   } catch (error) {
-    console.error('OIDC注册完成失败:', error);
+    logger.error('OIDC注册完成失败:', error);
     return apiError('服务器错误', 500);
   }
 }

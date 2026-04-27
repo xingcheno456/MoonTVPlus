@@ -1,20 +1,16 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
 import { lockManager } from '@/lib/lock';
+import { parseJsonBody } from '@/lib/api-validation';
+import { z } from 'zod';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
-
-const STORAGE_TYPE =
-  (process.env.NEXT_PUBLIC_STORAGE_TYPE as
-    | 'localstorage'
-    | 'redis'
-    | 'upstash'
-    | 'kvrocks'
-    | undefined) || 'localstorage';
 
 async function verifyTurnstileToken(
   token: string,
@@ -38,10 +34,17 @@ async function verifyTurnstileToken(
     const data = await response.json();
     return data.success === true;
   } catch (error) {
-    console.error('Turnstile验证失败:', error);
+    logger.error('Turnstile验证失败:', error);
     return false;
   }
 }
+
+const registerBodySchema = z.object({
+  username: z.string().regex(/^[a-zA-Z0-9_]{3,20}$/, '用户名只能包含字母、数字、下划线，长度3-20位'),
+  password: z.string().min(6, '密码长度至少为6位').max(100),
+  inviteCode: z.string().optional(),
+  turnstileToken: z.string().optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -56,25 +59,9 @@ export async function POST(req: NextRequest) {
       return apiError('注册功能未开启', 403);
     }
 
-    const { username, password, inviteCode, turnstileToken } = await req.json();
-
-    if (!username || typeof username !== 'string') {
-      return apiError('用户名不能为空', 400);
-    }
-    if (!password || typeof password !== 'string') {
-      return apiError('密码不能为空', 400);
-    }
-    if (inviteCode !== undefined && typeof inviteCode !== 'string') {
-      return apiError('邀请码格式错误', 400);
-    }
-
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-      return apiError('用户名只能包含字母、数字、下划线，长度3-20位', 400);
-    }
-
-    if (password.length < 6) {
-      return apiError('密码长度至少为6位', 400);
-    }
+    const bodyResult = await parseJsonBody(req, registerBodySchema);
+    if ('error' in bodyResult) return bodyResult.error;
+    const { username, password, inviteCode, turnstileToken } = bodyResult.data;
 
     if (username === process.env.USERNAME) {
       return apiError('该用户名不可用', 409);
@@ -112,7 +99,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (!siteConfig.TurnstileSecretKey) {
-          console.error('Turnstile Secret Key未配置');
+          logger.error('Turnstile Secret Key未配置');
           return apiError('服务器配置错误', 500);
         }
 
@@ -135,7 +122,7 @@ export async function POST(req: NextRequest) {
 
         return apiSuccess({ message: '注册成功' });
       } catch (err: any) {
-        console.error('创建用户失败', err);
+        logger.error('创建用户失败', err);
         if (err.message === '用户已存在') {
           return apiError('用户名已存在', 409);
         }
@@ -147,7 +134,7 @@ export async function POST(req: NextRequest) {
       }
     }
   } catch (error) {
-    console.error('注册接口异常', error);
+    logger.error('注册接口异常', error);
     return apiError('服务器错误', 500);
   }
 }

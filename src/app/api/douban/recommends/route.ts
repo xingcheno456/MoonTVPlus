@@ -1,12 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getCacheTime } from '@/lib/config';
 import { fetchDoubanData } from '@/lib/douban';
 import { DoubanResult } from '@/lib/types';
+
+import { logger } from '../../../../lib/logger';
 
 interface DoubanRecommendApiResponse {
   total: number;
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest) {
   }
 
   const target = `${baseUrl}?${params.toString()}`;
-  console.log(target);
+  logger.info(target);
   try {
     const doubanData =
       await fetchDoubanData<DoubanRecommendApiResponse>(target);

@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
+import { logger } from './logger';
 import { NFOMetadata, parseNFO } from './nfo-parser';
 import { parseVideoFileName } from './video-parser';
 import { XiaoyaClient } from './xiaoya.client';
@@ -98,7 +99,7 @@ async function findNFO(
       if (metadata) {
         return metadata;
       }
-    } catch (error) {
+    } catch (_error) {
       continue;
     }
   }
@@ -366,7 +367,7 @@ export async function getXiaoyaEpisodes(
 
     return videoFiles.map((file) => {
       const parsed = parseVideoFileName(file.name);
-      console.log('[xiaoya-metadata] 解析文件名:', file.name, '结果:', parsed);
+      logger.info('[xiaoya-metadata] 解析文件名:', file.name, '结果:', parsed);
       let title = file.name;
 
       if (parsed.season && parsed.episode) {

@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+ 
 
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-import { handleServiceError, validateAuthenticatedUser } from '@/services/auth.service';
+
+import { validateAuthenticatedUser } from '@/services/auth.service';
 import { buildCacheHeaders, generateSuggestions } from '@/services/search.service';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -24,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess({ suggestions }, { headers: cacheHeaders });
   } catch (error) {
-    console.error('获取搜索建议失败', error);
+    logger.error('获取搜索建议失败', error);
     return apiError('获取搜索建议失败', 500);
   }
 }

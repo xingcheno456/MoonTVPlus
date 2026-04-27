@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getStorage } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -28,7 +29,7 @@ export async function GET(
 
     return apiSuccess({ request: movieRequest });
   } catch (error) {
-    console.error('获取求片详情失败:', error);
+    logger.error('获取求片详情失败:', error);
     return apiError((error as Error).message, 500);
   }
 }
@@ -104,7 +105,7 @@ export async function PATCH(
       request: { ...movieRequest, ...updates },
     });
   } catch (error) {
-    console.error('更新求片失败:', error);
+    logger.error('更新求片失败:', error);
     return apiError((error as Error).message, 500);
   }
 }
@@ -151,7 +152,7 @@ export async function DELETE(
 
     return apiError('删除成功', 400);
   } catch (error) {
-    console.error('删除求片失败:', error);
+    logger.error('删除求片失败:', error);
     return apiError((error as Error).message, 500);
   }
 }

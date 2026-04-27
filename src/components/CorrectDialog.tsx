@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 
 import { Search, X } from 'lucide-react';
@@ -9,6 +9,8 @@ import { createPortal } from 'react-dom';
 
 import { getTMDBImageUrl } from '@/lib/tmdb.search';
 import { processImageUrl } from '@/lib/utils';
+
+import { logger } from '../lib/logger';
 
 interface TMDBResult {
   id: number;
@@ -161,7 +163,7 @@ export default function CorrectDialog({
         setError('搜索失败');
       }
     } catch (err) {
-      console.error('搜索失败:', err);
+      logger.error('搜索失败:', err);
       setError('搜索失败，请重试');
     } finally {
       setSearching(false);
@@ -188,7 +190,7 @@ export default function CorrectDialog({
         return [];
       }
     } catch (err) {
-      console.error('获取季度列表失败:', err);
+      logger.error('获取季度列表失败:', err);
       setError('获取季度列表失败，请重试');
       return [];
     } finally {
@@ -265,7 +267,7 @@ export default function CorrectDialog({
           correctedAt: Date.now(),
         };
         localStorage.setItem(storageKey, JSON.stringify(correctionInfo));
-        console.log(
+        logger.info(
           '小雅源纠错信息已存储到 localStorage:',
           storageKey,
           correctionInfo,
@@ -291,7 +293,7 @@ export default function CorrectDialog({
       onCorrect();
       onClose();
     } catch (err) {
-      console.error('纠错失败:', err);
+      logger.error('纠错失败:', err);
       setError('纠错失败，请重试');
     } finally {
       setCorrecting(false);
@@ -391,7 +393,7 @@ export default function CorrectDialog({
           correctedAt: Date.now(),
         };
         localStorage.setItem(storageKey, JSON.stringify(correctionInfo));
-        console.log(
+        logger.info(
           '小雅源纠错信息已存储到 localStorage:',
           storageKey,
           correctionInfo,
@@ -417,7 +419,7 @@ export default function CorrectDialog({
       onCorrect();
       onClose();
     } catch (err) {
-      console.error('纠错失败:', err);
+      logger.error('纠错失败:', err);
       setError('纠错失败，请重试');
     } finally {
       setCorrecting(false);

@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, Film } from 'lucide-react';
@@ -12,6 +12,8 @@ import { base58Encode } from '@/lib/utils';
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
+
+import { logger } from '../../lib/logger';
 
 type LibrarySourceType =
   | 'openlist'
@@ -154,7 +156,7 @@ export default function PrivateLibraryPage() {
         setXiaoyaSearchResults(data.videos || []);
       }
     } catch (err) {
-      console.error('搜索失败:', err);
+      logger.error('搜索失败:', err);
       setError('搜索失败');
       setXiaoyaSearchResults([]);
     } finally {
@@ -197,7 +199,7 @@ export default function PrivateLibraryPage() {
           }
         }
       } catch (error) {
-        console.error('获取Emby源列表失败:', error);
+        logger.error('获取Emby源列表失败:', error);
       }
     };
 
@@ -279,7 +281,7 @@ export default function PrivateLibraryPage() {
         const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
 
         if (data.error) {
-          console.error('获取 Emby 媒体库列表失败:', data.error);
+          logger.error('获取 Emby 媒体库列表失败:', data.error);
           setEmbyViews([]);
         } else {
           setEmbyViews(data.views || []);
@@ -300,7 +302,7 @@ export default function PrivateLibraryPage() {
           }
         }
       } catch (err) {
-        console.error('获取 Emby 媒体库列表失败:', err);
+        logger.error('获取 Emby 媒体库列表失败:', err);
         setEmbyViews([]);
       } finally {
         setLoadingViews(false);
@@ -532,7 +534,7 @@ export default function PrivateLibraryPage() {
         if (err.name === 'AbortError') {
           return;
         }
-        console.error('获取视频列表失败:', err);
+        logger.error('获取视频列表失败:', err);
         setError('获取视频列表失败');
         if (isInitial) {
           setVideos([]);

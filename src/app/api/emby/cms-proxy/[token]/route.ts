@@ -1,11 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 import { NextRequest } from 'next/server';
 
-import { apiError, apiSuccess } from '@/lib/api-response';
-
+import { apiSuccess } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';
 import { EmbyClient } from '@/lib/emby.client';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -118,7 +119,7 @@ export async function GET(
       return await handleSearch(client, '', requestToken);
     }
   } catch (error) {
-    console.error('[Emby CMS Proxy] 错误:', error);
+    logger.error('[Emby CMS Proxy] 错误:', error);
     return apiSuccess({
       code: 500,
       msg: (error as Error).message,

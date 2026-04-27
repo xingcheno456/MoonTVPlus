@@ -1,7 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import bs58 from 'bs58';
 import he from 'he';
 import Hls from 'hls.js';
+
+import { logger } from './logger';
 
 export type DoubanImageProxyType =
   | 'direct'
@@ -401,7 +403,7 @@ export async function getVideoResolutionFromM3u8(
                 (fragmentSize * 8) / fragmentDuration,
               );
 
-              console.log(
+              logger.info(
                 `[测速] 估算码率: ${(estimatedBitrate / 1000000).toFixed(2)} Mbps (分片: ${(fragmentSize / 1024 / 1024).toFixed(2)} MB, 时长: ${fragmentDuration.toFixed(1)}s)`,
               );
             }
@@ -424,7 +426,7 @@ export async function getVideoResolutionFromM3u8(
 
       // 监听hls.js错误
       hls.on(Hls.Events.ERROR, (event: any, data: any) => {
-        console.error('HLS错误:', data);
+        logger.error('HLS错误:', data);
         if (data.fatal) {
           const statusCode = data.response?.code || data.response?.status;
           // 防止 415 代理兜底熔断导致正常的二进制源在优选逻辑中被剔除
@@ -433,7 +435,7 @@ export async function getVideoResolutionFromM3u8(
             (m3u8Url.includes('/api/proxy-m3u8') ||
               m3u8Url.includes('/api/proxy/vod/m3u8'))
           ) {
-            console.log(
+            logger.info(
               '[测速] 测速通道嗅探到这是底层的媒体流文件，免测速通过',
             );
             clearTimeout(timeout);

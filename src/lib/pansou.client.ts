@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+import { logger } from './logger';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * Pansou 网盘搜索 API 客户端
@@ -61,7 +62,7 @@ export async function loginPansou(
 
     return data.token;
   } catch (error) {
-    console.error('Pansou 登录失败:', error);
+    logger.error('Pansou 登录失败:', error);
     throw error;
   }
 }
@@ -92,7 +93,7 @@ async function getValidToken(
   try {
     return await loginPansou(apiUrl, username, password);
   } catch (error) {
-    console.error('获取 Pansou Token 失败:', error);
+    logger.error('获取 Pansou Token 失败:', error);
     return null;
   }
 }
@@ -183,7 +184,7 @@ export async function searchPansou(
 
     return data;
   } catch (error) {
-    console.error('Pansou 搜索失败:', error);
+    logger.error('Pansou 搜索失败:', error);
     throw error;
   }
 }
@@ -212,7 +213,7 @@ export async function checkPansouHealth(apiUrl: string): Promise<boolean> {
     const data = await response.json();
     return data.status === 'ok';
   } catch (error) {
-    console.error('Pansou 健康检查失败:', error);
+    logger.error('Pansou 健康检查失败:', error);
     return false;
   }
 }
