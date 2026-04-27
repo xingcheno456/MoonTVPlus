@@ -78,39 +78,5 @@ export function refineConfig(adminConfig: AdminConfig): AdminConfig {
 
   adminConfig.CustomCategories = Array.from(currentCustomCategories.values());
 
-  const livesFromFile = Object.entries(fileConfig.lives || []);
-  const currentLives = new Map(
-    (adminConfig.LiveConfig || []).map((l) => [l.key, l]),
-  );
-  livesFromFile.forEach(([key, site]) => {
-    const existingLive = currentLives.get(key);
-    if (existingLive) {
-      existingLive.name = site.name;
-      existingLive.url = site.url;
-      existingLive.ua = site.ua;
-      existingLive.epg = site.epg;
-    } else {
-      currentLives.set(key, {
-        key,
-        name: site.name,
-        url: site.url,
-        ua: site.ua,
-        epg: site.epg,
-        channelNumber: 0,
-        from: 'config',
-        disabled: false,
-      });
-    }
-  });
-
-  const livesFromFileKeys = new Set(livesFromFile.map(([key]) => key));
-  currentLives.forEach((live) => {
-    if (!livesFromFileKeys.has(live.key)) {
-      live.from = 'custom';
-    }
-  });
-
-  adminConfig.LiveConfig = Array.from(currentLives.values());
-
   return adminConfig;
 }

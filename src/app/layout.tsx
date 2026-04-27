@@ -93,7 +93,6 @@ export default async function RootLayout({
   let aiDefaultMessageNoVideo = '';
   let aiDefaultMessageWithVideo = '';
   let enableMovieRequest = true;
-  let webLiveEnabled = false;
   let customAdFilterVersion = 0;
   let tuneHubEnabled = false;
   let suwayomiEnabled = false;
@@ -152,8 +151,7 @@ export default async function RootLayout({
     aiDefaultMessageWithVideo = config.AIConfig?.DefaultMessageWithVideo || '';
     // 求片功能配置
     enableMovieRequest = config.SiteConfig.EnableMovieRequest ?? true;
-    // 网络直播功能配置
-    webLiveEnabled = config.WebLiveEnabled ?? false;
+
     // 自定义去广告代码版本号
     customAdFilterVersion = config.SiteConfig?.CustomAdFilterVersion || 0;
     // 音乐功能配置
@@ -240,7 +238,6 @@ export default async function RootLayout({
     AI_DEFAULT_MESSAGE_NO_VIDEO: aiDefaultMessageNoVideo,
     AI_DEFAULT_MESSAGE_WITH_VIDEO: aiDefaultMessageWithVideo,
     ENABLE_MOVIE_REQUEST: enableMovieRequest,
-    WEB_LIVE_ENABLED: webLiveEnabled,
     ADVANCED_RECOMMENDATION_ENABLED: advancedRecommendationEnabled,
     CUSTOM_AD_FILTER_VERSION: customAdFilterVersion,
     MUSIC_ENABLED: tuneHubEnabled,
@@ -259,11 +256,20 @@ export default async function RootLayout({
         <link rel='apple-touch-icon' href='/icons/icon-192x192.png' />
         {/* 主题CSS */}
         <link rel='stylesheet' href='/api/theme/css' />
-        {/* 将配置序列化后直接写入脚本，浏览器端可通过 window.RUNTIME_CONFIG 获取 */}
-        { }
+        <meta
+          name='runtime-config'
+          content={Buffer.from(JSON.stringify(runtimeConfig)).toString('base64')}
+        />
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.RUNTIME_CONFIG = ${JSON.stringify(runtimeConfig)};`,
+// SECURITY: 对 runtimeConfig 的值进行 HTML 转义，防止 XSS
+            __html: `window.RUNTIME_CONFIG = ${JSON.stringify(runtimeConfig).replace(
+              /</g, '\\u003c'
+            ).replace(
+              />/g, '\\u003e'
+            ).replace(
+              /\//g, '\\u002f'
+            )};`,
           }}
         />
       </head>

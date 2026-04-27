@@ -41,7 +41,6 @@ const SidebarContext = createContext<SidebarContextType>({
 
 export const useSidebar = () => useContext(SidebarContext);
 
-// 可替换为你自己的 logo 图片
 const Logo = () => {
   const { siteName } = useSite();
   return (
@@ -61,7 +60,6 @@ interface SidebarProps {
   activePath?: string;
 }
 
-// 在浏览器环境下通过全局变量缓存折叠状态，避免组件重新挂载时出现初始值闪烁
 declare global {
   interface Window {
     __sidebarCollapsed?: boolean;
@@ -78,10 +76,6 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
   const searchParams = useSearchParams();
   const watchRoomContext = useWatchRoomContextSafe();
 
-  if (pathname === '/watch-room/screen') {
-    return null;
-  }
-  // 若同一次 SPA 会话中已经读取过折叠状态，则直接复用，避免闪烁
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     if (
       typeof window !== 'undefined' &&
@@ -89,10 +83,9 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
     ) {
       return window.__sidebarCollapsed;
     }
-    return false; // 默认展开
+    return false;
   });
 
-  // 首次挂载时读取 localStorage，以便刷新后仍保持上次的折叠状态
   useLayoutEffect(() => {
     const saved = localStorage.getItem('sidebarCollapsed');
     if (saved !== null) {
@@ -102,7 +95,6 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
     }
   }, []);
 
-  // 当折叠状态变化时，同步到 <html> data 属性，供首屏 CSS 使用
   useLayoutEffect(() => {
     if (typeof document !== 'undefined') {
       if (isCollapsed) {
@@ -116,7 +108,6 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
   const [active, setActive] = useState(activePath);
 
   useEffect(() => {
-    // 立即根据当前路径更新状态，不等待页面加载
     const getCurrentFullPath = () => {
       const queryString = searchParams.toString();
       return queryString ? `${pathname}?${queryString}` : pathname;
@@ -160,22 +151,11 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
       label: '综艺',
       href: '/douban?type=show',
     },
-    {
-      icon: TvMinimalPlay,
-      label: '电视直播',
-      href: '/live',
-    },
-    {
-      icon: Globe,
-      label: '网络直播',
-      href: '/web-live',
-    },
   ]);
 
   useEffect(() => {
     const runtimeConfig = (window as any).RUNTIME_CONFIG;
 
-    // 基础菜单项（不包括观影室）
     const items = [
       {
         icon: Film,
@@ -197,23 +177,8 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
         label: '综艺',
         href: '/douban?type=show',
       },
-      {
-        icon: TvMinimalPlay,
-        label: '电视直播',
-        href: '/live',
-      },
     ];
 
-    // 如果启用网络直播，添加网络直播入口
-    if (runtimeConfig?.WEB_LIVE_ENABLED) {
-      items.push({
-        icon: Globe,
-        label: '网络直播',
-        href: '/web-live',
-      });
-    }
-
-    // 如果配置了 OpenList 或 Emby，添加私人影库入口
     if (runtimeConfig?.PRIVATE_LIBRARY_ENABLED) {
       items.push({
         icon: Container,
@@ -230,7 +195,6 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
       });
     }
 
-    // 如果启用观影室，添加观影室入口
     if (watchRoomContext?.isEnabled) {
       items.push({
         icon: Users,
@@ -239,7 +203,6 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
       });
     }
 
-    // 添加自定义分类（如果有）
     if (runtimeConfig?.CUSTOM_CATEGORIES?.length > 0) {
       items.push({
         icon: Star,
@@ -251,9 +214,12 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
     setMenuItems(items);
   }, [watchRoomContext?.isEnabled]);
 
+  if (pathname === '/watch-room/screen') {
+    return null;
+  }
+
   return (
     <SidebarContext.Provider value={contextValue}>
-      {/* 在移动端隐藏侧边栏 */}
       <div className='hidden md:flex'>
         <aside
           data-sidebar
@@ -266,7 +232,6 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
           }}
         >
           <div className='flex h-full flex-col'>
-            {/* 顶部 Logo 区域 */}
             <div className='relative h-16'>
               <div
                 className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
@@ -287,13 +252,11 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
               </button>
             </div>
 
-            {/* 首页和搜索导航 */}
             <nav className='mt-4 space-y-1 px-2'>
               <Link
                 href='/'
                 prefetch={false}
                 onClick={(e) => {
-                  // 确保点击事件立即生效，不被其他状态更新阻塞
                   e.currentTarget.blur();
                 }}
                 data-active={active === '/'}
@@ -328,18 +291,14 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
               </Link>
             </nav>
 
-            {/* 菜单项 */}
             <div className='flex-1 overflow-y-auto px-2 pt-4'>
               <div className='space-y-1'>
                 {menuItems.map((item) => {
-                  // 检查当前路径是否匹配这个菜单项
                   const typeMatch = item.href.match(/type=([^&]+)/)?.[1];
 
-                  // 解码URL以进行正确的比较
                   const decodedActive = decodeURIComponent(active);
                   const decodedItemHref = decodeURIComponent(item.href);
 
-                  // 提取路径名（不包含查询参数）
                   const activePathname = decodedActive.split('?')[0];
                   const itemPathname = decodedItemHref.split('?')[0];
 
@@ -347,7 +306,6 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
                     decodedActive === decodedItemHref ||
                     (decodedActive.startsWith('/douban') &&
                       decodedActive.includes(`type=${typeMatch}`)) ||
-                    // 对于没有type参数的路径，只比较路径名
                     (!typeMatch && activePathname === itemPathname);
                   const Icon = item.icon;
                   return (

@@ -85,39 +85,7 @@ export function refineConfig(adminConfig: AdminConfig): AdminConfig {
 
   adminConfig.CustomCategories = Array.from(currentCustomCategories.values());
 
-  const livesFromFile = Object.entries(fileConfig.lives || []);
-  const currentLives = new Map(
-    (adminConfig.LiveConfig || []).map((l) => [l.key, l]),
-  );
-  livesFromFile.forEach(([key, site]) => {
-    const existingLive = currentLives.get(key);
-    if (existingLive) {
-      existingLive.name = site.name;
-      existingLive.url = site.url;
-      existingLive.ua = site.ua;
-      existingLive.epg = site.epg;
-    } else {
-      currentLives.set(key, {
-        key,
-        name: site.name,
-        url: site.url,
-        ua: site.ua,
-        epg: site.epg,
-        channelNumber: 0,
-        from: 'config',
-        disabled: false,
-      });
-    }
-  });
 
-  const livesFromFileKeys = new Set(livesFromFile.map(([key]) => key));
-  currentLives.forEach((live) => {
-    if (!livesFromFileKeys.has(live.key)) {
-      live.from = 'custom';
-    }
-  });
-
-  adminConfig.LiveConfig = Array.from(currentLives.values());
 
   return adminConfig;
 }
@@ -222,7 +190,6 @@ export async function getInitConfig(
     },
     SourceConfig: [],
     CustomCategories: [],
-    LiveConfig: [],
   };
 
   adminConfig.UserConfig.Users = [];
@@ -243,22 +210,6 @@ export async function getInitConfig(
       name: category.name || category.query,
       type: category.type,
       query: category.query,
-      from: 'config',
-      disabled: false,
-    });
-  });
-
-  Object.entries(cfgFile.lives || {}).forEach(([key, live]) => {
-    if (!adminConfig.LiveConfig) {
-      adminConfig.LiveConfig = [];
-    }
-    adminConfig.LiveConfig.push({
-      key,
-      name: live.name,
-      url: live.url,
-      ua: live.ua,
-      epg: live.epg,
-      channelNumber: 0,
       from: 'config',
       disabled: false,
     });

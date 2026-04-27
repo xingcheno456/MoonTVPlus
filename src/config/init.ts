@@ -102,7 +102,6 @@ export async function getInitConfig(
     },
     SourceConfig: [],
     CustomCategories: [],
-    LiveConfig: [],
   };
 
   adminConfig.UserConfig.Users = [];
@@ -123,22 +122,6 @@ export async function getInitConfig(
       name: category.name || category.query,
       type: category.type,
       query: category.query,
-      from: 'config',
-      disabled: false,
-    });
-  });
-
-  Object.entries(cfgFile.lives || []).forEach(([key, live]) => {
-    if (!adminConfig.LiveConfig) {
-      adminConfig.LiveConfig = [];
-    }
-    adminConfig.LiveConfig.push({
-      key,
-      name: live.name,
-      url: live.url,
-      ua: live.ua,
-      epg: live.epg,
-      channelNumber: 0,
       from: 'config',
       disabled: false,
     });

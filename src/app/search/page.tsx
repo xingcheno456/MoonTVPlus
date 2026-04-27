@@ -991,7 +991,7 @@ function SearchPageClient() {
     }
 
     // 无搜索参数时聚焦搜索框
-    !searchParams.get('q') && document.getElementById('searchInput')?.focus();
+    if (!searchParams.get('q')) document.getElementById('searchInput')?.focus();
 
     // 获取用户权限
     const authInfo = getAuthInfoFromBrowserCookie();

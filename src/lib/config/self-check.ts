@@ -118,25 +118,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   ) {
     adminConfig.CustomCategories = [];
   }
-  if (!adminConfig.LiveConfig || !Array.isArray(adminConfig.LiveConfig)) {
-    adminConfig.LiveConfig = [];
-  }
 
-  const ownerUser = process.env.USERNAME;
-  adminConfig.UserConfig.Users = [
-    {
-      username: ownerUser!,
-      role: 'owner',
-      banned: false,
-    },
-  ];
-
-  const seenSourceKeys = new Set<string>();
-  adminConfig.SourceConfig = adminConfig.SourceConfig.filter((source) => {
-    if (seenSourceKeys.has(source.key)) return false;
-    seenSourceKeys.add(source.key);
-    return true;
-  });
 
   const seenCustomCategoryKeys = new Set<string>();
   adminConfig.CustomCategories = adminConfig.CustomCategories.filter(
@@ -146,13 +128,6 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
       return true;
     },
   );
-
-  const seenLiveKeys = new Set<string>();
-  adminConfig.LiveConfig = adminConfig.LiveConfig.filter((live) => {
-    if (seenLiveKeys.has(live.key)) return false;
-    seenLiveKeys.add(live.key);
-    return true;
-  });
 
   if (adminConfig.EmbyConfig) {
     if (
