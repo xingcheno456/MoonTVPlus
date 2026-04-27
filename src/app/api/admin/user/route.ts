@@ -103,17 +103,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 查找目标用户条目（用户组操作和批量操作不需要）
-    type UserEntry = AdminConfig['UserConfig']['Users'][number] | null;
+    type UserEntry = AdminConfig['UserConfig']['Users'][number] | null | undefined;
 
     let targetEntry: UserEntry = null;
     let isTargetAdmin = false;
-    let targetUserV2: {
-      username: string;
-      role: 'owner' | 'admin' | 'user';
-      banned?: boolean;
-      tags?: string[];
-      enabledApis?: string[];
-    } | null = null;
+    let targetUserV2: Awaited<ReturnType<typeof db.getUserInfoV2>> = null;
 
     if (
       !['userGroup', 'batchUpdateUserGroups'].includes(action) &&

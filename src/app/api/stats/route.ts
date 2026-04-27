@@ -8,6 +8,8 @@ import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
+const MOVIE_COMPLETION_THRESHOLD = 0.9;
+
 interface MonthlyData {
   month: string;
   count: number;
@@ -80,7 +82,7 @@ export async function GET(request: NextRequest) {
 
       if (record.total_episodes > 1 && record.index >= record.total_episodes) {
         completedCount++;
-      } else if (record.total_episodes <= 1 && watchTime > 0 && record.total_time > 0 && watchTime / record.total_time > 0.9) {
+      } else if (record.total_episodes <= 1 && watchTime > 0 && record.total_time > 0 && watchTime / record.total_time > MOVIE_COMPLETION_THRESHOLD) {
         completedCount++;
       }
 

@@ -82,22 +82,16 @@ function formatMonthLabel(month: string): string {
 const TYPE_COLORS: Record<string, string> = {
   '电影': 'bg-blue-500',
   '剧集': 'bg-purple-500',
-  '动漫': 'bg-pink-500',
-  '综艺': 'bg-orange-500',
 };
 
 const TYPE_BG_COLORS: Record<string, string> = {
   '电影': 'bg-blue-50 dark:bg-blue-900/20',
   '剧集': 'bg-purple-50 dark:bg-purple-900/20',
-  '动漫': 'bg-pink-50 dark:bg-pink-900/20',
-  '综艺': 'bg-orange-50 dark:bg-orange-900/20',
 };
 
 const TYPE_TEXT_COLORS: Record<string, string> = {
   '电影': 'text-blue-700 dark:text-blue-300',
   '剧集': 'text-purple-700 dark:text-purple-300',
-  '动漫': 'text-pink-700 dark:text-pink-300',
-  '综艺': 'text-orange-700 dark:text-orange-300',
 };
 
 const TYPE_ICONS: Record<string, typeof Film> = {
