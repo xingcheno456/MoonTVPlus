@@ -5,10 +5,44 @@ import { NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
+import { safeMathEval, safeEvalMathExpression } from '@/lib/safe-math-eval';
 
 import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
+
+function safeResolveTransformPath(data: any, expr: string): any {
+  const trimmed = expr.replace(/^return\s+/, '').trim();
+  if (!trimmed.startsWith('data')) {
+    throw new Error('Transform must start with "data"');
+  }
+  const pathStr = trimmed.slice(4);
+  if (pathStr.length === 0) return data;
+  const PROPERTY_ACCESS_REGEX = /^(\.[a-zA-Z_$][a-zA-Z0-9_$]*|\[\s*"[^"]+"\s*\])/g;
+  let match;
+  let current = data;
+  let lastIndex = 0;
+  while ((match = PROPERTY_ACCESS_REGEX.exec(pathStr)) !== null) {
+    if (match.index !== lastIndex) {
+      throw new Error(`Invalid transform expression at position ${match.index}`);
+    }
+    lastIndex = match.index + match[0].length;
+    const segment = match[0];
+    if (segment.startsWith('.')) {
+      const key = segment.slice(1);
+      current = current?.[key];
+    } else {
+      const keyMatch = segment.match(/^\[\s*"([^"]+)"\s*\]$/);
+      if (!keyMatch) throw new Error(`Invalid bracket access: ${segment}`);
+      current = current?.[keyMatch[1]];
+    }
+    if (current === undefined || current === null) return current;
+  }
+  if (lastIndex !== pathStr.length) {
+    throw new Error(`Trailing characters in transform: "${pathStr.slice(lastIndex)}"`);
+  }
+  return current;
+}
 
 // 检测是否为 Cloudflare 环境
 const isCloudflare =
@@ -274,62 +308,16 @@ async function executeMethod(
     evalContext[key] = isNaN(numValue) ? value : numValue;
   }
 
-  // 递归处理对象中的模板变量
+  // 递归处理对象中的模板变量（使用安全求值器，无 new Function/eval）
   function processTemplateValue(value: any): any {
     if (typeof value === 'string') {
-      // 处理包含模板变量的表达式
       const expressionRegex = /\{\{(.+?)\}\}/g;
-      return value.replace(expressionRegex, (match, expression) => {
+      return value.replace(expressionRegex, (_match, expression) => {
         try {
-          const SAFE_EXPR_REGEX = /^[\w\s+\-*/().%]+$/;
-
-          if (isCloudflare) {
-            const expr = expression.trim();
-
-            if (evalContext.hasOwnProperty(expr)) {
-              return String(evalContext[expr]);
-            }
-
-            let substituted: any = expr;
-
-            for (const [key, val] of Object.entries(evalContext)) {
-              const regex = new RegExp(`\\b${key}\\b`, 'g');
-              const replacement =
-                typeof val === 'number'
-                  ? String(val)
-                  : `"${String(val).replace(/"/g, '\\"')}"`;
-              substituted = substituted.replace(regex, replacement);
-            }
-
-            try {
-              if (!SAFE_EXPR_REGEX.test(substituted)) {
-                logger.error(
-                  `[executeMethod] 表达式包含不安全字符，拒绝执行: ${substituted}`,
-                );
-                return '0';
-              }
-              const fn = new Function(`return ${substituted}`);
-              substituted = fn();
-            } catch (err) {
-              logger.error(
-                `[executeMethod] Cloudflare 环境执行表达式失败: ${expr}`,
-                err,
-              );
-              substituted = String(substituted).replace(/^["']|["']$/g, '');
-            }
-
-            return String(substituted);
-          } else {
-            const fn = new Function(
-              ...Object.keys(evalContext),
-              `return ${expression}`,
-            );
-            const result = fn(...Object.values(evalContext));
-            return String(result);
-          }
+return safeEvalMathExpression(expression, evalContext);
         } catch (err) {
-          logger.error(`[executeMethod] 执行表达式失败: ${expression}`, err);
-          return '0'; // 默认值
+          logger.error(`[executeMethod] 表达式处理失败: ${expression}`, err);
+          return '0';
         }
       });
     } else if (Array.isArray(value)) {
@@ -385,15 +373,15 @@ async function executeMethod(
 
   // 5. 执行 transform 函数（如果有）
   if (config.transform) {
-    // 在 Cloudflare 环境下，将 transform 函数返回给前端执行
-    if (isCloudflare) {
-      // 将 transform 函数字符串附加到响应数据中
-      data.__transform = config.transform;
+    const MAX_TRANSFORM_LENGTH = 200;
+
+    if (config.transform.length > MAX_TRANSFORM_LENGTH) {
+      logger.error(
+        `[executeMethod] Transform 函数过长 (${config.transform.length} > ${MAX_TRANSFORM_LENGTH})，拒绝执行`,
+      );
     } else {
-      // 在 Node.js 环境下，直接执行 transform
-      try {
-        const transformFn = new Function('data', `return (${config.transform})(data)`);
-        data = transformFn(data);
+try {
+        data = safeResolveTransformPath(data, config.transform);
       } catch (err) {
         logger.error('[executeMethod] Transform 函数执行失败:', err);
       }

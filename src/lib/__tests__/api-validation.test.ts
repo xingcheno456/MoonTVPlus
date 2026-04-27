@@ -1,6 +1,7 @@
-import { parseSearchParams, validateAuth, validateAdminAuth } from '@/lib/api-validation';
-import { detailQuerySchema } from '@/lib/api-schemas';
 import { z } from 'zod';
+
+import { detailQuerySchema } from '@/lib/api-schemas';
+import { parseSearchParams, validateAuth, validateAdminAuth } from '@/lib/api-validation';
 
 describe('parseSearchParams', () => {
   function createMockRequest(url: string): any {

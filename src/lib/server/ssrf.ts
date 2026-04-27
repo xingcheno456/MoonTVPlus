@@ -7,30 +7,15 @@ import { logger } from '../logger';
  * 覆盖 IPv4 和 IPv6，彻底杜绝所有变体绕过。
  */
 export function isPrivateIP(ip: string): boolean {
-  // IPv4 私有地址和环回地址
-  if (ip.includes('.')) {
-    const parts = ip.split('.').map(Number);
-    if (parts.length !== 4) return false;
-
-    return (
-      parts[0] === 10 || // 10.x.x.x
-      parts[0] === 127 || // 127.x.x.x (Loopback)
-      (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || // 172.16.x.x - 172.31.x.x
-      (parts[0] === 192 && parts[1] === 168) || // 192.168.x.x
-      (parts[0] === 169 && parts[1] === 254) || // 169.254.x.x (Link-local)
-      parts[0] === 0 // 0.x.x.x ("This network")
-    );
-  }
-
-  // IPv6 私有地址和环回地址
+  // IPv6 地址（含 IPv4-mapped 格式 ::ffff:x.x.x.x）
   if (ip.includes(':')) {
+    const lowerIp = ip.toLowerCase();
+
     // ::1 环回地址 (Loopback)
     if (ip === '::1' || ip === '0:0:0:0:0:0:0:1') return true;
 
     // 0::0 / :: 未指定地址
     if (ip === '::' || ip === '0:0:0:0:0:0:0:0') return true;
-
-    const lowerIp = ip.toLowerCase();
 
     // IPv4 映射到 IPv6 的地址 (例如 ::ffff:127.0.0.1)
     if (lowerIp.startsWith('::ffff:')) {
@@ -48,6 +33,23 @@ export function isPrivateIP(ip: string): boolean {
       lowerIp.startsWith('feb')
     )
       return true;
+
+    return false;
+  }
+
+  // IPv4 私有地址和环回地址
+  if (ip.includes('.')) {
+    const parts = ip.split('.').map(Number);
+    if (parts.length !== 4) return false;
+
+    return (
+      parts[0] === 10 || // 10.x.x.x
+      parts[0] === 127 || // 127.x.x.x (Loopback)
+      (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || // 172.16.x.x - 172.31.x.x
+      (parts[0] === 192 && parts[1] === 168) || // 192.168.x.x
+      (parts[0] === 169 && parts[1] === 254) || // 169.254.x.x (Link-local)
+      parts[0] === 0 // 0.x.x.x ("This network")
+    );
   }
 
   return false;
@@ -98,7 +100,7 @@ export async function validateProxyUrlServerSide(
     }
 
     return true;
-  } catch (error) {
+  } catch (_error) {
     // 凡是报错（无论是 URL 解析失败，还是 DNS 解析失败，还是域名不存在），均作为不安全拒绝
     logger.warn(`[SSRF 防护] URL解析失败或不合法, 拒绝代理请求: ${urlStr}`);
     return false;

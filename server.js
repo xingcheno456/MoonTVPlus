@@ -3,6 +3,7 @@ const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
 const { Server } = require('socket.io');
+const nodeCrypto = require('crypto');
 
 function shouldInitSQLite() {
   const isCloudflare = process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
@@ -72,16 +73,26 @@ class WatchRoomServer {
           const userId = socket.id;
           const ownerToken = this.generateRoomId(); // 生成房主令牌
 
+          let passwordSalt = null;
+          let passwordHash = null;
+          if (data.password) {
+            passwordSalt = nodeCrypto.randomBytes(16).toString('hex');
+            passwordHash = nodeCrypto
+              .pbkdf2Sync(data.password, passwordSalt, 100000, 64, 'sha512')
+              .toString('hex');
+          }
+
           const room = {
             id: roomId,
             name: data.name,
             description: data.description,
-            password: data.password,
+            passwordHash,
+            passwordSalt,
             isPublic: data.isPublic,
             roomType: data.roomType || 'sync',
             ownerId: userId,
             ownerName: data.userName,
-            ownerToken: ownerToken, // 保存房主令牌
+            ownerToken: ownerToken,
             memberCount: 1,
             currentState: null,
             createdAt: Date.now(),
@@ -122,8 +133,13 @@ class WatchRoomServer {
             return callback({ success: false, error: '房间不存在' });
           }
 
-          if (room.password && room.password !== data.password) {
-            return callback({ success: false, error: '密码错误' });
+          if (room.passwordHash && room.passwordSalt) {
+            const hash = nodeCrypto
+              .pbkdf2Sync(data.password, room.passwordSalt, 100000, 64, 'sha512')
+              .toString('hex');
+            if (!nodeCrypto.timingSafeEqual(Buffer.from(hash), Buffer.from(room.passwordHash))) {
+              return callback({ success: false, error: '密码错误' });
+            }
           }
 
           const userId = socket.id;
@@ -613,11 +629,11 @@ class WatchRoomServer {
   }
 
   generateRoomId() {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
+    return nodeCrypto.randomBytes(4).toString('base64url').substring(0, 6).toUpperCase();
   }
 
   generateMessageId() {
-    return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    return `${Date.now()}-${nodeCrypto.randomBytes(8).toString('base64url')}`;
   }
 
   destroy() {
@@ -656,11 +672,16 @@ app.prepare().then(async () => {
     console.log('[WatchRoom] Initializing Socket.IO server...');
 
     // 初始化 Socket.IO
+    const corsOrigin = process.env.NEXT_PUBLIC_SITE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SITE_URL).origin
+      : `http://${hostname}:${port}`;
+
     const io = new Server(httpServer, {
       path: '/socket.io',
       cors: {
-        origin: '*',
+        origin: corsOrigin,
         methods: ['GET', 'POST'],
+        credentials: true,
       },
     });
 

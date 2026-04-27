@@ -3,7 +3,7 @@
  * 基于 M3U8Download 项目改造为 TypeScript 版本
  */
 
-// @ts-ignore - mux.js 没有类型定义
+// @ts-expect-error - mux.js 没有类型定义
 import * as muxjs from 'mux.js';
 
 import { AESDecryptor } from './aes-decryptor';
@@ -464,7 +464,7 @@ export class M3U8Downloader {
               }
 
               if (task.downloadIndex < task.rangeDownload.endSegment) {
-                !isPause && download();
+                if (!isPause) download();
               }
             }
           }
@@ -474,7 +474,7 @@ export class M3U8Downloader {
         xhr.send();
         task.requests.push(xhr);
       } else if (task.downloadIndex < task.rangeDownload.endSegment) {
-        !isPause && download();
+        if (!isPause) download();
       }
     };
 
@@ -806,7 +806,6 @@ export class M3U8Downloader {
   ): void {
     if (task.type === 'MP4') {
       try {
-        // @ts-ignore - mux.js 的 Transmuxer 在 mp4 子模块下
         const transMuxer = new muxjs.mp4.Transmuxer({
           keepOriginalTimestamps: true,
           duration: parseInt(task.durationSecond.toString()),

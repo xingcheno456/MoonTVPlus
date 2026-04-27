@@ -77,9 +77,6 @@ export async function GET(request: NextRequest) {
       });
   } catch (error) {
     logger.error('获取用户列表失败:', error);
-    return apiSuccess({
-        error: '获取用户列表失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError('获取用户列表失败', 500);
   }
 }

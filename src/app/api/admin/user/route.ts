@@ -452,9 +452,6 @@ export async function POST(request: NextRequest) {
       });
   } catch (error) {
     logger.error('用户管理操作失败:', error);
-    return apiSuccess({
-        error: '用户管理操作失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError('用户管理操作失败', 500);
   }
 }

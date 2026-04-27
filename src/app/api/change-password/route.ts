@@ -5,6 +5,8 @@ import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db, STORAGE_TYPE } from '@/lib/db';
 import { getUserDevices, revokeRefreshToken } from '@/lib/refresh-token';
+import { parseJsonBody } from '@/lib/api-validation';
+import { changePasswordBodySchema } from '@/lib/api-schemas';
 
 import { logger } from '../../../lib/logger';
 
@@ -18,16 +20,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json();
-    const { newPassword } = body;
+    const bodyResult = await parseJsonBody(request, changePasswordBodySchema);
+    if ('error' in bodyResult) return bodyResult.error;
+    const { newPassword } = bodyResult.data;
 
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
       return apiError('Unauthorized', 401);
-    }
-
-    if (!newPassword || typeof newPassword !== 'string') {
-      return apiError('新密码不得为空', 400);
     }
 
     const username = authInfo.username;

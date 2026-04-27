@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import * as cheerio from 'cheerio/slim';
+import { randomBytes } from 'crypto';
+import { mkdirSync, unlinkSync, writeFileSync } from 'fs';
 import { nanoid } from 'nanoid';
-import vm from 'vm';
+import { join } from 'path';
+import { Worker } from 'worker_threads';
 
 import { db } from '@/lib/db';
 
@@ -291,18 +294,91 @@ function createUtils() {
   };
 }
 
+const WORKER_DIR = join(process.cwd(), '.data', 'worker-scripts');
+
+function sanitizeSandbox(sandbox: Record<string, any>): Record<string, any> {
+  const clean: Record<string, any> = {};
+  for (const key of Object.keys(sandbox)) {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+      continue;
+    }
+    clean[key] = sandbox[key];
+  }
+  return clean;
+}
+
 function createScriptFactory(code: string) {
-  // 使用 vm 模块创建沙箱执行环境，用户脚本无法访问 Node.js 全局 API
-  const script = new vm.Script(
-    `"use strict";\n(function() {\n${code}\n})();`,
-    { filename: 'source-script.js' },
-  );
+  mkdirSync(WORKER_DIR, { recursive: true });
 
   return (sandbox: Record<string, any>) => {
-    const context = vm.createContext(sandbox);
-    return script.runInContext(context, {
-      timeout: DEFAULT_TIMEOUT_MS / 2,
-      breakOnSigint: true,
+    return new Promise((resolve, reject) => {
+      const workerFile = join(
+        WORKER_DIR,
+        `script-${nanoid()}.js`,
+      );
+
+      try {
+        const safeSandbox = sanitizeSandbox(sandbox);
+        const sandboxJSON = JSON.stringify(safeSandbox);
+        const userCode = `"use strict";
+const sandbox = ${sandboxJSON};
+(function() {
+  const __blockedGlobals = ['require', 'process', 'global', 'globalThis', 'Function', 'eval', 'WebAssembly', 'SharedArrayBuffer', 'Atomics'];
+  for (const __g of __blockedGlobals) {
+    try { delete globalThis[__g]; } catch {}
+  }
+  Object.freeze(globalThis);
+})();
+const result = (function() { ${code} }).call(sandbox);
+if (result && typeof result.then === 'function') {
+  result.then(v => parentPort.postMessage({ ok: true, result: v })).catch(e => parentPort.postMessage({ ok: false, error: e.message }));
+} else {
+  parentPort.postMessage({ ok: true, result });
+}`;
+
+        writeFileSync(workerFile, `
+const { parentPort } = require('worker_threads');
+${userCode}
+`);
+
+        const worker = new Worker(workerFile, {
+          resourceLimits: {
+            maxOldGenerationSizeMb: 128,
+            maxYoungGenerationSizeMb: 32,
+            stackSizeMb: 4,
+          },
+        });
+
+        const timer = setTimeout(() => {
+          worker.terminate();
+          reject(new Error('Script execution timed out'));
+        }, DEFAULT_TIMEOUT_MS / 2);
+
+        worker.on('message', (msg: { ok: boolean; result?: any; error?: string }) => {
+          clearTimeout(timer);
+          void worker.terminate();
+          try { unlinkSync(workerFile); } catch {}
+          if (msg.ok) resolve(msg.result);
+          else reject(new Error(msg.error));
+        });
+
+        worker.on('error', (err: Error) => {
+          clearTimeout(timer);
+          try { unlinkSync(workerFile); } catch {}
+          reject(err);
+        });
+
+        worker.on('exit', (code: number) => {
+          clearTimeout(timer);
+          if (code !== 0) {
+            try { unlinkSync(workerFile); } catch {}
+            reject(new Error(`Worker exited with code ${code}`));
+          }
+        });
+      } catch (err) {
+        try { unlinkSync(workerFile); } catch {}
+        reject(err);
+      }
     });
   };
 }
@@ -459,14 +535,13 @@ async function getEnabledSourceScriptByKey(key: string) {
   return item;
 }
 
-function getOrCompileScript(script: SourceScriptRecord) {
+async function getOrCompileScript(script: SourceScriptRecord) {
   const cacheKey = `${script.id}:${script.version}`;
   const cached = _compiledCache.get(cacheKey);
   if (cached) return cached;
 
   const factory = createScriptFactory(script.code);
-  // 在空沙箱中执行脚本——脚本只能通过 ctx 与外部交互
-  const compiled = normalizeScript(factory({}));
+  const compiled = normalizeScript(await factory({}));
 
   if (_compiledCache.size >= MAX_COMPILED_CACHE_SIZE) {
     const firstKey = _compiledCache.keys().next().value;
@@ -480,7 +555,7 @@ async function compileSourceScript(
   script: SourceScriptRecord,
   configValues?: Record<string, string>,
 ) {
-  const compiled = getOrCompileScript(script);
+  const compiled = await getOrCompileScript(script);
   const context = await createScriptContext(script, configValues);
   return {
     compiled,
@@ -686,7 +761,7 @@ export async function testSourceScript(input: {
     };
 
     const factory = createScriptFactory(input.code);
-    const compiled = normalizeScript(factory({}));
+    const compiled = normalizeScript(await factory({}));
     const hook = compiled[input.hook];
     if (typeof hook !== 'function') {
       throw new Error(`脚本未实现 ${input.hook} hook`);
@@ -953,7 +1028,7 @@ export async function resolveScriptDetailPlaybacks(input: {
 
   // 预检查：编译一次脚本，判断是否实现了 resolvePlayUrl
   const script = await getEnabledSourceScriptByKey(input.scriptKey);
-  const compiled = getOrCompileScript(script);
+  const compiled = await getOrCompileScript(script);
 
   if (typeof compiled.resolvePlayUrl !== 'function') {
     return input.result;

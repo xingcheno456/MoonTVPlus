@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
           'Cache-Control': 'no-store',
         },
       });
-  } catch (error) {
+  } catch (_error) {
     return apiError('获取脚本列表失败', 500);
   }
 }

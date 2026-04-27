@@ -1,4 +1,9 @@
 import { AdminConfig } from './admin.types';
+import {
+  MusicV2HistoryRecord,
+  MusicV2PlaylistItem,
+  MusicV2PlaylistRecord,
+} from './music-v2';
 import { MangaReadRecord, MangaShelfItem } from './manga.types';
 
 // 播放记录数据结构
@@ -162,6 +167,141 @@ export interface IMusicStorage {
   clearAllMusicPlayRecords(userName: string): Promise<void>;
 }
 
+export interface IMusicV2Storage {
+  listMusicV2History?(userName: string): Promise<MusicV2HistoryRecord[]>;
+  upsertMusicV2History?(userName: string, record: MusicV2HistoryRecord): Promise<void>;
+  batchUpsertMusicV2History?(userName: string, records: MusicV2HistoryRecord[]): Promise<void>;
+  deleteMusicV2History?(userName: string, songId: string): Promise<void>;
+  clearMusicV2History?(userName: string): Promise<void>;
+  createMusicV2Playlist?(
+    userName: string,
+    playlist: { id: string; name: string; description?: string; cover?: string },
+  ): Promise<void>;
+  getMusicV2Playlist?(playlistId: string): Promise<MusicV2PlaylistRecord | null>;
+  listMusicV2Playlists?(userName: string): Promise<MusicV2PlaylistRecord[]>;
+  updateMusicV2Playlist?(
+    playlistId: string,
+    updates: { name?: string; description?: string; cover?: string; song_count?: number },
+  ): Promise<void>;
+  deleteMusicV2Playlist?(playlistId: string): Promise<void>;
+  addMusicV2PlaylistItem?(playlistId: string, item: MusicV2PlaylistItem): Promise<void>;
+  removeMusicV2PlaylistItem?(playlistId: string, songId: string): Promise<void>;
+  listMusicV2PlaylistItems?(playlistId: string): Promise<MusicV2PlaylistItem[]>;
+  hasMusicV2PlaylistItem?(playlistId: string, songId: string): Promise<boolean>;
+}
+
+export interface IMusicV1PlaylistStorage {
+  createMusicPlaylist?(
+    userName: string,
+    playlist: { id: string; name: string; description?: string; cover?: string },
+  ): Promise<void>;
+  getMusicPlaylist?(playlistId: string): Promise<MusicV1Playlist | null>;
+  getUserMusicPlaylists?(userName: string): Promise<MusicV1Playlist[]>;
+  updateMusicPlaylist?(
+    playlistId: string,
+    updates: { name?: string; description?: string; cover?: string },
+  ): Promise<void>;
+  deleteMusicPlaylist?(playlistId: string): Promise<void>;
+  addSongToPlaylist?(
+    playlistId: string,
+    song: {
+      platform: string;
+      id: string;
+      name: string;
+      artist: string;
+      album?: string;
+      pic?: string;
+      duration: number;
+    },
+  ): Promise<void>;
+  removeSongFromPlaylist?(playlistId: string, platform: string, songId: string): Promise<void>;
+  getPlaylistSongs?(playlistId: string): Promise<MusicV1PlaylistSong[]>;
+  isSongInPlaylist?(playlistId: string, platform: string, songId: string): Promise<boolean>;
+}
+
+export interface MusicV1Playlist {
+  id: string;
+  username: string;
+  name: string;
+  description?: string;
+  cover?: string;
+  song_count: number;
+}
+
+export interface MusicV1PlaylistSong {
+  platform: string;
+  id: string;
+  name: string;
+  artist: string;
+  album?: string;
+  pic?: string;
+  duration: number;
+}
+
+export interface IUserV2Extension {
+  createUserV2?(
+    userName: string,
+    password: string,
+    role?: 'owner' | 'admin' | 'user',
+    tags?: string[],
+    oidcSub?: string,
+    enabledApis?: string[],
+  ): Promise<void>;
+  verifyUserV2?(userName: string, password: string): Promise<boolean>;
+  getUserInfoV2?(userName: string): Promise<UserV2Info | null>;
+  updateUserInfoV2?(
+    userName: string,
+    updates: {
+      role?: 'owner' | 'admin' | 'user';
+      banned?: boolean;
+      tags?: string[];
+      oidcSub?: string;
+      enabledApis?: string[];
+    },
+  ): Promise<void>;
+  changePasswordV2?(userName: string, newPassword: string): Promise<void>;
+  checkUserExistV2?(userName: string): Promise<boolean>;
+  getUserByOidcSub?(oidcSub: string): Promise<string | null>;
+  getUserListV2?(
+    offset?: number,
+    limit?: number,
+    ownerUsername?: string,
+  ): Promise<UserV2ListResult>;
+  deleteUserV2?(userName: string): Promise<void>;
+  getUsersByTag?(tagName: string): Promise<string[]>;
+}
+
+export interface UserV2Info {
+  role: 'owner' | 'admin' | 'user';
+  banned: boolean;
+  tags?: string[];
+  oidcSub?: string;
+  enabledApis?: string[];
+  created_at: number;
+  playrecord_migrated?: boolean;
+  favorite_migrated?: boolean;
+  skip_migrated?: boolean;
+}
+
+export interface UserV2ListResult {
+  users: Array<{
+    username: string;
+    role: 'owner' | 'admin' | 'user';
+    banned: boolean;
+    tags?: string[];
+    oidcSub?: string;
+    enabledApis?: string[];
+    created_at: number;
+  }>;
+  total: number;
+}
+
+export interface ITvboxTokenStorage {
+  getTvboxSubscribeToken?(userName: string): Promise<string | null>;
+  setTvboxSubscribeToken?(userName: string, token: string): Promise<void>;
+  getUsernameByTvboxToken?(token: string): Promise<string | null>;
+}
+
 export interface IV2UserExtension {
   getUserInfoV2?(userName: string): Promise<{
     role: 'owner' | 'admin' | 'user';
@@ -197,7 +337,11 @@ export type IStorage = IPlayRecordStorage &
   INotificationStorage &
   IMovieRequestStorage &
   IMusicStorage &
-  IV2UserExtension;
+  IV2UserExtension &
+  IMusicV2Storage &
+  IMusicV1PlaylistStorage &
+  IUserV2Extension &
+  ITvboxTokenStorage;
 
 // 搜索结果数据结构
 export interface SearchResult {

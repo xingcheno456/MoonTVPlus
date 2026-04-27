@@ -275,9 +275,6 @@ export async function POST(request: NextRequest) {
       });
   } catch (error) {
     logger.error('更新站点配置失败:', error);
-    return apiSuccess({
-        error: '更新站点配置失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError('更新站点配置失败', 500);
   }
 }

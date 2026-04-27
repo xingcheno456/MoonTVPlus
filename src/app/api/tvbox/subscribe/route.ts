@@ -5,7 +5,6 @@ import { NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { getCachedLiveChannels } from '@/lib/live';
 
 import { logger } from '../../../../lib/logger';
 
@@ -65,10 +64,6 @@ export async function GET(request: NextRequest) {
     // 获取视频源
     // 全局token返回所有源，用户token返回该用户有权限的源
     const apiSites = await getAvailableApiSites(username);
-
-    // 获取直播源
-    const liveConfig =
-      config.LiveConfig?.filter((live) => !live.disabled) || [];
 
     // 获取当前请求的 origin，用于构建代理链接
     // 优先级：SITE_BASE 环境变量 > origin 参数 > 从请求头构建
@@ -163,29 +158,7 @@ export async function GET(request: NextRequest) {
       ],
 
       // 直播源
-      lives: await Promise.all(
-        liveConfig.map(async (live) => {
-          try {
-            const liveChannels = await getCachedLiveChannels(live.key);
-            return {
-              name: live.name,
-              type: 0,
-              url: live.url,
-              epg: live.epg || liveChannels?.epgUrl || '',
-              logo: '',
-            };
-          } catch (error) {
-            return {
-              name: live.name,
-              type: 0,
-              playerType: 1,
-              url: live.url,
-              epg: live.epg || '',
-              logo: '',
-            };
-          }
-        }),
-      ),
+      lives: [],
 
       // 解析器
       parses: [],

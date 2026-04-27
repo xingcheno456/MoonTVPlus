@@ -316,9 +316,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     logger.error('视频源管理操作失败:', error);
-    return apiSuccess({
-        error: '视频源管理操作失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError('视频源管理操作失败', 500);
   }
 }

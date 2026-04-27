@@ -35,9 +35,6 @@ export async function GET(request: NextRequest) {
         },
       });
   } catch (error) {
-    return apiSuccess({
-        error: '重置管理员配置失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError('重置管理员配置失败', 500);
   }
 }

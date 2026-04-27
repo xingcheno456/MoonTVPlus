@@ -12,6 +12,8 @@ import {
   storeRefreshToken,
   TOKEN_CONFIG,
 } from '@/lib/refresh-token';
+import { loginBodySchema } from '@/lib/api-schemas';
+import { parseJsonBody } from '@/lib/api-validation';
 
 import { logger } from '../../../lib/logger';
 
@@ -35,8 +37,10 @@ function buildLoginResponse(authToken?: string | null) {
 // 生成认证Cookie（带签名和 Refresh Token）
 async function generateAuthCookie(
   username?: string,
+  /** @deprecated Password is never stored in cookies. Retained for backward compatibility only. */
   password?: string,
   role?: 'owner' | 'admin' | 'user',
+  /** @deprecated IncludePassword is no longer used. HMAC signature is used instead. Will be removed in next major version. */
   includePassword?: boolean,
   deviceInfo?: string,
 ): Promise<string> {
@@ -166,16 +170,15 @@ export async function POST(req: NextRequest) {
           path: '/',
           expires: new Date(0),
           sameSite: 'lax',
-          httpOnly: false,
+          httpOnly: true,
         });
 
         return response;
       }
 
-      const { password } = await req.json();
-      if (typeof password !== 'string') {
-        return apiError('密码不能为空', 400);
-      }
+      const bodyResult = await parseJsonBody(req, loginBodySchema);
+      if ('error' in bodyResult) return bodyResult.error;
+      const { password } = bodyResult.data;
 
       if (password !== envPassword) {
         return apiError('密码错误', 401);
@@ -199,21 +202,20 @@ export async function POST(req: NextRequest) {
         path: '/',
         expires,
         sameSite: 'lax',
-        httpOnly: false, // 允许客户端访问
-        secure: false,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
       });
 
       return response;
     }
 
     // 数据库 / redis 模式——校验用户名并尝试连接数据库
-    const { username, password, turnstileToken } = await req.json();
+    const bodyResult = await parseJsonBody(req, loginBodySchema);
+    if ('error' in bodyResult) return bodyResult.error;
+    const { username, password, turnstileToken } = bodyResult.data;
 
-    if (!username || typeof username !== 'string') {
+    if (!username) {
       return apiError('用户名不能为空', 400);
-    }
-    if (!password || typeof password !== 'string') {
-      return apiError('密码不能为空', 400);
     }
 
     // 如果开启了Turnstile验证
@@ -259,8 +261,8 @@ export async function POST(req: NextRequest) {
         path: '/',
         expires,
         sameSite: 'lax',
-        httpOnly: false, // 允许客户端访问
-        secure: false,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
       });
 
       return response;
@@ -309,7 +311,8 @@ export async function POST(req: NextRequest) {
       path: '/',
       expires,
       sameSite: 'lax',
-      httpOnly: false, // 允许客户端访问
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
     });
 
     logger.info(`Cookie已设置`);

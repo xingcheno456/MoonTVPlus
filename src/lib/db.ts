@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 import { AdminConfig } from './admin.types';
 import { MusicPlayRecord } from './db.client';
@@ -17,6 +18,10 @@ import {
   IStorage,
   PlayRecord,
   SkipConfig,
+  UserV2Info,
+  UserV2ListResult,
+  MusicV1Playlist,
+  MusicV1PlaylistSong,
 } from './types';
 import { UpstashRedisStorage } from './upstash.db';
 
@@ -28,12 +33,16 @@ export type StorageType =
   | 'd1'
   | 'postgres';
 
-// storage type 常量，默认 'localstorage'
 export const STORAGE_TYPE: StorageType =
   (process.env.NEXT_PUBLIC_STORAGE_TYPE as StorageType | undefined) ||
   'localstorage';
 
-// 创建存储实例
+interface DatabaseAdapter {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string): Promise<void>;
+  del(key: string): Promise<void>;
+}
+
 function createStorage(): IStorage {
   switch (STORAGE_TYPE) {
     case 'redis':
@@ -43,93 +52,66 @@ function createStorage(): IStorage {
     case 'kvrocks':
       return new KvrocksStorage();
     case 'd1':
-      // D1Storage 只能在服务端使用，客户端会报错
       if (typeof window !== 'undefined') {
         throw new Error('D1Storage can only be used on the server side');
       }
       const d1Adapter = getD1Adapter();
-      // 动态导入 D1Storage 以避免客户端打包
       const { D1Storage } = require('./d1.db');
       return new D1Storage(d1Adapter);
     case 'postgres':
-      // PostgresStorage 只能在服务端使用，客户端会报错
       if (typeof window !== 'undefined') {
         throw new Error('PostgresStorage can only be used on the server side');
       }
       const postgresAdapter = getPostgresAdapter();
-      // 动态导入 PostgresStorage 以避免客户端打包
       const { PostgresStorage } = require('./postgres.db');
       return new PostgresStorage(postgresAdapter);
     case 'localstorage':
     default:
-      return null as unknown as IStorage;
+      throw new Error(
+        `LocalStorage mode should use client-side storage only. Server-side operations require a database backend (redis/upstash/kvrocks/d1/postgres).`,
+      );
   }
 }
 
-/**
- * 获取 Postgres 适配器
- * 使用 Vercel Postgres (@vercel/postgres)
- */
-function getPostgresAdapter(): any {
-  // 动态导入适配器以避免客户端打包
+function getPostgresAdapter(): DatabaseAdapter {
   const { PostgresAdapter } = require('./postgres-adapter');
-
   logger.info('Using Vercel Postgres database');
-
   return new PostgresAdapter();
 }
 
-/**
- * 获取 D1 适配器
- * 开发环境：使用 better-sqlite3
- * 生产环境：使用 Cloudflare D1
- */
-function getD1Adapter(): any {
-  // 动态导入适配器以避免客户端打包
+function getD1Adapter(): DatabaseAdapter {
   const { CloudflareD1Adapter, SQLiteAdapter } = require('./d1-adapter');
 
-  // 检查是否为 Cloudflare 构建
   const isCloudflare =
     process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
 
-  // 生产环境：Cloudflare Workers/Pages
   if (isCloudflare) {
-    // 创建一个懒加载的适配器，延迟到实际使用时才获取 D1 绑定
-    let cachedAdapter: any = null;
+    let cachedAdapter: DatabaseAdapter | null = null;
 
-    return new Proxy(
-      {},
-      {
-        get(target, prop) {
-          // 懒加载：第一次访问时才获取真实的 D1 适配器
-          if (!cachedAdapter) {
-            try {
-              const {
-                getCloudflareContext,
-              } = require('@opennextjs/cloudflare');
-              const { env } = getCloudflareContext();
-
-              if (!env.DB) {
-                throw new Error(
-                  'D1 database binding (DB) not found in Cloudflare environment',
-                );
-              }
-
-              logger.info('Using Cloudflare D1 database');
-              cachedAdapter = new CloudflareD1Adapter(env.DB);
-            } catch (error) {
-              logger.error('Failed to initialize Cloudflare D1:', error);
-              throw error;
+    return new Proxy({} as DatabaseAdapter, {
+      get(_target, prop) {
+        if (!cachedAdapter) {
+          try {
+            const { getCloudflareContext } = require('@opennextjs/cloudflare');
+            const { env } = getCloudflareContext();
+            if (!env.DB) {
+              throw new Error(
+                'D1 database binding (DB) not found in Cloudflare environment',
+              );
             }
+            logger.info('Using Cloudflare D1 database');
+            cachedAdapter = new CloudflareD1Adapter(env.DB);
+          } catch (error) {
+            logger.error('Failed to initialize Cloudflare D1:', error);
+            throw error;
           }
-
-          return cachedAdapter[prop];
-        },
+        }
+        const adapter = cachedAdapter as unknown as Record<string, unknown>;
+        return adapter[prop as string];
       },
-    );
+    });
   }
 
-  // 开发环境：better-sqlite3
   const Database = require('better-sqlite3');
   const path = require('path');
 
@@ -138,9 +120,9 @@ function getD1Adapter(): any {
     path.join(process.cwd(), '.data', 'moontv.db');
 
   const db = new Database(dbPath);
-  db.pragma('journal_mode = WAL'); // 启用 WAL 模式提升性能
-  db.pragma('foreign_keys = ON'); // 与 D1 保持一致，启用外键约束
-  db.pragma('busy_timeout = 5000'); // 避免启动阶段或并发写入时立即锁失败
+  db.pragma('journal_mode = WAL');
+  db.pragma('foreign_keys = ON');
+  db.pragma('busy_timeout = 5000');
 
   logger.info('Using SQLite database (non-Cloudflare mode)');
   logger.info('Database location:', dbPath);
@@ -148,7 +130,6 @@ function getD1Adapter(): any {
   return new SQLiteAdapter(db);
 }
 
-// 单例存储实例
 let storageInstance: IStorage | null = null;
 
 export function getStorage(): IStorage {
@@ -158,12 +139,10 @@ export function getStorage(): IStorage {
   return storageInstance;
 }
 
-// 工具函数：生成存储key
 export function generateStorageKey(source: string, id: string): string {
   return `${source}+${id}`;
 }
 
-// 导出便捷方法
 export class DbManager {
   private storage: IStorage;
 
@@ -171,7 +150,6 @@ export class DbManager {
     this.storage = getStorage();
   }
 
-  // 播放记录相关方法
   async getPlayRecord(
     userName: string,
     source: string,
@@ -206,7 +184,6 @@ export class DbManager {
     await this.storage.deletePlayRecord(userName, key);
   }
 
-  // 收藏相关方法
   async getFavorite(
     userName: string,
     source: string,
@@ -250,7 +227,6 @@ export class DbManager {
     return favorite !== null;
   }
 
-  // 音乐播放记录相关方法
   async saveMusicPlayRecord(
     userName: string,
     platform: string,
@@ -291,180 +267,116 @@ export class DbManager {
     await this.storage.clearAllMusicPlayRecords(userName);
   }
 
-  // Music V2 历史记录相关
+  // Music V2 历史记录
   async listMusicV2History(userName: string): Promise<MusicV2HistoryRecord[]> {
-    if (typeof (this.storage as any).listMusicV2History === 'function') {
-      return (this.storage as any).listMusicV2History(userName);
-    }
-    return [];
+    return this.storage.listMusicV2History?.(userName) ?? [];
   }
 
   async upsertMusicV2History(
     userName: string,
     record: MusicV2HistoryRecord,
   ): Promise<void> {
-    if (typeof (this.storage as any).upsertMusicV2History === 'function') {
-      await (this.storage as any).upsertMusicV2History(userName, record);
-    }
+    await this.storage.upsertMusicV2History?.(userName, record);
   }
 
   async batchUpsertMusicV2History(
     userName: string,
     records: MusicV2HistoryRecord[],
   ): Promise<void> {
-    if (typeof (this.storage as any).batchUpsertMusicV2History === 'function') {
-      await (this.storage as any).batchUpsertMusicV2History(userName, records);
-    }
+    await this.storage.batchUpsertMusicV2History?.(userName, records);
   }
 
   async deleteMusicV2History(userName: string, songId: string): Promise<void> {
-    if (typeof (this.storage as any).deleteMusicV2History === 'function') {
-      await (this.storage as any).deleteMusicV2History(userName, songId);
-    }
+    await this.storage.deleteMusicV2History?.(userName, songId);
   }
 
   async clearMusicV2History(userName: string): Promise<void> {
-    if (typeof (this.storage as any).clearMusicV2History === 'function') {
-      await (this.storage as any).clearMusicV2History(userName);
-    }
+    await this.storage.clearMusicV2History?.(userName);
   }
 
-  // Music V2 歌单相关
+  // Music V2 歌单
   async createMusicV2Playlist(
     userName: string,
-    playlist: {
-      id: string;
-      name: string;
-      description?: string;
-      cover?: string;
-    },
+    playlist: { id: string; name: string; description?: string; cover?: string },
   ): Promise<void> {
-    if (typeof (this.storage as any).createMusicV2Playlist === 'function') {
-      await (this.storage as any).createMusicV2Playlist(userName, playlist);
-    }
+    await this.storage.createMusicV2Playlist?.(userName, playlist);
   }
 
   async getMusicV2Playlist(
     playlistId: string,
   ): Promise<MusicV2PlaylistRecord | null> {
-    if (typeof (this.storage as any).getMusicV2Playlist === 'function') {
-      return (this.storage as any).getMusicV2Playlist(playlistId);
-    }
-    return null;
+    return this.storage.getMusicV2Playlist?.(playlistId) ?? null;
   }
 
   async listMusicV2Playlists(
     userName: string,
   ): Promise<MusicV2PlaylistRecord[]> {
-    if (typeof (this.storage as any).listMusicV2Playlists === 'function') {
-      return (this.storage as any).listMusicV2Playlists(userName);
-    }
-    return [];
+    return this.storage.listMusicV2Playlists?.(userName) ?? [];
   }
 
   async updateMusicV2Playlist(
     playlistId: string,
-    updates: {
-      name?: string;
-      description?: string;
-      cover?: string;
-      song_count?: number;
-    },
+    updates: { name?: string; description?: string; cover?: string; song_count?: number },
   ): Promise<void> {
-    if (typeof (this.storage as any).updateMusicV2Playlist === 'function') {
-      await (this.storage as any).updateMusicV2Playlist(playlistId, updates);
-    }
+    await this.storage.updateMusicV2Playlist?.(playlistId, updates);
   }
 
   async deleteMusicV2Playlist(playlistId: string): Promise<void> {
-    if (typeof (this.storage as any).deleteMusicV2Playlist === 'function') {
-      await (this.storage as any).deleteMusicV2Playlist(playlistId);
-    }
+    await this.storage.deleteMusicV2Playlist?.(playlistId);
   }
 
   async addMusicV2PlaylistItem(
     playlistId: string,
     item: MusicV2PlaylistItem,
   ): Promise<void> {
-    if (typeof (this.storage as any).addMusicV2PlaylistItem === 'function') {
-      await (this.storage as any).addMusicV2PlaylistItem(playlistId, item);
-    }
+    await this.storage.addMusicV2PlaylistItem?.(playlistId, item);
   }
 
   async removeMusicV2PlaylistItem(
     playlistId: string,
     songId: string,
   ): Promise<void> {
-    if (typeof (this.storage as any).removeMusicV2PlaylistItem === 'function') {
-      await (this.storage as any).removeMusicV2PlaylistItem(playlistId, songId);
-    }
+    await this.storage.removeMusicV2PlaylistItem?.(playlistId, songId);
   }
 
   async listMusicV2PlaylistItems(
     playlistId: string,
   ): Promise<MusicV2PlaylistItem[]> {
-    if (typeof (this.storage as any).listMusicV2PlaylistItems === 'function') {
-      return (this.storage as any).listMusicV2PlaylistItems(playlistId);
-    }
-    return [];
+    return this.storage.listMusicV2PlaylistItems?.(playlistId) ?? [];
   }
 
   async hasMusicV2PlaylistItem(
     playlistId: string,
     songId: string,
   ): Promise<boolean> {
-    if (typeof (this.storage as any).hasMusicV2PlaylistItem === 'function') {
-      return (this.storage as any).hasMusicV2PlaylistItem(playlistId, songId);
-    }
-    return false;
+    return this.storage.hasMusicV2PlaylistItem?.(playlistId, songId) ?? false;
   }
 
-  // 音乐歌单相关方法
+  // 音乐歌单 (V1)
   async createMusicPlaylist(
     userName: string,
-    playlist: {
-      id: string;
-      name: string;
-      description?: string;
-      cover?: string;
-    },
+    playlist: { id: string; name: string; description?: string; cover?: string },
   ): Promise<void> {
-    if (typeof (this.storage as any).createMusicPlaylist === 'function') {
-      await (this.storage as any).createMusicPlaylist(userName, playlist);
-    }
+    await this.storage.createMusicPlaylist?.(userName, playlist);
   }
 
-  async getMusicPlaylist(playlistId: string): Promise<any | null> {
-    if (typeof (this.storage as any).getMusicPlaylist === 'function') {
-      return (this.storage as any).getMusicPlaylist(playlistId);
-    }
-    return null;
+  async getMusicPlaylist(playlistId: string): Promise<MusicV1Playlist | null> {
+    return this.storage.getMusicPlaylist?.(playlistId) ?? null;
   }
 
-  async getUserMusicPlaylists(userName: string): Promise<any[]> {
-    if (typeof (this.storage as any).getUserMusicPlaylists === 'function') {
-      return (this.storage as any).getUserMusicPlaylists(userName);
-    }
-    return [];
+  async getUserMusicPlaylists(userName: string): Promise<MusicV1Playlist[]> {
+    return this.storage.getUserMusicPlaylists?.(userName) ?? [];
   }
 
   async updateMusicPlaylist(
     playlistId: string,
-    updates: {
-      name?: string;
-      description?: string;
-      cover?: string;
-    },
+    updates: { name?: string; description?: string; cover?: string },
   ): Promise<void> {
-    if (typeof (this.storage as any).updateMusicPlaylist === 'function') {
-      await (this.storage as any).updateMusicPlaylist(playlistId, updates);
-    }
+    await this.storage.updateMusicPlaylist?.(playlistId, updates);
   }
 
   async deleteMusicPlaylist(playlistId: string): Promise<void> {
-    if (typeof (this.storage as any).deleteMusicPlaylist === 'function') {
-      await (this.storage as any).deleteMusicPlaylist(playlistId);
-    }
+    await this.storage.deleteMusicPlaylist?.(playlistId);
   }
 
   async addSongToPlaylist(
@@ -479,9 +391,7 @@ export class DbManager {
       duration: number;
     },
   ): Promise<void> {
-    if (typeof (this.storage as any).addSongToPlaylist === 'function') {
-      await (this.storage as any).addSongToPlaylist(playlistId, song);
-    }
+    await this.storage.addSongToPlaylist?.(playlistId, song);
   }
 
   async removeSongFromPlaylist(
@@ -489,20 +399,11 @@ export class DbManager {
     platform: string,
     songId: string,
   ): Promise<void> {
-    if (typeof (this.storage as any).removeSongFromPlaylist === 'function') {
-      await (this.storage as any).removeSongFromPlaylist(
-        playlistId,
-        platform,
-        songId,
-      );
-    }
+    await this.storage.removeSongFromPlaylist?.(playlistId, platform, songId);
   }
 
-  async getPlaylistSongs(playlistId: string): Promise<any[]> {
-    if (typeof (this.storage as any).getPlaylistSongs === 'function') {
-      return (this.storage as any).getPlaylistSongs(playlistId);
-    }
-    return [];
+  async getPlaylistSongs(playlistId: string): Promise<MusicV1PlaylistSong[]> {
+    return this.storage.getPlaylistSongs?.(playlistId) ?? [];
   }
 
   async isSongInPlaylist(
@@ -510,21 +411,13 @@ export class DbManager {
     platform: string,
     songId: string,
   ): Promise<boolean> {
-    if (typeof (this.storage as any).isSongInPlaylist === 'function') {
-      return (this.storage as any).isSongInPlaylist(
-        playlistId,
-        platform,
-        songId,
-      );
-    }
-    return false;
+    return this.storage.isSongInPlaylist?.(playlistId, platform, songId) ?? false;
   }
 
   async verifyUser(userName: string, password: string): Promise<boolean> {
     return this.storage.verifyUser(userName, password);
   }
 
-  // 检查用户是否已存在
   async checkUserExist(userName: string): Promise<boolean> {
     return this.storage.checkUserExist(userName);
   }
@@ -537,7 +430,7 @@ export class DbManager {
     await this.storage.deleteUser(userName);
   }
 
-  // ---------- 用户相关（新版本） ----------
+  // 用户相关（新版本）
   async createUserV2(
     userName: string,
     password: string,
@@ -546,40 +439,15 @@ export class DbManager {
     oidcSub?: string,
     enabledApis?: string[],
   ): Promise<void> {
-    if (typeof (this.storage as any).createUserV2 === 'function') {
-      await (this.storage as any).createUserV2(
-        userName,
-        password,
-        role,
-        tags,
-        oidcSub,
-        enabledApis,
-      );
-    }
+    await this.storage.createUserV2?.(userName, password, role, tags, oidcSub, enabledApis);
   }
 
   async verifyUserV2(userName: string, password: string): Promise<boolean> {
-    if (typeof (this.storage as any).verifyUserV2 === 'function') {
-      return (this.storage as any).verifyUserV2(userName, password);
-    }
-    return false;
+    return this.storage.verifyUserV2?.(userName, password) ?? false;
   }
 
-  async getUserInfoV2(userName: string): Promise<{
-    role: 'owner' | 'admin' | 'user';
-    banned: boolean;
-    tags?: string[];
-    oidcSub?: string;
-    enabledApis?: string[];
-    created_at: number;
-    playrecord_migrated?: boolean;
-    favorite_migrated?: boolean;
-    skip_migrated?: boolean;
-  } | null> {
-    if (typeof (this.storage as any).getUserInfoV2 === 'function') {
-      return (this.storage as any).getUserInfoV2(userName);
-    }
-    return null;
+  async getUserInfoV2(userName: string): Promise<UserV2Info | null> {
+    return this.storage.getUserInfoV2?.(userName) ?? null;
   }
 
   async updateUserInfoV2(
@@ -592,111 +460,68 @@ export class DbManager {
       enabledApis?: string[];
     },
   ): Promise<void> {
-    if (typeof (this.storage as any).updateUserInfoV2 === 'function') {
-      await (this.storage as any).updateUserInfoV2(userName, updates);
-    }
+    await this.storage.updateUserInfoV2?.(userName, updates);
   }
 
   async changePasswordV2(userName: string, newPassword: string): Promise<void> {
-    if (typeof (this.storage as any).changePasswordV2 === 'function') {
-      await (this.storage as any).changePasswordV2(userName, newPassword);
-    }
+    await this.storage.changePasswordV2?.(userName, newPassword);
   }
 
   async checkUserExistV2(userName: string): Promise<boolean> {
-    if (typeof (this.storage as any).checkUserExistV2 === 'function') {
-      return (this.storage as any).checkUserExistV2(userName);
-    }
-    return false;
+    return this.storage.checkUserExistV2?.(userName) ?? false;
   }
 
   async getUserByOidcSub(oidcSub: string): Promise<string | null> {
-    if (typeof (this.storage as any).getUserByOidcSub === 'function') {
-      return (this.storage as any).getUserByOidcSub(oidcSub);
-    }
-    return null;
+    return this.storage.getUserByOidcSub?.(oidcSub) ?? null;
   }
 
   async getUserListV2(
     offset = 0,
     limit = 20,
     ownerUsername?: string,
-  ): Promise<{
-    users: Array<{
-      username: string;
-      role: 'owner' | 'admin' | 'user';
-      banned: boolean;
-      tags?: string[];
-      oidcSub?: string;
-      enabledApis?: string[];
-      created_at: number;
-    }>;
-    total: number;
-  }> {
-    if (typeof (this.storage as any).getUserListV2 === 'function') {
-      return (this.storage as any).getUserListV2(offset, limit, ownerUsername);
-    }
-    return { users: [], total: 0 };
+  ): Promise<UserV2ListResult> {
+    return this.storage.getUserListV2?.(offset, limit, ownerUsername) ?? { users: [], total: 0 };
   }
 
   async deleteUserV2(userName: string): Promise<void> {
-    if (typeof (this.storage as any).deleteUserV2 === 'function') {
-      await (this.storage as any).deleteUserV2(userName);
-    }
+    await this.storage.deleteUserV2?.(userName);
   }
 
   async getUsersByTag(tagName: string): Promise<string[]> {
-    if (typeof (this.storage as any).getUsersByTag === 'function') {
-      return (this.storage as any).getUsersByTag(tagName);
-    }
-    return [];
+    return this.storage.getUsersByTag?.(tagName) ?? [];
   }
 
-  // ---------- TVBox订阅token ----------
+  // TVBox订阅token
   async getTvboxSubscribeToken(userName: string): Promise<string | null> {
-    if (typeof (this.storage as any).getTvboxSubscribeToken === 'function') {
-      return (this.storage as any).getTvboxSubscribeToken(userName);
-    }
-    return null;
+    return this.storage.getTvboxSubscribeToken?.(userName) ?? null;
   }
 
   async setTvboxSubscribeToken(userName: string, token: string): Promise<void> {
-    if (typeof (this.storage as any).setTvboxSubscribeToken === 'function') {
-      await (this.storage as any).setTvboxSubscribeToken(userName, token);
-    }
+    await this.storage.setTvboxSubscribeToken?.(userName, token);
   }
 
   async getUsernameByTvboxToken(token: string): Promise<string | null> {
-    if (typeof (this.storage as any).getUsernameByTvboxToken === 'function') {
-      return (this.storage as any).getUsernameByTvboxToken(token);
-    }
-    return null;
+    return this.storage.getUsernameByTvboxToken?.(token) ?? null;
   }
 
-  // ---------- 播放记录迁移 ----------
+  // 播放记录迁移
   async migratePlayRecords(userName: string): Promise<void> {
-    if (typeof (this.storage as any).migratePlayRecords === 'function') {
-      await (this.storage as any).migratePlayRecords(userName);
-    }
+    await this.storage.migratePlayRecords(userName);
   }
 
-  // ---------- 收藏迁移 ----------
+  // 收藏迁移
   async migrateFavorites(userName: string): Promise<void> {
-    if (typeof (this.storage as any).migrateFavorites === 'function') {
-      await (this.storage as any).migrateFavorites(userName);
-    }
+    await this.storage.migrateFavorites(userName);
   }
 
-  // ---------- 跳过配置迁移 ----------
+  // 跳过配置迁移
   async migrateSkipConfigs(userName: string): Promise<void> {
-    if (typeof (this.storage as any).migrateSkipConfigs === 'function') {
-      await (this.storage as any).migrateSkipConfigs(userName);
-    }
+    await this.storage.migrateSkipConfigs(userName);
   }
 
-  // ---------- 数据迁移 ----------
+  // 数据迁移
   async migrateUsersFromConfig(adminConfig: AdminConfig): Promise<void> {
-    if (typeof (this.storage as any).createUserV2 !== 'function') {
+    if (typeof this.storage.createUserV2 !== 'function') {
       throw new Error('当前存储类型不支持新版用户存储');
     }
 
@@ -709,40 +534,34 @@ export class DbManager {
 
     for (const user of users) {
       try {
-        // 跳过环境变量中的站长（站长使用环境变量认证，不需要迁移）
         if (user.username === process.env.USERNAME) {
           logger.info(`跳过站长 ${user.username} 的迁移`);
           continue;
         }
 
-        // 检查用户是否已经迁移
         const exists = await this.checkUserExistV2(user.username);
         if (exists) {
           logger.info(`用户 ${user.username} 已存在，跳过迁移`);
           continue;
         }
 
-        // 获取密码
         let password = '';
 
-        // 如果是OIDC用户，生成随机密码（OIDC用户不需要密码登录）
-        if ((user as any).oidcSub) {
+        if ('oidcSub' in user && user.oidcSub) {
           password = crypto.randomUUID();
           logger.info(`用户 ${user.username} (OIDC用户) 使用随机密码迁移`);
-        }
-        // 尝试从旧的存储中获取密码
-        else {
+        } else {
           try {
-            const storage = this.storage as any;
-            if (typeof storage?.adapter?.get === 'function') {
-              const storedPassword = await storage.adapter.get(
+            const storage = this.storage as unknown as Record<string, unknown>;
+            const adapter = storage.adapter as Record<string, unknown> | undefined;
+            if (adapter && typeof adapter.get === 'function') {
+              const storedPassword = await (adapter.get as (key: string) => Promise<string | null>)(
                 `u:${user.username}:pwd`,
               );
               if (storedPassword) {
                 password = storedPassword;
                 logger.info(`用户 ${user.username} 使用旧密码迁移`);
               } else {
-                // 没有旧密码，使用默认密码
                 password = 'defaultPassword123';
                 logger.info(`用户 ${user.username} 没有旧密码，使用默认密码`);
               }
@@ -750,31 +569,25 @@ export class DbManager {
               password = 'defaultPassword123';
             }
           } catch (err) {
-            logger.error(
-              `获取用户 ${user.username} 的密码失败，使用默认密码`,
-              err,
-            );
+            logger.error(`获取用户 ${user.username} 的密码失败，使用默认密码`, err);
             password = 'defaultPassword123';
           }
         }
 
-        // 将站长角色转换为普通角色
         const migratedRole = user.role === 'owner' ? 'user' : user.role;
         if (user.role === 'owner') {
           logger.info(`用户 ${user.username} 的角色从 owner 转换为 user`);
         }
 
-        // 创建新用户
         await this.createUserV2(
           user.username,
           password,
           migratedRole,
           user.tags,
-          (user as any).oidcSub,
+          user.oidcSub,
           user.enabledApis,
         );
 
-        // 如果用户被封禁，更新状态
         if (user.banned) {
           await this.updateUserInfoV2(user.username, { banned: true });
         }
@@ -788,7 +601,7 @@ export class DbManager {
     logger.info('用户迁移完成');
   }
 
-  // ---------- 搜索历史 ----------
+  // 搜索历史
   async getSearchHistory(userName: string): Promise<string[]> {
     return this.storage.getSearchHistory(userName);
   }
@@ -801,7 +614,7 @@ export class DbManager {
     await this.storage.deleteSearchHistory(userName, keyword);
   }
 
-  // ---------- 漫画书架 ----------
+  // 漫画书架
   async getMangaShelf(
     userName: string,
     sourceId: string,
@@ -843,7 +656,7 @@ export class DbManager {
     );
   }
 
-  // ---------- 漫画阅读历史 ----------
+  // 漫画阅读历史
   async getMangaReadRecord(
     userName: string,
     sourceId: string,
@@ -885,38 +698,26 @@ export class DbManager {
     );
   }
 
-  // 获取全部用户名
   async getAllUsers(): Promise<string[]> {
-    if (typeof (this.storage as any).getAllUsers === 'function') {
-      return (this.storage as any).getAllUsers();
-    }
-    return [];
+    return this.storage.getAllUsers?.() ?? [];
   }
 
-  // ---------- 管理员配置 ----------
+  // 管理员配置
   async getAdminConfig(): Promise<AdminConfig | null> {
-    if (typeof (this.storage as any).getAdminConfig === 'function') {
-      return (this.storage as any).getAdminConfig();
-    }
-    return null;
+    return this.storage.getAdminConfig?.() ?? null;
   }
 
   async saveAdminConfig(config: AdminConfig): Promise<void> {
-    if (typeof (this.storage as any).setAdminConfig === 'function') {
-      await (this.storage as any).setAdminConfig(config);
-    }
+    await this.storage.setAdminConfig?.(config);
   }
 
-  // ---------- 跳过片头片尾配置 ----------
+  // 跳过片头片尾配置
   async getSkipConfig(
     userName: string,
     source: string,
     id: string,
   ): Promise<SkipConfig | null> {
-    if (typeof (this.storage as any).getSkipConfig === 'function') {
-      return (this.storage as any).getSkipConfig(userName, source, id);
-    }
-    return null;
+    return this.storage.getSkipConfig?.(userName, source, id) ?? null;
   }
 
   async setSkipConfig(
@@ -925,9 +726,7 @@ export class DbManager {
     id: string,
     config: SkipConfig,
   ): Promise<void> {
-    if (typeof (this.storage as any).setSkipConfig === 'function') {
-      await (this.storage as any).setSkipConfig(userName, source, id, config);
-    }
+    await this.storage.setSkipConfig?.(userName, source, id, config);
   }
 
   async deleteSkipConfig(
@@ -935,74 +734,54 @@ export class DbManager {
     source: string,
     id: string,
   ): Promise<void> {
-    if (typeof (this.storage as any).deleteSkipConfig === 'function') {
-      await (this.storage as any).deleteSkipConfig(userName, source, id);
-    }
+    await this.storage.deleteSkipConfig?.(userName, source, id);
   }
 
   async getAllSkipConfigs(
     userName: string,
   ): Promise<{ [key: string]: SkipConfig }> {
-    if (typeof (this.storage as any).getAllSkipConfigs === 'function') {
-      return (this.storage as any).getAllSkipConfigs(userName);
-    }
-    return {};
+    return this.storage.getAllSkipConfigs?.(userName) ?? {};
   }
 
-  // ---------- 弹幕过滤配置 ----------
+  // 弹幕过滤配置
   async getDanmakuFilterConfig(
     userName: string,
   ): Promise<DanmakuFilterConfig | null> {
-    if (typeof (this.storage as any).getDanmakuFilterConfig === 'function') {
-      return (this.storage as any).getDanmakuFilterConfig(userName);
-    }
-    return null;
+    return this.storage.getDanmakuFilterConfig?.(userName) ?? null;
   }
 
   async setDanmakuFilterConfig(
     userName: string,
     config: DanmakuFilterConfig,
   ): Promise<void> {
-    if (typeof (this.storage as any).setDanmakuFilterConfig === 'function') {
-      await (this.storage as any).setDanmakuFilterConfig(userName, config);
-    }
+    await this.storage.setDanmakuFilterConfig?.(userName, config);
   }
 
   async deleteDanmakuFilterConfig(userName: string): Promise<void> {
-    if (typeof (this.storage as any).deleteDanmakuFilterConfig === 'function') {
-      await (this.storage as any).deleteDanmakuFilterConfig(userName);
-    }
+    await this.storage.deleteDanmakuFilterConfig?.(userName);
   }
 
-  // ---------- 数据清理 ----------
+  // 数据清理
   async clearAllData(): Promise<void> {
-    if (typeof (this.storage as any).clearAllData === 'function') {
-      await (this.storage as any).clearAllData();
+    if (typeof this.storage.clearAllData === 'function') {
+      await this.storage.clearAllData();
     } else {
       throw new Error('存储类型不支持清空数据操作');
     }
   }
 
-  // ---------- 通用键值存储 ----------
+  // 通用键值存储
   async getGlobalValue(key: string): Promise<string | null> {
-    if (typeof (this.storage as any).getGlobalValue === 'function') {
-      return (this.storage as any).getGlobalValue(key);
-    }
-    return null;
+    return this.storage.getGlobalValue?.(key) ?? null;
   }
 
   async setGlobalValue(key: string, value: string): Promise<void> {
-    if (typeof (this.storage as any).setGlobalValue === 'function') {
-      await (this.storage as any).setGlobalValue(key, value);
-    }
+    await this.storage.setGlobalValue?.(key, value);
   }
 
   async deleteGlobalValue(key: string): Promise<void> {
-    if (typeof (this.storage as any).deleteGlobalValue === 'function') {
-      await (this.storage as any).deleteGlobalValue(key);
-    }
+    await this.storage.deleteGlobalValue?.(key);
   }
 }
 
-// 导出默认实例
 export const db = new DbManager();

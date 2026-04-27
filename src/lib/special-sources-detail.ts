@@ -339,7 +339,7 @@ export async function getXiaoyaDetail(id: string): Promise<SearchResult> {
   let decodedDirPath: string;
   try {
     decodedDirPath = base58Decode(id);
-  } catch (decodeError) {
+  } catch (_decodeError) {
     throw new Error('无效的视频ID');
   }
 

@@ -1,5 +1,6 @@
 'use client';
- 
+
+import DOMPurify from 'dompurify';
 
 import {
   AlertCircle,
@@ -111,7 +112,7 @@ const AlertModal = ({
           {html && (
             <div
               className='mb-4 text-left text-gray-600 dark:text-gray-400'
-              dangerouslySetInnerHTML={{ __html: html }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
             />
           )}
 

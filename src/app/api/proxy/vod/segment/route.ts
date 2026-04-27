@@ -1,26 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { apiError } from '@/lib/api-response';
+import { commonSchemas } from '@/lib/api-schemas';
+import { parseSearchParams } from '@/lib/api-validation';
 import { getConfig } from '@/lib/config';
 import { buildProxyStreamHeaders } from '@/lib/server/proxy-headers';
 import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
+import { z } from 'zod';
 
 export const runtime = 'nodejs';
 
+const vodProxySegmentSchema = z.object({
+  url: commonSchemas.url,
+  source: commonSchemas.source,
+});
+
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const url = searchParams.get('url');
-  const source = searchParams.get('source');
+  const paramResult = parseSearchParams(request as any, vodProxySegmentSchema);
+  if ('error' in paramResult) return paramResult.error;
+  const { url, source } = paramResult.data;
 
-  if (!url) {
-    return apiError('Missing url', 400);
-  }
-
-  if (!source) {
-    return apiError('Missing source', 400);
-  }
-
-  // 定义直链播放模式常量
   const DIRECT_PLAY_SOURCE = 'directplay';
 
   // 直链播放模式：跳过源站配置检查，直接代理

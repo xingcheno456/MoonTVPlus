@@ -27,3 +27,24 @@ export const paginatedQuerySchema = z.object({
   page: commonSchemas.page,
   pageSize: commonSchemas.pageSize,
 });
+
+export const proxyUrlSchema = z.object({
+  url: z.string().min(1, 'url 不能为空'),
+  source: z.string().min(1, 'source 不能为空').optional(),
+});
+
+export const loginBodySchema = z.object({
+  username: z.string().optional(),
+  password: z.string().min(1, 'password 不能为空'),
+  turnstileToken: z.string().optional(),
+});
+
+export const registerBodySchema = z.object({
+  username: z.string().regex(/^[a-zA-Z0-9_]{3,20}$/, '用户名只能包含字母、数字、下划线，长度3-20位'),
+  password: z.string().min(6, '密码至少6个字符').max(100, '密码最多100个字符'),
+  turnstileToken: z.string().optional(),
+});
+
+export const changePasswordBodySchema = z.object({
+  newPassword: z.string().min(6, '新密码至少6个字符').max(100, '新密码最多100个字符'),
+});

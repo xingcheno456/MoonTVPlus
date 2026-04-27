@@ -248,7 +248,7 @@ export class XiaoyaClient {
     try {
       await this.getFileInfo(path);
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
