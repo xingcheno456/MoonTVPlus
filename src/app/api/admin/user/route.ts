@@ -1,6 +1,7 @@
 
 import { NextRequest } from 'next/server';
 
+import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -102,9 +103,17 @@ export async function POST(request: NextRequest) {
     }
 
     // 查找目标用户条目（用户组操作和批量操作不需要）
-    let targetEntry: any = null;
+    type UserEntry = AdminConfig['UserConfig']['Users'][number] | null;
+
+    let targetEntry: UserEntry = null;
     let isTargetAdmin = false;
-    let targetUserV2: any = null;
+    let targetUserV2: {
+      username: string;
+      role: 'owner' | 'admin' | 'user';
+      banned?: boolean;
+      tags?: string[];
+      enabledApis?: string[];
+    } | null = null;
 
     if (
       !['userGroup', 'batchUpdateUserGroups'].includes(action) &&

@@ -2,6 +2,7 @@
 
 
 import {
+  BarChart3,
   Blend,
   Cat,
   Clover,
@@ -285,6 +286,22 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
                 {!isCollapsed && (
                   <span className='whitespace-nowrap opacity-100 transition-opacity duration-200'>
                     搜索
+                  </span>
+                )}
+              </Link>
+              <Link
+                href='/stats'
+                data-active={active === '/stats'}
+                className={`group flex min-h-[40px] items-center rounded-lg px-2 py-2 pl-4 font-medium text-gray-700 transition-colors duration-200 hover:bg-gray-100/30 hover:text-green-600 data-[active=true]:bg-green-500/20 data-[active=true]:text-green-700 dark:text-gray-300 dark:hover:text-green-400 dark:data-[active=true]:bg-green-500/10 dark:data-[active=true]:text-green-400 ${
+                  isCollapsed ? 'mx-0 w-full max-w-none' : 'mx-0'
+                } justify-start gap-3`}
+              >
+                <div className='flex h-4 w-4 items-center justify-center'>
+                  <BarChart3 className='h-4 w-4 text-gray-500 group-hover:text-green-600 data-[active=true]:text-green-700 dark:text-gray-400 dark:group-hover:text-green-400 dark:data-[active=true]:text-green-400' />
+                </div>
+                {!isCollapsed && (
+                  <span className='whitespace-nowrap opacity-100 transition-opacity duration-200'>
+                    统计
                   </span>
                 )}
               </Link>

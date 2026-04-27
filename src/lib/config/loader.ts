@@ -211,7 +211,7 @@ export async function getConfig(): Promise<AdminConfig> {
     );
     if (!dbReadFailed && nonOwnerUsers.length > 0) {
       try {
-        const storage = (db as any).storage;
+        const storage = (db as unknown as Record<string, unknown>).storage;
         if (storage && typeof storage.createUserV2 === 'function') {
           logger.info('检测到配置中有用户，开始自动迁移...');
           await db.migrateUsersFromConfig(adminConfig);
@@ -239,6 +239,6 @@ export async function setCachedConfig(config: AdminConfig) {
 }
 
 export async function clearConfigCache() {
-  cachedConfig = undefined as any;
+  cachedConfig = undefined as unknown as AdminConfig;
   configInitPromise = null;
 }

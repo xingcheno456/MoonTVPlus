@@ -2,6 +2,7 @@
 
 
 import {
+  BarChart3,
   Blend,
   Cat,
   Clover,
@@ -114,6 +115,12 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
         href: '/douban?type=custom',
       });
     }
+
+    items.push({
+      icon: BarChart3,
+      label: '统计',
+      href: '/stats',
+    });
 
     setNavItems(items);
   }, [watchRoomContext?.isEnabled]);

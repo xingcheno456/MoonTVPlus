@@ -44,7 +44,7 @@ async function generateAuthCookie(
   deviceInfo?: string,
 ): Promise<string> {
   const now = Date.now();
-  const authData: any = { role: role || 'user' };
+  const authData: Record<string, unknown> = { role: role || 'user' };
 
   // note: includePassword parameter is retained for backward compatibility
   // but password is NEVER stored in the cookie — only validated server-side
