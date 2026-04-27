@@ -15,6 +15,14 @@ import { yellowWords } from '@/lib/yellow';
 
 import { logger } from '../lib/logger';
 
+interface OpenListFolderInfo {
+  title: string;
+  poster_path: string | null;
+  release_date: string;
+  overview: string;
+  media_type: string;
+}
+
 export interface SearchOptions {
   username: string;
   query: string;
@@ -126,7 +134,7 @@ async function searchEmbySources(
           return [];
         }
       })(),
-      new Promise<any[]>((_, reject) =>
+      new Promise<never[]>((_, reject) =>
         setTimeout(() => reject(new Error(`${embyConfig.name} timeout`)), timeout),
       ),
     ]).catch((error) => {
@@ -175,12 +183,12 @@ async function searchOpenList(
 
         if (metaInfo && metaInfo.folders) {
           return Object.entries(metaInfo.folders)
-            .filter(([folderName, info]: [string, any]) => {
+            .filter(([folderName, info]: [string, OpenListFolderInfo]) => {
               const matchFolder = folderName.toLowerCase().includes(query.toLowerCase());
               const matchTitle = info.title.toLowerCase().includes(query.toLowerCase());
               return matchFolder || matchTitle;
             })
-            .map(([folderName, info]: [string, any]) => ({
+            .map(([folderName, info]: [string, OpenListFolderInfo]) => ({
               id: folderName,
               source: 'openlist',
               source_name: '私人影库',
@@ -201,7 +209,7 @@ async function searchOpenList(
         return [];
       }
     })(),
-    new Promise<any[]>((_, reject) =>
+    new Promise<never[]>((_, reject) =>
       setTimeout(() => reject(new Error('OpenList timeout')), timeout),
     ),
   ]).catch((error) => {
@@ -273,7 +281,7 @@ async function searchSourceScripts(
           return [];
         }
       })(),
-      new Promise<any[]>((_, reject) =>
+      new Promise<never[]>((_, reject) =>
         setTimeout(() => reject(new Error(`${script.name} timeout`)), timeout),
       ),
     ]).catch((error) => {
@@ -411,13 +419,13 @@ export async function generateSuggestions(
       new Set(
         results
           .filter(
-            (r: any) =>
+            (r) =>
               config.SiteConfig.DisableYellowFilter ||
               !yellowWords.some((word: string) =>
                 (r.type_name || '').includes(word),
               ),
           )
-          .map((r: any) => r.title)
+          .map((r) => r.title)
           .filter(Boolean)
           .flatMap((title: string) => title.split(/[ -:：·、-]/))
           .filter(

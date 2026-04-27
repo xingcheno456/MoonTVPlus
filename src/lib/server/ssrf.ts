@@ -100,7 +100,7 @@ export async function validateProxyUrlServerSide(
     }
 
     return true;
-  } catch (_error) {
+  } catch {
     // 凡是报错（无论是 URL 解析失败，还是 DNS 解析失败，还是域名不存在），均作为不安全拒绝
     logger.warn(`[SSRF 防护] URL解析失败或不合法, 拒绝代理请求: ${urlStr}`);
     return false;

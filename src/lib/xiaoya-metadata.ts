@@ -99,7 +99,7 @@ async function findNFO(
       if (metadata) {
         return metadata;
       }
-    } catch (_error) {
+    } catch {
       continue;
     }
   }

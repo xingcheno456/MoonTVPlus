@@ -173,7 +173,7 @@ export async function getComments(
     if (episodeId) {
       apiUrl = `${baseUrl}/api/v2/comment/${episodeId}?format=xml`;
     } else {
-      apiUrl = `${baseUrl}/api/v2/comment?url=${encodeURIComponent(url!)}&format=xml`;
+      apiUrl = `${baseUrl}/api/v2/comment?url=${encodeURIComponent(url as string)}&format=xml`;
     }
 
     const controller = new AbortController();
