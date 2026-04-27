@@ -61,11 +61,11 @@ export async function GET(request: NextRequest) {
       return apiError('TMDB 图片信息获取失败', response.code, String(response.code));
     }
 
-    const backdrops = (response.images.backdrops || []).map((item: any) => ({
+    const backdrops = ((response.images.backdrops as any[]) || []).map((item: any) => ({
       ...item,
       imageType: 'backdrop' as const,
     }));
-    const posters = (response.images.posters || []).map((item: any) => ({
+    const posters = ((response.images.posters as any[]) || []).map((item: any) => ({
       ...item,
       imageType: 'poster' as const,
     }));

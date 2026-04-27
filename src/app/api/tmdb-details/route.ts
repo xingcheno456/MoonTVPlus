@@ -157,13 +157,13 @@ export async function GET(request: NextRequest) {
       mediaType,
       title: details.title || details.name,
       backdrop: details.backdrop_path
-        ? getTMDBImageUrl(details.backdrop_path, 'w1280')
+        ? getTMDBImageUrl(details.backdrop_path as string, 'w1280')
         : null,
       poster: details.poster_path
-        ? getTMDBImageUrl(details.poster_path, 'w500')
+        ? getTMDBImageUrl(details.poster_path as string, 'w500')
         : null,
       overview: details.overview || '',
-      rating: details.vote_average ? details.vote_average.toFixed(1) : '',
+      rating: details.vote_average ? (details.vote_average as number).toFixed(1) : '',
       releaseDate: details.release_date || details.first_air_date || '',
       genres: details.genres || [], // 添加类型标签
     };
