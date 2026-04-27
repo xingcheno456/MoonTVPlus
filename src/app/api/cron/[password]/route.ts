@@ -1,5 +1,4 @@
- 
-
+import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 
 import { checkAnimeSubscriptions } from '@/lib/anime-subscription';
@@ -14,7 +13,7 @@ import {
   MangaShelfUpdate,
 } from '@/lib/email.templates';
 import { fetchVideoDetail } from '@/lib/fetchVideoDetail';
-import { refreshLiveChannels } from '@/lib/live';
+
 import { MangaChapter, MangaShelfItem } from '@/lib/manga.types';
 import { startOpenListRefresh } from '@/lib/openlist-refresh';
 import {
@@ -185,9 +184,11 @@ function extractPassword(request: NextRequest): string | null {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ password: string }> },
+  _params: { params: Promise<unknown> },
 ) {
-  logger.info(request.url);
+  // SECURITY: 不打印完整 URL，避免认证凭据泄露到日志
+  // 仅使用 Bearer token 认证，URL 路径不再包含密码
+  logger.info('[Cron] Request received');
 
   const cronPassword = process.env.CRON_PASSWORD;
   if (!cronPassword) {
@@ -195,11 +196,24 @@ export async function GET(
     return apiError('Unauthorized', 401);
   }
 
-  const { password: pathPassword } = await params;
   const headerPassword = extractPassword(request);
-  const password = headerPassword ?? pathPassword;
+  const password = headerPassword;
 
-  const clientKey = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+  if (!password) {
+    return apiError('Missing Authorization Bearer token', 401);
+  }
+
+  function getClientIP(request: NextRequest): string {
+    const trustedProxy = process.env.TRUSTED_PROXY === 'true';
+    if (trustedProxy) {
+      const cfIP = request.headers.get('CF-Connecting-IP')
+        ?? request.headers.get('x-real-ip');
+      if (cfIP) return cfIP;
+    }
+    return (request as unknown as { ip?: string }).ip ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  }
+
+  const clientKey = getClientIP(request);
 
   const now = Date.now();
   const failure = authFailures.get(clientKey);
@@ -207,7 +221,11 @@ export async function GET(
     return apiError('Too many authentication failures', 429);
   }
 
-  if (password !== cronPassword) {
+  // SECURITY: 使用常量时间比较防止时序攻击
+  const passwordBuffer = Buffer.from(password || '');
+  const cronPasswordBuffer = Buffer.from(cronPassword);
+  if (!password || passwordBuffer.length !== cronPasswordBuffer.length ||
+      !crypto.timingSafeEqual(passwordBuffer, cronPasswordBuffer)) {
     const existing = authFailures.get(clientKey);
     if (existing && now < existing.resetAt) {
       existing.count++;
@@ -283,38 +301,13 @@ async function cronJob() {
 
   // 其余任务并行执行
   await Promise.all([
-    refreshAllLiveChannels(),
     refreshOpenList(),
     refreshRecordAndFavorites(),
     checkAnimeSubscriptions(),
   ]);
 }
 
-async function refreshAllLiveChannels() {
-  const config = await getConfig();
 
-  // 并发刷新所有启用的直播源
-  const refreshPromises = (config.LiveConfig || [])
-    .filter((liveInfo) => !liveInfo.disabled)
-    .map(async (liveInfo) => {
-      try {
-        const nums = await refreshLiveChannels(liveInfo);
-        liveInfo.channelNumber = nums;
-      } catch (error) {
-        logger.error(
-          `刷新直播源失败 [${liveInfo.name || liveInfo.key}]:`,
-          error,
-        );
-        liveInfo.channelNumber = 0;
-      }
-    });
-
-  // 等待所有刷新任务完成
-  await Promise.all(refreshPromises);
-
-  // 保存配置
-  await db.saveAdminConfig(config);
-}
 
 async function refreshConfig() {
   let config = await getConfig();
