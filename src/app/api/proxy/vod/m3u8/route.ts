@@ -1,37 +1,60 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextResponse } from "next/server";
+import { apiError } from '@/lib/api-response';
+import { commonSchemas } from '@/lib/api-schemas';
+import { parseSearchParams } from '@/lib/api-validation';
+import { getConfig } from '@/lib/config';
 
-import { getConfig } from "@/lib/config";
-import { getBaseUrl, resolveUrl } from "@/lib/live";
+import {
+  buildProxyM3u8Headers,
+  buildProxyStreamHeaders,
+} from '@/lib/server/proxy-headers';
 import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
-import { buildProxyM3u8Headers, buildProxyStreamHeaders } from '@/lib/server/proxy-headers';
+import { z } from 'zod';
+
+import { logger } from '../../../../../lib/logger';
+
+function getBaseUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return parsed.origin + parsed.pathname.substring(0, parsed.pathname.lastIndexOf('/') + 1);
+  } catch {
+    return url;
+  }
+}
+
+function resolveUrl(baseUrl: string, relativeUrl: string): string {
+  if (relativeUrl.startsWith('http://') || relativeUrl.startsWith('https://')) {
+    return relativeUrl;
+  }
+  try {
+    return new URL(relativeUrl, baseUrl).toString();
+  } catch {
+    return relativeUrl;
+  }
+}
 
 export const runtime = 'nodejs';
 
+const vodProxyM3u8Schema = z.object({
+  url: commonSchemas.url,
+  source: commonSchemas.source,
+});
+
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const url = searchParams.get('url');
-  const source = searchParams.get('source'); // 视频源key
+  const paramResult = parseSearchParams(request as any, vodProxyM3u8Schema);
+  if ('error' in paramResult) return paramResult.error;
+  const { url, source } = paramResult.data;
 
-  if (!url) {
-    return NextResponse.json({ error: 'Missing url' }, { status: 400 });
-  }
-
-  if (!source) {
-    return NextResponse.json({ error: 'Missing source' }, { status: 400 });
-  }
-
-  // 检查该视频源是否启用了代理模式
   const config = await getConfig();
   const videoSource = config.SourceConfig?.find((s: any) => s.key === source);
 
   if (!videoSource) {
-    return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+    return apiError('Source not found', 404);
   }
 
   if (!videoSource.proxyMode) {
-    return NextResponse.json({ error: 'Proxy mode not enabled for this source' }, { status: 403 });
+    return apiError('Proxy mode not enabled for this source', 403);
   }
 
   let response: Response | null = null;
@@ -43,7 +66,7 @@ export async function GET(request: Request) {
     // 安全校验：防 SSRF 拦截请求内网或非法 URL
     const isSafeUrl = await validateProxyUrlServerSide(decodedUrl);
     if (!isSafeUrl) {
-      return NextResponse.json({ error: 'Proxy request to local or invalid network is forbidden' }, { status: 403 });
+      return apiError('Proxy request to local or invalid network is forbidden', 403);
     }
 
     response = await fetch(decodedUrl, {
@@ -51,18 +74,23 @@ export async function GET(request: Request) {
       redirect: 'follow',
       credentials: 'same-origin',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': decodedUrl,
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Referer: decodedUrl,
       },
     });
 
     if (!response.ok) {
-      return NextResponse.json({ error: 'Failed to fetch m3u8' }, { status: 500 });
+      return apiError('Failed to fetch m3u8', 500);
     }
 
     const contentType = response.headers.get('Content-Type') || '';
     // rewrite m3u8
-    if (contentType.toLowerCase().includes('mpegurl') || contentType.toLowerCase().includes('octet-stream') || decodedUrl.includes('.m3u8')) {
+    if (
+      contentType.toLowerCase().includes('mpegurl') ||
+      contentType.toLowerCase().includes('octet-stream') ||
+      decodedUrl.includes('.m3u8')
+    ) {
       // 获取最终的响应URL（处理重定向后的URL）
       const finalUrl = response.url;
       const m3u8Content = await response.text();
@@ -72,14 +100,19 @@ export async function GET(request: Request) {
       const baseUrl = getBaseUrl(finalUrl);
 
       // 重写 M3U8 内容
-      const modifiedContent = rewriteM3U8Content(m3u8Content, baseUrl, request, source);
+      const modifiedContent = rewriteM3U8Content(
+        m3u8Content,
+        baseUrl,
+        request,
+        source,
+      );
 
       const headers = buildProxyM3u8Headers(contentType || undefined);
       return new Response(modifiedContent, { headers });
     }
     // just proxy
     const headers = buildProxyStreamHeaders(
-      response.headers.get('Content-Type') || 'application/vnd.apple.mpegurl'
+      response.headers.get('Content-Type') || 'application/vnd.apple.mpegurl',
     );
     headers.set('Cache-Control', 'no-cache');
 
@@ -89,7 +122,7 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch m3u8' }, { status: 500 });
+    return apiError('Failed to fetch m3u8', 500);
   } finally {
     // 确保 response 被正确关闭以释放资源
     if (response && !responseUsed) {
@@ -97,13 +130,18 @@ export async function GET(request: Request) {
         response.body?.cancel();
       } catch (error) {
         // 忽略关闭时的错误
-        console.warn('Failed to close response body:', error);
+        logger.warn('Failed to close response body:', error);
       }
     }
   }
 }
 
-function rewriteM3U8Content(content: string, baseUrl: string, req: Request, source: string) {
+function rewriteM3U8Content(
+  content: string,
+  baseUrl: string,
+  req: Request,
+  source: string,
+) {
   // 从 referer 头提取协议信息
   const referer = req.headers.get('referer');
   let protocol = 'http';
@@ -167,7 +205,12 @@ function rewriteM3U8Content(content: string, baseUrl: string, req: Request, sour
   return rewrittenLines.join('\n');
 }
 
-function rewriteMapUri(line: string, baseUrl: string, proxyBase: string, source: string) {
+function rewriteMapUri(
+  line: string,
+  baseUrl: string,
+  proxyBase: string,
+  source: string,
+) {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
     const originalUri = uriMatch[1];
@@ -178,7 +221,12 @@ function rewriteMapUri(line: string, baseUrl: string, proxyBase: string, source:
   return line;
 }
 
-function rewriteKeyUri(line: string, baseUrl: string, proxyBase: string, source: string) {
+function rewriteKeyUri(
+  line: string,
+  baseUrl: string,
+  proxyBase: string,
+  source: string,
+) {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
     const originalUri = uriMatch[1];

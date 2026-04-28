@@ -1,10 +1,42 @@
 import dns from 'dns';
 
+import { logger } from '../logger';
+
 /**
  * 判断 IP 地址是否为内网/本地私有地址
  * 覆盖 IPv4 和 IPv6，彻底杜绝所有变体绕过。
  */
 export function isPrivateIP(ip: string): boolean {
+  // IPv6 地址（含 IPv4-mapped 格式 ::ffff:x.x.x.x）
+  if (ip.includes(':')) {
+    const lowerIp = ip.toLowerCase();
+
+    // ::1 环回地址 (Loopback)
+    if (ip === '::1' || ip === '0:0:0:0:0:0:0:1') return true;
+
+    // 0::0 / :: 未指定地址
+    if (ip === '::' || ip === '0:0:0:0:0:0:0:0') return true;
+
+    // IPv4 映射到 IPv6 的地址 (例如 ::ffff:127.0.0.1)
+    if (lowerIp.startsWith('::ffff:')) {
+      return isPrivateIP(lowerIp.substring(7));
+    }
+
+    // 唯一本地地址 (Unique Local Addresses, fc00::/7)
+    if (lowerIp.startsWith('fc') || lowerIp.startsWith('fd')) return true;
+
+    // 链路本地地址 (Link-Local Addresses, fe80::/10)
+    if (
+      lowerIp.startsWith('fe8') ||
+      lowerIp.startsWith('fe9') ||
+      lowerIp.startsWith('fea') ||
+      lowerIp.startsWith('feb')
+    )
+      return true;
+
+    return false;
+  }
+
   // IPv4 私有地址和环回地址
   if (ip.includes('.')) {
     const parts = ip.split('.').map(Number);
@@ -20,28 +52,6 @@ export function isPrivateIP(ip: string): boolean {
     );
   }
 
-  // IPv6 私有地址和环回地址
-  if (ip.includes(':')) {
-    // ::1 环回地址 (Loopback)
-    if (ip === '::1' || ip === '0:0:0:0:0:0:0:1') return true;
-
-    // 0::0 / :: 未指定地址
-    if (ip === '::' || ip === '0:0:0:0:0:0:0:0') return true;
-
-    const lowerIp = ip.toLowerCase();
-
-    // IPv4 映射到 IPv6 的地址 (例如 ::ffff:127.0.0.1)
-    if (lowerIp.startsWith('::ffff:')) {
-      return isPrivateIP(lowerIp.substring(7));
-    }
-
-    // 唯一本地地址 (Unique Local Addresses, fc00::/7)
-    if (lowerIp.startsWith('fc') || lowerIp.startsWith('fd')) return true;
-
-    // 链路本地地址 (Link-Local Addresses, fe80::/10)
-    if (lowerIp.startsWith('fe8') || lowerIp.startsWith('fe9') || lowerIp.startsWith('fea') || lowerIp.startsWith('feb')) return true;
-  }
-
   return false;
 }
 
@@ -49,7 +59,9 @@ export function isPrivateIP(ip: string): boolean {
  * 校验代理 URL 是否安全 (防止 SSRF / DNS 重绑定漏洞)
  * 只在 Node.js 服务端运行。
  */
-export async function validateProxyUrlServerSide(urlStr: string): Promise<boolean> {
+export async function validateProxyUrlServerSide(
+  urlStr: string,
+): Promise<boolean> {
   if (!urlStr) return false;
   try {
     const parsed = new URL(urlStr);
@@ -81,14 +93,16 @@ export async function validateProxyUrlServerSide(urlStr: string): Promise<boolea
 
     // 4. 对物理 IP 进行内网校验
     if (isPrivateIP(lookupResult.address)) {
-      console.warn(`[SSRF 防护] 拦截到尝试访问内部网络的请求 URL: ${urlStr} (解析出的底层 IP: ${lookupResult.address})`);
+      logger.warn(
+        `[SSRF 防护] 拦截到尝试访问内部网络的请求 URL: ${urlStr} (解析出的底层 IP: ${lookupResult.address})`,
+      );
       return false;
     }
 
     return true;
-  } catch (error) {
+  } catch (_error) {
     // 凡是报错（无论是 URL 解析失败，还是 DNS 解析失败，还是域名不存在），均作为不安全拒绝
-    console.warn(`[SSRF 防护] URL解析失败或不合法, 拒绝代理请求: ${urlStr}`);
+    logger.warn(`[SSRF 防护] URL解析失败或不合法, 拒绝代理请求: ${urlStr}`);
     return false;
   }
 }

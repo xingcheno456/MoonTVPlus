@@ -1,63 +1,62 @@
-import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-response';
+import { commonSchemas } from '@/lib/api-schemas';
+import { parseSearchParams } from '@/lib/api-validation';
+import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
+import { z } from 'zod';
 
 export const runtime = 'nodejs';
 
-// OrionTV 兼容接口
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const imageUrl = searchParams.get('url');
+const imageProxyQuerySchema = z.object({
+  url: commonSchemas.url,
+});
 
-  if (!imageUrl) {
-    return NextResponse.json({ error: 'Missing image URL' }, { status: 400 });
+export async function GET(request: Request) {
+  const paramResult = parseSearchParams(request as any, imageProxyQuerySchema);
+  if ('error' in paramResult) return paramResult.error;
+  const { url: imageUrl } = paramResult.data;
+
+  const decodedUrl = decodeURIComponent(imageUrl);
+
+  const isSafeUrl = await validateProxyUrlServerSide(decodedUrl);
+  if (!isSafeUrl) {
+    return apiError('Proxy request to local or invalid network is forbidden', 403);
   }
 
   try {
-    const imageResponse = await fetch(imageUrl, {
+    const imageResponse = await fetch(decodedUrl, {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        Accept: 'image/jpeg,image/png,image/gif,*/*;q=0.8',
+        Accept: 'image/jpeg,image/png,image/gif */*;q=0.8',
         Referer: 'https://movie.douban.com/',
       },
     });
 
     if (!imageResponse.ok) {
-      return NextResponse.json(
-        { error: imageResponse.statusText },
-        { status: imageResponse.status }
-      );
+      return apiError(imageResponse.statusText, imageResponse.status);
     }
 
     const contentType = imageResponse.headers.get('content-type');
 
     if (!imageResponse.body) {
-      return NextResponse.json(
-        { error: 'Image response has no body' },
-        { status: 500 }
-      );
+      return apiError('Image response has no body', 500);
     }
 
-    // 创建响应头
     const headers = new Headers();
     if (contentType) {
       headers.set('Content-Type', contentType);
     }
 
-    // 设置缓存头（可选）
-    headers.set('Cache-Control', 'public, max-age=15720000, s-maxage=15720000'); // 缓存半年
+    headers.set('Cache-Control', 'public, max-age=15720000, s-maxage=15720000');
     headers.set('CDN-Cache-Control', 'public, s-maxage=15720000');
     headers.set('Vercel-CDN-Cache-Control', 'public, s-maxage=15720000');
     headers.set('Netlify-Vary', 'query');
 
-    // 直接返回图片流
     return new Response(imageResponse.body, {
       status: 200,
       headers,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Error fetching image' },
-      { status: 500 }
-    );
+    return apiError('Error fetching image', 500);
   }
 }

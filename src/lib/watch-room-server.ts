@@ -1,6 +1,8 @@
 // Socket.IO 观影室服务器逻辑（共享代码）
 import { Server as SocketIOServer, Socket } from 'socket.io';
 
+import { logger } from './logger';
+
 import type {
   ChatMessage,
   ClientToServerEvents,
@@ -20,14 +22,16 @@ export class WatchRoomServer {
   private helperToRoom: Map<string, string> = new Map(); // helperSocketId -> roomId
   private cleanupInterval: NodeJS.Timeout | null = null;
 
-  constructor(private io: SocketIOServer<ClientToServerEvents, ServerToClientEvents>) {
+  constructor(
+    private io: SocketIOServer<ClientToServerEvents, ServerToClientEvents>,
+  ) {
     this.setupEventHandlers();
     this.startCleanupTimer();
   }
 
   private setupEventHandlers() {
     this.io.on('connection', (socket: TypedSocket) => {
-      console.log(`[WatchRoom] Client connected: ${socket.id}`);
+      logger.info(`[WatchRoom] Client connected: ${socket.id}`);
 
       // 创建房间
       socket.on('room:create', (data, callback) => {
@@ -70,10 +74,12 @@ export class WatchRoomServer {
 
           socket.join(roomId);
 
-          console.log(`[WatchRoom] Room created: ${roomId} by ${data.userName}`);
+          logger.info(
+            `[WatchRoom] Room created: ${roomId} by ${data.userName}`,
+          );
           callback({ success: true, room });
         } catch (error) {
-          console.error('[WatchRoom] Error creating room:', error);
+          logger.error('[WatchRoom] Error creating room:', error);
           callback({ success: false, error: '创建房间失败' });
         }
       });
@@ -99,7 +105,9 @@ export class WatchRoomServer {
             room.ownerId = userId;
             room.lastOwnerHeartbeat = Date.now();
             this.rooms.set(data.roomId, room);
-            console.log(`[WatchRoom] Owner ${data.userName} reconnected to room ${data.roomId}`);
+            logger.info(
+              `[WatchRoom] Owner ${data.userName} reconnected to room ${data.roomId}`,
+            );
           }
 
           const member: Member = {
@@ -112,11 +120,13 @@ export class WatchRoomServer {
           const roomMembers = this.members.get(data.roomId);
           if (roomMembers) {
             if (isOwner) {
-              Array.from(roomMembers.entries()).forEach(([memberId, existingMember]) => {
-                if (existingMember.isOwner && memberId !== userId) {
-                  roomMembers.delete(memberId);
-                }
-              });
+              Array.from(roomMembers.entries()).forEach(
+                ([memberId, existingMember]) => {
+                  if (existingMember.isOwner && memberId !== userId) {
+                    roomMembers.delete(memberId);
+                  }
+                },
+              );
             }
 
             roomMembers.set(userId, member);
@@ -136,12 +146,14 @@ export class WatchRoomServer {
           // 通知房间内其他成员
           socket.to(data.roomId).emit('room:member-joined', member);
 
-          console.log(`[WatchRoom] User ${data.userName} joined room ${data.roomId}${isOwner ? ' (as owner)' : ''}`);
+          logger.info(
+            `[WatchRoom] User ${data.userName} joined room ${data.roomId}${isOwner ? ' (as owner)' : ''}`,
+          );
 
           const members = Array.from(roomMembers?.values() || []);
           callback({ success: true, room, members });
         } catch (error) {
-          console.error('[WatchRoom] Error joining room:', error);
+          logger.error('[WatchRoom] Error joining room:', error);
           callback({ success: false, error: '加入房间失败' });
         }
       });
@@ -153,7 +165,9 @@ export class WatchRoomServer {
 
       // 获取房间列表
       socket.on('room:list', (callback) => {
-        const publicRooms = Array.from(this.rooms.values()).filter((room) => room.isPublic);
+        const publicRooms = Array.from(this.rooms.values()).filter(
+          (room) => room.isPublic,
+        );
         callback(publicRooms);
       });
 
@@ -242,7 +256,7 @@ export class WatchRoomServer {
           this.helperToRoom.set(socket.id, data.roomId);
           callback({ success: true });
         } catch (error) {
-          console.error('[WatchRoom] Error registering screen helper:', error);
+          logger.error('[WatchRoom] Error registering screen helper:', error);
           callback({ success: false, error: '注册共享控制窗口失败' });
         }
       });
@@ -252,7 +266,8 @@ export class WatchRoomServer {
         const helperRoomId = this.helperToRoom.get(socket.id);
         const roomId = roomInfo?.roomId || helperRoomId;
         if (!roomId) return;
-        if (helperRoomId && this.screenHelpers.get(helperRoomId) !== socket.id) return;
+        if (helperRoomId && this.screenHelpers.get(helperRoomId) !== socket.id)
+          return;
         if (roomInfo && !roomInfo.isOwner) return;
 
         const room = this.rooms.get(roomId);
@@ -268,7 +283,8 @@ export class WatchRoomServer {
         const helperRoomId = this.helperToRoom.get(socket.id);
         const roomId = roomInfo?.roomId || helperRoomId;
         if (!roomId) return;
-        if (helperRoomId && this.screenHelpers.get(helperRoomId) !== socket.id) return;
+        if (helperRoomId && this.screenHelpers.get(helperRoomId) !== socket.id)
+          return;
         if (roomInfo && !roomInfo.isOwner) return;
 
         const room = this.rooms.get(roomId);
@@ -284,9 +300,11 @@ export class WatchRoomServer {
         if (!roomInfo) return;
 
         const room = this.rooms.get(roomInfo.roomId);
-        if (!room || roomInfo.isOwner || room.currentState?.type !== 'screen') return;
+        if (!room || roomInfo.isOwner || room.currentState?.type !== 'screen')
+          return;
 
-        const targetSocketId = this.screenHelpers.get(roomInfo.roomId) || room.ownerId;
+        const targetSocketId =
+          this.screenHelpers.get(roomInfo.roomId) || room.ownerId;
         this.io.to(targetSocketId).emit('screen:viewer-ready', {
           userId: socket.id,
         });
@@ -375,31 +393,31 @@ export class WatchRoomServer {
 
       // 清除房间播放状态（房主离开播放/直播页面时调用）
       socket.on('state:clear', (callback) => {
-        console.log('[WatchRoom] Received state:clear from', socket.id);
+        logger.info('[WatchRoom] Received state:clear from', socket.id);
         const roomInfo = this.socketToRoom.get(socket.id);
 
         if (!roomInfo) {
-          console.log('[WatchRoom] No room info found for socket');
+          logger.info('[WatchRoom] No room info found for socket');
           if (callback) callback({ success: false, error: 'Not in a room' });
           return;
         }
 
         if (!roomInfo.isOwner) {
-          console.log('[WatchRoom] User is not owner');
+          logger.info('[WatchRoom] User is not owner');
           if (callback) callback({ success: false, error: 'Not owner' });
           return;
         }
 
         const room = this.rooms.get(roomInfo.roomId);
         if (room) {
-          console.log(`[WatchRoom] Clearing room state for ${roomInfo.roomId}`);
+          logger.info(`[WatchRoom] Clearing room state for ${roomInfo.roomId}`);
           room.currentState = null;
           this.rooms.set(roomInfo.roomId, room);
           // 通知房间内其他成员状态已清除
           socket.to(roomInfo.roomId).emit('state:cleared');
           if (callback) callback({ success: true });
         } else {
-          console.log('[WatchRoom] Room not found');
+          logger.info('[WatchRoom] Room not found');
           if (callback) callback({ success: false, error: 'Room not found' });
         }
       });
@@ -428,7 +446,7 @@ export class WatchRoomServer {
 
       // 断开连接
       socket.on('disconnect', () => {
-        console.log(`[WatchRoom] Client disconnected: ${socket.id}`);
+        logger.info(`[WatchRoom] Client disconnected: ${socket.id}`);
         const helperRoomId = this.helperToRoom.get(socket.id);
         if (helperRoomId) {
           this.helperToRoom.delete(socket.id);
@@ -469,7 +487,9 @@ export class WatchRoomServer {
 
       // 如果是房主离开，记录时间但不立即删除房间
       if (isOwner) {
-        console.log(`[WatchRoom] Owner left room ${roomId}, will auto-delete after 5 minutes`);
+        logger.info(
+          `[WatchRoom] Owner left room ${roomId}, will auto-delete after 5 minutes`,
+        );
       }
 
       // 如果房间没人了，立即删除
@@ -483,7 +503,7 @@ export class WatchRoomServer {
   }
 
   private deleteRoom(roomId: string) {
-    console.log(`[WatchRoom] Deleting room ${roomId}`);
+    logger.info(`[WatchRoom] Deleting room ${roomId}`);
     this.io.to(roomId).emit('room:deleted');
     this.rooms.delete(roomId);
     this.members.delete(roomId);
@@ -505,8 +525,13 @@ export class WatchRoomServer {
         const timeSinceHeartbeat = now - room.lastOwnerHeartbeat;
 
         // 如果房主心跳超过30秒，清除播放状态
-        if (timeSinceHeartbeat > clearStateTimeout && room.currentState !== null) {
-          console.log(`[WatchRoom] Room ${roomId} owner inactive for 30s, clearing play state`);
+        if (
+          timeSinceHeartbeat > clearStateTimeout &&
+          room.currentState !== null
+        ) {
+          logger.info(
+            `[WatchRoom] Room ${roomId} owner inactive for 30s, clearing play state`,
+          );
           room.currentState = null;
           this.rooms.set(roomId, room);
           // 通知房间内所有成员状态已清除
@@ -515,7 +540,7 @@ export class WatchRoomServer {
 
         // 检查房主是否超时5分钟 - 删除房间
         if (timeSinceHeartbeat > deleteTimeout) {
-          console.log(`[WatchRoom] Room ${roomId} owner timeout, deleting...`);
+          logger.info(`[WatchRoom] Room ${roomId} owner timeout, deleting...`);
           this.deleteRoom(roomId);
         }
       });

@@ -1,4 +1,9 @@
 import { AdminConfig } from './admin.types';
+import {
+  MusicV2HistoryRecord,
+  MusicV2PlaylistItem,
+  MusicV2PlaylistRecord,
+} from './music-v2';
 import { MangaReadRecord, MangaShelfItem } from './manga.types';
 
 // 播放记录数据结构
@@ -30,131 +35,274 @@ export interface Favorite {
   vod_remarks?: string; // 视频备注信息
 }
 
-// 存储接口
-export interface IStorage {
-  // 播放记录相关
+export interface IPlayRecordStorage {
   getPlayRecord(userName: string, key: string): Promise<PlayRecord | null>;
   setPlayRecord(
     userName: string,
     key: string,
-    record: PlayRecord
+    record: PlayRecord,
   ): Promise<void>;
   getAllPlayRecords(userName: string): Promise<{ [key: string]: PlayRecord }>;
   deletePlayRecord(userName: string, key: string): Promise<void>;
-  // 清理超出限制的旧播放记录
   cleanupOldPlayRecords(userName: string): Promise<void>;
-  // 迁移播放记录
   migratePlayRecords(userName: string): Promise<void>;
+}
 
-  // 收藏相关
+export interface IFavoriteStorage {
   getFavorite(userName: string, key: string): Promise<Favorite | null>;
   setFavorite(userName: string, key: string, favorite: Favorite): Promise<void>;
   getAllFavorites(userName: string): Promise<{ [key: string]: Favorite }>;
   deleteFavorite(userName: string, key: string): Promise<void>;
-  // 迁移收藏
   migrateFavorites(userName: string): Promise<void>;
+  getLastFavoriteCheckTime(userName: string): Promise<number>;
+  setLastFavoriteCheckTime(userName: string, timestamp: number): Promise<void>;
+}
 
-  // 音乐播放记录相关
-  getMusicPlayRecord(userName: string, key: string): Promise<any | null>;
-  setMusicPlayRecord(userName: string, key: string, record: any): Promise<void>;
-  batchSetMusicPlayRecords(userName: string, records: { key: string; record: any }[]): Promise<void>;
-  getAllMusicPlayRecords(userName: string): Promise<{ [key: string]: any }>;
-  deleteMusicPlayRecord(userName: string, key: string): Promise<void>;
-  clearAllMusicPlayRecords(userName: string): Promise<void>;
-
-  // 用户相关
+export interface IUserStorage {
   verifyUser(userName: string, password: string): Promise<boolean>;
-  // 检查用户是否存在（无需密码）
   checkUserExist(userName: string): Promise<boolean>;
-  // 修改用户密码
   changePassword(userName: string, newPassword: string): Promise<void>;
-  // 删除用户（包括密码、搜索历史、播放记录、收藏夹）
   deleteUser(userName: string): Promise<void>;
-
-  // 搜索历史相关
+  getAllUsers(): Promise<string[]>;
   getSearchHistory(userName: string): Promise<string[]>;
   addSearchHistory(userName: string, keyword: string): Promise<void>;
   deleteSearchHistory(userName: string, keyword?: string): Promise<void>;
+}
 
-  // 漫画书架相关
-  getMangaShelf(userName: string, key: string): Promise<MangaShelfItem | null>;
-  setMangaShelf(userName: string, key: string, item: MangaShelfItem): Promise<void>;
-  getAllMangaShelf(userName: string): Promise<{ [key: string]: MangaShelfItem }>;
-  deleteMangaShelf(userName: string, key: string): Promise<void>;
-
-  // 漫画阅读历史相关
-  getMangaReadRecord(userName: string, key: string): Promise<MangaReadRecord | null>;
-  setMangaReadRecord(userName: string, key: string, record: MangaReadRecord): Promise<void>;
-  getAllMangaReadRecords(userName: string): Promise<{ [key: string]: MangaReadRecord }>;
-  deleteMangaReadRecord(userName: string, key: string): Promise<void>;
-  cleanupOldMangaReadRecords?(userName: string): Promise<void>;
-
-  // 用户列表
-  getAllUsers(): Promise<string[]>;
-
-  // 管理员配置相关
+export interface IConfigStorage {
   getAdminConfig(): Promise<AdminConfig | null>;
   setAdminConfig(config: AdminConfig): Promise<void>;
-
-  // 跳过片头片尾配置相关
   getSkipConfig(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<SkipConfig | null>;
   setSkipConfig(
     userName: string,
     source: string,
     id: string,
-    config: SkipConfig
+    config: SkipConfig,
   ): Promise<void>;
   deleteSkipConfig(userName: string, source: string, id: string): Promise<void>;
   getAllSkipConfigs(userName: string): Promise<{ [key: string]: SkipConfig }>;
-  // 迁移跳过配置
   migrateSkipConfigs(userName: string): Promise<void>;
-
-  // 弹幕过滤配置相关
   getDanmakuFilterConfig(userName: string): Promise<DanmakuFilterConfig | null>;
   setDanmakuFilterConfig(
     userName: string,
-    config: DanmakuFilterConfig
+    config: DanmakuFilterConfig,
   ): Promise<void>;
   deleteDanmakuFilterConfig(userName: string): Promise<void>;
-
-  // 数据清理相关
   clearAllData(): Promise<void>;
-
-  // 通用键值存储
   getGlobalValue(key: string): Promise<string | null>;
   setGlobalValue(key: string, value: string): Promise<void>;
   deleteGlobalValue(key: string): Promise<void>;
+}
 
-  // 通知相关
+export interface IMangaStorage {
+  getMangaShelf(userName: string, key: string): Promise<MangaShelfItem | null>;
+  setMangaShelf(
+    userName: string,
+    key: string,
+    item: MangaShelfItem,
+  ): Promise<void>;
+  getAllMangaShelf(
+    userName: string,
+  ): Promise<{ [key: string]: MangaShelfItem }>;
+  deleteMangaShelf(userName: string, key: string): Promise<void>;
+  getMangaReadRecord(
+    userName: string,
+    key: string,
+  ): Promise<MangaReadRecord | null>;
+  setMangaReadRecord(
+    userName: string,
+    key: string,
+    record: MangaReadRecord,
+  ): Promise<void>;
+  getAllMangaReadRecords(
+    userName: string,
+  ): Promise<{ [key: string]: MangaReadRecord }>;
+  deleteMangaReadRecord(userName: string, key: string): Promise<void>;
+  cleanupOldMangaReadRecords?(userName: string): Promise<void>;
+}
+
+export interface INotificationStorage {
   getNotifications(userName: string): Promise<Notification[]>;
   addNotification(userName: string, notification: Notification): Promise<void>;
-  markNotificationAsRead(userName: string, notificationId: string): Promise<void>;
+  markNotificationAsRead(
+    userName: string,
+    notificationId: string,
+  ): Promise<void>;
   deleteNotification(userName: string, notificationId: string): Promise<void>;
   clearAllNotifications(userName: string): Promise<void>;
   getUnreadNotificationCount(userName: string): Promise<number>;
+}
 
-  // 收藏更新检查相关
-  getLastFavoriteCheckTime(userName: string): Promise<number>;
-  setLastFavoriteCheckTime(userName: string, timestamp: number): Promise<void>;
-
-  // 求片冷却时间
-  updateLastMovieRequestTime?(userName: string, timestamp: number): Promise<void>;
-
-  // 求片相关
+export interface IMovieRequestStorage {
   getAllMovieRequests(): Promise<MovieRequest[]>;
   getMovieRequest(requestId: string): Promise<MovieRequest | null>;
   createMovieRequest(request: MovieRequest): Promise<void>;
-  updateMovieRequest(requestId: string, updates: Partial<MovieRequest>): Promise<void>;
+  updateMovieRequest(
+    requestId: string,
+    updates: Partial<MovieRequest>,
+  ): Promise<void>;
   deleteMovieRequest(requestId: string): Promise<void>;
   getUserMovieRequests(userName: string): Promise<string[]>;
   addUserMovieRequest(userName: string, requestId: string): Promise<void>;
   removeUserMovieRequest(userName: string, requestId: string): Promise<void>;
+  updateLastMovieRequestTime?(
+    userName: string,
+    timestamp: number,
+  ): Promise<void>;
+}
 
-  // 新版用户存储（V2）- 可选方法
+export interface IMusicStorage {
+  getMusicPlayRecord(userName: string, key: string): Promise<any | null>;
+  setMusicPlayRecord(userName: string, key: string, record: any): Promise<void>;
+  batchSetMusicPlayRecords(
+    userName: string,
+    records: { key: string; record: any }[],
+  ): Promise<void>;
+  getAllMusicPlayRecords(userName: string): Promise<{ [key: string]: any }>;
+  deleteMusicPlayRecord(userName: string, key: string): Promise<void>;
+  clearAllMusicPlayRecords(userName: string): Promise<void>;
+}
+
+export interface IMusicV2Storage {
+  listMusicV2History?(userName: string): Promise<MusicV2HistoryRecord[]>;
+  upsertMusicV2History?(userName: string, record: MusicV2HistoryRecord): Promise<void>;
+  batchUpsertMusicV2History?(userName: string, records: MusicV2HistoryRecord[]): Promise<void>;
+  deleteMusicV2History?(userName: string, songId: string): Promise<void>;
+  clearMusicV2History?(userName: string): Promise<void>;
+  createMusicV2Playlist?(
+    userName: string,
+    playlist: { id: string; name: string; description?: string; cover?: string },
+  ): Promise<void>;
+  getMusicV2Playlist?(playlistId: string): Promise<MusicV2PlaylistRecord | null>;
+  listMusicV2Playlists?(userName: string): Promise<MusicV2PlaylistRecord[]>;
+  updateMusicV2Playlist?(
+    playlistId: string,
+    updates: { name?: string; description?: string; cover?: string; song_count?: number },
+  ): Promise<void>;
+  deleteMusicV2Playlist?(playlistId: string): Promise<void>;
+  addMusicV2PlaylistItem?(playlistId: string, item: MusicV2PlaylistItem): Promise<void>;
+  removeMusicV2PlaylistItem?(playlistId: string, songId: string): Promise<void>;
+  listMusicV2PlaylistItems?(playlistId: string): Promise<MusicV2PlaylistItem[]>;
+  hasMusicV2PlaylistItem?(playlistId: string, songId: string): Promise<boolean>;
+}
+
+export interface IMusicV1PlaylistStorage {
+  createMusicPlaylist?(
+    userName: string,
+    playlist: { id: string; name: string; description?: string; cover?: string },
+  ): Promise<void>;
+  getMusicPlaylist?(playlistId: string): Promise<MusicV1Playlist | null>;
+  getUserMusicPlaylists?(userName: string): Promise<MusicV1Playlist[]>;
+  updateMusicPlaylist?(
+    playlistId: string,
+    updates: { name?: string; description?: string; cover?: string },
+  ): Promise<void>;
+  deleteMusicPlaylist?(playlistId: string): Promise<void>;
+  addSongToPlaylist?(
+    playlistId: string,
+    song: {
+      platform: string;
+      id: string;
+      name: string;
+      artist: string;
+      album?: string;
+      pic?: string;
+      duration: number;
+    },
+  ): Promise<void>;
+  removeSongFromPlaylist?(playlistId: string, platform: string, songId: string): Promise<void>;
+  getPlaylistSongs?(playlistId: string): Promise<MusicV1PlaylistSong[]>;
+  isSongInPlaylist?(playlistId: string, platform: string, songId: string): Promise<boolean>;
+}
+
+export interface MusicV1Playlist {
+  id: string;
+  username: string;
+  name: string;
+  description?: string;
+  cover?: string;
+  song_count: number;
+}
+
+export interface MusicV1PlaylistSong {
+  platform: string;
+  id: string;
+  name: string;
+  artist: string;
+  album?: string;
+  pic?: string;
+  duration: number;
+}
+
+export interface IUserV2Extension {
+  createUserV2?(
+    userName: string,
+    password: string,
+    role?: 'owner' | 'admin' | 'user',
+    tags?: string[],
+    oidcSub?: string,
+    enabledApis?: string[],
+  ): Promise<void>;
+  verifyUserV2?(userName: string, password: string): Promise<boolean>;
+  getUserInfoV2?(userName: string): Promise<UserV2Info | null>;
+  updateUserInfoV2?(
+    userName: string,
+    updates: {
+      role?: 'owner' | 'admin' | 'user';
+      banned?: boolean;
+      tags?: string[];
+      oidcSub?: string;
+      enabledApis?: string[];
+    },
+  ): Promise<void>;
+  changePasswordV2?(userName: string, newPassword: string): Promise<void>;
+  checkUserExistV2?(userName: string): Promise<boolean>;
+  getUserByOidcSub?(oidcSub: string): Promise<string | null>;
+  getUserListV2?(
+    offset?: number,
+    limit?: number,
+    ownerUsername?: string,
+  ): Promise<UserV2ListResult>;
+  deleteUserV2?(userName: string): Promise<void>;
+  getUsersByTag?(tagName: string): Promise<string[]>;
+}
+
+export interface UserV2Info {
+  role: 'owner' | 'admin' | 'user';
+  banned: boolean;
+  tags?: string[];
+  oidcSub?: string;
+  enabledApis?: string[];
+  created_at: number;
+  playrecord_migrated?: boolean;
+  favorite_migrated?: boolean;
+  skip_migrated?: boolean;
+}
+
+export interface UserV2ListResult {
+  users: Array<{
+    username: string;
+    role: 'owner' | 'admin' | 'user';
+    banned: boolean;
+    tags?: string[];
+    oidcSub?: string;
+    enabledApis?: string[];
+    created_at: number;
+  }>;
+  total: number;
+}
+
+export interface ITvboxTokenStorage {
+  getTvboxSubscribeToken?(userName: string): Promise<string | null>;
+  setTvboxSubscribeToken?(userName: string, token: string): Promise<void>;
+  getUsernameByTvboxToken?(token: string): Promise<string | null>;
+}
+
+export interface IV2UserExtension {
   getUserInfoV2?(userName: string): Promise<{
     role: 'owner' | 'admin' | 'user';
     banned: boolean;
@@ -166,21 +314,34 @@ export interface IStorage {
     favorite_migrated?: boolean;
     skip_migrated?: boolean;
     last_movie_request_time?: number;
-    email?: string; // 用户邮箱
-    emailNotifications?: boolean; // 是否接收邮件通知
+    email?: string;
+    emailNotifications?: boolean;
   } | null>;
-
-  // 用户邮箱相关
   getUserEmail?(userName: string): Promise<string | null>;
   setUserEmail?(userName: string, email: string): Promise<void>;
   getEmailNotificationPreference?(userName: string): Promise<boolean>;
-  setEmailNotificationPreference?(userName: string, enabled: boolean): Promise<void>;
-
-  // TVBox订阅token相关
+  setEmailNotificationPreference?(
+    userName: string,
+    enabled: boolean,
+  ): Promise<void>;
   getTvboxSubscribeToken?(userName: string): Promise<string | null>;
   setTvboxSubscribeToken?(userName: string, token: string): Promise<void>;
   getUsernameByTvboxToken?(token: string): Promise<string | null>;
 }
+
+export type IStorage = IPlayRecordStorage &
+  IFavoriteStorage &
+  IUserStorage &
+  IConfigStorage &
+  IMangaStorage &
+  INotificationStorage &
+  IMovieRequestStorage &
+  IMusicStorage &
+  IV2UserExtension &
+  IMusicV2Storage &
+  IMusicV1PlaylistStorage &
+  IUserV2Extension &
+  ITvboxTokenStorage;
 
 // 搜索结果数据结构
 export interface SearchResult {

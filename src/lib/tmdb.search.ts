@@ -3,6 +3,7 @@
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import nodeFetch from 'node-fetch';
 
+import { logger } from './logger';
 import { getNextApiKey } from './tmdb.client';
 
 // TMDB API 默认 Base URL（不包含 /3/，由程序拼接）
@@ -12,7 +13,9 @@ const DEFAULT_TMDB_BASE_URL = 'https://api.themoviedb.org';
  * 检测是否在 Cloudflare 环境中运行
  */
 function isCloudflareEnvironment(): boolean {
-  return process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
+  return (
+    process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare'
+  );
 }
 
 /**
@@ -72,7 +75,7 @@ export async function searchTMDB(
   query: string,
   proxy?: string,
   year?: number,
-  reverseProxyBaseUrl?: string
+  reverseProxyBaseUrl?: string,
 ): Promise<{ code: number; result: TMDBSearchResult | null }> {
   try {
     const actualKey = getNextApiKey(apiKey);
@@ -93,15 +96,16 @@ export async function searchTMDB(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error('TMDB 搜索失败:', response.status, response.statusText);
+      logger.error('TMDB 搜索失败:', response.status, response.statusText);
       return { code: response.status, result: null };
     }
 
-    const data: TMDBSearchResponse = await response.json() as TMDBSearchResponse;
+    const data: TMDBSearchResponse =
+      (await response.json()) as TMDBSearchResponse;
 
     // 过滤出电影和电视剧，取第一个结果
     const validResults = data.results.filter(
-      (item) => item.media_type === 'movie' || item.media_type === 'tv'
+      (item) => item.media_type === 'movie' || item.media_type === 'tv',
     );
 
     if (validResults.length === 0) {
@@ -113,7 +117,7 @@ export async function searchTMDB(
       result: validResults[0],
     };
   } catch (error) {
-    console.error('TMDB 搜索异常:', error);
+    logger.error('TMDB 搜索异常:', error);
     return { code: 500, result: null };
   }
 }
@@ -152,7 +156,7 @@ export async function getTVSeasons(
   apiKey: string,
   tvId: number,
   proxy?: string,
-  reverseProxyBaseUrl?: string
+  reverseProxyBaseUrl?: string,
 ): Promise<{ code: number; seasons: TMDBSeasonInfo[] | null }> {
   try {
     const actualKey = getNextApiKey(apiKey);
@@ -166,21 +170,27 @@ export async function getTVSeasons(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error('TMDB 获取电视剧详情失败:', response.status, response.statusText);
+      logger.error(
+        'TMDB 获取电视剧详情失败:',
+        response.status,
+        response.statusText,
+      );
       return { code: response.status, seasons: null };
     }
 
-    const data: TMDBTVDetails = await response.json() as TMDBTVDetails;
+    const data: TMDBTVDetails = (await response.json()) as TMDBTVDetails;
 
     // 过滤掉特殊季度（如 Season 0 通常是特别篇）
-    const validSeasons = data.seasons.filter((season) => season.season_number > 0);
+    const validSeasons = data.seasons.filter(
+      (season) => season.season_number > 0,
+    );
 
     return {
       code: 200,
       seasons: validSeasons,
     };
   } catch (error) {
-    console.error('TMDB 获取季度列表异常:', error);
+    logger.error('TMDB 获取季度列表异常:', error);
     return { code: 500, seasons: null };
   }
 }
@@ -193,7 +203,7 @@ export async function getTVSeasonDetails(
   tvId: number,
   seasonNumber: number,
   proxy?: string,
-  reverseProxyBaseUrl?: string
+  reverseProxyBaseUrl?: string,
 ): Promise<{ code: number; season: TMDBSeasonInfo | null }> {
   try {
     const actualKey = getNextApiKey(apiKey);
@@ -207,18 +217,22 @@ export async function getTVSeasonDetails(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error('TMDB 获取季度详情失败:', response.status, response.statusText);
+      logger.error(
+        'TMDB 获取季度详情失败:',
+        response.status,
+        response.statusText,
+      );
       return { code: response.status, season: null };
     }
 
-    const data: TMDBSeasonInfo = await response.json() as TMDBSeasonInfo;
+    const data: TMDBSeasonInfo = (await response.json()) as TMDBSeasonInfo;
 
     return {
       code: 200,
       season: data,
     };
   } catch (error) {
-    console.error('TMDB 获取季度详情异常:', error);
+    logger.error('TMDB 获取季度详情异常:', error);
     return { code: 500, season: null };
   }
 }
@@ -226,10 +240,7 @@ export async function getTVSeasonDetails(
 /**
  * 获取 TMDB 图片完整 URL
  */
-export function getTMDBImageUrl(
-  path: string | null,
-  size = 'w500'
-): string {
+export function getTMDBImageUrl(path: string | null, size = 'w500'): string {
   if (!path) return '';
 
   // 如果已经是完整的 URL (http:// 或 https://),直接返回
@@ -237,8 +248,9 @@ export function getTMDBImageUrl(
     return path;
   }
 
-  const baseUrl = typeof window !== 'undefined'
-    ? localStorage.getItem('tmdbImageBaseUrl') || 'https://image.tmdb.org'
-    : 'https://image.tmdb.org';
+  const baseUrl =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('tmdbImageBaseUrl') || 'https://image.tmdb.org'
+      : 'https://image.tmdb.org';
   return `${baseUrl}/t/p/${size}${path}`;
 }

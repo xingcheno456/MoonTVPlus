@@ -2,13 +2,18 @@
 import type { Socket } from 'socket.io-client';
 import { io } from 'socket.io-client';
 
+import { logger } from './logger';
+
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
   WatchRoomConfig,
 } from '@/types/watch-room';
 
-export type WatchRoomSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
+export type WatchRoomSocket = Socket<
+  ServerToClientEvents,
+  ClientToServerEvents
+>;
 
 class WatchRoomSocketManager {
   private socket: WatchRoomSocket | null = null;
@@ -113,8 +118,8 @@ class WatchRoomSocketManager {
 
       // 使用 once 而不是 on，避免重复注册
       this.socket.once('connect', () => {
-        // eslint-disable-next-line no-console
-        console.log('[WatchRoom] Connected to server');
+         
+        logger.info('[WatchRoom] Connected to server');
         this.connectionPromise = null;
         if (this.socket) {
           resolve(this.socket);
@@ -122,8 +127,8 @@ class WatchRoomSocketManager {
       });
 
       this.socket.once('connect_error', (error) => {
-        // eslint-disable-next-line no-console
-        console.error('[WatchRoom] Connection error:', error);
+         
+        logger.error('[WatchRoom] Connection error:', error);
         this.connectionPromise = null;
         reject(error);
       });
@@ -175,20 +180,20 @@ class WatchRoomSocketManager {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
-      // eslint-disable-next-line no-console
-      console.log('[WatchRoom] Socket connected');
+       
+      logger.info('[WatchRoom] Socket connected');
       // 重置心跳响应时间
       this.lastHeartbeatResponse = Date.now();
     });
 
     this.socket.on('disconnect', (reason) => {
-      // eslint-disable-next-line no-console
-      console.log('[WatchRoom] Socket disconnected:', reason);
+       
+      logger.info('[WatchRoom] Socket disconnected:', reason);
     });
 
     this.socket.on('error', (error) => {
-      // eslint-disable-next-line no-console
-      console.error('[WatchRoom] Socket error:', error);
+       
+      logger.error('[WatchRoom] Socket error:', error);
     });
 
     // 监听心跳响应
@@ -198,14 +203,14 @@ class WatchRoomSocketManager {
 
     // 监听重连尝试
     this.socket.io.on('reconnect_attempt', (attemptNumber) => {
-      // eslint-disable-next-line no-console
-      console.log('[WatchRoom] Reconnect attempt:', attemptNumber);
+       
+      logger.info('[WatchRoom] Reconnect attempt:', attemptNumber);
     });
 
     // 监听重连成功
     this.socket.io.on('reconnect', (attemptNumber) => {
-      // eslint-disable-next-line no-console
-      console.log('[WatchRoom] Reconnected after', attemptNumber, 'attempts');
+       
+      logger.info('[WatchRoom] Reconnected after', attemptNumber, 'attempts');
       // 重置心跳响应时间
       this.lastHeartbeatResponse = Date.now();
       this.reconnectSuccessCallback?.();
@@ -213,8 +218,8 @@ class WatchRoomSocketManager {
 
     // 监听重连失败
     this.socket.io.on('reconnect_failed', () => {
-      // eslint-disable-next-line no-console
-      console.error('[WatchRoom] Reconnect failed after all attempts');
+       
+      logger.error('[WatchRoom] Reconnect failed after all attempts');
       this.reconnectFailedCallback?.();
     });
   }
@@ -248,14 +253,20 @@ class WatchRoomSocketManager {
 
       // 如果超过15秒没有收到心跳响应，认为连接可能有问题
       if (timeSinceLastResponse > 15000) {
-        // eslint-disable-next-line no-console
-        console.warn('[WatchRoom] Heartbeat timeout detected, last response was', timeSinceLastResponse, 'ms ago');
+         
+        logger.warn(
+          '[WatchRoom] Heartbeat timeout detected, last response was',
+          timeSinceLastResponse,
+          'ms ago',
+        );
 
         // 不要强制断开连接，让 Socket.IO 的自动重连机制处理
         // Socket.IO 会自动检测连接问题并尝试重连
         // 只记录警告，不主动断开
-        // eslint-disable-next-line no-console
-        console.warn('[WatchRoom] Waiting for Socket.IO auto-reconnect mechanism');
+         
+        logger.warn(
+          '[WatchRoom] Waiting for Socket.IO auto-reconnect mechanism',
+        );
 
         // 重置心跳响应时间，避免重复触发警告
         this.lastHeartbeatResponse = Date.now();
@@ -269,13 +280,15 @@ class WatchRoomSocketManager {
 
     this.visibilityChangeHandler = () => {
       if (document.visibilityState === 'visible') {
-        // eslint-disable-next-line no-console
-        console.log('[WatchRoom] Page became visible, checking connection...');
+         
+        logger.info('[WatchRoom] Page became visible, checking connection...');
 
         // 页面可见时检查连接状态
         if (this.socket && !this.socket.connected) {
-          // eslint-disable-next-line no-console
-          console.log('[WatchRoom] Socket disconnected, attempting to reconnect...');
+           
+          logger.info(
+            '[WatchRoom] Socket disconnected, attempting to reconnect...',
+          );
           this.socket.connect();
         }
       }
@@ -286,9 +299,13 @@ class WatchRoomSocketManager {
 
   // 移除浏览器可见性监听
   private removeVisibilityListener() {
-    if (typeof document === 'undefined' || !this.visibilityChangeHandler) return;
+    if (typeof document === 'undefined' || !this.visibilityChangeHandler)
+      return;
 
-    document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+    document.removeEventListener(
+      'visibilitychange',
+      this.visibilityChangeHandler,
+    );
     this.visibilityChangeHandler = null;
   }
 
@@ -305,13 +322,13 @@ class WatchRoomSocketManager {
   // 手动重连
   async reconnect(): Promise<boolean> {
     if (!this.config) {
-      console.error('[WatchRoom] No config available for reconnection');
+      logger.error('[WatchRoom] No config available for reconnection');
       return false;
     }
 
     try {
-      // eslint-disable-next-line no-console
-      console.log('[WatchRoom] Manual reconnection initiated...');
+       
+      logger.info('[WatchRoom] Manual reconnection initiated...');
 
       // 如果socket存在且未连接，尝试重新连接
       if (this.socket && !this.socket.connected) {
@@ -339,7 +356,7 @@ class WatchRoomSocketManager {
       await this.connect(this.config);
       return true;
     } catch (error) {
-      console.error('[WatchRoom] Manual reconnection failed:', error);
+      logger.error('[WatchRoom] Manual reconnection failed:', error);
       return false;
     }
   }
