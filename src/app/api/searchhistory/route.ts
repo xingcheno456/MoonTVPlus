@@ -1,132 +1,58 @@
-/* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { apiError, apiSuccess } from '@/lib/api-response';
+
+import { handleServiceError, validateAuthenticatedUser } from '@/services/auth.service';
+import {
+  addSearchHistory,
+  deleteSearchHistory,
+  getSearchHistory,
+} from '@/services/playrecord.service';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
-// 最大保存条数（与客户端保持一致）
-const HISTORY_LIMIT = 20;
-
-/**
- * GET /api/searchhistory
- * 返回 string[]
- */
 export async function GET(request: NextRequest) {
   try {
-    // 从 cookie 获取用户信息
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
-
-    const history = await db.getSearchHistory(authInfo.username);
-    return NextResponse.json(history, { status: 200 });
+    const username = await validateAuthenticatedUser(request);
+    const history = await getSearchHistory(username);
+    return apiSuccess(history);
   } catch (err) {
-    console.error('获取搜索历史失败', err);
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    );
+    logger.error('获取搜索历史失败', err);
+    return handleServiceError(err);
   }
 }
 
-/**
- * POST /api/searchhistory
- * body: { keyword: string }
- */
 export async function POST(request: NextRequest) {
   try {
-    // 从 cookie 获取用户信息
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
-
+    const username = await validateAuthenticatedUser(request);
     const body = await request.json();
     const keyword: string = body.keyword?.trim();
 
     if (!keyword) {
-      return NextResponse.json(
-        { error: 'Keyword is required' },
-        { status: 400 }
-      );
+      return apiError('Keyword is required', 400);
     }
 
-    await db.addSearchHistory(authInfo.username, keyword);
-
-    // 再次获取最新列表，确保客户端与服务端同步
-    const history = await db.getSearchHistory(authInfo.username);
-    return NextResponse.json(history.slice(0, HISTORY_LIMIT), { status: 200 });
+    const history = await addSearchHistory(username, keyword);
+    return apiSuccess(history);
   } catch (err) {
-    console.error('添加搜索历史失败', err);
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    );
+    logger.error('添加搜索历史失败', err);
+    return handleServiceError(err);
   }
 }
 
-/**
- * DELETE /api/searchhistory?keyword=<kw>
- *
- * 1. 不带 keyword -> 清空全部搜索历史
- * 2. 带 keyword=<kw> -> 删除单条关键字
- */
 export async function DELETE(request: NextRequest) {
   try {
-    // 从 cookie 获取用户信息
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
-
+    const username = await validateAuthenticatedUser(request);
     const { searchParams } = new URL(request.url);
     const kw = searchParams.get('keyword')?.trim();
 
-    await db.deleteSearchHistory(authInfo.username, kw || undefined);
-
-    return NextResponse.json({ success: true }, { status: 200 });
+    await deleteSearchHistory(username, kw || undefined);
+    return apiSuccess(null);
   } catch (err) {
-    console.error('删除搜索历史失败', err);
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    );
+    logger.error('删除搜索历史失败', err);
+    return handleServiceError(err);
   }
 }

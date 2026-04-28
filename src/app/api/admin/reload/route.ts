@@ -1,51 +1,43 @@
-/* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { clearConfigCache } from '@/lib/config';
+import { STORAGE_TYPE } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '不支持本地存储进行管理员配置',
-      },
-      { status: 400 }
-    );
+      }, { status: 400 });
   }
 
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
   const username = authInfo.username;
 
   if (username !== process.env.USERNAME) {
-    return NextResponse.json({ error: '仅支持站长重载配置' }, { status: 401 });
+    return apiError('仅支持站长重载配置', 401);
   }
 
   try {
     await clearConfigCache();
 
-    return NextResponse.json(
-      { ok: true },
-      {
+    return apiSuccess({ ok: true }, {
         headers: {
           'Cache-Control': 'no-store',
         },
-      }
-    );
+      });
   } catch (error) {
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '重载配置失败',
         details: (error as Error).message,
-      },
-      { status: 500 }
-    );
+      }, { status: 500 });
   }
 }

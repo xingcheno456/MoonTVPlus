@@ -1,8 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
+
+import { logger } from '../lib/logger';
 
 interface Song {
   id: string;
@@ -73,7 +75,7 @@ const PiPLyricsContent = ({
 
   return (
     <div
-      className="pip-container"
+      className='pip-container'
       style={{
         backgroundColor: `rgba(0, 0, 0, ${opacity})`,
         height: '100vh',
@@ -86,7 +88,7 @@ const PiPLyricsContent = ({
     >
       {/* 头部：歌曲信息 + 控制按钮 */}
       <div
-        className="pip-header"
+        className='pip-header'
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -107,15 +109,24 @@ const PiPLyricsContent = ({
             flex: 1,
           }}
         >
-          {currentSong ? `${currentSong.name} - ${currentSong.artist}` : '暂无播放'}
+          {currentSong
+            ? `${currentSong.name} - ${currentSong.artist}`
+            : '暂无播放'}
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'center',
+            flexShrink: 0,
+          }}
+        >
           {/* 透明度滑块 */}
           <input
-            type="range"
-            min="0.3"
-            max="1"
-            step="0.1"
+            type='range'
+            min='0.3'
+            max='1'
+            step='0.1'
             value={opacity}
             onChange={(e) => onOpacityChange(parseFloat(e.target.value))}
             style={{ width: '60px', cursor: 'pointer' }}
@@ -165,7 +176,7 @@ const PiPLyricsContent = ({
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'rgba(239, 68, 68, 0.8)';
             }}
-            title="关闭"
+            title='关闭'
           >
             ×
           </button>
@@ -188,14 +199,12 @@ const PiPLyricsContent = ({
           }}
         >
           {lyrics.length > 0 && currentLyricIndex >= 0
-            ? (
-              lyrics[currentLyricIndex]?.translation
-                ? `${lyrics[currentLyricIndex]?.text || '♪'}\n${lyrics[currentLyricIndex]?.translation}`
-                : lyrics[currentLyricIndex]?.text || '♪'
-            )
+            ? lyrics[currentLyricIndex]?.translation
+              ? `${lyrics[currentLyricIndex]?.text || '♪'}\n${lyrics[currentLyricIndex]?.translation}`
+              : lyrics[currentLyricIndex]?.text || '♪'
             : currentSong
-            ? '暂无歌词'
-            : '请播放歌曲'}
+              ? '暂无歌词'
+              : '请播放歌曲'}
         </div>
       ) : (
         // 完整模式：显示所有歌词
@@ -322,21 +331,31 @@ export default function LyricsPiPWindow({
         opacity={opacity}
         minimized={minimized}
         onOpacityChange={(newOpacity) => {
-          window.postMessage({ type: 'PIP_OPACITY_CHANGE', opacity: newOpacity }, '*');
+          window.postMessage(
+            { type: 'PIP_OPACITY_CHANGE', opacity: newOpacity },
+            '*',
+          );
         }}
         onMinimizedChange={(newMinimized) => {
-          window.postMessage({ type: 'PIP_MINIMIZED_CHANGE', minimized: newMinimized }, '*');
+          window.postMessage(
+            { type: 'PIP_MINIMIZED_CHANGE', minimized: newMinimized },
+            '*',
+          );
         }}
         onClose={() => {
           window.postMessage({ type: 'PIP_CLOSE' }, '*');
         }}
-      />
+      />,
     );
   };
 
   // 更新 PiP 内容
   useEffect(() => {
-    if (pipWindowRef.current && !pipWindowRef.current.closed && rootRef.current) {
+    if (
+      pipWindowRef.current &&
+      !pipWindowRef.current.closed &&
+      rootRef.current
+    ) {
       rootRef.current.render(
         <PiPLyricsContent
           currentSong={currentSong}
@@ -345,15 +364,21 @@ export default function LyricsPiPWindow({
           opacity={opacity}
           minimized={minimized}
           onOpacityChange={(newOpacity) => {
-            window.postMessage({ type: 'PIP_OPACITY_CHANGE', opacity: newOpacity }, '*');
+            window.postMessage(
+              { type: 'PIP_OPACITY_CHANGE', opacity: newOpacity },
+              '*',
+            );
           }}
           onMinimizedChange={(newMinimized) => {
-            window.postMessage({ type: 'PIP_MINIMIZED_CHANGE', minimized: newMinimized }, '*');
+            window.postMessage(
+              { type: 'PIP_MINIMIZED_CHANGE', minimized: newMinimized },
+              '*',
+            );
           }}
           onClose={() => {
             window.postMessage({ type: 'PIP_CLOSE' }, '*');
           }}
-        />
+        />,
       );
     }
   }, [currentSong, lyrics, currentLyricIndex, opacity, minimized]);
@@ -362,12 +387,14 @@ export default function LyricsPiPWindow({
   useEffect(() => {
     const openPiPWindow = async () => {
       if (!('documentPictureInPicture' in window)) {
-        console.error('浏览器不支持 Document Picture-in-Picture API');
+        logger.error('浏览器不支持 Document Picture-in-Picture API');
         return;
       }
 
       try {
-        const pipWin = await (window as any).documentPictureInPicture.requestWindow({
+        const pipWin = await (
+          window as any
+        ).documentPictureInPicture.requestWindow({
           width: 400,
           height: 300,
         });
@@ -390,7 +417,7 @@ export default function LyricsPiPWindow({
         // 渲染内容
         renderPiPContent(pipWin);
       } catch (error) {
-        console.error('打开画中画窗口失败:', error);
+        logger.error('打开画中画窗口失败:', error);
         onClose();
       }
     };

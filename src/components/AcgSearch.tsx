@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { AlertCircle, Download, ExternalLink, Loader2 } from 'lucide-react';
-import { useCallback,useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import Toast, { ToastProps } from '@/components/Toast';
@@ -89,14 +89,18 @@ export default function AcgSearch({
 
       if (isLoadMore) {
         // 追加新数据
-        setAllItems(prev => [...prev, ...data.items]);
+        setAllItems((prev) => [...prev, ...data.items]);
         // 如果当前页没有结果，说明没有更多了
-        setHasMore(source !== 'mikan' && source !== 'dmhy' && data.items.length > 0);
+        setHasMore(
+          source !== 'mikan' && source !== 'dmhy' && data.items.length > 0,
+        );
       } else {
         // 新搜索，重置数据
         setAllItems(data.items);
         // 如果第一页有结果，假设可能还有更多
-        setHasMore(source !== 'mikan' && source !== 'dmhy' && data.items.length > 0);
+        setHasMore(
+          source !== 'mikan' && source !== 'dmhy' && data.items.length > 0,
+        );
       }
 
       setCurrentPage(page);
@@ -169,7 +173,7 @@ export default function AcgSearch({
         root: null,
         rootMargin: '100px',
         threshold: 0.1,
-      }
+      },
     );
 
     observer.observe(element);
@@ -207,7 +211,9 @@ export default function AcgSearch({
         }),
       });
 
-      const data = await response.json();
+      const _raw_data = await response.json();
+
+      const data = _raw_data.success === true ? _raw_data.data : _raw_data;
 
       if (!response.ok) {
         throw new Error(data.error || '添加下载任务失败');
@@ -250,7 +256,9 @@ export default function AcgSearch({
         <div className='flex items-center justify-center py-12'>
           <div className='text-center'>
             <AlertCircle className='mx-auto h-12 w-12 text-red-500 dark:text-red-400' />
-            <p className='mt-4 text-sm text-red-600 dark:text-red-400'>{error}</p>
+            <p className='mt-4 text-sm text-red-600 dark:text-red-400'>
+              {error}
+            </p>
           </div>
         </div>
       );
@@ -276,7 +284,7 @@ export default function AcgSearch({
           {allItems.map((item) => (
             <div
               key={item.guid}
-              className='p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-green-400 dark:hover:border-green-600 transition-colors'
+              className='rounded-lg border border-gray-200 bg-gray-50 p-4 transition-colors hover:border-green-400 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-green-600'
             >
               {/* 标题 */}
               <div className='mb-2 font-medium text-gray-900 dark:text-gray-100'>
@@ -308,7 +316,7 @@ export default function AcgSearch({
                 <button
                   onClick={() => handleOpenDownloadDialog(item)}
                   disabled={downloadingId === item.guid}
-                  className='flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                  className='flex items-center gap-1.5 rounded-md bg-green-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50'
                   title='存到私人影库'
                 >
                   {downloadingId === item.guid ? (
@@ -327,7 +335,7 @@ export default function AcgSearch({
                   href={item.link}
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gray-200 text-gray-700 text-sm hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors'
+                  className='flex items-center gap-1.5 rounded-md bg-gray-200 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                   title='查看详情'
                 >
                   <ExternalLink className='h-4 w-4' />
@@ -340,7 +348,10 @@ export default function AcgSearch({
 
         {/* 加载更多指示器 */}
         {source !== 'mikan' && source !== 'dmhy' && hasMore && (
-          <div ref={loadMoreRef} className='flex items-center justify-center py-8'>
+          <div
+            ref={loadMoreRef}
+            className='flex items-center justify-center py-8'
+          >
             <div className='text-center'>
               <Loader2 className='mx-auto h-6 w-6 animate-spin text-green-600 dark:text-green-400' />
               <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
@@ -353,8 +364,8 @@ export default function AcgSearch({
         {/* 命名弹窗 */}
         {showNameDialog && (
           <div className='fixed inset-0 z-[1000] flex items-center justify-center bg-black/50'>
-            <div className='bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl'>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+            <div className='mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800'>
+              <h3 className='mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100'>
                 设置资源名称
               </h3>
               <input
@@ -362,24 +373,24 @@ export default function AcgSearch({
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 placeholder='请输入资源名称'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500'
+                className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
                 autoFocus
               />
-              <div className='mt-4 flex gap-2 justify-end'>
+              <div className='mt-4 flex justify-end gap-2'>
                 <button
                   onClick={() => {
                     setShowNameDialog(false);
                     setSelectedItem(null);
                     setCustomName('');
                   }}
-                  className='px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors'
+                  className='rounded-lg bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                 >
                   取消
                 </button>
                 <button
                   onClick={handleConfirmDownload}
                   disabled={!customName.trim()}
-                  className='px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                  className='rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   确定
                 </button>

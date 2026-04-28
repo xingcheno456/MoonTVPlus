@@ -1,14 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { promisify } from 'util';
 import { gunzip } from 'zlib';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { configSelfCheck, setCachedConfig } from '@/lib/config';
-import { SimpleCrypto } from '@/lib/crypto';
-import { db } from '@/lib/db';
-import { updateProgress, clearProgress } from '@/lib/data-migration-progress';
+import { SimpleCrypto } from '@/lib/crypto-node';
+import { clearProgress,updateProgress } from '@/lib/data-migration-progress';
+import { db, STORAGE_TYPE } from '@/lib/db';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -17,23 +20,20 @@ const gunzipAsync = promisify(gunzip);
 export async function POST(req: NextRequest) {
   try {
     // 检查存储类型
-    const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+    const storageType = STORAGE_TYPE;
     if (storageType === 'localstorage') {
-      return NextResponse.json(
-        { error: '不支持本地存储进行数据迁移' },
-        { status: 400 }
-      );
+      return apiError('不支持本地存储进行数据迁移', 400);
     }
 
     // 验证身份和权限
     const authInfo = getAuthInfoFromCookie(req);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
+      return apiError('未登录', 401);
     }
 
     // 检查用户权限（只有站长可以导入数据）
     if (authInfo.username !== process.env.USERNAME) {
-      return NextResponse.json({ error: '权限不足，只有站长可以导入数据' }, { status: 401 });
+      return apiError('权限不足，只有站长可以导入数据', 401);
     }
 
     const username = authInfo.username; // 存储到局部变量以便 TypeScript 类型推断
@@ -44,11 +44,11 @@ export async function POST(req: NextRequest) {
     const password = formData.get('password') as string;
 
     if (!file) {
-      return NextResponse.json({ error: '请选择备份文件' }, { status: 400 });
+      return apiError('请选择备份文件', 400);
     }
 
     if (!password) {
-      return NextResponse.json({ error: '请提供解密密码' }, { status: 400 });
+      return apiError('请提供解密密码', 400);
     }
 
     // 读取文件内容
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     try {
       decryptedData = SimpleCrypto.decrypt(encryptedData, password);
     } catch (error) {
-      return NextResponse.json({ error: '解密失败，请检查密码是否正确' }, { status: 400 });
+      return apiError('解密失败，请检查密码是否正确', 400);
     }
 
     // 解压缩数据
@@ -72,12 +72,16 @@ export async function POST(req: NextRequest) {
     try {
       importData = JSON.parse(decompressedData);
     } catch (error) {
-      return NextResponse.json({ error: '备份文件格式错误' }, { status: 400 });
+      return apiError('备份文件格式错误', 400);
     }
 
     // 验证数据格式
-    if (!importData.data || !importData.data.adminConfig || !importData.data.userData) {
-      return NextResponse.json({ error: '备份文件格式无效' }, { status: 400 });
+    if (
+      !importData.data ||
+      !importData.data.adminConfig ||
+      !importData.data.userData
+    ) {
+      return apiError('备份文件格式无效', 400);
     }
 
     // 开始导入数据 - 先清空现有数据
@@ -85,11 +89,15 @@ export async function POST(req: NextRequest) {
     await db.clearAllData();
 
     // 额外清除所有V2用户（clearAllData可能只清除旧版用户）
-    const existingUsers = await db.getUserListV2(0, 1000000, process.env.USERNAME);
+    const existingUsers = await db.getUserListV2(
+      0,
+      1000000,
+      process.env.USERNAME,
+    );
     for (const user of existingUsers.users) {
       await db.deleteUserV2(user.username);
     }
-    console.log(`已清除 ${existingUsers.users.length} 个现有V2用户`);
+    logger.info(`已清除 ${existingUsers.users.length} 个现有V2用户`);
 
     // 导入管理员配置
     importData.data.adminConfig = configSelfCheck(importData.data.adminConfig);
@@ -99,9 +107,9 @@ export async function POST(req: NextRequest) {
     // 清除短剧视频源缓存（因为导入的配置可能包含不同的视频源）
     try {
       await db.deleteGlobalValue('duanju');
-      console.log('已清除短剧视频源缓存');
+      logger.info('已清除短剧视频源缓存');
     } catch (error) {
-      console.error('清除短剧视频源缓存失败:', error);
+      logger.error('清除短剧视频源缓存失败:', error);
       // 不影响主流程，继续执行
     }
 
@@ -109,27 +117,41 @@ export async function POST(req: NextRequest) {
     const userData = importData.data.userData;
     const storage = (db as any).storage;
     // 使用前面已声明的 storageType 变量
-    const usersV2Map = new Map((importData.data.usersV2 || []).map((u: any) => [u.username, u]));
+    const usersV2Map = new Map(
+      (importData.data.usersV2 || []).map((u: any) => [u.username, u]),
+    );
 
     const userCount = Object.keys(userData).length;
-    console.log(`准备导入 ${userCount} 个用户的数据`);
-    updateProgress(username, 'import', 'importing', 0, userCount, '开始导入用户数据...');
+    logger.info(`准备导入 ${userCount} 个用户的数据`);
+    updateProgress(
+      username,
+      'import',
+      'importing',
+      0,
+      userCount,
+      '开始导入用户数据...',
+    );
 
     // 分块处理用户，每批处理数量可通过环境变量配置
-    const CHUNK_SIZE = parseInt(process.env.DATA_MIGRATION_CHUNK_SIZE || '10', 10);
+    const CHUNK_SIZE = parseInt(
+      process.env.DATA_MIGRATION_CHUNK_SIZE || '10',
+      10,
+    );
     const usernames = Object.keys(userData);
     let importedCount = 0;
 
     for (let i = 0; i < usernames.length; i += CHUNK_SIZE) {
       const chunk = usernames.slice(i, i + CHUNK_SIZE);
-      console.log(`处理第 ${Math.floor(i / CHUNK_SIZE) + 1} 批用户 (${chunk.length} 个)`);
+      logger.info(
+        `处理第 ${Math.floor(i / CHUNK_SIZE) + 1} 批用户 (${chunk.length} 个)`,
+      );
       updateProgress(
         username,
         'import',
         'importing',
         importedCount,
         userCount,
-        `正在导入用户数据 (${importedCount}/${userCount})...`
+        `正在导入用户数据 (${importedCount}/${userCount})...`,
       );
 
       // 并行导入当前批次的用户
@@ -137,7 +159,10 @@ export async function POST(req: NextRequest) {
         try {
           const user = userData[username];
           // 数据批处理大小（用于播放记录、收藏夹等）
-          const DATA_BATCH_SIZE = parseInt(process.env.DATA_MIGRATION_CHUNK_SIZE || '10', 10);
+          const DATA_BATCH_SIZE = parseInt(
+            process.env.DATA_MIGRATION_CHUNK_SIZE || '10',
+            10,
+          );
 
           // 为所有有passwordV2的用户创建user:info
           if (user.passwordV2) {
@@ -165,11 +190,13 @@ export async function POST(req: NextRequest) {
                   userV2?.tags,
                   userV2?.oidcSub,
                   userV2?.enabledApis,
-                  userV2?.banned
+                  userV2?.banned,
                 );
-                console.log(`用户 ${username} 导入成功 (D1)`);
+                logger.info(`用户 ${username} 导入成功 (D1)`);
               } else {
-                console.error(`D1 storage 缺少 createUserWithHashedPassword 方法`);
+                logger.error(
+                  `D1 storage 缺少 createUserWithHashedPassword 方法`,
+                );
                 return false;
               }
             } else if (storageType === 'postgres') {
@@ -183,11 +210,13 @@ export async function POST(req: NextRequest) {
                   userV2?.tags,
                   userV2?.oidcSub,
                   userV2?.enabledApis,
-                  userV2?.banned
+                  userV2?.banned,
                 );
-                console.log(`用户 ${username} 导入成功 (Postgres)`);
+                logger.info(`用户 ${username} 导入成功 (Postgres)`);
               } else {
-                console.error(`Postgres storage 缺少 createUserWithHashedPassword 方法`);
+                logger.error(
+                  `Postgres storage 缺少 createUserWithHashedPassword 方法`,
+                );
                 return false;
               }
             } else {
@@ -212,21 +241,27 @@ export async function POST(req: NextRequest) {
                 userInfo.enabledApis = JSON.stringify(userV2.enabledApis);
               }
 
-              await storage.withRetry(() => storage.client.hSet(userInfoKey, userInfo));
-              await storage.withRetry(() => storage.client.zAdd('user:list', {
-                score: createdAt,
-                value: username,
-              }));
+              await storage.withRetry(() =>
+                storage.adapter.hSet(userInfoKey, userInfo),
+              );
+              await storage.withRetry(() =>
+                storage.adapter.zAdd('user:list', {
+                  score: createdAt,
+                  value: username,
+                }),
+              );
 
               if (userV2?.oidcSub) {
                 const oidcSubKey = `oidc:sub:${userV2.oidcSub}`;
-                await storage.withRetry(() => storage.client.set(oidcSubKey, username));
+                await storage.withRetry(() =>
+                  storage.adapter.set(oidcSubKey, username),
+                );
               }
 
-              console.log(`用户 ${username} 导入成功 (Redis)`);
+              logger.info(`用户 ${username} 导入成功 (Redis)`);
             }
           } else {
-            console.log(`跳过用户 ${username}：没有passwordV2`);
+            logger.info(`跳过用户 ${username}：没有passwordV2`);
             return false;
           }
 
@@ -241,8 +276,8 @@ export async function POST(req: NextRequest) {
                   const batch = entries.slice(j, j + DATA_BATCH_SIZE);
                   await Promise.all(
                     batch.map(([key, record]) =>
-                      (db as any).storage.setPlayRecord(username, key, record)
-                    )
+                      (db as any).storage.setPlayRecord(username, key, record),
+                    ),
                   );
                 }
               }
@@ -256,8 +291,8 @@ export async function POST(req: NextRequest) {
                   const batch = entries.slice(j, j + DATA_BATCH_SIZE);
                   await Promise.all(
                     batch.map(([key, favorite]) =>
-                      (db as any).storage.setFavorite(username, key, favorite)
-                    )
+                      (db as any).storage.setFavorite(username, key, favorite),
+                    ),
                   );
                 }
               }
@@ -270,7 +305,9 @@ export async function POST(req: NextRequest) {
                 for (let j = 0; j < reversed.length; j += DATA_BATCH_SIZE) {
                   const batch = reversed.slice(j, j + DATA_BATCH_SIZE);
                   await Promise.all(
-                    batch.map((keyword: string) => db.addSearchHistory(username, keyword))
+                    batch.map((keyword: string) =>
+                      db.addSearchHistory(username, keyword),
+                    ),
                   );
                 }
               }
@@ -286,10 +323,15 @@ export async function POST(req: NextRequest) {
                     batch.map(([key, skipConfig]) => {
                       const [source, id] = key.split('+');
                       if (source && id) {
-                        return db.setSkipConfig(username, source, id, skipConfig as any);
+                        return db.setSkipConfig(
+                          username,
+                          source,
+                          id,
+                          skipConfig as any,
+                        );
                       }
                       return Promise.resolve();
-                    })
+                    }),
                   );
                 }
               }
@@ -302,7 +344,11 @@ export async function POST(req: NextRequest) {
                 : [];
 
               if (historyRecords.length > 0) {
-                for (let j = 0; j < historyRecords.length; j += DATA_BATCH_SIZE) {
+                for (
+                  let j = 0;
+                  j < historyRecords.length;
+                  j += DATA_BATCH_SIZE
+                ) {
                   const batch = historyRecords.slice(j, j + DATA_BATCH_SIZE);
                   await db.batchUpsertMusicV2History(
                     username,
@@ -317,7 +363,7 @@ export async function POST(req: NextRequest) {
                       playCount: record.playCount || 1,
                       createdAt: record.createdAt || Date.now(),
                       updatedAt: record.updatedAt || Date.now(),
-                    }))
+                    })),
                   );
                 }
               }
@@ -340,8 +386,15 @@ export async function POST(req: NextRequest) {
 
                   // 批量导入歌单中的歌曲
                   if (playlist.songs && Array.isArray(playlist.songs)) {
-                    for (let j = 0; j < playlist.songs.length; j += DATA_BATCH_SIZE) {
-                      const batch = playlist.songs.slice(j, j + DATA_BATCH_SIZE);
+                    for (
+                      let j = 0;
+                      j < playlist.songs.length;
+                      j += DATA_BATCH_SIZE
+                    ) {
+                      const batch = playlist.songs.slice(
+                        j,
+                        j + DATA_BATCH_SIZE,
+                      );
                       await Promise.all(
                         batch.map((song: any, index: number) =>
                           db.addMusicV2PlaylistItem(playlist.id, {
@@ -361,63 +414,69 @@ export async function POST(req: NextRequest) {
                             lrcUrl: song.lrcUrl,
                             mrcUrl: song.mrcUrl,
                             trcUrl: song.trcUrl,
-                            sortOrder: song.sortOrder ?? (j + index),
+                            sortOrder: song.sortOrder ?? j + index,
                             addedAt: song.addedAt || Date.now(),
                             updatedAt: song.updatedAt || Date.now(),
-                          })
-                        )
+                          }),
+                        ),
                       );
                     }
                   }
                 }
               }
-            })()
+            })(),
           ]);
 
           return true;
         } catch (error) {
-          console.error(`导入用户 ${username} 失败:`, error);
+          logger.error(`导入用户 ${username} 失败:`, error);
           return false;
         }
       });
 
       // 等待当前批次完成
       const results = await Promise.all(importPromises);
-      importedCount += results.filter(r => r).length;
+      importedCount += results.filter((r) => r).length;
 
-      console.log(`已完成 ${importedCount}/${userCount} 个用户`);
+      logger.info(`已完成 ${importedCount}/${userCount} 个用户`);
       updateProgress(
         username,
         'import',
         'importing',
         importedCount,
         userCount,
-        `已导入 ${importedCount}/${userCount} 个用户`
+        `已导入 ${importedCount}/${userCount} 个用户`,
       );
     }
 
-    console.log(`成功导入 ${importedCount} 个用户的user:info`);
-    updateProgress(username, 'import', 'completed', importedCount, userCount, '导入完成！');
+    logger.info(`成功导入 ${importedCount} 个用户的user:info`);
+    updateProgress(
+      username,
+      'import',
+      'completed',
+      importedCount,
+      userCount,
+      '导入完成！',
+    );
     setTimeout(() => clearProgress(username, 'import'), 3000);
 
-    return NextResponse.json({
+    return apiSuccess({
       message: '数据导入成功',
       importedUsers: Object.keys(userData).length,
       importedUsersV2: importData.data.usersV2?.length || 0,
       timestamp: importData.timestamp,
-      serverVersion: typeof importData.serverVersion === 'string' ? importData.serverVersion : '未知版本'
+      serverVersion:
+        typeof importData.serverVersion === 'string'
+          ? importData.serverVersion
+          : '未知版本',
     });
-
   } catch (error) {
-    console.error('数据导入失败:', error);
+    logger.error('数据导入失败:', error);
     // 清除进度信息
     const authInfo = getAuthInfoFromCookie(req);
     if (authInfo?.username) {
       clearProgress(authInfo.username, 'import');
     }
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '导入失败' },
-      { status: 500 }
-    );
+    return apiError(error instanceof Error ? error.message : '导入失败', 500);
   }
 }

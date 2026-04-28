@@ -1,9 +1,11 @@
 // React Hook for Live Page Synchronization
 'use client';
 
-import { useCallback,useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
+
+import { logger } from '../lib/logger';
 
 import type { LiveState } from '@/types/watch-room';
 
@@ -29,7 +31,6 @@ export function useLiveSync({
   const currentRoom = watchRoom?.currentRoom;
   const socket = watchRoom?.socket;
 
-
   // 房主：广播频道切换
   const broadcastChannelChange = useCallback(() => {
     if (!isOwner || !socket || syncingRef.current || !watchRoom) return;
@@ -43,9 +44,16 @@ export function useLiveSync({
       channelUrl: currentChannelUrl,
     };
 
-    console.log('[LiveSync] Broadcasting channel change:', state);
+    logger.info('[LiveSync] Broadcasting channel change:', state);
     watchRoom.changeLiveChannel(state);
-  }, [isOwner, socket, currentChannelId, currentChannelName, currentChannelUrl, watchRoom]);
+  }, [
+    isOwner,
+    socket,
+    currentChannelId,
+    currentChannelName,
+    currentChannelUrl,
+    watchRoom,
+  ]);
 
   // 房员：接收并同步房主的频道切换
   useEffect(() => {
@@ -54,7 +62,7 @@ export function useLiveSync({
     const handleLiveChange = (state: LiveState) => {
       if (syncingRef.current) return;
 
-      console.log('[LiveSync] Received channel change:', state);
+      logger.info('[LiveSync] Received channel change:', state);
       syncingRef.current = true;
 
       try {
@@ -88,7 +96,13 @@ export function useLiveSync({
     }, 500); // 延迟广播，避免频繁触发
 
     return () => clearTimeout(timer);
-  }, [isOwner, currentChannelId, currentChannelUrl, broadcastChannelChange, isInRoom]);
+  }, [
+    isOwner,
+    currentChannelId,
+    currentChannelUrl,
+    broadcastChannelChange,
+    isInRoom,
+  ]);
 
   return {
     isInRoom,

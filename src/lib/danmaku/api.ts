@@ -18,6 +18,7 @@ import type {
   DanmakuSearchResponse,
   DanmakuSettings,
 } from './types';
+import { logger } from '../logger';
 
 // 初始化弹幕模块（清理过期缓存）
 let _cacheCleanupInitialized = false;
@@ -32,11 +33,11 @@ export function initDanmakuModule(): void {
   clearExpiredDanmakuCache()
     .then((count) => {
       if (count > 0) {
-        console.log(`[弹幕缓存] 启动清理: 已删除 ${count} 个过期缓存`);
+        logger.info(`[弹幕缓存] 启动清理: 已删除 ${count} 个过期缓存`);
       }
     })
     .catch((error) => {
-      console.error('[弹幕缓存] 清理失败:', error);
+      logger.error('[弹幕缓存] 清理失败:', error);
     });
 }
 
@@ -53,7 +54,7 @@ export {
 
 // 搜索动漫
 export async function searchAnime(
-  keyword: string
+  keyword: string,
 ): Promise<DanmakuSearchResponse> {
   try {
     const url = `/api/danmaku/search?keyword=${encodeURIComponent(keyword)}`;
@@ -66,7 +67,7 @@ export async function searchAnime(
     const data = (await response.json()) as DanmakuSearchResponse;
     return data;
   } catch (error) {
-    console.error('搜索动漫失败:', error);
+    logger.error('搜索动漫失败:', error);
     return {
       errorCode: -1,
       success: false,
@@ -78,7 +79,7 @@ export async function searchAnime(
 
 // 自动匹配（根据文件名）
 export async function matchAnime(
-  fileName: string
+  fileName: string,
 ): Promise<DanmakuMatchResponse> {
   try {
     const url = '/api/danmaku/match';
@@ -99,7 +100,7 @@ export async function matchAnime(
     const data = (await response.json()) as DanmakuMatchResponse;
     return data;
   } catch (error) {
-    console.error('自动匹配失败:', error);
+    logger.error('自动匹配失败:', error);
     return {
       errorCode: -1,
       success: false,
@@ -112,7 +113,7 @@ export async function matchAnime(
 
 // 获取剧集列表
 export async function getEpisodes(
-  animeId: number
+  animeId: number,
 ): Promise<DanmakuEpisodesResponse> {
   try {
     const url = `/api/danmaku/episodes?animeId=${animeId}`;
@@ -125,7 +126,7 @@ export async function getEpisodes(
     const data = (await response.json()) as DanmakuEpisodesResponse;
     return data;
   } catch (error) {
-    console.error('获取剧集列表失败:', error);
+    logger.error('获取剧集列表失败:', error);
     return {
       errorCode: -1,
       success: false,
@@ -153,21 +154,29 @@ export async function getDanmakuById(
     episodeTitle?: string;
     searchKeyword?: string;
     danmakuCount?: number;
-  }
+  },
 ): Promise<DanmakuComment[]> {
   try {
     // 1. 如果提供了 title 和 episodeIndex，先尝试从缓存读取
     if (title && episodeIndex !== undefined && !options?.bypassCache) {
       const cachedData = await getDanmakuFromCache(title, episodeIndex);
       if (cachedData) {
-        console.log(`[弹幕缓存] 使用缓存: title=${title}, episodeIndex=${episodeIndex}, 数量=${cachedData.comments.length}`);
+        logger.info(
+          `[弹幕缓存] 使用缓存: title=${title}, episodeIndex=${episodeIndex}, 数量=${cachedData.comments.length}`,
+        );
         return cachedData.comments;
       }
-      console.log(`[弹幕缓存] 缓存未命中，从 API 获取: title=${title}, episodeIndex=${episodeIndex}`);
+      logger.info(
+        `[弹幕缓存] 缓存未命中，从 API 获取: title=${title}, episodeIndex=${episodeIndex}`,
+      );
     } else if (title && episodeIndex !== undefined && options?.bypassCache) {
-      console.log(`[弹幕缓存] 手动选择，跳过缓存读取: title=${title}, episodeIndex=${episodeIndex}, episodeId=${episodeId}`);
+      logger.info(
+        `[弹幕缓存] 手动选择，跳过缓存读取: title=${title}, episodeIndex=${episodeIndex}, episodeId=${episodeId}`,
+      );
     } else {
-      console.log(`[弹幕缓存] 未提供 title/episodeIndex，跳过缓存: episodeId=${episodeId}`);
+      logger.info(
+        `[弹幕缓存] 未提供 title/episodeIndex，跳过缓存: episodeId=${episodeId}`,
+      );
     }
 
     // 2. 缓存未命中，从 API 获取
@@ -182,9 +191,17 @@ export async function getDanmakuById(
     const comments = data.comments || [];
 
     // 3. 如果提供了 title 和 episodeIndex，保存到缓存
-    if (comments.length > 0 && title && title.trim() !== '' && episodeIndex !== undefined && episodeIndex >= 0) {
+    if (
+      comments.length > 0 &&
+      title &&
+      title.trim() !== '' &&
+      episodeIndex !== undefined &&
+      episodeIndex >= 0
+    ) {
       try {
-        console.log(`[弹幕缓存] 尝试保存缓存: title="${title}", episodeIndex=${episodeIndex}, 数量=${comments.length}`);
+        logger.info(
+          `[弹幕缓存] 尝试保存缓存: title="${title}", episodeIndex=${episodeIndex}, 数量=${comments.length}`,
+        );
         await saveDanmakuToCache(title, episodeIndex, comments, {
           animeId: metadata?.animeId,
           episodeId: episodeId,
@@ -193,18 +210,22 @@ export async function getDanmakuById(
           searchKeyword: metadata?.searchKeyword,
           danmakuCount: metadata?.danmakuCount ?? comments.length,
         });
-        console.log(`[弹幕缓存] 已缓存: title=${title}, episodeIndex=${episodeIndex}, 数量=${comments.length}`);
+        logger.info(
+          `[弹幕缓存] 已缓存: title=${title}, episodeIndex=${episodeIndex}, 数量=${comments.length}`,
+        );
       } catch (cacheError) {
-        console.error('[弹幕缓存] 保存缓存失败:', cacheError);
+        logger.error('[弹幕缓存] 保存缓存失败:', cacheError);
         // 缓存失败不影响返回结果
       }
     } else {
-      console.log(`[弹幕缓存] 不满足缓存条件: title="${title}", episodeIndex=${episodeIndex}, comments.length=${comments.length}`);
+      logger.info(
+        `[弹幕缓存] 不满足缓存条件: title="${title}", episodeIndex=${episodeIndex}, comments.length=${comments.length}`,
+      );
     }
 
     return comments;
   } catch (error) {
-    console.error('获取弹幕失败:', error);
+    logger.error('获取弹幕失败:', error);
     return [];
   }
 }
@@ -222,15 +243,13 @@ export async function getDanmakuByUrl(url: string): Promise<DanmakuComment[]> {
     const data = (await response.json()) as DanmakuCommentsResponse;
     return data.comments || [];
   } catch (error) {
-    console.error('获取弹幕失败:', error);
+    logger.error('获取弹幕失败:', error);
     return [];
   }
 }
 
 // 将 danmu_api 的弹幕格式转换为 artplayer-plugin-danmuku 格式
-export function convertDanmakuFormat(
-  comments: DanmakuComment[]
-): Array<{
+export function convertDanmakuFormat(comments: DanmakuComment[]): Array<{
   text: string;
   time: number;
   color: string;
@@ -249,7 +268,8 @@ export function convertDanmakuFormat(
 
     // 转换弹幕类型: 1=滚动(0), 4=底部(1), 5=顶部(2)
     let mode = 0; // 默认滚动
-    if (type === 5) mode = 1; // 顶部
+    if (type === 5)
+      mode = 1; // 顶部
     else if (type === 4) mode = 2; // 底部
 
     return {
@@ -290,7 +310,7 @@ export function loadDanmakuSettings(): DanmakuSettings {
 
     return settings;
   } catch (error) {
-    console.error('读取弹幕设置失败:', error);
+    logger.error('读取弹幕设置失败:', error);
   }
   return DEFAULT_DANMAKU_SETTINGS;
 }
@@ -302,7 +322,7 @@ export function saveDanmakuSettings(settings: DanmakuSettings): void {
   try {
     localStorage.setItem('danmaku_settings', JSON.stringify(settings));
   } catch (error) {
-    console.error('保存弹幕设置失败:', error);
+    logger.error('保存弹幕设置失败:', error);
   }
 }
 
@@ -313,7 +333,7 @@ export function saveDanmakuDisplayState(enabled: boolean): void {
   try {
     localStorage.setItem('danmaku_display_enabled', String(enabled));
   } catch (error) {
-    console.error('保存弹幕显示状态失败:', error);
+    logger.error('保存弹幕显示状态失败:', error);
   }
 }
 
@@ -326,7 +346,7 @@ export function loadDanmakuDisplayState(): boolean | null {
     if (saved === null) return null;
     return saved === 'true';
   } catch (error) {
-    console.error('读取弹幕显示状态失败:', error);
+    logger.error('读取弹幕显示状态失败:', error);
     return null;
   }
 }
@@ -349,7 +369,7 @@ export function saveDanmakuMemory(
   episodeId: number,
   animeTitle: string,
   episodeTitle: string,
-  searchKeyword?: string // 可选的搜索关键词
+  searchKeyword?: string, // 可选的搜索关键词
 ): void {
   if (typeof window === 'undefined') return;
 
@@ -384,14 +404,12 @@ export function saveDanmakuMemory(
       localStorage.setItem('danmaku_memories', JSON.stringify(memories));
     }
   } catch (error) {
-    console.error('保存弹幕记忆失败:', error);
+    logger.error('保存弹幕记忆失败:', error);
   }
 }
 
 // 读取弹幕选择记忆
-export function loadDanmakuMemory(
-  videoTitle: string
-): DanmakuMemory | null {
+export function loadDanmakuMemory(videoTitle: string): DanmakuMemory | null {
   if (typeof window === 'undefined') return null;
 
   try {
@@ -401,7 +419,7 @@ export function loadDanmakuMemory(
     const memories: Record<string, DanmakuMemory> = JSON.parse(memoriesJson);
     return memories[videoTitle] || null;
   } catch (error) {
-    console.error('读取弹幕记忆失败:', error);
+    logger.error('读取弹幕记忆失败:', error);
     return null;
   }
 }

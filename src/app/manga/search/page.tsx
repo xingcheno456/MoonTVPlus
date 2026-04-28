@@ -4,8 +4,16 @@ import { Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { deleteMangaShelf, getAllMangaShelf, saveMangaShelf } from '@/lib/db.client';
-import { MangaSearchItem, MangaShelfItem, MangaSource } from '@/lib/manga.types';
+import {
+  deleteMangaShelf,
+  getAllMangaShelf,
+  saveMangaShelf,
+} from '@/lib/db.client';
+import {
+  MangaSearchItem,
+  MangaShelfItem,
+  MangaSource,
+} from '@/lib/manga.types';
 
 import MangaCard from '@/components/MangaCard';
 
@@ -21,7 +29,9 @@ function MangaCardSkeleton({ withButton = false }: { withButton?: boolean }) {
           <div className='h-3 w-1/2 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
         </div>
       </div>
-      {withButton && <div className='h-9 w-full animate-pulse rounded-2xl bg-gray-200 dark:bg-gray-800' />}
+      {withButton && (
+        <div className='h-9 w-full animate-pulse rounded-2xl bg-gray-200 dark:bg-gray-800' />
+      )}
     </div>
   );
 }
@@ -44,43 +54,65 @@ export default function MangaSearchPage() {
   const [lastSearchedSourceId, setLastSearchedSourceId] = useState('');
   const restoredRef = useRef(false);
 
-  const getCacheKey = useCallback((keyword: string, selectedSourceId: string) => {
-    return `manga_search_cache_${selectedSourceId || 'all'}_${keyword.trim()}`;
-  }, []);
+  const getCacheKey = useCallback(
+    (keyword: string, selectedSourceId: string) => {
+      return `manga_search_cache_${selectedSourceId || 'all'}_${keyword.trim()}`;
+    },
+    [],
+  );
 
   const getCachedResults = useCallback(
     (keyword: string, selectedSourceId: string) => {
       if (typeof window === 'undefined' || !keyword.trim()) return null;
       try {
-        const cached = sessionStorage.getItem(getCacheKey(keyword, selectedSourceId));
+        const cached = sessionStorage.getItem(
+          getCacheKey(keyword, selectedSourceId),
+        );
         return cached ? (JSON.parse(cached) as MangaSearchItem[]) : null;
       } catch {
         return null;
       }
     },
-    [getCacheKey]
+    [getCacheKey],
   );
 
   const setCachedResults = useCallback(
-    (keyword: string, selectedSourceId: string, nextResults: MangaSearchItem[]) => {
+    (
+      keyword: string,
+      selectedSourceId: string,
+      nextResults: MangaSearchItem[],
+    ) => {
       if (typeof window === 'undefined' || !keyword.trim()) return;
       try {
-        sessionStorage.setItem(getCacheKey(keyword, selectedSourceId), JSON.stringify(nextResults));
+        sessionStorage.setItem(
+          getCacheKey(keyword, selectedSourceId),
+          JSON.stringify(nextResults),
+        );
       } catch {
         // ignore session cache failures
       }
     },
-    [getCacheKey]
+    [getCacheKey],
   );
 
-  const saveSearchState = useCallback((nextState: { query: string; sourceId: string; results: MangaSearchItem[] }) => {
-    if (typeof window === 'undefined') return;
-    try {
-      sessionStorage.setItem(MANGA_SEARCH_STATE_KEY, JSON.stringify(nextState));
-    } catch {
-      // ignore session cache failures
-    }
-  }, []);
+  const saveSearchState = useCallback(
+    (nextState: {
+      query: string;
+      sourceId: string;
+      results: MangaSearchItem[];
+    }) => {
+      if (typeof window === 'undefined') return;
+      try {
+        sessionStorage.setItem(
+          MANGA_SEARCH_STATE_KEY,
+          JSON.stringify(nextState),
+        );
+      } catch {
+        // ignore session cache failures
+      }
+    },
+    [],
+  );
 
   const restoreSearchState = useCallback(() => {
     if (typeof window === 'undefined') return null;
@@ -104,7 +136,9 @@ export default function MangaSearchPage() {
       .then((data) => setSources(data.sources || []))
       .catch(() => undefined);
 
-    getAllMangaShelf().then(setShelf).catch(() => undefined);
+    getAllMangaShelf()
+      .then(setShelf)
+      .catch(() => undefined);
   }, []);
 
   const performSearch = useCallback(
@@ -121,7 +155,11 @@ export default function MangaSearchPage() {
       const cached = getCachedResults(trimmedQuery, selectedSourceId);
       if (cached) {
         setResults(cached);
-        saveSearchState({ query: trimmedQuery, sourceId: selectedSourceId, results: cached });
+        saveSearchState({
+          query: trimmedQuery,
+          sourceId: selectedSourceId,
+          results: cached,
+        });
         setLoading(false);
         return;
       }
@@ -130,12 +168,17 @@ export default function MangaSearchPage() {
         const params = new URLSearchParams({ q: trimmedQuery });
         if (selectedSourceId) params.set('sourceId', selectedSourceId);
         const res = await fetch(`/api/manga/search?${params.toString()}`);
-        const data = await res.json();
+        const _raw_data = await res.json();
+        const data = _raw_data.success === true ? _raw_data.data : _raw_data;
         if (!res.ok) throw new Error(data.error || '搜索失败');
         const nextResults = data.results || [];
         setResults(nextResults);
         setCachedResults(trimmedQuery, selectedSourceId, nextResults);
-        saveSearchState({ query: trimmedQuery, sourceId: selectedSourceId, results: nextResults });
+        saveSearchState({
+          query: trimmedQuery,
+          sourceId: selectedSourceId,
+          results: nextResults,
+        });
       } catch (err) {
         setError((err as Error).message);
         setResults([]);
@@ -143,7 +186,7 @@ export default function MangaSearchPage() {
         setLoading(false);
       }
     },
-    [getCachedResults, saveSearchState, setCachedResults]
+    [getCachedResults, saveSearchState, setCachedResults],
   );
 
   useEffect(() => {

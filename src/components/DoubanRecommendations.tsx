@@ -1,17 +1,18 @@
 'use client';
 
-import { useCallback,useEffect, useState } from 'react';
-
-import { useEnableComments } from '@/hooks/useEnableComments';
-
-import ScrollableRow from '@/components/ScrollableRow';
-import VideoCard from '@/components/VideoCard';
+import { useCallback, useEffect, useState } from 'react';
 
 import {
   getRecommendationCache,
   recommendationCacheKeys,
   setRecommendationCache,
 } from '@/lib/recommendations/cache';
+import { useEnableComments } from '@/hooks/useEnableComments';
+
+import ScrollableRow from '@/components/ScrollableRow';
+import VideoCard from '@/components/VideoCard';
+
+import { logger } from '../lib/logger';
 
 interface DoubanRecommendation {
   doubanId: string;
@@ -24,8 +25,12 @@ interface DoubanRecommendationsProps {
   doubanId: number;
 }
 
-export default function DoubanRecommendations({ doubanId }: DoubanRecommendationsProps) {
-  const [recommendations, setRecommendations] = useState<DoubanRecommendation[]>([]);
+export default function DoubanRecommendations({
+  doubanId,
+}: DoubanRecommendationsProps) {
+  const [recommendations, setRecommendations] = useState<
+    DoubanRecommendation[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +38,7 @@ export default function DoubanRecommendations({ doubanId }: DoubanRecommendation
 
   const fetchRecommendations = useCallback(async () => {
     try {
-      console.log('正在获取推荐');
+      logger.info('正在获取推荐');
       setLoading(true);
       setError(null);
 
@@ -41,14 +46,14 @@ export default function DoubanRecommendations({ doubanId }: DoubanRecommendation
       const cached = getRecommendationCache<DoubanRecommendation[]>(cacheKey);
 
       if (cached) {
-        console.log('使用缓存的推荐数据');
+        logger.info('使用缓存的推荐数据');
         setRecommendations(cached);
         setLoading(false);
         return;
       }
 
       const response = await fetch(
-        `/api/douban-recommendations?id=${doubanId}`
+        `/api/douban-recommendations?id=${doubanId}`,
       );
 
       if (!response.ok) {
@@ -56,14 +61,14 @@ export default function DoubanRecommendations({ doubanId }: DoubanRecommendation
       }
 
       const result = await response.json();
-      console.log('获取到推荐:', result.recommendations);
+      logger.info('获取到推荐:', result.recommendations);
 
       const recommendationsData = result.recommendations || [];
       setRecommendations(recommendationsData);
 
       setRecommendationCache(cacheKey, recommendationsData);
     } catch (err) {
-      console.error('获取推荐失败:', err);
+      logger.error('获取推荐失败:', err);
       setError(err instanceof Error ? err.message : '获取推荐失败');
     } finally {
       setLoading(false);
@@ -82,15 +87,15 @@ export default function DoubanRecommendations({ doubanId }: DoubanRecommendation
 
   if (loading) {
     return (
-      <div className='flex justify-center items-center py-8'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-500'></div>
+      <div className='flex items-center justify-center py-8'>
+        <div className='h-8 w-8 animate-spin rounded-full border-b-2 border-green-500'></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
+      <div className='py-8 text-center text-gray-500 dark:text-gray-400'>
         {error}
       </div>
     );
@@ -105,7 +110,7 @@ export default function DoubanRecommendations({ doubanId }: DoubanRecommendation
       {recommendations.map((rec) => (
         <div
           key={rec.doubanId}
-          className='min-w-[96px] w-24 sm:min-w-[140px] sm:w-[140px]'
+          className='w-24 min-w-[96px] sm:w-[140px] sm:min-w-[140px]'
         >
           <VideoCard
             title={rec.title}

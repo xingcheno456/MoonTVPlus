@@ -1,3 +1,4 @@
+import { logger } from './logger';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
@@ -34,12 +35,15 @@ export interface DatabaseAdapter {
   prepare(query: string): D1PreparedStatement;
   batch?(statements: D1PreparedStatement[]): Promise<D1Result[]>;
   exec?(query: string): void;
+  readonly placeholderStyle: '?' | '$n';
 }
 
 /**
  * Cloudflare D1 适配器（生产环境）
  */
 export class CloudflareD1Adapter implements DatabaseAdapter {
+  readonly placeholderStyle = '?' as const;
+
   constructor(private db: D1Database) {}
 
   prepare(query: string): D1PreparedStatement {
@@ -56,7 +60,8 @@ export class CloudflareD1Adapter implements DatabaseAdapter {
  * 包装 better-sqlite3 以兼容 D1 API
  */
 export class SQLiteAdapter implements DatabaseAdapter {
-  private db: any; // better-sqlite3 Database
+  private db: any;
+  readonly placeholderStyle = '?' as const;
 
   constructor(db: any) {
     this.db = db;
@@ -115,7 +120,7 @@ class SQLitePreparedStatement implements D1PreparedStatement {
       if (colName) return result[colName] ?? null;
       return result;
     } catch (err) {
-      console.error('SQLite first() error:', err);
+      logger.error('SQLite first() error:', err);
       return null;
     }
   }
@@ -131,7 +136,7 @@ class SQLitePreparedStatement implements D1PreparedStatement {
         },
       };
     } catch (err: any) {
-      console.error('SQLite run() error:', err);
+      logger.error('SQLite run() error:', err);
       return {
         success: false,
         error: err.message,
@@ -147,7 +152,7 @@ class SQLitePreparedStatement implements D1PreparedStatement {
         results: results || [],
       };
     } catch (err: any) {
-      console.error('SQLite all() error:', err);
+      logger.error('SQLite all() error:', err);
       return {
         success: false,
         error: err.message,

@@ -28,12 +28,13 @@ function isBrowser() {
 function isQuotaExceededError(error: unknown) {
   return (
     error instanceof DOMException &&
-    (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
+    (error.name === 'QuotaExceededError' ||
+      error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
   );
 }
 
 function parseEpisodeProgressRecord(
-  value: unknown
+  value: unknown,
 ): LocalEpisodeProgressRecord | null {
   if (!value || typeof value !== 'object') {
     return null;
@@ -50,14 +51,16 @@ function parseEpisodeProgressRecord(
 
   return {
     playTime: Math.floor(playTime),
-    totalTime: Number.isFinite(totalTime) && totalTime >= 0 ? Math.floor(totalTime) : 0,
+    totalTime:
+      Number.isFinite(totalTime) && totalTime >= 0 ? Math.floor(totalTime) : 0,
     updatedAt: Number.isFinite(updatedAt) && updatedAt > 0 ? updatedAt : 0,
   };
 }
 
-function normalizeEpisodeProgressStore(
-  value: unknown
-): { store: LocalEpisodeProgressStore | null; changed: boolean } {
+function normalizeEpisodeProgressStore(value: unknown): {
+  store: LocalEpisodeProgressStore | null;
+  changed: boolean;
+} {
   if (!value || typeof value !== 'object') {
     return { store: null, changed: false };
   }
@@ -115,7 +118,9 @@ function normalizeEpisodeProgressStore(
   };
 }
 
-function readEpisodeProgressStore(contentKey: string): LocalEpisodeProgressStore | null {
+function readEpisodeProgressStore(
+  contentKey: string,
+): LocalEpisodeProgressStore | null {
   if (!isBrowser()) {
     return null;
   }
@@ -152,7 +157,7 @@ function collectEpisodeProgressEntries() {
   }
 
   const keys = Array.from({ length: localStorage.length }, (_, index) =>
-    localStorage.key(index)
+    localStorage.key(index),
   ).filter((key): key is string => Boolean(key));
 
   const entries: Array<{ key: string; updatedAt: number }> = [];
@@ -196,7 +201,7 @@ function normalizeContentTitle(title: string) {
   return title
     .replace(/\s+/g, '')
     .replace(/[\uff01-\uff5e]/g, (char) =>
-      String.fromCharCode(char.charCodeAt(0) - 0xfee0)
+      String.fromCharCode(char.charCodeAt(0) - 0xfee0),
     )
     .replace(/[()（）[\]【】{}「」『』<>《》]/g, '')
     .replace(/[^\w\u4e00-\u9fa5]/g, '')
@@ -218,11 +223,13 @@ function normalizeContentIdentityId(value: unknown) {
 }
 
 function buildLegacyEpisodeProgressContentKey(
-  identity: EpisodeProgressContentIdentity
+  identity: EpisodeProgressContentIdentity,
 ) {
   const title = normalizeContentTitle(identity.title || '');
   const year = String(identity.year || '').trim();
-  const searchType = String(identity.searchType || '').trim().toLowerCase();
+  const searchType = String(identity.searchType || '')
+    .trim()
+    .toLowerCase();
 
   if (!title) {
     return null;
@@ -232,7 +239,7 @@ function buildLegacyEpisodeProgressContentKey(
 }
 
 export function buildEpisodeProgressContentKey(
-  identity: EpisodeProgressContentIdentity
+  identity: EpisodeProgressContentIdentity,
 ) {
   const doubanId = normalizeContentIdentityId(identity.doubanId);
   if (doubanId) {
@@ -241,7 +248,9 @@ export function buildEpisodeProgressContentKey(
 
   const tmdbId = normalizeContentIdentityId(identity.tmdbId);
   if (tmdbId) {
-    const searchType = String(identity.searchType || '').trim().toLowerCase();
+    const searchType = String(identity.searchType || '')
+      .trim()
+      .toLowerCase();
     return searchType ? `tmdb:${searchType}:${tmdbId}` : `tmdb:${tmdbId}`;
   }
 
@@ -262,7 +271,7 @@ export function loadAllLocalEpisodeProgressRecords(contentKey: string | null) {
 
 export function loadLocalEpisodeProgressRecord(
   contentKey: string | null,
-  episodeIndex: number
+  episodeIndex: number,
 ) {
   const episodes = loadAllLocalEpisodeProgressRecords(contentKey);
   return episodes[String(episodeIndex)] || null;
@@ -270,7 +279,7 @@ export function loadLocalEpisodeProgressRecord(
 
 export function loadLocalEpisodeProgress(
   contentKey: string | null,
-  episodeIndex: number
+  episodeIndex: number,
 ) {
   const record = loadLocalEpisodeProgressRecord(contentKey, episodeIndex);
   if (!record) {
@@ -283,14 +292,14 @@ export function loadLocalEpisodeProgress(
 }
 
 export function pruneLocalEpisodeProgressStorage(
-  maxShows = EPISODE_PROGRESS_MAX_SHOWS
+  maxShows = EPISODE_PROGRESS_MAX_SHOWS,
 ) {
   if (!isBrowser()) {
     return;
   }
 
   const entries = collectEpisodeProgressEntries().sort(
-    (a, b) => b.updatedAt - a.updatedAt
+    (a, b) => b.updatedAt - a.updatedAt,
   );
 
   if (entries.length <= maxShows) {
@@ -306,7 +315,7 @@ export function saveLocalEpisodeProgress(
   contentKey: string | null,
   episodeIndex: number,
   playTime: number,
-  totalTime: number
+  totalTime: number,
 ) {
   if (
     !isBrowser() ||
@@ -327,7 +336,10 @@ export function saveLocalEpisodeProgress(
       ...(currentStore?.episodes || {}),
       [String(episodeIndex)]: {
         playTime: Math.floor(playTime),
-        totalTime: Number.isFinite(totalTime) && totalTime >= 0 ? Math.floor(totalTime) : 0,
+        totalTime:
+          Number.isFinite(totalTime) && totalTime >= 0
+            ? Math.floor(totalTime)
+            : 0,
         updatedAt: now,
       },
     },
@@ -346,7 +358,7 @@ export function saveLocalEpisodeProgress(
     }
 
     pruneLocalEpisodeProgressStorage(
-      Math.max(10, Math.floor(EPISODE_PROGRESS_MAX_SHOWS / 2))
+      Math.max(10, Math.floor(EPISODE_PROGRESS_MAX_SHOWS / 2)),
     );
     localStorage.setItem(key, payload);
     pruneLocalEpisodeProgressStorage();

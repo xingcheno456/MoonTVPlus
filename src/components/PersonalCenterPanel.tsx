@@ -35,7 +35,7 @@ export function PersonalCenterPanel({
   return createPortal(
     <>
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className='fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm'
         onClick={onClose}
         onTouchMove={(e) => {
           e.preventDefault();
@@ -46,7 +46,7 @@ export function PersonalCenterPanel({
         style={{ touchAction: 'none' }}
       />
 
-      <div className='fixed top-1/2 left-1/2 z-[1001] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900'>
+      <div className='fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900'>
         <div
           className='p-6'
           data-panel-content
@@ -61,7 +61,7 @@ export function PersonalCenterPanel({
               className='absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
               aria-label='Close'
             >
-              <X className='w-5 h-5' />
+              <X className='h-5 w-5' />
             </button>
             <div className='mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-blue-500 text-3xl font-semibold text-white shadow-md'>
               {avatarText}
@@ -81,10 +81,10 @@ export function PersonalCenterPanel({
           <div className='space-y-3'>
             <button
               onClick={onOpenEmailSettings}
-              className='flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-left transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-750'
+              className='dark:hover:bg-gray-750 flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-left transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800'
             >
               <div className='flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300'>
-                <Mail className='w-6 h-6' />
+                <Mail className='h-6 w-6' />
               </div>
               <div>
                 <div className='text-base font-semibold text-gray-900 dark:text-gray-100'>
@@ -99,10 +99,10 @@ export function PersonalCenterPanel({
             {showDeviceManagement && (
               <button
                 onClick={onOpenDeviceManagement}
-                className='flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-left transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-750'
+                className='dark:hover:bg-gray-750 flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-left transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800'
               >
                 <div className='flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300'>
-                  <Monitor className='w-6 h-6' />
+                  <Monitor className='h-6 w-6' />
                 </div>
                 <div>
                   <div className='text-base font-semibold text-gray-900 dark:text-gray-100'>
@@ -118,6 +118,6 @@ export function PersonalCenterPanel({
         </div>
       </div>
     </>,
-    document.body
+    document.body,
   );
 }

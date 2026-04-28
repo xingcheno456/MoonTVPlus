@@ -1,6 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
 'use client';
+/* eslint-disable react-hooks/exhaustive-deps */
 
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -125,11 +124,11 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
   // 更新指示器位置的通用函数
   const updateIndicatorPosition = (
     activeIndex: number,
-    containerRef: React.RefObject<HTMLDivElement>,
+    containerRef: React.RefObject<HTMLDivElement | null>,
     buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
     setIndicatorStyle: React.Dispatch<
       React.SetStateAction<{ left: number; width: number }>
-    >
+    >,
   ) => {
     if (
       activeIndex >= 0 &&
@@ -160,26 +159,27 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
     // 主选择器初始位置
     if (primaryOptions.length > 0) {
       const activeIndex = primaryOptions.findIndex(
-        (opt) => opt.value === (primarySelection || primaryOptions[0].value)
+        (opt) => opt.value === (primarySelection || primaryOptions[0].value),
       );
       updateIndicatorPosition(
         activeIndex,
         primaryContainerRef,
         primaryButtonRefs,
-        setPrimaryIndicatorStyle
+        setPrimaryIndicatorStyle,
       );
     }
 
     // 副选择器初始位置
     if (secondaryOptions.length > 0) {
       const activeIndex = secondaryOptions.findIndex(
-        (opt) => opt.value === (secondarySelection || secondaryOptions[0].value)
+        (opt) =>
+          opt.value === (secondarySelection || secondaryOptions[0].value),
       );
       updateIndicatorPosition(
         activeIndex,
         secondaryContainerRef,
         secondaryButtonRefs,
-        setSecondaryIndicatorStyle
+        setSecondaryIndicatorStyle,
       );
     }
   }, [primaryOptions, secondaryOptions]); // 当选项变化时重新计算
@@ -188,13 +188,13 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
   useEffect(() => {
     if (primaryOptions.length > 0) {
       const activeIndex = primaryOptions.findIndex(
-        (opt) => opt.value === primarySelection
+        (opt) => opt.value === primarySelection,
       );
       const cleanup = updateIndicatorPosition(
         activeIndex,
         primaryContainerRef,
         primaryButtonRefs,
-        setPrimaryIndicatorStyle
+        setPrimaryIndicatorStyle,
       );
       return cleanup;
     }
@@ -204,13 +204,13 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
   useEffect(() => {
     if (secondaryOptions.length > 0) {
       const activeIndex = secondaryOptions.findIndex(
-        (opt) => opt.value === secondarySelection
+        (opt) => opt.value === secondarySelection,
       );
       const cleanup = updateIndicatorPosition(
         activeIndex,
         secondaryContainerRef,
         secondaryButtonRefs,
-        setSecondaryIndicatorStyle
+        setSecondaryIndicatorStyle,
       );
       return cleanup;
     }
@@ -221,7 +221,7 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
     options: { label: string; value: string }[],
     activeValue: string | undefined,
     onChange: (value: string) => void,
-    isPrimary = false
+    isPrimary = false,
   ) => {
     const containerRef = isPrimary
       ? primaryContainerRef
@@ -234,12 +234,12 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
     return (
       <div
         ref={containerRef}
-        className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-sm'
+        className='relative inline-flex rounded-full bg-gray-200/60 p-0.5 backdrop-blur-sm dark:bg-gray-700/60 sm:p-1'
       >
         {/* 滑动的白色背景指示器 */}
         {indicatorStyle.width > 0 && (
           <div
-            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out'
+            className='absolute bottom-0.5 top-0.5 rounded-full bg-white shadow-sm transition-all duration-300 ease-out dark:bg-gray-500 sm:bottom-1 sm:top-1'
             style={{
               left: `${indicatorStyle.left}px`,
               width: `${indicatorStyle.width}px`,
@@ -256,10 +256,10 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
                 buttonRefs.current[index] = el;
               }}
               onClick={() => onChange(option.value)}
-              className={`relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 whitespace-nowrap ${
+              className={`relative z-10 whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium transition-all duration-200 sm:px-4 sm:py-2 sm:text-sm ${
                 isActive
-                  ? 'text-gray-900 dark:text-gray-100 cursor-default'
-                  : 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer'
+                  ? 'cursor-default text-gray-900 dark:text-gray-100'
+                  : 'cursor-pointer text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
               }`}
             >
               {option.label}
@@ -280,8 +280,8 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
       {/* 两级选择器包装 */}
       <div className='space-y-3 sm:space-y-4'>
         {/* 一级选择器 */}
-        <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-          <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+        <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+          <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
             类型
           </span>
           <div className='overflow-x-auto'>
@@ -289,15 +289,15 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
               primaryOptions,
               primarySelection || primaryOptions[0]?.value,
               onPrimaryChange,
-              true
+              true,
             )}
           </div>
         </div>
 
         {/* 二级选择器 */}
         {secondaryOptions.length > 0 && (
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+            <span className='min-w-[48px] text-xs font-medium text-gray-600 dark:text-gray-400 sm:text-sm'>
               片单
             </span>
             <div ref={secondaryScrollContainerRef} className='overflow-x-auto'>
@@ -305,7 +305,7 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
                 secondaryOptions,
                 secondarySelection || secondaryOptions[0]?.value,
                 onSecondaryChange,
-                false
+                false,
               )}
             </div>
           </div>

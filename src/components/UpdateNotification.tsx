@@ -31,7 +31,12 @@ export const UpdateNotification: React.FC = () => {
   }, []);
 
   // 检查中、不是站长、是移动设备或没有更新时不渲染任何内容
-  if (isChecking || !isOwner || isMobile || updateStatus !== UpdateStatus.HAS_UPDATE) {
+  if (
+    isChecking ||
+    !isOwner ||
+    isMobile ||
+    updateStatus !== UpdateStatus.HAS_UPDATE
+  ) {
     return null;
   }
 
@@ -39,7 +44,7 @@ export const UpdateNotification: React.FC = () => {
     <>
       <button
         onClick={() => setIsVersionPanelOpen(true)}
-        className='flex items-center px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-full hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors cursor-pointer'
+        className='flex cursor-pointer items-center rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1.5 transition-colors hover:bg-yellow-200 dark:border-yellow-700 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50'
       >
         <span className='text-xs font-medium text-yellow-800 dark:text-yellow-300'>
           有更新

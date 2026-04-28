@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { apiError, apiSuccess } from '@/lib/api-response';
+import { validateAdminAuth } from '@/lib/api-validation';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { XiaoyaClient } from '@/lib/xiaoya.client';
@@ -15,10 +16,8 @@ export const runtime = 'nodejs';
  */
 export async function POST(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json({ error: '无权限' }, { status: 403 });
-    }
+    const adminAuth = validateAdminAuth(request);
+    if ('status' in adminAuth) return adminAuth;
 
     const body = await request.json();
     const { action, ...configData } = body;
@@ -30,18 +29,15 @@ export async function POST(request: NextRequest) {
           configData.ServerURL,
           configData.Username,
           configData.Password,
-          configData.Token
+          configData.Token,
         );
 
         // 尝试列出根目录
         await client.listDirectory('/');
 
-        return NextResponse.json({ success: true, message: '连接成功' });
+        return apiSuccess({ message: '连接成功' });
       } catch (error) {
-        return NextResponse.json(
-          { success: false, message: (error as Error).message },
-          { status: 400 }
-        );
+        return apiError((error as Error).message, 400);
       }
     }
 
@@ -60,14 +56,11 @@ export async function POST(request: NextRequest) {
 
       await db.saveAdminConfig(config);
 
-      return NextResponse.json({ success: true, message: '保存成功' });
+      return apiSuccess({ message: '保存成功' });
     }
 
-    return NextResponse.json({ error: '无效的操作' }, { status: 400 });
+    return apiError('无效的操作', 400);
   } catch (error) {
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 }
-    );
+    return apiError((error as Error).message, 500);
   }
 }

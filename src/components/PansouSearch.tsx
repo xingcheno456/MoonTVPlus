@@ -1,12 +1,21 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { AlertCircle, Copy, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
+import {
+  AlertCircle,
+  Copy,
+  ExternalLink,
+  Loader2,
+  RefreshCw,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
-import Toast, { ToastProps } from '@/components/Toast';
 import { PansouLink, PansouSearchResult } from '@/lib/pansou.client';
+
+import Toast, { ToastProps } from '@/components/Toast';
+
+import { logger } from '../lib/logger';
 
 interface PansouSearchProps {
   keyword: string;
@@ -34,13 +43,17 @@ const CLOUD_TYPE_NAMES: Record<string, string> = {
 // 网盘类型颜色
 const CLOUD_TYPE_COLORS: Record<string, string> = {
   baidu: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200',
-  aliyun: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200',
-  quark: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200',
+  aliyun:
+    'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200',
+  quark:
+    'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200',
   tianyi: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200',
   uc: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200',
   mobile: 'bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-200',
-  '115': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200',
-  pikpak: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200',
+  '115':
+    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200',
+  pikpak:
+    'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200',
   xunlei: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-200',
   '123': 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200',
   magnet: 'bg-gray-100 text-gray-800 dark:bg-gray-700/40 dark:text-gray-200',
@@ -116,7 +129,7 @@ export default function PansouSearch({
       setCopiedUrl(url);
       setTimeout(() => setCopiedUrl(null), 2000);
     } catch (err) {
-      console.error('复制失败:', err);
+      logger.error('复制失败:', err);
     }
   };
 
@@ -138,7 +151,8 @@ export default function PansouSearch({
         }),
       });
 
-      const data = await response.json();
+      const _raw_data = await response.json();
+      const data = _raw_data.success === true ? _raw_data.data : _raw_data;
       if (!response.ok) {
         throw new Error(data.error || '转存失败');
       }
@@ -174,13 +188,14 @@ export default function PansouSearch({
         }),
       });
 
-      const data = await response.json();
+      const _raw_data = await response.json();
+      const data = _raw_data.success === true ? _raw_data.data : _raw_data;
       if (!response.ok) {
         throw new Error(data.error || '立即播放失败');
       }
 
       router.push(
-        `/play?source=quark-temp&id=${encodeURIComponent(data.id)}&title=${encodeURIComponent(data.title || keyword)}`
+        `/play?source=quark-temp&id=${encodeURIComponent(data.id)}&title=${encodeURIComponent(data.title || keyword)}`,
       );
     } catch (err: any) {
       setToast({
@@ -212,10 +227,12 @@ export default function PansouSearch({
         <div className='flex items-center justify-center py-12'>
           <div className='text-center'>
             <AlertCircle className='mx-auto h-12 w-12 text-red-500 dark:text-red-400' />
-            <p className='mt-4 text-sm text-red-600 dark:text-red-400'>{error}</p>
+            <p className='mt-4 text-sm text-red-600 dark:text-red-400'>
+              {error}
+            </p>
             <button
               onClick={searchPansou}
-              className='mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors'
+              className='mt-4 inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700'
             >
               <RefreshCw className='h-4 w-4' />
               重试
@@ -241,12 +258,13 @@ export default function PansouSearch({
     const cloudTypes = Object.keys(results.merged_by_type || {});
 
     // 过滤显示的网盘类型
-    const filteredCloudTypes = selectedType === 'all'
-      ? cloudTypes
-      : cloudTypes.filter(type => type === selectedType);
+    const filteredCloudTypes =
+      selectedType === 'all'
+        ? cloudTypes
+        : cloudTypes.filter((type) => type === selectedType);
 
     // 计算每种网盘类型的数量
-    const typeStats = cloudTypes.map(type => ({
+    const typeStats = cloudTypes.map((type) => ({
       type,
       count: results.merged_by_type?.[type]?.length || 0,
     }));
@@ -255,14 +273,18 @@ export default function PansouSearch({
       <>
         {/* 搜索结果统计 */}
         <div className='text-sm text-gray-600 dark:text-gray-400'>
-          找到 <span className='font-semibold text-green-600 dark:text-green-400'>{results.total}</span> 个资源
+          找到{' '}
+          <span className='font-semibold text-green-600 dark:text-green-400'>
+            {results.total}
+          </span>{' '}
+          个资源
         </div>
 
         {/* 网盘类型过滤器 */}
         <div className='flex flex-wrap gap-2'>
           <button
             onClick={() => setSelectedType('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               selectedType === 'all'
                 ? 'bg-green-600 text-white dark:bg-green-600'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
@@ -277,7 +299,7 @@ export default function PansouSearch({
               <button
                 key={type}
                 onClick={() => setSelectedType(type)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   selectedType === type
                     ? 'bg-green-600 text-white dark:bg-green-600'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
@@ -295,13 +317,16 @@ export default function PansouSearch({
           if (!links || links.length === 0) return null;
 
           const typeName = CLOUD_TYPE_NAMES[cloudType] || cloudType;
-          const typeColor = CLOUD_TYPE_COLORS[cloudType] || CLOUD_TYPE_COLORS.others;
+          const typeColor =
+            CLOUD_TYPE_COLORS[cloudType] || CLOUD_TYPE_COLORS.others;
 
           return (
             <div key={cloudType} className='space-y-3'>
               {/* 网盘类型标题 */}
               <div className='flex items-center gap-2'>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${typeColor}`}>
+                <span
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${typeColor}`}
+                >
                   {typeName}
                 </span>
                 <span className='text-xs text-gray-500 dark:text-gray-400'>
@@ -314,7 +339,7 @@ export default function PansouSearch({
                 {links.map((link: PansouLink, index: number) => (
                   <div
                     key={`${cloudType}-${index}`}
-                    className='p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-green-400 dark:hover:border-green-600 transition-colors'
+                    className='rounded-lg border border-gray-200 bg-gray-50 p-4 transition-colors hover:border-green-400 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-green-600'
                   >
                     {/* 资源标题 */}
                     {link.note && (
@@ -324,57 +349,70 @@ export default function PansouSearch({
                     )}
 
                     {/* 链接和密码 */}
-                    <div className='flex items-center gap-2 mb-2'>
-                      <div className='flex-1 min-w-0'>
-                        <div className='text-xs text-gray-600 dark:text-gray-400 truncate'>
+                    <div className='mb-2 flex items-center gap-2'>
+                      <div className='min-w-0 flex-1'>
+                        <div className='truncate text-xs text-gray-600 dark:text-gray-400'>
                           {link.url}
                         </div>
                         {link.password && (
-                          <div className='text-xs text-gray-600 dark:text-gray-400 mt-1'>
-                            提取码: <span className='font-mono font-semibold'>{link.password}</span>
+                          <div className='mt-1 text-xs text-gray-600 dark:text-gray-400'>
+                            提取码:{' '}
+                            <span className='font-mono font-semibold'>
+                              {link.password}
+                            </span>
                           </div>
                         )}
                       </div>
 
                       {/* 操作按钮 */}
-                      <div className='flex items-center gap-1 flex-shrink-0'>
+                      <div className='flex flex-shrink-0 items-center gap-1'>
                         {cloudType === 'quark' && (
                           <>
                             <button
                               onClick={() => handleQuarkInstantPlay(link)}
                               disabled={playingUrl === link.url}
-                              className='px-2 py-1 rounded-md bg-green-600 hover:bg-green-700 text-white text-xs transition-colors disabled:opacity-60'
+                              className='rounded-md bg-green-600 px-2 py-1 text-xs text-white transition-colors hover:bg-green-700 disabled:opacity-60'
                               title='立即播放'
                             >
-                              {playingUrl === link.url ? '处理中...' : '立即播放'}
+                              {playingUrl === link.url
+                                ? '处理中...'
+                                : '立即播放'}
                             </button>
                             <button
                               onClick={() => handleQuarkTransfer(link)}
                               disabled={transferingUrl === link.url}
-                              className='px-2 py-1 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-xs transition-colors disabled:opacity-60'
+                              className='rounded-md bg-purple-600 px-2 py-1 text-xs text-white transition-colors hover:bg-purple-700 disabled:opacity-60'
                               title='转存到配置目录'
                             >
-                              {transferingUrl === link.url ? '转存中...' : '转存'}
+                              {transferingUrl === link.url
+                                ? '转存中...'
+                                : '转存'}
                             </button>
                           </>
                         )}
                         <button
-                          onClick={() => handleCopy(
-                            link.password ? `${link.url}\n提取码: ${link.password}` : link.url,
-                            link.url
-                          )}
-                          className='p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
+                          onClick={() =>
+                            handleCopy(
+                              link.password
+                                ? `${link.url}\n提取码: ${link.password}`
+                                : link.url,
+                              link.url,
+                            )
+                          }
+                          className='rounded-md p-2 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700'
                           title='复制链接'
                         >
                           {copiedUrl === link.url ? (
-                            <span className='text-xs text-green-600 dark:text-green-400'>已复制</span>
+                            <span className='text-xs text-green-600 dark:text-green-400'>
+                              已复制
+                            </span>
                           ) : (
                             <Copy className='h-4 w-4 text-gray-600 dark:text-gray-400' />
                           )}
                         </button>
                         <button
                           onClick={() => handleOpenLink(link.url)}
-                          className='p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
+                          className='rounded-md p-2 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700'
                           title='打开链接'
                         >
                           <ExternalLink className='h-4 w-4 text-gray-600 dark:text-gray-400' />
@@ -384,11 +422,11 @@ export default function PansouSearch({
 
                     {/* 来源和时间 */}
                     <div className='flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400'>
-                      {link.source && (
-                        <span>来源: {link.source}</span>
-                      )}
+                      {link.source && <span>来源: {link.source}</span>}
                       {link.datetime && (
-                        <span>{new Date(link.datetime).toLocaleDateString()}</span>
+                        <span>
+                          {new Date(link.datetime).toLocaleDateString()}
+                        </span>
                       )}
                     </div>
 
@@ -418,9 +456,7 @@ export default function PansouSearch({
 
   return (
     <>
-      <div className='space-y-6'>
-        {renderBody()}
-      </div>
+      <div className='space-y-6'>{renderBody()}</div>
       {toast && <Toast {...toast} />}
     </>
   );

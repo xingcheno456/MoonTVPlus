@@ -1,12 +1,14 @@
-/* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { apiError, apiSuccess } from '@/lib/api-response';
+import { validateAdminAuth } from '@/lib/api-validation';
 import { getConfig } from '@/lib/config';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
 import { EmbyClient } from '@/lib/emby.client';
 import { clearEmbyCache } from '@/lib/emby-cache';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -17,46 +19,30 @@ export const runtime = 'nodejs';
  * - clearCache: 清除 Emby 缓存
  */
 export async function POST(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
-    return NextResponse.json(
-      { error: '不支持本地存储进行管理员配置' },
-      { status: 400 }
-    );
+    return apiError('不支持本地存储进行管理员配置', 400);
   }
 
   try {
     const body = await request.json();
     const { action, ServerURL, ApiKey, Username, Password } = body;
 
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const username = authInfo.username;
+    const adminAuth = validateAdminAuth(request);
+    if ('status' in adminAuth) return adminAuth;
+    const username = adminAuth.username;
 
     // 获取配置
     const adminConfig = await getConfig();
 
-    // 权限检查
-    if (username !== process.env.USERNAME) {
-      const userInfo = await db.getUserInfoV2(username);
-      if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
-      }
-    }
-
     if (action === 'test') {
       // 测试连接
       if (!ServerURL) {
-        return NextResponse.json({ error: '请填写 Emby 服务器地址' }, { status: 400 });
+        return apiError('请填写 Emby 服务器地址', 400);
       }
 
       if (!ApiKey && !Username) {
-        return NextResponse.json(
-          { error: '请填写 API Key 或用户名' },
-          { status: 400 }
-        );
+        return apiError('请填写 API Key 或用户名', 400);
       }
 
       const testConfig = {
@@ -73,44 +59,35 @@ export async function POST(request: NextRequest) {
         try {
           await client.authenticate(Username, Password || '');
         } catch (error) {
-          return NextResponse.json(
-            { success: false, message: 'Emby 认证失败: ' + (error as Error).message },
-            { status: 200 }
-          );
+          return apiSuccess({
+              success: false,
+              message: 'Emby 认证失败: ' + (error as Error).message,
+            }, { status: 200 });
         }
       }
 
       // 测试连接
       const isConnected = await client.checkConnectivity();
       if (!isConnected) {
-        return NextResponse.json(
-          { success: false, message: 'Emby 连接失败，请检查服务器地址和认证信息' },
-          { status: 200 }
-        );
+        return apiSuccess({
+            success: false,
+            message: 'Emby 连接失败，请检查服务器地址和认证信息',
+          }, { status: 200 });
       }
 
-      return NextResponse.json({
-        success: true,
-        message: 'Emby 连接测试成功',
-      });
+      return apiSuccess({ message: 'Emby 连接测试成功', });
     }
 
     if (action === 'clearCache') {
       // 清除缓存
       const result = clearEmbyCache();
-      return NextResponse.json({
-        success: true,
-        message: `已清除 ${result.cleared} 条 Emby 缓存`,
-        cleared: result.cleared,
-      });
+      return apiSuccess({ message: `已清除 ${result.cleared} 条 Emby 缓存`,
+        cleared: result.cleared, });
     }
 
-    return NextResponse.json({ error: '不支持的操作' }, { status: 400 });
+    return apiError('不支持的操作', 400);
   } catch (error) {
-    console.error('Emby 配置保存失败:', error);
-    return NextResponse.json(
-      { error: 'Emby 配置保存失败: ' + (error as Error).message },
-      { status: 500 }
-    );
+    logger.error('Emby 配置保存失败:', error);
+    return apiError('Emby 配置保存失败: ' + (error as Error).message, 500);
   }
 }

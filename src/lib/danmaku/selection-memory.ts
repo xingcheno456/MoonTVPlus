@@ -1,3 +1,4 @@
+import { logger } from '../logger';
 /**
  * 弹幕选择记忆管理
  * 用于记住用户在多个弹幕源中的选择，避免换集时重复弹出选择对话框
@@ -10,15 +11,18 @@ const STORAGE_KEY_PREFIX = 'danmaku_selection_';
  * @param title 视频标题
  * @param selectedIndex 用户选择的弹幕源在搜索结果中的下标
  */
-export function saveDanmakuSourceIndex(title: string, selectedIndex: number): void {
+export function saveDanmakuSourceIndex(
+  title: string,
+  selectedIndex: number,
+): void {
   if (typeof window === 'undefined') return;
 
   try {
     const key = `${STORAGE_KEY_PREFIX}index_${title}`;
     sessionStorage.setItem(key, selectedIndex.toString());
-    console.log(`[弹幕记忆] 保存弹幕源下标: ${title} -> ${selectedIndex}`);
+    logger.info(`[弹幕记忆] 保存弹幕源下标: ${title} -> ${selectedIndex}`);
   } catch (error) {
-    console.error('[弹幕记忆] 保存下标失败:', error);
+    logger.error('[弹幕记忆] 保存下标失败:', error);
   }
 }
 
@@ -37,12 +41,12 @@ export function getDanmakuSourceIndex(title: string): number | null {
     if (value !== null) {
       const index = parseInt(value, 10);
       if (!isNaN(index) && index >= 0) {
-        console.log(`[弹幕记忆] 读取弹幕源下标: ${title} -> ${index}`);
+        logger.info(`[弹幕记忆] 读取弹幕源下标: ${title} -> ${index}`);
         return index;
       }
     }
   } catch (error) {
-    console.error('[弹幕记忆] 读取下标失败:', error);
+    logger.error('[弹幕记忆] 读取下标失败:', error);
   }
 
   return null;
@@ -57,16 +61,18 @@ export function getDanmakuSourceIndex(title: string): number | null {
 export function saveManualDanmakuSelection(
   title: string,
   episodeIndex: number,
-  episodeId: number
+  episodeId: number,
 ): void {
   if (typeof window === 'undefined') return;
 
   try {
     const key = `${STORAGE_KEY_PREFIX}manual_${title}_${episodeIndex}`;
     sessionStorage.setItem(key, episodeId.toString());
-    console.log(`[弹幕记忆] 保存手动选择: ${title} 第${episodeIndex}集 -> ${episodeId}`);
+    logger.info(
+      `[弹幕记忆] 保存手动选择: ${title} 第${episodeIndex}集 -> ${episodeId}`,
+    );
   } catch (error) {
-    console.error('[弹幕记忆] 保存手动选择失败:', error);
+    logger.error('[弹幕记忆] 保存手动选择失败:', error);
   }
 }
 
@@ -78,7 +84,7 @@ export function saveManualDanmakuSelection(
  */
 export function getManualDanmakuSelection(
   title: string,
-  episodeIndex: number
+  episodeIndex: number,
 ): number | null {
   if (typeof window === 'undefined') return null;
 
@@ -89,12 +95,14 @@ export function getManualDanmakuSelection(
     if (value !== null) {
       const episodeId = parseInt(value, 10);
       if (!isNaN(episodeId)) {
-        console.log(`[弹幕记忆] 读取手动选择: ${title} 第${episodeIndex}集 -> ${episodeId}`);
+        logger.info(
+          `[弹幕记忆] 读取手动选择: ${title} 第${episodeIndex}集 -> ${episodeId}`,
+        );
         return episodeId;
       }
     }
   } catch (error) {
-    console.error('[弹幕记忆] 读取手动选择失败:', error);
+    logger.error('[弹幕记忆] 读取手动选择失败:', error);
   }
 
   return null;
@@ -121,11 +129,11 @@ export function clearDanmakuSelectionMemory(title: string): void {
       }
     }
 
-    keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    keysToRemove.forEach((key) => sessionStorage.removeItem(key));
 
-    console.log(`[弹幕记忆] 清除记忆: ${title}`);
+    logger.info(`[弹幕记忆] 清除记忆: ${title}`);
   } catch (error) {
-    console.error('[弹幕记忆] 清除记忆失败:', error);
+    logger.error('[弹幕记忆] 清除记忆失败:', error);
   }
 }
 
@@ -144,11 +152,11 @@ export function clearAllDanmakuSelectionMemory(): void {
       }
     }
 
-    keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    keysToRemove.forEach((key) => sessionStorage.removeItem(key));
 
-    console.log('[弹幕记忆] 清除所有记忆');
+    logger.info('[弹幕记忆] 清除所有记忆');
   } catch (error) {
-    console.error('[弹幕记忆] 清除所有记忆失败:', error);
+    logger.error('[弹幕记忆] 清除所有记忆失败:', error);
   }
 }
 
@@ -163,9 +171,9 @@ export function saveDanmakuSearchKeyword(title: string, keyword: string): void {
   try {
     const key = `${STORAGE_KEY_PREFIX}keyword_${title}`;
     sessionStorage.setItem(key, keyword);
-    console.log(`[弹幕记忆] 保存搜索关键词: ${title} -> ${keyword}`);
+    logger.info(`[弹幕记忆] 保存搜索关键词: ${title} -> ${keyword}`);
   } catch (error) {
-    console.error('[弹幕记忆] 保存搜索关键词失败:', error);
+    logger.error('[弹幕记忆] 保存搜索关键词失败:', error);
   }
 }
 
@@ -182,11 +190,11 @@ export function getDanmakuSearchKeyword(title: string): string | null {
     const keyword = sessionStorage.getItem(key);
 
     if (keyword) {
-      console.log(`[弹幕记忆] 读取搜索关键词: ${title} -> ${keyword}`);
+      logger.info(`[弹幕记忆] 读取搜索关键词: ${title} -> ${keyword}`);
       return keyword;
     }
   } catch (error) {
-    console.error('[弹幕记忆] 读取搜索关键词失败:', error);
+    logger.error('[弹幕记忆] 读取搜索关键词失败:', error);
   }
 
   return null;
@@ -203,9 +211,9 @@ export function saveDanmakuAnimeId(title: string, animeId: number): void {
   try {
     const key = `${STORAGE_KEY_PREFIX}anime_${title}`;
     sessionStorage.setItem(key, animeId.toString());
-    console.log(`[弹幕记忆] 保存动漫ID: ${title} -> ${animeId}`);
+    logger.info(`[弹幕记忆] 保存动漫ID: ${title} -> ${animeId}`);
   } catch (error) {
-    console.error('[弹幕记忆] 保存动漫ID失败:', error);
+    logger.error('[弹幕记忆] 保存动漫ID失败:', error);
   }
 }
 
@@ -224,12 +232,12 @@ export function getDanmakuAnimeId(title: string): number | null {
     if (value !== null) {
       const animeId = parseInt(value, 10);
       if (!isNaN(animeId)) {
-        console.log(`[弹幕记忆] 读取动漫ID: ${title} -> ${animeId}`);
+        logger.info(`[弹幕记忆] 读取动漫ID: ${title} -> ${animeId}`);
         return animeId;
       }
     }
   } catch (error) {
-    console.error('[弹幕记忆] 读取动漫ID失败:', error);
+    logger.error('[弹幕记忆] 读取动漫ID失败:', error);
   }
 
   return null;

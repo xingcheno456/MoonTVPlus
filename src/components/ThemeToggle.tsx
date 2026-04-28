@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,react-hooks/exhaustive-deps */
-
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 
 import { Moon, Sun } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -37,7 +37,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     // 渲染一个占位符以避免布局偏移
-    return <div className='w-10 h-10' />;
+    return <div className='h-10 w-10' />;
   }
 
   const toggleTheme = () => {
@@ -57,13 +57,13 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className='w-10 h-10 p-2 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-700/50 transition-colors'
+      className='flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-700/50'
       aria-label='Toggle theme'
     >
       {resolvedTheme === 'dark' ? (
-        <Sun className='w-full h-full' />
+        <Sun className='h-full w-full' />
       ) : (
-        <Moon className='w-full h-full' />
+        <Moon className='h-full w-full' />
       )}
     </button>
   );

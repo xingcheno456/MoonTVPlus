@@ -1,94 +1,46 @@
-/* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { DanmakuFilterConfig } from '@/lib/types';
+import { apiError, apiSuccess } from '@/lib/api-response';
+
+import { handleServiceError, validateAuthenticatedUser } from '@/services/auth.service';
+import {
+  getDanmakuFilterConfig,
+  saveDanmakuFilterConfig,
+} from '@/services/playrecord.service';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
-    }
+    const username = await validateAuthenticatedUser(request);
+    const filterConfig = await getDanmakuFilterConfig(username);
 
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
-
-    // 获取弹幕过滤配置
-    const filterConfig = await db.getDanmakuFilterConfig(authInfo.username);
-
-    // 如果没有配置，返回默认值
     if (!filterConfig) {
-      return NextResponse.json({ rules: [] });
+      return apiSuccess({ rules: [] });
     }
 
-    return NextResponse.json(filterConfig);
+    return apiSuccess(filterConfig);
   } catch (error) {
-    console.error('获取弹幕过滤配置失败:', error);
-    return NextResponse.json(
-      { error: '获取弹幕过滤配置失败' },
-      { status: 500 }
-    );
+    logger.error('获取弹幕过滤配置失败:', error);
+    return handleServiceError(error);
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
-
+    const username = await validateAuthenticatedUser(request);
     const body = await request.json();
-    const config: DanmakuFilterConfig = body;
 
-    if (!config || !Array.isArray(config.rules)) {
-      return NextResponse.json({ error: '配置格式错误' }, { status: 400 });
-    }
-
-    // 验证每个规则的格式
-    const validatedRules = config.rules.map((rule) => ({
-      keyword: String(rule.keyword || ''),
-      type: (rule.type === 'regex' || rule.type === 'normal') ? rule.type : 'normal',
-      enabled: Boolean(rule.enabled),
-      id: rule.id || undefined,
-    }));
-
-    const validatedConfig: DanmakuFilterConfig = {
-      rules: validatedRules,
-    };
-
-    await db.setDanmakuFilterConfig(authInfo.username, validatedConfig);
-
-    return NextResponse.json({ success: true });
+    await saveDanmakuFilterConfig(username, body);
+    return apiSuccess({ success: true });
   } catch (error) {
-    console.error('保存弹幕过滤配置失败:', error);
-    return NextResponse.json(
-      { error: '保存弹幕过滤配置失败' },
-      { status: 500 }
-    );
+    if (error instanceof Error && error.message === '配置格式错误') {
+      return apiError(error.message, 400);
+    }
+    logger.error('保存弹幕过滤配置失败:', error);
+    return handleServiceError(error);
   }
 }

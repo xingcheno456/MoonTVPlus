@@ -73,6 +73,7 @@ export interface AdminConfig {
       banned?: boolean;
       enabledApis?: string[]; // 优先级高于tags限制
       tags?: string[]; // 多 tags 取并集限制
+      oidcSub?: string; // OIDC 用户标识
     }[];
     Tags?: {
       name: string;
@@ -96,26 +97,7 @@ export interface AdminConfig {
     from: 'config' | 'custom';
     disabled?: boolean;
   }[];
-  LiveConfig?: {
-    key: string;
-    name: string;
-    url: string;  // m3u 地址
-    ua?: string;
-    epg?: string; // 节目单
-    from: 'config' | 'custom';
-    channelNumber?: number;
-    disabled?: boolean;
-    proxyMode?: 'full' | 'm3u8-only' | 'direct'; // 代理模式：full=全量代理，m3u8-only=仅代理m3u8，direct=直连
-  }[];
-  WebLiveConfig?: {
-    key: string;
-    name: string;
-    platform: string; // 直播平台类型，如 'huya'
-    roomId: string; // 房间ID
-    from: 'config' | 'custom';
-    disabled?: boolean;
-  }[];
-  WebLiveEnabled?: boolean; // 网络直播功能总开关
+
   ThemeConfig?: {
     enableBuiltInTheme: boolean; // 是否启用内置主题
     builtInTheme: string; // 内置主题名称

@@ -118,7 +118,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   if (!isVisible || !mounted) return null;
 
   const content = (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-4">
+    <div className='fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-4'>
       {/* 背景遮罩 */}
       <div
         className={`absolute inset-0 bg-black/80 transition-opacity duration-200 ease-out ${
@@ -134,33 +134,35 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
       {/* 关闭按钮 */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors duration-150"
-        aria-label="关闭"
+        className='absolute right-4 top-4 z-10 rounded-full bg-black/50 p-2 transition-colors duration-150 hover:bg-black/70'
+        aria-label='关闭'
       >
-        <X size={24} className="text-white" />
+        <X size={24} className='text-white' />
       </button>
 
       {/* 图片容器 */}
       <div
-        className="relative max-w-[100vw] max-h-[100vh] sm:max-w-[90vw] sm:max-h-[90vh] transition-all duration-200 ease-out"
+        className='relative max-h-[100vh] max-w-[100vw] transition-all duration-200 ease-out sm:max-h-[90vh] sm:max-w-[90vw]'
         style={{
           willChange: 'transform, opacity',
           backfaceVisibility: 'hidden',
-          transform: isAnimating ? 'scale(1) translateZ(0)' : 'scale(0.95) translateZ(0)',
+          transform: isAnimating
+            ? 'scale(1) translateZ(0)'
+            : 'scale(0.95) translateZ(0)',
           opacity: isAnimating ? 1 : 0,
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative w-full h-full">
+        <div className='relative h-full w-full'>
           <ProxyImage
             originalSrc={imageUrl}
             alt={alt}
-            className="object-contain max-w-[100vw] max-h-[100vh] sm:max-w-[90vw] sm:max-h-[90vh] w-auto h-auto"
+            className='h-auto max-h-[100vh] w-auto max-w-[100vw] object-contain sm:max-h-[90vh] sm:max-w-[90vw]'
             style={{
               maxWidth: '100vw',
               maxHeight: '100vh',
             }}
-            loading="eager"
+            loading='eager'
           />
         </div>
       </div>

@@ -155,7 +155,7 @@ const FireworksCanvas = () => {
   return (
     <canvas
       ref={canvasRef}
-      className='fixed inset-0 z-30 pointer-events-none'
+      className='pointer-events-none fixed inset-0 z-30'
       aria-hidden='true'
     />
   );

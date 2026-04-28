@@ -43,7 +43,9 @@ interface SuwayomiSessionCacheEntry {
 const SUWAYOMI_SESSION_TTL_MS = 25 * 60 * 1000;
 const suwayomiSessionCache = new Map<string, SuwayomiSessionCacheEntry>();
 
-function normalizeSuwayomiAuthMode(value?: string | null): 'none' | 'basic_auth' | 'simple_login' {
+function normalizeSuwayomiAuthMode(
+  value?: string | null,
+): 'none' | 'basic_auth' | 'simple_login' {
   if (value === 'basic_auth' || value === 'simple_login') {
     return value;
   }
@@ -55,7 +57,9 @@ function buildBasicAuthHeader(username: string, password: string): string {
 }
 
 function hashSimpleLoginPassword(password?: string): string {
-  return createHash('sha256').update(password || '').digest('hex');
+  return createHash('sha256')
+    .update(password || '')
+    .digest('hex');
 }
 
 function getSimpleLoginCacheKey(config: ResolvedSuwayomiConfig): string {
@@ -63,7 +67,9 @@ function getSimpleLoginCacheKey(config: ResolvedSuwayomiConfig): string {
 }
 
 function getResponseSetCookieHeaders(response: Response): string[] {
-  const headers = response.headers as Headers & { getSetCookie?: () => string[] };
+  const headers = response.headers as Headers & {
+    getSetCookie?: () => string[];
+  };
   if (typeof headers.getSetCookie === 'function') {
     return headers.getSetCookie();
   }
@@ -82,7 +88,7 @@ function extractCookieHeader(response: Response): string | null {
 
 export async function loginWithSimpleAuth(
   config: ResolvedSuwayomiConfig,
-  forceRefresh = false
+  forceRefresh = false,
 ): Promise<string> {
   if (!config.username || !config.password) {
     throw new Error('Suwayomi simple_login 缺少用户名或密码');
@@ -107,7 +113,7 @@ export async function loginWithSimpleAuth(
       }).toString(),
       redirect: 'manual',
       cache: 'no-store',
-    }
+    },
   );
 
   const cookieHeader = extractCookieHeader(response);
@@ -123,8 +129,11 @@ export async function loginWithSimpleAuth(
   return cookieHeader;
 }
 
-async function resolveSuwayomiConfig(options: SuwayomiClientOptions = {}): Promise<ResolvedSuwayomiConfig> {
-  let serverUrl = process.env.SUWAYOMI_URL || process.env.NEXT_PUBLIC_SUWAYOMI_URL || '';
+async function resolveSuwayomiConfig(
+  options: SuwayomiClientOptions = {},
+): Promise<ResolvedSuwayomiConfig> {
+  let serverUrl =
+    process.env.SUWAYOMI_URL || process.env.NEXT_PUBLIC_SUWAYOMI_URL || '';
   let authMode = normalizeSuwayomiAuthMode(process.env.SUWAYOMI_AUTH_MODE);
   let username = process.env.SUWAYOMI_USERNAME || '';
   let password = process.env.SUWAYOMI_PASSWORD || '';
@@ -136,7 +145,9 @@ async function resolveSuwayomiConfig(options: SuwayomiClientOptions = {}): Promi
     const config = await getConfig();
     if (config.SuwayomiConfig?.Enabled) {
       serverUrl = config.SuwayomiConfig.ServerURL || serverUrl;
-      authMode = normalizeSuwayomiAuthMode(config.SuwayomiConfig.AuthMode || authMode);
+      authMode = normalizeSuwayomiAuthMode(
+        config.SuwayomiConfig.AuthMode || authMode,
+      );
       username = config.SuwayomiConfig.Username || username;
       password = config.SuwayomiConfig.Password || password;
       defaultLang = config.SuwayomiConfig.DefaultLang || defaultLang;
@@ -178,7 +189,9 @@ async function resolveSuwayomiConfig(options: SuwayomiClientOptions = {}): Promi
   };
 }
 
-export async function getSuwayomiConfig(options: SuwayomiClientOptions = {}): Promise<ResolvedSuwayomiConfig> {
+export async function getSuwayomiConfig(
+  options: SuwayomiClientOptions = {},
+): Promise<ResolvedSuwayomiConfig> {
   return resolveSuwayomiConfig(options);
 }
 
@@ -190,7 +203,7 @@ export function buildSuwayomiImageProxyUrl(pathOrUrl: string): string {
 
 async function getSuwayomiRequestHeaders(
   resolved: ResolvedSuwayomiConfig,
-  forceSimpleLoginRefresh = false
+  forceSimpleLoginRefresh = false,
 ): Promise<HeadersInit | undefined> {
   if (resolved.authMode === 'basic_auth') {
     if (!resolved.username || !resolved.password) {
@@ -214,10 +227,13 @@ async function getSuwayomiRequestHeaders(
 async function suwayomiFetch(
   resolved: ResolvedSuwayomiConfig,
   input: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
 ): Promise<Response> {
   const execute = async (forceSimpleLoginRefresh: boolean) => {
-    const authHeaders = await getSuwayomiRequestHeaders(resolved, forceSimpleLoginRefresh);
+    const authHeaders = await getSuwayomiRequestHeaders(
+      resolved,
+      forceSimpleLoginRefresh,
+    );
     return fetch(input, {
       ...init,
       headers: {
@@ -268,7 +284,11 @@ export class SuwayomiClient {
     this.options = options;
   }
 
-  private async graphqlRequest<T>(query: string, variables?: Record<string, any>, operationName?: string): Promise<T> {
+  private async graphqlRequest<T>(
+    query: string,
+    variables?: Record<string, any>,
+    operationName?: string,
+  ): Promise<T> {
     const resolved = await resolveSuwayomiConfig(this.options);
     const response = await suwayomiFetch(resolved, resolved.serverUrl, {
       method: 'POST',
@@ -284,7 +304,9 @@ export class SuwayomiClient {
 
     const data = (await response.json()) as GraphQLResponse<T>;
     if (data.errors?.length) {
-      throw new Error(data.errors.map((item) => item.message || 'Unknown error').join('; '));
+      throw new Error(
+        data.errors.map((item) => item.message || 'Unknown error').join('; '),
+      );
     }
     if (!data.data) {
       throw new Error('Suwayomi 返回空数据');
@@ -308,14 +330,24 @@ export class SuwayomiClient {
     `;
 
     const data = await this.graphqlRequest<{
-      sources?: { nodes?: Array<{ id: string; name?: string; lang?: string; displayName?: string }> };
+      sources?: {
+        nodes?: Array<{
+          id: string;
+          name?: string;
+          lang?: string;
+          displayName?: string;
+        }>;
+      };
     }>(query);
 
     const nodes = data.sources?.nodes || [];
     const filtered = nodes.filter((item) => !lang || item.lang === lang);
-    const scoped = resolved.sourceIds.length > 0
-      ? filtered.filter((item) => resolved.sourceIds.includes(String(item.id)))
-      : filtered;
+    const scoped =
+      resolved.sourceIds.length > 0
+        ? filtered.filter((item) =>
+            resolved.sourceIds.includes(String(item.id)),
+          )
+        : filtered;
 
     return scoped.map((item) => ({
       id: String(item.id),
@@ -325,11 +357,18 @@ export class SuwayomiClient {
     }));
   }
 
-  async searchManga(keyword: string, sourceId?: string, page = 1): Promise<MangaSearchItem[]> {
+  async searchManga(
+    keyword: string,
+    sourceId?: string,
+    page = 1,
+  ): Promise<MangaSearchItem[]> {
     const resolved = await resolveSuwayomiConfig(this.options);
     const sources = sourceId
       ? [{ id: sourceId, displayName: sourceId, name: sourceId }]
-      : (await this.getSources(resolved.defaultLang)).slice(0, resolved.maxSources);
+      : (await this.getSources(resolved.defaultLang)).slice(
+          0,
+          resolved.maxSources,
+        );
     const query = `
       mutation GET_SOURCE_MANGAS_FETCH($input: FetchSourceMangaInput!) {
         fetchSourceManga(input: $input) {
@@ -376,7 +415,7 @@ export class SuwayomiClient {
             page,
           },
         },
-        'GET_SOURCE_MANGAS_FETCH'
+        'GET_SOURCE_MANGAS_FETCH',
       ).catch(() => ({ fetchSourceManga: { mangas: [] } }));
 
       const mangas = data.fetchSourceManga?.mangas || [];
@@ -405,7 +444,7 @@ export class SuwayomiClient {
   async getRecommendedManga(
     sourceId: string,
     type: MangaRecommendType = 'POPULAR',
-    page = 1
+    page = 1,
   ): Promise<MangaRecommendResult> {
     if (!sourceId) {
       return { mangas: [], hasNextPage: false };
@@ -461,7 +500,7 @@ export class SuwayomiClient {
           page,
         },
       },
-      'GET_SOURCE_MANGAS_FETCH'
+      'GET_SOURCE_MANGAS_FETCH',
     );
 
     return {
@@ -469,7 +508,8 @@ export class SuwayomiClient {
       mangas: (data.fetchSourceManga?.mangas || []).map((manga) => ({
         id: String(manga.id),
         sourceId: String(manga.sourceId || sourceId),
-        sourceName: matchedSource?.displayName || matchedSource?.name || sourceId,
+        sourceName:
+          matchedSource?.displayName || matchedSource?.name || sourceId,
         title: manga.title || '未命名漫画',
         cover: buildSuwayomiImageProxyUrl(manga.thumbnailUrl || ''),
         description: manga.description,
@@ -514,7 +554,11 @@ export class SuwayomiClient {
           uploadDate?: number;
         }>;
       };
-    }>(mutation, { input: { mangaId: Number(mangaId) || mangaId } }, 'GET_MANGA_CHAPTERS_FETCH');
+    }>(
+      mutation,
+      { input: { mangaId: Number(mangaId) || mangaId } },
+      'GET_MANGA_CHAPTERS_FETCH',
+    );
 
     return (data.fetchChapters?.chapters || []).map((chapter) => ({
       id: String(chapter.id),
@@ -589,12 +633,16 @@ export class SuwayomiClient {
           sourceId: String(detailData.manga.sourceId || input.sourceId),
           sourceName: input.sourceName || input.sourceId,
           title: detailData.manga.title || metadata.title || '漫画详情',
-          cover: buildSuwayomiImageProxyUrl(detailData.manga.thumbnailUrl || metadata.cover || ''),
+          cover: buildSuwayomiImageProxyUrl(
+            detailData.manga.thumbnailUrl || metadata.cover || '',
+          ),
           description: detailData.manga.description || metadata.description,
           author: detailData.manga.author || metadata.author,
           artist: detailData.manga.artist,
           genre: detailData.manga.genre,
-          status: normalizeMangaStatus(detailData.manga.status) || normalizeMangaStatus(metadata.status),
+          status:
+            normalizeMangaStatus(detailData.manga.status) ||
+            normalizeMangaStatus(metadata.status),
         };
       }
     } catch {
@@ -627,9 +675,15 @@ export class SuwayomiClient {
 
     const data = await this.graphqlRequest<{
       fetchChapterPages?: { pages?: string[] };
-    }>(mutation, { input: { chapterId: Number(chapterId) || chapterId } }, 'GET_CHAPTER_PAGES_FETCH');
+    }>(
+      mutation,
+      { input: { chapterId: Number(chapterId) || chapterId } },
+      'GET_CHAPTER_PAGES_FETCH',
+    );
 
-    return (data.fetchChapterPages?.pages || []).map((item) => buildSuwayomiImageProxyUrl(item));
+    return (data.fetchChapterPages?.pages || []).map((item) =>
+      buildSuwayomiImageProxyUrl(item),
+    );
   }
 }
 

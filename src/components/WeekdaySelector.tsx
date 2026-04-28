@@ -1,6 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
 'use client';
+/* eslint-disable react-hooks/exhaustive-deps */
 
 import React, { useEffect, useState } from 'react';
 
@@ -31,9 +30,8 @@ const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
     return weekdayMap[today];
   };
 
-  const [selectedWeekday, setSelectedWeekday] = useState<string>(
-    getTodayWeekday()
-  );
+  const [selectedWeekday, setSelectedWeekday] =
+    useState<string>(getTodayWeekday());
 
   // 组件初始化时通知父组件默认选中的星期
   useEffect(() => {
@@ -53,14 +51,11 @@ const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
               setSelectedWeekday(weekday.value);
               onWeekdayChange(weekday.value);
             }}
-            className={`
-              relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 whitespace-nowrap
-              ${
-                isActive
-                  ? 'text-green-600 dark:text-green-400 font-semibold'
-                  : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer'
-              }
-            `}
+            className={`relative z-10 whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium transition-all duration-200 sm:px-4 sm:py-2 sm:text-sm ${
+              isActive
+                ? 'font-semibold text-green-600 dark:text-green-400'
+                : 'cursor-pointer text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+            } `}
             title={weekday.label}
           >
             {weekday.shortLabel}

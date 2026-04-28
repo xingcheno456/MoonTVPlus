@@ -1,7 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+ 
 
 import { API_CONFIG, getAvailableApiSites } from '@/lib/config';
 import { db } from '@/lib/db';
+
+import { logger } from './logger';
 
 interface CmsClassResponse {
   class?: Array<{
@@ -30,7 +32,7 @@ export async function getDuanjuSources(): Promise<DuanjuSource[]> {
     }
 
     // 没有缓存，开始筛选
-    console.log('开始筛选包含短剧分类的视频源...');
+    logger.info('开始筛选包含短剧分类的视频源...');
     const allSources = await getAvailableApiSites();
     const duanjuSources: DuanjuSource[] = [];
 
@@ -77,7 +79,7 @@ export async function getDuanjuSources(): Promise<DuanjuSource[]> {
         return null;
       } catch (error) {
         // 请求失败或超时，忽略该源
-        console.error(`检查视频源 ${source.name} 失败:`, error);
+        logger.error(`检查视频源 ${source.name} 失败:`, error);
         return null;
       }
     });
@@ -91,14 +93,14 @@ export async function getDuanjuSources(): Promise<DuanjuSource[]> {
       }
     });
 
-    console.log(`找到 ${duanjuSources.length} 个包含短剧分类的视频源`);
+    logger.info(`找到 ${duanjuSources.length} 个包含短剧分类的视频源`);
 
     // 存入数据库（即使是空数组也要存）
     await db.setGlobalValue('duanju', JSON.stringify(duanjuSources));
 
     return duanjuSources;
   } catch (error) {
-    console.error('获取短剧视频源失败:', error);
+    logger.error('获取短剧视频源失败:', error);
     throw error;
   }
 }

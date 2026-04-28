@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 'use client';
 
 import { AlertTriangle, ChevronRight } from 'lucide-react';
@@ -8,14 +7,16 @@ import { createPortal } from 'react-dom';
 import type { PlayRecord } from '@/lib/db.client';
 import {
   clearAllPlayRecords,
-  getCachedPlayRecordsSnapshot,
   getAllPlayRecords,
+  getCachedPlayRecordsSnapshot,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 
 import PlayRecordsPanel from '@/components/PlayRecordsPanel';
 import VideoCard from '@/components/VideoCard';
 import VirtualScrollableRow from '@/components/VirtualScrollableRow';
+
+import { logger } from '../lib/logger';
 
 interface ContinueWatchingProps {
   className?: string;
@@ -33,14 +34,16 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
 
   const updatePlayRecords = (
     allRecords: Record<string, PlayRecord>,
-    limit?: number
+    limit?: number,
   ) => {
     const recordsArray = Object.entries(allRecords).map(([key, record]) => ({
       ...record,
       key,
     }));
 
-    const sortedRecords = recordsArray.sort((a, b) => b.save_time - a.save_time);
+    const sortedRecords = recordsArray.sort(
+      (a, b) => b.save_time - a.save_time,
+    );
     setPlayRecords(limit ? sortedRecords.slice(0, limit) : sortedRecords);
   };
 
@@ -61,7 +64,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
       (newRecords: Record<string, PlayRecord>) => {
         updatePlayRecords(newRecords);
         setLoading(false);
-      }
+      },
     );
 
     const fetchPlayRecords = async () => {
@@ -74,7 +77,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
         const allRecords = await getAllPlayRecords();
         updatePlayRecords(allRecords);
       } catch (error) {
-        console.error('获取播放记录失败:', error);
+        logger.error('获取播放记录失败:', error);
         setPlayRecords([]);
       } finally {
         setLoading(false);
@@ -131,17 +134,17 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
           )}
         </div>
         {loading ? (
-          <div className='flex gap-2 overflow-x-auto scrollbar-hide pb-2 pt-2'>
+          <div className='scrollbar-hide flex gap-2 overflow-x-auto pb-2 pt-2'>
             {Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
-                className='min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
+                className='w-48 min-w-[180px] sm:w-52 sm:min-w-[200px]'
               >
-                <div className='relative aspect-[3/2] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
+                <div className='relative aspect-[3/2] w-full animate-pulse overflow-hidden rounded-lg bg-gray-200 dark:bg-gray-800'>
                   <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700' />
                 </div>
-                <div className='mt-1 h-1 rounded bg-gray-200 animate-pulse dark:bg-gray-800' />
-                <div className='mt-2 h-4 w-3/4 rounded bg-gray-200 animate-pulse dark:bg-gray-800' />
+                <div className='mt-1 h-1 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                <div className='mt-2 h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
               </div>
             ))}
           </div>
@@ -153,7 +156,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
                 return (
                   <div
                     key={record.key}
-                    className='min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
+                    className='w-48 min-w-[180px] sm:w-52 sm:min-w-[200px]'
                     style={{ position: 'relative' }}
                   >
                     <VideoCard
@@ -170,7 +173,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
                       from='playrecord'
                       onDelete={() =>
                         setPlayRecords((prev) =>
-                          prev.filter((item) => item.key !== record.key)
+                          prev.filter((item) => item.key !== record.key),
                         )
                       }
                       type={record.total_episodes > 1 ? 'tv' : ''}
@@ -248,7 +251,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
             onClick={() => setShowConfirmDialog(false)}
           >
             <div
-              className='max-w-md w-full rounded-lg border border-red-200 bg-white shadow-xl transition-all duration-300 dark:border-red-800 dark:bg-gray-800'
+              className='w-full max-w-md rounded-lg border border-red-200 bg-white shadow-xl transition-all duration-300 dark:border-red-800 dark:bg-gray-800'
               onClick={(event) => event.stopPropagation()}
             >
               <div className='p-6'>
@@ -283,7 +286,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
 
       {showPlayRecordsPanel &&
@@ -292,7 +295,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
             isOpen={showPlayRecordsPanel}
             onClose={() => setShowPlayRecordsPanel(false)}
           />,
-          document.body
+          document.body,
         )}
     </>
   );

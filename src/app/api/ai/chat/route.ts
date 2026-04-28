@@ -1,14 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+ 
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import {
-  orchestrateDataSources,
-  VideoContext,
-} from '@/lib/ai-orchestrator';
+import { orchestrateDataSources, VideoContext } from '@/lib/ai-orchestrator';
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -35,7 +35,7 @@ async function streamOpenAIChat(
     temperature: number;
     maxTokens: number;
   },
-  enableStreaming = true
+  enableStreaming = true,
 ): Promise<ReadableStream | Response> {
   const response = await fetch(`${config.baseURL}/chat/completions`, {
     method: 'POST',
@@ -54,7 +54,7 @@ async function streamOpenAIChat(
 
   if (!response.ok) {
     throw new Error(
-      `OpenAI API error: ${response.status} ${response.statusText}`
+      `OpenAI API error: ${response.status} ${response.statusText}`,
     );
   }
 
@@ -66,7 +66,7 @@ async function streamOpenAIChat(
  */
 function transformToSSE(
   stream: ReadableStream,
-  provider: 'openai' | 'claude' | 'custom'
+  provider: 'openai' | 'claude' | 'custom',
 ): ReadableStream {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
@@ -104,7 +104,7 @@ function transformToSSE(
 
               if (data === '[DONE]') {
                 controller.enqueue(
-                  new TextEncoder().encode('data: [DONE]\n\n')
+                  new TextEncoder().encode('data: [DONE]\n\n'),
                 );
                 continue;
               }
@@ -136,7 +136,10 @@ function transformToSSE(
                   // 检查是否退出thinking块
                   if (inThinkingBlock && contentBuffer.includes('</think>')) {
                     // 移除thinking块内容
-                    contentBuffer = contentBuffer.replace(/<think>[\s\S]*?<\/think>/g, '');
+                    contentBuffer = contentBuffer.replace(
+                      /<think>[\s\S]*?<\/think>/g,
+                      '',
+                    );
                     inThinkingBlock = false;
                   }
 
@@ -146,7 +149,9 @@ function transformToSSE(
                     const outputText = contentBuffer;
                     if (outputText) {
                       controller.enqueue(
-                        new TextEncoder().encode(`data: ${JSON.stringify({ text: outputText })}\n\n`)
+                        new TextEncoder().encode(
+                          `data: ${JSON.stringify({ text: outputText })}\n\n`,
+                        ),
                       );
                       contentBuffer = ''; // 清空已输出的内容
                     }
@@ -155,7 +160,12 @@ function transformToSSE(
               } catch (e) {
                 // 只在非空数据解析失败时打印错误
                 if (data.length > 0) {
-                  console.error('Parse stream chunk error:', e, 'Data:', data.substring(0, 100));
+                  logger.error(
+                    'Parse stream chunk error:',
+                    e,
+                    'Data:',
+                    data.substring(0, 100),
+                  );
                 }
               }
             }
@@ -181,21 +191,26 @@ function transformToSSE(
                 if (text) {
                   contentBuffer += text;
                   // 最后清理一次thinking标签
-                  contentBuffer = contentBuffer.replace(/<think>[\s\S]*?<\/think>/g, '');
+                  contentBuffer = contentBuffer.replace(
+                    /<think>[\s\S]*?<\/think>/g,
+                    '',
+                  );
                   if (contentBuffer) {
                     controller.enqueue(
-                      new TextEncoder().encode(`data: ${JSON.stringify({ text: contentBuffer })}\n\n`)
+                      new TextEncoder().encode(
+                        `data: ${JSON.stringify({ text: contentBuffer })}\n\n`,
+                      ),
                     );
                   }
                 }
               } catch (e) {
-                console.error('Parse final buffer error:', e);
+                logger.error('Parse final buffer error:', e);
               }
             }
           }
         }
       } catch (error) {
-        console.error('Stream error:', error);
+        logger.error('Stream error:', error);
         controller.error(error);
       } finally {
         controller.close();
@@ -209,7 +224,7 @@ export async function POST(request: NextRequest) {
     // 1. 验证用户登录
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     // 2. 获取AI配置
@@ -217,10 +232,7 @@ export async function POST(request: NextRequest) {
     const aiConfig = adminConfig.AIConfig;
 
     if (!aiConfig || !aiConfig.Enabled) {
-      return NextResponse.json(
-        { error: 'AI功能未启用' },
-        { status: 400 }
-      );
+      return apiError('AI功能未启用', 400);
     }
 
     // 3. 权限检查：如果不允许普通用户使用，检查用户角色
@@ -230,11 +242,12 @@ export async function POST(request: NextRequest) {
       if (username !== process.env.USERNAME) {
         // 检查是否为管理员
         const userInfo = await db.getUserInfoV2(username);
-        if (!userInfo || (userInfo.role !== 'admin' && userInfo.role !== 'owner') || userInfo.banned) {
-          return NextResponse.json(
-            { error: '该功能仅限站长和管理员使用' },
-            { status: 403 }
-          );
+        if (
+          !userInfo ||
+          (userInfo.role !== 'admin' && userInfo.role !== 'owner') ||
+          userInfo.banned
+        ) {
+          return apiError('该功能仅限站长和管理员使用', 403);
         }
       }
     }
@@ -244,42 +257,38 @@ export async function POST(request: NextRequest) {
     const { message, context, history = [] } = body;
 
     if (!message || typeof message !== 'string') {
-      return NextResponse.json(
-        { error: '消息内容不能为空' },
-        { status: 400 }
-      );
+      return apiError('消息内容不能为空', 400);
     }
 
-    console.log('📨 收到AI聊天请求:', {
+    logger.info('📨 收到AI聊天请求:', {
       message: message.slice(0, 50),
       context,
       historyLength: history.length,
     });
 
     // 4. 使用orchestrator协调数据源
-    const orchestrationResult = await orchestrateDataSources(
-      message,
-      context,
-      {
-        enableWebSearch: aiConfig.EnableWebSearch,
-        webSearchProvider: aiConfig.WebSearchProvider,
-        tavilyApiKey: aiConfig.TavilyApiKey,
-        serperApiKey: aiConfig.SerperApiKey,
-        serpApiKey: aiConfig.SerpApiKey,
-        // TMDB 配置
-        tmdbApiKey: adminConfig.SiteConfig.TMDBApiKey,
-        tmdbProxy: adminConfig.SiteConfig.TMDBProxy,
-        tmdbReverseProxy: adminConfig.SiteConfig.TMDBReverseProxy,
-        // 决策模型配置（固定使用自定义provider，复用主模型的API配置）
-        enableDecisionModel: aiConfig.EnableDecisionModel,
-        decisionProvider: 'custom',
-        decisionApiKey: aiConfig.CustomApiKey,
-        decisionBaseURL: aiConfig.CustomBaseURL,
-        decisionModel: aiConfig.DecisionCustomModel,
-      }
-    );
+    const orchestrationResult = await orchestrateDataSources(message, context, {
+      enableWebSearch: aiConfig.EnableWebSearch,
+      webSearchProvider: aiConfig.WebSearchProvider,
+      tavilyApiKey: aiConfig.TavilyApiKey,
+      serperApiKey: aiConfig.SerperApiKey,
+      serpApiKey: aiConfig.SerpApiKey,
+      // TMDB 配置
+      tmdbApiKey: adminConfig.SiteConfig.TMDBApiKey,
+      tmdbProxy: adminConfig.SiteConfig.TMDBProxy,
+      tmdbReverseProxy: adminConfig.SiteConfig.TMDBReverseProxy,
+      // 决策模型配置（固定使用自定义provider，复用主模型的API配置）
+      enableDecisionModel: aiConfig.EnableDecisionModel,
+      decisionProvider: 'custom',
+      decisionApiKey: aiConfig.CustomApiKey,
+      decisionBaseURL: aiConfig.CustomBaseURL,
+      decisionModel: aiConfig.DecisionCustomModel,
+    });
 
-    console.log('🎯 数据协调完成, systemPrompt长度:', orchestrationResult.systemPrompt.length);
+    logger.info(
+      '🎯 数据协调完成, systemPrompt长度:',
+      orchestrationResult.systemPrompt.length,
+    );
 
     // 5. 构建消息列表
     const systemPrompt = aiConfig.SystemPrompt
@@ -299,19 +308,20 @@ export async function POST(request: NextRequest) {
     const enableStreaming = aiConfig.EnableStreaming !== false; // 默认启用流式响应
 
     if (!aiConfig.CustomApiKey || !aiConfig.CustomBaseURL) {
-      return NextResponse.json(
-        { error: '自定义API配置不完整' },
-        { status: 400 }
-      );
+      return apiError('自定义API配置不完整', 400);
     }
 
-    const result = await streamOpenAIChat(messages, {
-      apiKey: aiConfig.CustomApiKey,
-      baseURL: aiConfig.CustomBaseURL,
-      model: aiConfig.CustomModel || 'gpt-3.5-turbo',
-      temperature,
-      maxTokens,
-    }, enableStreaming);
+    const result = await streamOpenAIChat(
+      messages,
+      {
+        apiKey: aiConfig.CustomApiKey,
+        baseURL: aiConfig.CustomBaseURL,
+        model: aiConfig.CustomModel || 'gpt-3.5-turbo',
+        temperature,
+        maxTokens,
+      },
+      enableStreaming,
+    );
 
     // 7. 根据是否启用流式响应返回不同格式
     if (enableStreaming) {
@@ -334,16 +344,13 @@ export async function POST(request: NextRequest) {
       // 移除thinking标签内容
       content = content.replace(/<think>[\s\S]*?<\/think>/g, '');
 
-      return NextResponse.json({ content });
+      return apiSuccess({ content });
     }
   } catch (error) {
-    console.error('❌ AI聊天API错误:', error);
-    return NextResponse.json(
-      {
-        error: 'AI聊天请求失败',
-        details: (error as Error).message,
-      },
-      { status: 500 }
+    logger.error('❌ AI聊天API错误:', error);
+    return apiError(
+      'AI聊天请求失败: ' + (error as Error).message,
+      500,
     );
   }
 }

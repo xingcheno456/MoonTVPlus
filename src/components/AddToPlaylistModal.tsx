@@ -1,7 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
+ 
 
 import { useEffect, useState } from 'react';
+
+import { logger } from '../lib/logger';
 
 interface Song {
   id: string;
@@ -44,7 +46,9 @@ export default function AddToPlaylistModal({
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [newPlaylistDescription, setNewPlaylistDescription] = useState('');
   const [creating, setCreating] = useState(false);
-  const [addingToPlaylistId, setAddingToPlaylistId] = useState<string | null>(null); // 正在添加的歌单ID
+  const [addingToPlaylistId, setAddingToPlaylistId] = useState<string | null>(
+    null,
+  ); // 正在添加的歌单ID
 
   // 加载用户的歌单列表
   useEffect(() => {
@@ -58,11 +62,11 @@ export default function AddToPlaylistModal({
       setLoading(true);
       const response = await fetch('/api/music/v2/playlists');
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         setPlaylists(data.data?.playlists || []);
       }
     } catch (error) {
-      console.error('加载歌单失败:', error);
+      logger.error('加载歌单失败:', error);
     } finally {
       setLoading(false);
     }
@@ -91,11 +95,11 @@ export default function AddToPlaylistModal({
         setShowCreateForm(false);
         await loadPlaylists();
       } else {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         onError?.(data.error || '创建歌单失败');
       }
     } catch (error) {
-      console.error('创建歌单失败:', error);
+      logger.error('创建歌单失败:', error);
       onError?.('创建歌单失败');
     } finally {
       setCreating(false);
@@ -107,31 +111,34 @@ export default function AddToPlaylistModal({
 
     try {
       setAddingToPlaylistId(playlistId);
-      const response = await fetch(`/api/music/v2/playlists/${playlistId}/songs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          song: {
-            source: song.platform,
-            songId: song.id,
-            name: song.name,
-            artist: song.artist,
-            album: song.album,
-            cover: song.pic,
-            durationSec: song.duration || 0,
-          },
-        }),
-      });
+      const response = await fetch(
+        `/api/music/v2/playlists/${playlistId}/songs`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            song: {
+              source: song.platform,
+              songId: song.id,
+              name: song.name,
+              artist: song.artist,
+              album: song.album,
+              cover: song.pic,
+              durationSec: song.duration || 0,
+            },
+          }),
+        },
+      );
 
       if (response.ok) {
         onSuccess?.();
         onClose();
       } else {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         onError?.(data.error || '添加失败');
       }
     } catch (error) {
-      console.error('添加到歌单失败:', error);
+      logger.error('添加到歌单失败:', error);
       onError?.('添加到歌单失败');
     } finally {
       setAddingToPlaylistId(null);
@@ -142,43 +149,63 @@ export default function AddToPlaylistModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-center justify-center p-4"
+      className='fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm'
       onClick={onClose}
     >
       <div
-        className="bg-zinc-900 rounded-xl max-w-md w-full max-h-[80vh] overflow-hidden border border-white/10"
+        className='max-h-[80vh] w-full max-w-md overflow-hidden rounded-xl border border-white/10 bg-zinc-900'
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 border-b border-white/10">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-white">添加到歌单</h3>
+        <div className='border-b border-white/10 p-4'>
+          <div className='flex items-center justify-between'>
+            <h3 className='text-lg font-bold text-white'>添加到歌单</h3>
             <button
               onClick={onClose}
-              className="text-zinc-400 hover:text-white transition-colors"
+              className='text-zinc-400 transition-colors hover:text-white'
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className='h-6 w-6'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M6 18L18 6M6 6l12 12'
+                />
               </svg>
             </button>
           </div>
           {song && (
-            <div className="mt-2 text-sm text-zinc-400">
+            <div className='mt-2 text-sm text-zinc-400'>
               {song.name} - {song.artist}
             </div>
           )}
         </div>
 
         {/* Content */}
-        <div className="p-4 overflow-y-auto max-h-[calc(80vh-120px)]">
+        <div className='max-h-[calc(80vh-120px)] overflow-y-auto p-4'>
           {/* Create New Playlist Button */}
           {!showCreateForm && (
             <button
               onClick={() => setShowCreateForm(true)}
-              className="w-full mb-4 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+              className='mb-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-white transition-colors hover:bg-green-700'
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <svg
+                className='h-5 w-5'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M12 4v16m8-8H4'
+                />
               </svg>
               创建新歌单
             </button>
@@ -186,26 +213,26 @@ export default function AddToPlaylistModal({
 
           {/* Create Form */}
           {showCreateForm && (
-            <div className="mb-4 p-4 bg-white/5 rounded-lg border border-white/10">
+            <div className='mb-4 rounded-lg border border-white/10 bg-white/5 p-4'>
               <input
-                type="text"
-                placeholder="歌单名称"
+                type='text'
+                placeholder='歌单名称'
                 value={newPlaylistName}
                 onChange={(e) => setNewPlaylistName(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-800 text-white rounded-lg border border-white/10 focus:border-green-500 focus:outline-none mb-2"
+                className='mb-2 w-full rounded-lg border border-white/10 bg-zinc-800 px-3 py-2 text-white focus:border-green-500 focus:outline-none'
               />
               <textarea
-                placeholder="歌单描述（可选）"
+                placeholder='歌单描述（可选）'
                 value={newPlaylistDescription}
                 onChange={(e) => setNewPlaylistDescription(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-800 text-white rounded-lg border border-white/10 focus:border-green-500 focus:outline-none resize-none"
+                className='w-full resize-none rounded-lg border border-white/10 bg-zinc-800 px-3 py-2 text-white focus:border-green-500 focus:outline-none'
                 rows={2}
               />
-              <div className="flex gap-2 mt-2">
+              <div className='mt-2 flex gap-2'>
                 <button
                   onClick={handleCreatePlaylist}
                   disabled={creating}
-                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-zinc-700 text-white rounded-lg transition-colors"
+                  className='flex-1 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 disabled:bg-zinc-700'
                 >
                   {creating ? '创建中...' : '确定'}
                 </button>
@@ -215,7 +242,7 @@ export default function AddToPlaylistModal({
                     setNewPlaylistName('');
                     setNewPlaylistDescription('');
                   }}
-                  className="flex-1 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
+                  className='flex-1 rounded-lg bg-zinc-700 px-4 py-2 text-white transition-colors hover:bg-zinc-600'
                 >
                   取消
                 </button>
@@ -225,47 +252,86 @@ export default function AddToPlaylistModal({
 
           {/* Playlists List */}
           {loading ? (
-            <div className="text-center py-8 text-zinc-400">加载中...</div>
+            <div className='py-8 text-center text-zinc-400'>加载中...</div>
           ) : playlists.length === 0 ? (
-            <div className="text-center py-8 text-zinc-400">
+            <div className='py-8 text-center text-zinc-400'>
               还没有歌单，创建一个吧
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className='space-y-2'>
               {playlists.map((playlist) => (
                 <button
                   key={playlist.id}
                   onClick={() => handleAddToPlaylist(playlist.id)}
                   disabled={addingToPlaylistId !== null}
-                  className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 disabled:bg-white/5 disabled:cursor-not-allowed rounded-lg transition-colors text-left flex items-center gap-3"
+                  className='flex w-full items-center gap-3 rounded-lg bg-white/5 px-4 py-3 text-left transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:bg-white/5'
                 >
                   {playlist.cover ? (
                     <img
                       src={playlist.cover}
                       alt={playlist.name}
-                      className="w-12 h-12 rounded object-cover"
+                      className='h-12 w-12 rounded object-cover'
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded bg-zinc-800 flex items-center justify-center">
-                      <svg className="w-6 h-6 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    <div className='flex h-12 w-12 items-center justify-center rounded bg-zinc-800'>
+                      <svg
+                        className='h-6 w-6 text-zinc-600'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3'
+                        />
                       </svg>
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-white font-medium truncate">{playlist.name}</div>
+                  <div className='min-w-0 flex-1'>
+                    <div className='truncate font-medium text-white'>
+                      {playlist.name}
+                    </div>
                     {playlist.description && (
-                      <div className="text-xs text-zinc-500 truncate">{playlist.description}</div>
+                      <div className='truncate text-xs text-zinc-500'>
+                        {playlist.description}
+                      </div>
                     )}
                   </div>
                   {addingToPlaylistId === playlist.id ? (
-                    <svg className="w-5 h-5 text-green-500 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className='h-5 w-5 animate-spin text-green-500'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                    >
+                      <circle
+                        className='opacity-25'
+                        cx='12'
+                        cy='12'
+                        r='10'
+                        stroke='currentColor'
+                        strokeWidth='4'
+                      ></circle>
+                      <path
+                        className='opacity-75'
+                        fill='currentColor'
+                        d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                      ></path>
                     </svg>
                   ) : (
-                    <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <svg
+                      className='h-5 w-5 text-zinc-400'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M9 5l7 7-7 7'
+                      />
                     </svg>
                   )}
                 </button>

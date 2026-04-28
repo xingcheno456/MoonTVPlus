@@ -1,3 +1,4 @@
+import { logger } from './logger';
 /**
  * 季度标识解析工具
  * 用于从文件夹名称中识别和提取季度信息
@@ -139,8 +140,16 @@ function chineseNumberToInt(str: string): number {
   }
 
   const chineseNumbers: Record<string, number> = {
-    '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
-    '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
+    一: 1,
+    二: 2,
+    三: 3,
+    四: 4,
+    五: 5,
+    六: 6,
+    七: 7,
+    八: 8,
+    九: 9,
+    十: 10,
   };
 
   // 处理"十"的特殊情况
@@ -187,12 +196,12 @@ export function testSeasonParser() {
     'Stranger Things S03',
   ];
 
-  console.log('Season Parser Test Results:');
+  logger.info('Season Parser Test Results:');
   testCases.forEach((title) => {
     const result = parseSeasonFromTitle(title);
-    console.log(`Input: "${title}"`);
-    console.log(`  Clean Title: "${result.cleanTitle}"`);
-    console.log(`  Season: ${result.seasonNumber}`);
-    console.log('');
+    logger.info(`Input: "${title}"`);
+    logger.info(`  Clean Title: "${result.cleanTitle}"`);
+    logger.info(`  Season: ${result.seasonNumber}`);
+    logger.info('');
   });
 }

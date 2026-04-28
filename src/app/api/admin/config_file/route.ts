@@ -1,27 +1,27 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+ 
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, refineConfig } from '@/lib/config';
-import { db } from '@/lib/db';
+import { db, STORAGE_TYPE } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
-    return NextResponse.json(
-      {
+    return apiSuccess({
         error: '不支持本地存储进行管理员配置',
-      },
-      { status: 400 }
-    );
+      }, { status: 400 });
   }
 
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
   const username = authInfo.username;
 
@@ -31,10 +31,7 @@ export async function POST(request: NextRequest) {
 
     // 仅站长可以修改配置文件
     if (username !== process.env.USERNAME) {
-      return NextResponse.json(
-        { error: '权限不足，只有站长可以修改配置文件' },
-        { status: 401 }
-      );
+      return apiError('权限不足，只有站长可以修改配置文件', 401);
     }
 
     // 获取请求体
@@ -42,20 +39,14 @@ export async function POST(request: NextRequest) {
     const { configFile, subscriptionUrl, autoUpdate, lastCheckTime } = body;
 
     if (!configFile || typeof configFile !== 'string') {
-      return NextResponse.json(
-        { error: '配置文件内容不能为空' },
-        { status: 400 }
-      );
+      return apiError('配置文件内容不能为空', 400);
     }
 
     // 验证 JSON 格式
     try {
       JSON.parse(configFile);
     } catch (e) {
-      return NextResponse.json(
-        { error: '配置文件格式错误，请检查 JSON 语法' },
-        { status: 400 }
-      );
+      return apiError('配置文件格式错误，请检查 JSON 语法', 400);
     }
 
     adminConfig.ConfigFile = configFile;
@@ -83,24 +74,18 @@ export async function POST(request: NextRequest) {
     // 清除短剧视频源缓存（因为配置文件可能包含新的视频源）
     try {
       await db.deleteGlobalValue('duanju');
-      console.log('已清除短剧视频源缓存');
+      logger.info('已清除短剧视频源缓存');
     } catch (error) {
-      console.error('清除短剧视频源缓存失败:', error);
+      logger.error('清除短剧视频源缓存失败:', error);
       // 不影响主流程，继续执行
     }
 
-    return NextResponse.json({
-      success: true,
-      message: '配置文件更新成功',
-    });
+    return apiSuccess({ message: '配置文件更新成功', });
   } catch (error) {
-    console.error('更新配置文件失败:', error);
-    return NextResponse.json(
-      {
+    logger.error('更新配置文件失败:', error);
+    return apiSuccess({
         error: '更新配置文件失败',
         details: (error as Error).message,
-      },
-      { status: 500 }
-    );
+      }, { status: 500 });
   }
 }

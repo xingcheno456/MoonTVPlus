@@ -1,7 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';
 import { getTMDBUpcomingContent } from '@/lib/tmdb.client';
+
+import { logger } from '../../../../lib/logger';
 
 // 内存缓存对象
 interface CacheItem {
@@ -17,7 +20,7 @@ export async function GET(request: NextRequest) {
     // 检查缓存是否存在且未过期
     const now = Date.now();
     if (cache && now - cache.timestamp < CACHE_DURATION) {
-      return NextResponse.json({
+      return apiSuccess({
         code: 200,
         data: cache.data,
         cached: true,
@@ -32,20 +35,18 @@ export async function GET(request: NextRequest) {
     const tmdbReverseProxy = config.SiteConfig?.TMDBReverseProxy;
 
     if (!tmdbApiKey) {
-      return NextResponse.json(
-        { code: 400, message: 'TMDB API Key 未配置' },
-        { status: 400 }
-      );
+      return apiError('TMDB API Key 未配置', 400);
     }
 
     // 调用TMDB API获取数据
-    const result = await getTMDBUpcomingContent(tmdbApiKey, tmdbProxy, tmdbReverseProxy);
+    const result = await getTMDBUpcomingContent(
+      tmdbApiKey,
+      tmdbProxy,
+      tmdbReverseProxy,
+    );
 
     if (result.code !== 200) {
-      return NextResponse.json(
-        { code: result.code, message: '获取TMDB数据失败' },
-        { status: result.code === 401 ? 401 : 500 }
-      );
+      return apiError('获取TMDB数据失败', result.code === 401 ? 401 : 500);
     }
 
     // 更新缓存
@@ -54,16 +55,16 @@ export async function GET(request: NextRequest) {
       timestamp: now,
     };
 
-    return NextResponse.json({
+    return apiSuccess({
       code: 200,
       data: result.list,
       cached: false,
     });
   } catch (error) {
-    console.error('获取TMDB即将上映数据失败:', error);
-    return NextResponse.json(
-      { code: 500, message: '服务器内部错误' },
-      { status: 500 }
+    logger.error('获取TMDB即将上映数据失败:', error);
+    return apiError(
+      '服务器内部错误: ' + (error instanceof Error ? error.message : '未知错误'),
+      500,
     );
   }
 }

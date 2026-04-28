@@ -1,7 +1,8 @@
+import { logger } from './logger';
 import { EpisodeFilterConfig } from './types';
 
 export function normalizeEpisodeFilterConfig(
-  config?: EpisodeFilterConfig | null
+  config?: EpisodeFilterConfig | null,
 ): EpisodeFilterConfig {
   return {
     rules: config?.rules ?? [],
@@ -11,7 +12,7 @@ export function normalizeEpisodeFilterConfig(
 
 export function doesEpisodeTitleMatchFilterRules(
   title: string,
-  config?: EpisodeFilterConfig | null
+  config?: EpisodeFilterConfig | null,
 ): boolean {
   const normalizedConfig = normalizeEpisodeFilterConfig(config);
 
@@ -26,7 +27,7 @@ export function doesEpisodeTitleMatchFilterRules(
         return true;
       }
     } catch (e) {
-      console.error('集数过滤规则错误:', e);
+      logger.error('集数过滤规则错误:', e);
     }
   }
 
@@ -35,7 +36,7 @@ export function doesEpisodeTitleMatchFilterRules(
 
 export function isEpisodeHiddenByFilter(
   title: string,
-  config?: EpisodeFilterConfig | null
+  config?: EpisodeFilterConfig | null,
 ): boolean {
   const normalizedConfig = normalizeEpisodeFilterConfig(config);
   if (normalizedConfig.rules.length === 0) {
