@@ -1,8 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { API_CONFIG, getAvailableApiSites, getConfig } from '@/lib/config';
 import { yellowWords } from '@/lib/yellow';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -19,17 +22,14 @@ interface CmsClassResponse {
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   const { searchParams } = new URL(request.url);
   const sourceKey = searchParams.get('source');
 
   if (!sourceKey) {
-    return NextResponse.json(
-      { error: '缺少参数: source' },
-      { status: 400 }
-    );
+    return apiError('缺少参数: source', 400);
   }
 
   try {
@@ -38,10 +38,7 @@ export async function GET(request: NextRequest) {
     const targetSite = apiSites.find((site) => site.key === sourceKey);
 
     if (!targetSite) {
-      return NextResponse.json(
-        { error: `未找到指定的视频源: ${sourceKey}` },
-        { status: 404 }
-      );
+      return apiError(`未找到指定的视频源: ${sourceKey}`, 404);
     }
 
     // 请求分类列表
@@ -58,7 +55,7 @@ export async function GET(request: NextRequest) {
     const classData: CmsClassResponse = await classResponse.json();
 
     if (!classData.class || !Array.isArray(classData.class)) {
-      return NextResponse.json({
+      return apiSuccess({
         categories: [],
       });
     }
@@ -72,17 +69,14 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
+    return apiSuccess({
       categories: filteredCategories.map((item) => ({
         id: item.type_id.toString(),
         name: item.type_name,
       })),
     });
   } catch (error) {
-    console.error('Failed to get categories:', error);
-    return NextResponse.json(
-      { error: '获取分类列表失败' },
-      { status: 500 }
-    );
+    logger.error('Failed to get categories:', error);
+    return apiError('获取分类列表失败', 500);
   }
 }

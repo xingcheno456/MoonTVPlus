@@ -1,8 +1,9 @@
-/* eslint-disable no-console */
 
 'use client';
 
-import { CURRENT_VERSION } from "@/lib/version";
+import { CURRENT_VERSION } from '@/lib/version';
+
+import { logger } from './logger';
 
 // 版本检查结果枚举
 export enum UpdateStatus {
@@ -37,7 +38,7 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
     // 如果两个URL都失败，返回获取失败状态
     return UpdateStatus.FETCH_FAILED;
   } catch (error) {
-    console.error('版本检查失败:', error);
+    logger.error('版本检查失败:', error);
     return UpdateStatus.FETCH_FAILED;
   }
 }
@@ -75,7 +76,7 @@ async function fetchVersionFromUrl(url: string): Promise<string | null> {
     const version = await response.text();
     return version.trim();
   } catch (error) {
-    console.warn(`从 ${url} 获取版本信息失败:`, error);
+    logger.warn(`从 ${url} 获取版本信息失败:`, error);
     return null;
   }
 }
@@ -139,7 +140,7 @@ export function compareVersions(remoteVersion: string): UpdateStatus {
     // 所有级别都相等，无需更新
     return UpdateStatus.NO_UPDATE;
   } catch (error) {
-    console.error('版本号比较失败:', error);
+    logger.error('版本号比较失败:', error);
     // 如果版本号格式无效，回退到字符串比较
     return remoteVersion !== CURRENT_VERSION
       ? UpdateStatus.HAS_UPDATE

@@ -3,7 +3,11 @@
 import { BookOpen } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { deleteMangaShelf, getAllMangaShelf, subscribeToDataUpdates } from '@/lib/db.client';
+import {
+  deleteMangaShelf,
+  getAllMangaShelf,
+  subscribeToDataUpdates,
+} from '@/lib/db.client';
 import { MangaShelfItem } from '@/lib/manga.types';
 
 import MangaCard from '@/components/MangaCard';
@@ -34,7 +38,7 @@ export default function MangaShelfPage() {
   useEffect(() => {
     const unsubscribe = subscribeToDataUpdates<Record<string, MangaShelfItem>>(
       'mangaShelfUpdated',
-      setShelf
+      setShelf,
     );
 
     getAllMangaShelf()
@@ -47,7 +51,7 @@ export default function MangaShelfPage() {
 
   const shelfList = useMemo(
     () => Object.entries(shelf).sort(([, a], [, b]) => b.saveTime - a.saveTime),
-    [shelf]
+    [shelf],
   );
 
   const removeItem = async (sourceId: string, mangaId: string) => {
@@ -63,7 +67,8 @@ export default function MangaShelfPage() {
   return (
     <section className='mx-auto max-w-6xl'>
       <div className='mb-4 flex items-center gap-2 text-sm text-gray-500'>
-        <BookOpen className='h-4 w-4 text-emerald-500' /> 共 {shelfList.length} 本漫画
+        <BookOpen className='h-4 w-4 text-emerald-500' /> 共 {shelfList.length}{' '}
+        本漫画
       </div>
       {loading ? (
         <MangaShelfSkeleton />

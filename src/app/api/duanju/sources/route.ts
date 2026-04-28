@@ -1,9 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+ 
 
-import { NextResponse } from 'next/server';
-
+import { apiSuccess } from '@/lib/api-response';
 import { getCacheTime } from '@/lib/config';
 import { getDuanjuSources } from '@/lib/duanju';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -15,27 +16,21 @@ export async function GET() {
     const sources = await getDuanjuSources();
     const cacheTime = await getCacheTime();
 
-    return NextResponse.json(
-      {
+    return apiSuccess({
         code: 200,
         message: '获取成功',
         data: sources,
-      },
-      {
+      }, {
         headers: {
           'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
         },
-      }
-    );
+      });
   } catch (error) {
-    console.error('获取短剧视频源失败:', error);
-    return NextResponse.json(
-      {
+    logger.error('获取短剧视频源失败:', error);
+    return apiSuccess({
         code: 500,
         message: '获取短剧视频源失败',
         error: (error as Error).message,
-      },
-      { status: 500 }
-    );
+      }, { status: 500 });
   }
 }

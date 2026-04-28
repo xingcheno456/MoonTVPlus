@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiSuccess } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -13,23 +16,21 @@ export const runtime = 'nodejs';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> },
 ) {
   const { searchParams } = new URL(request.url);
+  const { token } = await params;
   const ac = searchParams.get('ac');
   const wd = searchParams.get('wd'); // 搜索关键词
   const ids = searchParams.get('ids'); // 视频ID（即文件夹key）
 
   // 检查必要参数
   if (ac !== 'videolist' && ac !== 'list' && ac !== 'detail') {
-    return NextResponse.json(
-      { code: 400, msg: '不支持的操作' },
-      { status: 400 }
-    );
+    return apiSuccess({ code: 400, msg: '不支持的操作' }, { status: 400 });
   }
 
   // 验证 TVBox Token（从路径中获取）
-  const requestToken = params.token;
+  const requestToken = token;
   const globalToken = process.env.TVBOX_SUBSCRIBE_TOKEN;
 
   // 检查是否是全局token或用户token
@@ -51,8 +52,7 @@ export async function GET(
   }
 
   if (!isValidToken) {
-    return NextResponse.json(
-      {
+    return apiSuccess({
         code: 401,
         msg: '无效的访问token',
         page: 1,
@@ -60,9 +60,7 @@ export async function GET(
         limit: 0,
         total: 0,
         list: [],
-      },
-      { status: 401 }
-    );
+      }, { status: 401 });
   }
 
   try {
@@ -77,7 +75,7 @@ export async function GET(
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json({
+      return apiSuccess({
         code: 0,
         msg: 'OpenList 未配置或未启用',
         page: 1,
@@ -91,7 +89,8 @@ export async function GET(
     const rootPath = openListConfig.RootPath || '/';
 
     // 读取元数据
-    const { getCachedMetaInfo, setCachedMetaInfo } = await import('@/lib/openlist-cache');
+    const { getCachedMetaInfo, setCachedMetaInfo } =
+      await import('@/lib/openlist-cache');
     const { db } = await import('@/lib/db');
 
     let metaInfo = getCachedMetaInfo();
@@ -106,12 +105,15 @@ export async function GET(
           }
         }
       } catch (error) {
-        console.error('[OpenList CMS Proxy] 从数据库读取 metainfo 失败:', error);
+        logger.error(
+          '[OpenList CMS Proxy] 从数据库读取 metainfo 失败:',
+          error,
+        );
       }
     }
 
     if (!metaInfo || !metaInfo.folders) {
-      return NextResponse.json({
+      return apiSuccess({
         code: 0,
         msg: '未找到元数据',
         page: 1,
@@ -126,7 +128,14 @@ export async function GET(
     if (wd) {
       // 如果是 detail 模式且有搜索词，返回第一个匹配结果的详情
       if (ac === 'detail') {
-        return await handleDetailBySearch(metaInfo, wd, openListConfig, rootPath, requestToken, request);
+        return await handleDetailBySearch(
+          metaInfo,
+          wd,
+          openListConfig,
+          rootPath,
+          requestToken,
+          request,
+        );
       }
       return await handleSearch(metaInfo, wd, request);
     }
@@ -134,7 +143,7 @@ export async function GET(
     // 详情模式
     if (ids || ac === 'detail') {
       if (!ids) {
-        return NextResponse.json({
+        return apiSuccess({
           code: 0,
           msg: '缺少视频ID',
           page: 1,
@@ -144,15 +153,21 @@ export async function GET(
           list: [],
         });
       }
-      return await handleDetail(metaInfo, ids, openListConfig, rootPath, requestToken, request);
+      return await handleDetail(
+        metaInfo,
+        ids,
+        openListConfig,
+        rootPath,
+        requestToken,
+        request,
+      );
     }
 
     // 列表模式（返回所有）
     return await handleSearch(metaInfo, '', request);
   } catch (error) {
-    console.error('[OpenList CMS Proxy] 错误:', error);
-    return NextResponse.json(
-      {
+    logger.error('[OpenList CMS Proxy] 错误:', error);
+    return apiSuccess({
         code: 500,
         msg: (error as Error).message,
         page: 1,
@@ -160,16 +175,18 @@ export async function GET(
         limit: 0,
         total: 0,
         list: [],
-      },
-      { status: 500 }
-    );
+      }, { status: 500 });
   }
 }
 
 /**
  * 处理搜索请求
  */
-async function handleSearch(metaInfo: any, query: string, request: NextRequest) {
+async function handleSearch(
+  metaInfo: any,
+  query: string,
+  request: NextRequest,
+) {
   const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
 
   const lowerQuery = query.toLowerCase();
@@ -193,7 +210,7 @@ async function handleSearch(metaInfo: any, query: string, request: NextRequest) 
       // 不在搜索结果中返回 vod_play_url，TVBox 会调用详情接口获取
     }));
 
-  return NextResponse.json({
+  return apiSuccess({
     code: 1,
     msg: '数据列表',
     page: 1,
@@ -213,19 +230,21 @@ async function handleDetailBySearch(
   openListConfig: any,
   rootPath: string,
   token: string,
-  request: NextRequest
+  request: NextRequest,
 ) {
   const lowerQuery = query.toLowerCase();
 
   // 搜索匹配的第一个文件夹
-  const matchedEntry = Object.entries(metaInfo.folders).find(([folderName, info]: [string, any]) => {
-    const matchFolder = folderName.toLowerCase().includes(lowerQuery);
-    const matchTitle = info.title.toLowerCase().includes(lowerQuery);
-    return matchFolder || matchTitle;
-  });
+  const matchedEntry = Object.entries(metaInfo.folders).find(
+    ([folderName, info]: [string, any]) => {
+      const matchFolder = folderName.toLowerCase().includes(lowerQuery);
+      const matchTitle = info.title.toLowerCase().includes(lowerQuery);
+      return matchFolder || matchTitle;
+    },
+  );
 
   if (!matchedEntry) {
-    return NextResponse.json({
+    return apiSuccess({
       code: 0,
       msg: '未找到该视频',
       page: 1,
@@ -238,7 +257,14 @@ async function handleDetailBySearch(
 
   // 使用找到的 folderKey 调用详情处理函数
   const [folderKey] = matchedEntry;
-  return await handleDetail(metaInfo, folderKey, openListConfig, rootPath, token, request);
+  return await handleDetail(
+    metaInfo,
+    folderKey,
+    openListConfig,
+    rootPath,
+    token,
+    request,
+  );
 }
 
 /**
@@ -250,14 +276,14 @@ async function handleDetail(
   openListConfig: any,
   rootPath: string,
   token: string,
-  request: NextRequest
+  request: NextRequest,
 ) {
   const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
 
   // 查找文件夹信息
   const folderMeta = metaInfo.folders?.[folderKey];
   if (!folderMeta) {
-    return NextResponse.json({
+    return apiSuccess({
       code: 0,
       msg: '未找到该视频',
       page: 1,
@@ -274,13 +300,14 @@ async function handleDetail(
 
   // 调用 OpenList 客户端获取视频文件列表
   const { OpenListClient } = await import('@/lib/openlist.client');
-  const { getCachedVideoInfo, setCachedVideoInfo } = await import('@/lib/openlist-cache');
+  const { getCachedVideoInfo, setCachedVideoInfo } =
+    await import('@/lib/openlist-cache');
   const { parseVideoFileName } = await import('@/lib/video-parser');
 
   const client = new OpenListClient(
     openListConfig.URL,
     openListConfig.Username,
-    openListConfig.Password
+    openListConfig.Password,
   );
 
   let videoInfo = getCachedVideoInfo(folderPath);
@@ -292,10 +319,14 @@ async function handleDetail(
   let total = 0;
 
   while (true) {
-    const listResponse = await client.listDirectory(folderPath, currentPage, pageSize);
+    const listResponse = await client.listDirectory(
+      folderPath,
+      currentPage,
+      pageSize,
+    );
 
     if (listResponse.code !== 200) {
-      return NextResponse.json({
+      return apiSuccess({
         code: 0,
         msg: 'OpenList 列表获取失败2',
         page: 1,
@@ -316,10 +347,29 @@ async function handleDetail(
     currentPage++;
   }
 
-  const videoExtensions = ['.mp4', '.mkv', '.avi', '.m3u8', '.flv', '.ts', '.mov', '.wmv', '.webm', '.rmvb', '.rm', '.mpg', '.mpeg', '.3gp', '.f4v', '.m4v', '.vob'];
+  const videoExtensions = [
+    '.mp4',
+    '.mkv',
+    '.avi',
+    '.m3u8',
+    '.flv',
+    '.ts',
+    '.mov',
+    '.wmv',
+    '.webm',
+    '.rmvb',
+    '.rm',
+    '.mpg',
+    '.mpeg',
+    '.3gp',
+    '.f4v',
+    '.m4v',
+    '.vob',
+  ];
   const videoFiles = allFiles.filter((item) => {
-    if (item.is_dir || item.name.startsWith('.') || item.name.endsWith('.json')) return false;
-    return videoExtensions.some(ext => item.name.toLowerCase().endsWith(ext));
+    if (item.is_dir || item.name.startsWith('.') || item.name.endsWith('.json'))
+      return false;
+    return videoExtensions.some((ext) => item.name.toLowerCase().endsWith(ext));
   });
 
   if (!videoInfo) {
@@ -329,7 +379,7 @@ async function handleDetail(
       const file = videoFiles[i];
       const parsed = parseVideoFileName(file.name);
       videoInfo.episodes[file.name] = {
-        episode: parsed.episode || (i + 1),
+        episode: parsed.episode || i + 1,
         season: parsed.season,
         title: parsed.title,
         parsed_from: 'filename',
@@ -341,9 +391,13 @@ async function handleDetail(
 
   // 构建播放链接
   // 获取当前请求的 baseUrl
-  const host = request.headers.get('host') || request.headers.get('x-forwarded-host');
-  const proto = request.headers.get('x-forwarded-proto') ||
-    (host?.includes('localhost') || host?.includes('127.0.0.1') ? 'http' : 'https');
+  const host =
+    request.headers.get('host') || request.headers.get('x-forwarded-host');
+  const proto =
+    request.headers.get('x-forwarded-proto') ||
+    (host?.includes('localhost') || host?.includes('127.0.0.1')
+      ? 'http'
+      : 'https');
   const baseUrl = process.env.SITE_BASE || `${proto}://${host}`;
 
   const episodes = videoFiles
@@ -351,13 +405,26 @@ async function handleDetail(
       const parsed = parseVideoFileName(file.name);
       let episodeInfo;
       if (parsed.episode) {
-        episodeInfo = { episode: parsed.episode, season: parsed.season, title: parsed.title, parsed_from: 'filename', isOVA: parsed.isOVA };
+        episodeInfo = {
+          episode: parsed.episode,
+          season: parsed.season,
+          title: parsed.title,
+          parsed_from: 'filename',
+          isOVA: parsed.isOVA,
+        };
       } else {
-        episodeInfo = videoInfo!.episodes[file.name] || { episode: index + 1, season: undefined, title: undefined, parsed_from: 'filename' };
+        episodeInfo = videoInfo!.episodes[file.name] || {
+          episode: index + 1,
+          season: undefined,
+          title: undefined,
+          parsed_from: 'filename',
+        };
       }
       let displayTitle = episodeInfo.title;
       if (!displayTitle && episodeInfo.episode) {
-        displayTitle = episodeInfo.isOVA ? `OVA ${episodeInfo.episode}` : `第${episodeInfo.episode}集`;
+        displayTitle = episodeInfo.isOVA
+          ? `OVA ${episodeInfo.episode}`
+          : `第${episodeInfo.episode}集`;
       }
       if (!displayTitle) {
         displayTitle = file.name;
@@ -380,16 +447,18 @@ async function handleDetail(
       if (a.isOVA && !b.isOVA) return 1;
       if (!a.isOVA && b.isOVA) return -1;
       // 都是 OVA 或都不是 OVA，按集数排序
-      return a.episode !== b.episode ? a.episode - b.episode : a.fileName.localeCompare(b.fileName);
+      return a.episode !== b.episode
+        ? a.episode - b.episode
+        : a.fileName.localeCompare(b.fileName);
     });
 
   // 转换为 CMS vod_play_url 格式
   // 格式：第1集$url1#第2集$url2#第3集$url3
   const vodPlayUrl = episodes
-    .map(ep => `${ep.title}$${ep.playUrl}`)
+    .map((ep) => `${ep.title}$${ep.playUrl}`)
     .join('#');
 
-  return NextResponse.json({
+  return apiSuccess({
     code: 1,
     msg: '数据列表',
     page: 1,
@@ -402,7 +471,9 @@ async function handleDetail(
         vod_name: folderMeta.title,
         vod_pic: getTMDBImageUrl(folderMeta.poster_path),
         vod_remarks: folderMeta.media_type === 'movie' ? '电影' : '剧集',
-        vod_year: folderMeta.release_date ? folderMeta.release_date.split('-')[0] : '',
+        vod_year: folderMeta.release_date
+          ? folderMeta.release_date.split('-')[0]
+          : '',
         vod_content: folderMeta.overview || '',
         type_name: folderMeta.media_type === 'movie' ? '电影' : '电视剧',
         vod_douban_id: 0,

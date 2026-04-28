@@ -1,17 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { createQuarkInstantPlayFolder } from '@/lib/netdisk/quark.client';
 import { base58Encode } from '@/lib/utils';
 
+import { logger } from '../../../../../lib/logger';
+
 export const runtime = 'nodejs';
 
 function joinPath(...parts: string[]) {
-  const joined = parts
-    .filter(Boolean)
-    .join('/')
-    .replace(/\/+/g, '/');
+  const joined = parts.filter(Boolean).join('/').replace(/\/+/g, '/');
   return joined.startsWith('/') ? joined : `/${joined}`;
 }
 
@@ -19,19 +19,19 @@ export async function POST(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo?.username) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
+      return apiError('未登录', 401);
     }
 
     const { shareUrl, passcode, title } = await request.json();
     if (!shareUrl) {
-      return NextResponse.json({ error: '分享链接不能为空' }, { status: 400 });
+      return apiError('分享链接不能为空', 400);
     }
 
     const config = await getConfig();
     const quarkConfig = config.NetDiskConfig?.Quark;
 
     if (!quarkConfig?.Enabled || !quarkConfig.Cookie) {
-      return NextResponse.json({ error: '夸克网盘未配置或未启用' }, { status: 400 });
+      return apiError('夸克网盘未配置或未启用', 400);
     }
 
     const result = await createQuarkInstantPlayFolder(quarkConfig.Cookie, {
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const openlistFolderPath = joinPath(
       quarkConfig.OpenListTempPath,
-      result.folderName
+      result.folderName,
     );
 
     if (
@@ -61,27 +61,26 @@ export async function POST(request: NextRequest) {
         const openListClient = new OpenListClient(
           config.OpenListConfig.URL,
           config.OpenListConfig.Username,
-          config.OpenListConfig.Password
+          config.OpenListConfig.Password,
         );
-        await openListClient.refreshDirectory(quarkConfig.OpenListTempPath || '/');
+        await openListClient.refreshDirectory(
+          quarkConfig.OpenListTempPath || '/',
+        );
         await openListClient.refreshDirectory(openlistFolderPath);
       } catch (refreshError) {
-        console.warn('[quark instant-play] 刷新 OpenList 临时目录失败:', refreshError);
+        logger.warn(
+          '[quark instant-play] 刷新 OpenList 临时目录失败:',
+          refreshError,
+        );
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      source: 'quark-temp',
+    return apiSuccess({ source: 'quark-temp',
       id: base58Encode(openlistFolderPath),
       title: title || result.folderName,
       openlistFolderPath,
-      ...result,
-    });
+      ...result, });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '立即播放失败' },
-      { status: 500 }
-    );
+    return apiError(error instanceof Error ? error.message : '立即播放失败', 500);
   }
 }

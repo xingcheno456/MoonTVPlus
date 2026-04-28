@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+ 
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getTVSeasonDetails } from '@/lib/tmdb.search';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -16,7 +19,7 @@ export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -24,7 +27,7 @@ export async function GET(request: NextRequest) {
     const season = searchParams.get('season');
 
     if (!id || !season) {
-      return NextResponse.json({ error: '缺少参数' }, { status: 400 });
+      return apiError('缺少参数', 400);
     }
 
     const config = await getConfig();
@@ -33,7 +36,7 @@ export async function GET(request: NextRequest) {
     const tmdbReverseProxy = config.SiteConfig.TMDBReverseProxy;
 
     if (!tmdbApiKey) {
-      return NextResponse.json({ error: 'TMDB API Key 未配置' }, { status: 400 });
+      return apiError('TMDB API Key 未配置', 400);
     }
 
     const response = await getTVSeasonDetails(
@@ -41,22 +44,16 @@ export async function GET(request: NextRequest) {
       parseInt(id),
       parseInt(season),
       tmdbProxy,
-      tmdbReverseProxy
+      tmdbReverseProxy,
     );
 
     if (response.code !== 200 || !response.season) {
-      return NextResponse.json(
-        { error: '获取失败', code: response.code },
-        { status: response.code }
-      );
+      return apiError('获取失败', response.code, String(response.code));
     }
 
-    return NextResponse.json(response.season);
+    return apiSuccess(response.season);
   } catch (error) {
-    console.error('获取集数详情失败:', error);
-    return NextResponse.json(
-      { error: '获取失败', details: (error as Error).message },
-      { status: 500 }
-    );
+    logger.error('获取集数详情失败:', error);
+    return apiError('获取失败: ' + (error as Error).message, 500);
   }
 }

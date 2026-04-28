@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { suwayomiClient } from '@/lib/suwayomi.client';
 
 import { getAuthorizedUsername } from '../_utils';
@@ -11,14 +12,16 @@ export async function GET(request: NextRequest) {
   if (username instanceof NextResponse) return username;
 
   try {
-    const chapterId = new URL(request.url).searchParams.get('chapterId')?.trim();
+    const chapterId = new URL(request.url).searchParams
+      .get('chapterId')
+      ?.trim();
     if (!chapterId) {
-      return NextResponse.json({ error: '缺少 chapterId' }, { status: 400 });
+      return apiError('缺少 chapterId', 400);
     }
 
     const pages = await suwayomiClient.getChapterPages(chapterId);
-    return NextResponse.json({ pages });
+    return apiSuccess({ pages });
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return apiError((error as Error).message, 500);
   }
 }

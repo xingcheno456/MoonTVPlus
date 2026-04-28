@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -21,7 +24,8 @@ async function getFinalUrl(url: string, maxRedirects = 5): Promise<string> {
         method: 'HEAD',
         redirect: 'manual',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         },
       });
 
@@ -49,7 +53,7 @@ async function getFinalUrl(url: string, maxRedirects = 5): Promise<string> {
         return currentUrl;
       }
     } catch (error) {
-      console.error('[openlist/play] 获取最终 URL 失败:', error);
+      logger.error('[openlist/play] 获取最终 URL 失败:', error);
       return currentUrl;
     }
   }
@@ -67,7 +71,7 @@ export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -76,7 +80,7 @@ export async function GET(request: NextRequest) {
     const format = searchParams.get('format'); // 新增 format 参数
 
     if (!folderName || !fileName) {
-      return NextResponse.json({ error: '缺少参数' }, { status: 400 });
+      return apiError('缺少参数', 400);
     }
 
     const config = await getConfig();
@@ -89,7 +93,7 @@ export async function GET(request: NextRequest) {
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json({ error: 'OpenList 未配置或未启用' }, { status: 400 });
+      return apiError('OpenList 未配置或未启用', 400);
     }
 
     // folderName 已经是完整路径，直接使用
@@ -99,7 +103,7 @@ export async function GET(request: NextRequest) {
     const client = new OpenListClient(
       openListConfig.URL,
       openListConfig.Username,
-      openListConfig.Password
+      openListConfig.Password,
     );
 
     // 如果启用了禁用预览视频，直接使用直连方法
@@ -107,15 +111,12 @@ export async function GET(request: NextRequest) {
       const fileResponse = await client.getFile(filePath);
 
       if (fileResponse.code !== 200 || !fileResponse.data.raw_url) {
-        console.error('[OpenList Play] 获取播放URL失败:', {
+        logger.error('[OpenList Play] 获取播放URL失败:', {
           fileName,
           code: fileResponse.code,
           message: fileResponse.message,
         });
-        return NextResponse.json(
-          { error: '获取播放链接失败' },
-          { status: 500 }
-        );
+        return apiError('获取播放链接失败', 500);
       }
 
       // 如果指定了 format=json，使用 getFinalUrl 并返回 JSON
@@ -127,11 +128,14 @@ export async function GET(request: NextRequest) {
           throw new Error('获取到的播放链接为空');
         }
 
-        return NextResponse.json({ url: finalUrl });
+        return apiSuccess({ url: finalUrl });
       }
 
       // 检查URL是否为空
-      if (!fileResponse.data.raw_url || fileResponse.data.raw_url.trim() === '') {
+      if (
+        !fileResponse.data.raw_url ||
+        fileResponse.data.raw_url.trim() === ''
+      ) {
         throw new Error('获取到的播放链接为空');
       }
 
@@ -143,16 +147,17 @@ export async function GET(request: NextRequest) {
     try {
       const data = await client.getVideoPreview(filePath);
 
-      const taskList = data.data?.video_preview_play_info?.live_transcoding_task_list;
+      const taskList =
+        data.data?.video_preview_play_info?.live_transcoding_task_list;
       if (!taskList || taskList.length === 0) {
         throw new Error('未找到可用的播放链接');
       }
 
       const qualityOrder: Record<string, number> = {
-        'FHD': 1,
-        'HD': 2,
-        'LD': 3,
-        'SD': 4,
+        FHD: 1,
+        HD: 2,
+        LD: 3,
+        SD: 4,
       };
 
       const qualities = taskList
@@ -162,7 +167,10 @@ export async function GET(request: NextRequest) {
           url: task.url,
         }))
         .filter((quality: any) => quality.url && quality.url.trim() !== '') // 过滤空URL
-        .sort((a: any, b: any) => (qualityOrder[a.name] || 999) - (qualityOrder[b.name] || 999));
+        .sort(
+          (a: any, b: any) =>
+            (qualityOrder[a.name] || 999) - (qualityOrder[b.name] || 999),
+        );
 
       if (qualities.length === 0) {
         throw new Error('未找到已完成的播放链接');
@@ -174,10 +182,10 @@ export async function GET(request: NextRequest) {
           qualities.map(async (quality: any) => ({
             ...quality,
             url: await getFinalUrl(quality.url),
-          }))
+          })),
         );
 
-        return NextResponse.json({
+        return apiSuccess({
           url: resolvedQualities[0].url,
           qualities: resolvedQualities,
         });
@@ -187,20 +195,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(qualities[0].url);
     } catch (error) {
       // 视频预览流失败，降级到直连方法
-      console.log('[openlist/play] 视频预览流失败，降级到直连方法:', (error as Error).message);
+      logger.info(
+        '[openlist/play] 视频预览流失败，降级到直连方法:',
+        (error as Error).message,
+      );
 
       const fileResponse = await client.getFile(filePath);
 
       if (fileResponse.code !== 200 || !fileResponse.data.raw_url) {
-        console.error('[OpenList Play] 获取播放URL失败:', {
+        logger.error('[OpenList Play] 获取播放URL失败:', {
           fileName,
           code: fileResponse.code,
           message: fileResponse.message,
         });
-        return NextResponse.json(
-          { error: '获取播放链接失败' },
-          { status: 500 }
-        );
+        return apiError('获取播放链接失败', 500);
       }
 
       // 如果指定了 format=json，使用 getFinalUrl 并返回 JSON
@@ -212,11 +220,14 @@ export async function GET(request: NextRequest) {
           throw new Error('获取到的播放链接为空');
         }
 
-        return NextResponse.json({ url: finalUrl });
+        return apiSuccess({ url: finalUrl });
       }
 
       // 检查URL是否为空
-      if (!fileResponse.data.raw_url || fileResponse.data.raw_url.trim() === '') {
+      if (
+        !fileResponse.data.raw_url ||
+        fileResponse.data.raw_url.trim() === ''
+      ) {
         throw new Error('获取到的播放链接为空');
       }
 
@@ -224,10 +235,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(fileResponse.data.raw_url);
     }
   } catch (error) {
-    console.error('获取播放链接失败:', error);
-    return NextResponse.json(
-      { error: '获取失败', details: (error as Error).message },
-      { status: 500 }
-    );
+    logger.error('获取播放链接失败:', error);
+    return apiError('获取失败: ' + (error as Error).message, 500);
   }
 }

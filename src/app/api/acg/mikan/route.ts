@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { parseStringPromise } from 'xml2js';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getMagnetBaseUrl, universalMagnetFetch } from '@/lib/magnet.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -23,40 +26,28 @@ export async function POST(req: NextRequest) {
     // 检查权限
     const authInfo = getAuthInfoFromCookie(req);
     if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json(
-        { error: '无权限访问' },
-        { status: 403 }
-      );
+      return apiError('无权限访问', 403);
     }
 
     const { keyword, page = 1 } = await req.json();
 
     if (!keyword || typeof keyword !== 'string') {
-      return NextResponse.json(
-        { error: '搜索关键词不能为空' },
-        { status: 400 }
-      );
+      return apiError('搜索关键词不能为空', 400);
     }
 
     const trimmedKeyword = keyword.trim();
     if (!trimmedKeyword) {
-      return NextResponse.json(
-        { error: '搜索关键词不能为空' },
-        { status: 400 }
-      );
+      return apiError('搜索关键词不能为空', 400);
     }
 
     // 验证页码（Mikan RSS 不支持分页，这里仍接收 page 以保持接口一致）
     const pageNum = parseInt(String(page), 10);
     if (isNaN(pageNum) || pageNum < 1) {
-      return NextResponse.json(
-        { error: '页码必须是大于0的整数' },
-        { status: 400 }
-      );
+      return apiError('页码必须是大于0的整数', 400);
     }
 
     if (pageNum > 1) {
-      return NextResponse.json({
+      return apiSuccess({
         keyword: trimmedKeyword,
         page: pageNum,
         total: 0,
@@ -67,16 +58,20 @@ export async function POST(req: NextRequest) {
     const config = await getConfig();
     const searchBaseUrl = getMagnetBaseUrl(
       'https://mikanani.me',
-      config.SiteConfig.MagnetMikanReverseProxy
+      config.SiteConfig.MagnetMikanReverseProxy,
     );
     const searchUrl = `${searchBaseUrl}/RSS/Search?searchstr=${encodeURIComponent(trimmedKeyword)}`;
 
-    const response = await universalMagnetFetch(searchUrl, config.SiteConfig.MagnetProxy, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    const response = await universalMagnetFetch(
+      searchUrl,
+      config.SiteConfig.MagnetProxy,
+      {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
       },
-    });
+    );
 
     if (!response.ok) {
       throw new Error(`Mikan API 请求失败: ${response.status}`);
@@ -86,7 +81,7 @@ export async function POST(req: NextRequest) {
     const parsed = await parseStringPromise(xmlData);
 
     if (!parsed?.rss?.channel?.[0]?.item) {
-      return NextResponse.json({
+      return apiSuccess({
         keyword: trimmedKeyword,
         page: pageNum,
         total: 0,
@@ -99,16 +94,17 @@ export async function POST(req: NextRequest) {
     const results = items.map((item: any) => {
       const title = pickText(item.title);
       const link = pickText(item.link);
-      const guid = pickText(item.guid) || link || `${title}-${pickText(item.torrent?.[0]?.pubDate)}`;
+      const guid =
+        pickText(item.guid) ||
+        link ||
+        `${title}-${pickText(item.torrent?.[0]?.pubDate)}`;
       const pubDate =
         pickText(item.pubDate) ||
         pickText(item.torrent?.[0]?.pubDate) ||
         pickText(item['dc:date']);
 
       const description =
-        pickText(item.description) ||
-        pickText(item['content:encoded']) ||
-        '';
+        pickText(item.description) || pickText(item['content:encoded']) || '';
 
       const torrentUrl =
         pickText(item.enclosure?.[0]?.$?.url) ||
@@ -120,10 +116,12 @@ export async function POST(req: NextRequest) {
       if (description) {
         const imgMatches = description.match(/src="([^"]+)"/g);
         if (imgMatches) {
-          images = imgMatches.map((match: string) => {
-            const urlMatch = match.match(/src="([^"]+)"/);
-            return urlMatch ? urlMatch[1] : '';
-          }).filter(Boolean);
+          images = imgMatches
+            .map((match: string) => {
+              const urlMatch = match.match(/src="([^"]+)"/);
+              return urlMatch ? urlMatch[1] : '';
+            })
+            .filter(Boolean);
         }
       }
 
@@ -138,17 +136,14 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({
+    return apiSuccess({
       keyword: trimmedKeyword,
       page: pageNum,
       total: results.length,
       items: results,
     });
   } catch (error: any) {
-    console.error('Mikan 搜索失败:', error);
-    return NextResponse.json(
-      { error: error.message || '搜索失败' },
-      { status: 500 }
-    );
+    logger.error('Mikan 搜索失败:', error);
+    return apiError(error.message || '搜索失败', 500);
   }
 }

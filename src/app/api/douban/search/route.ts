@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { fetchDoubanData } from '@/lib/douban';
 
 export const runtime = 'nodejs';
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
   const query = searchParams.get('q');
 
   if (!query) {
-    return NextResponse.json({ error: '缺少搜索关键词' }, { status: 400 });
+    return apiError('缺少搜索关键词', 400);
   }
 
   try {
@@ -40,11 +41,8 @@ export async function GET(request: NextRequest) {
       data: data,
     };
 
-    return NextResponse.json(response);
+    return apiSuccess(response);
   } catch (error) {
-    return NextResponse.json(
-      { error: '搜索豆瓣数据失败', details: (error as Error).message },
-      { status: 500 }
-    );
+    return apiError('搜索豆瓣数据失败: ' + (error as Error).message, 500);
   }
 }

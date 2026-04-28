@@ -1,13 +1,15 @@
-/* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import {
   getUserDevices,
   revokeAllRefreshTokens,
   revokeRefreshToken,
 } from '@/lib/refresh-token';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -16,7 +18,7 @@ export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
 
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
@@ -28,10 +30,10 @@ export async function GET(request: NextRequest) {
       isCurrent: device.tokenId === authInfo.tokenId,
     }));
 
-    return NextResponse.json({ devices: devicesWithCurrent });
+    return apiSuccess({ devices: devicesWithCurrent });
   } catch (error) {
-    console.error('Failed to get devices:', error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    logger.error('Failed to get devices:', error);
+    return apiError('Server error', 500);
   }
 }
 
@@ -40,22 +42,22 @@ export async function DELETE(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
 
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
     const { tokenId } = await request.json();
 
     if (!tokenId) {
-      return NextResponse.json({ error: 'Token ID required' }, { status: 400 });
+      return apiError('Token ID required', 400);
     }
 
     await revokeRefreshToken(authInfo.username, tokenId);
 
-    return NextResponse.json({ ok: true });
+    return apiSuccess({ ok: true });
   } catch (error) {
-    console.error('Failed to revoke device:', error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    logger.error('Failed to revoke device:', error);
+    return apiError('Server error', 500);
   }
 }
 
@@ -64,13 +66,13 @@ export async function POST(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
 
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
     await revokeAllRefreshTokens(authInfo.username);
 
-    const response = NextResponse.json({ ok: true });
+    const response = apiSuccess({ ok: true });
 
     // 清除当前设备的 Cookie
     response.cookies.set('auth', '', {
@@ -83,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Failed to revoke all devices:', error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    logger.error('Failed to revoke all devices:', error);
+    return apiError('Server error', 500);
   }
 }

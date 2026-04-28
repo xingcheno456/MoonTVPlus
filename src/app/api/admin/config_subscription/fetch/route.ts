@@ -1,8 +1,10 @@
-/* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -11,30 +13,24 @@ export async function POST(request: NextRequest) {
     // 权限检查：仅站长可以拉取配置订阅
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     if (authInfo.username !== process.env.USERNAME) {
-      return NextResponse.json(
-        { error: '权限不足，只有站长可以拉取配置订阅' },
-        { status: 401 }
-      );
+      return apiError('权限不足，只有站长可以拉取配置订阅', 401);
     }
 
     const { url } = await request.json();
 
     if (!url) {
-      return NextResponse.json({ error: '缺少URL参数' }, { status: 400 });
+      return apiError('缺少URL参数', 400);
     }
 
     // 直接 fetch URL 获取配置内容
     const response = await fetch(url);
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: `请求失败: ${response.status} ${response.statusText}` },
-        { status: response.status }
-      );
+      return apiError(`请求失败: ${response.status} ${response.statusText}`, 400);
     }
 
     const configContent = await response.text();
@@ -46,21 +42,14 @@ export async function POST(request: NextRequest) {
       const decodedBytes = bs58.decode(configContent);
       decodedContent = new TextDecoder().decode(decodedBytes);
     } catch (decodeError) {
-      console.warn('Base58 解码失败', decodeError);
+      logger.warn('Base58 解码失败', decodeError);
       throw decodeError;
     }
 
-    return NextResponse.json({
-      success: true,
-      configContent: decodedContent,
-      message: '配置拉取成功'
-    });
-
+    return apiSuccess({ configContent: decodedContent,
+      message: '配置拉取成功', });
   } catch (error) {
-    console.error('拉取配置失败:', error);
-    return NextResponse.json(
-      { error: '拉取配置失败' },
-      { status: 500 }
-    );
+    logger.error('拉取配置失败:', error);
+    return apiError('拉取配置失败', 500);
   }
 }

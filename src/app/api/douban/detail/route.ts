@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server';
-
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getCacheTime } from '@/lib/config';
 import { fetchDoubanData } from '@/lib/douban';
 
@@ -47,10 +46,7 @@ export async function GET(request: Request) {
 
   // 验证参数
   if (!id) {
-    return NextResponse.json(
-      { error: '缺少必要参数: id' },
-      { status: 400 }
-    );
+    return apiError('缺少必要参数: id', 400);
   }
 
   const target = `https://m.douban.com/rexxar/api/v2/subject/${id}`;
@@ -60,7 +56,7 @@ export async function GET(request: Request) {
     const doubanData = await fetchDoubanData<DoubanDetailApiResponse>(target);
 
     const cacheTime = await getCacheTime();
-    return NextResponse.json(doubanData, {
+    return apiSuccess(doubanData, {
       headers: {
         'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
         'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
@@ -69,9 +65,6 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: '获取豆瓣详情失败', details: (error as Error).message },
-      { status: 500 }
-    );
+    return apiError('获取豆瓣详情失败: ' + (error as Error).message, 500);
   }
 }

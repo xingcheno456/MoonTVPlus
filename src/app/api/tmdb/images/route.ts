@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getTMDBImages } from '@/lib/tmdb.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -16,7 +19,7 @@ export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -25,14 +28,16 @@ export async function GET(request: NextRequest) {
     const pageParam = searchParams.get('page');
     const pageSizeParam = searchParams.get('pageSize');
     const page = pageParam ? Math.max(parseInt(pageParam, 10), 1) : null;
-    const pageSize = pageSizeParam ? Math.min(Math.max(parseInt(pageSizeParam, 10), 1), 60) : null;
+    const pageSize = pageSizeParam
+      ? Math.min(Math.max(parseInt(pageSizeParam, 10), 1), 60)
+      : null;
 
     if (!id) {
-      return NextResponse.json({ error: '缺少ID参数' }, { status: 400 });
+      return apiError('缺少ID参数', 400);
     }
 
     if (type !== 'movie' && type !== 'tv') {
-      return NextResponse.json({ error: '类型参数必须是movie或tv' }, { status: 400 });
+      return apiError('类型参数必须是movie或tv', 400);
     }
 
     const config = await getConfig();
@@ -41,7 +46,7 @@ export async function GET(request: NextRequest) {
     const tmdbReverseProxy = config.SiteConfig.TMDBReverseProxy;
 
     if (!tmdbApiKey) {
-      return NextResponse.json({ error: 'TMDB API Key 未配置' }, { status: 400 });
+      return apiError('TMDB API Key 未配置', 400);
     }
 
     const response = await getTMDBImages(
@@ -49,21 +54,18 @@ export async function GET(request: NextRequest) {
       parseInt(id, 10),
       type as 'movie' | 'tv',
       tmdbProxy,
-      tmdbReverseProxy
+      tmdbReverseProxy,
     );
 
     if (response.code !== 200 || !response.images) {
-      return NextResponse.json(
-        { error: 'TMDB 图片信息获取失败', code: response.code },
-        { status: response.code }
-      );
+      return apiError('TMDB 图片信息获取失败', response.code, String(response.code));
     }
 
-    const backdrops = (response.images.backdrops || []).map((item: any) => ({
+    const backdrops = ((response.images.backdrops as any[]) || []).map((item: any) => ({
       ...item,
       imageType: 'backdrop' as const,
     }));
-    const posters = (response.images.posters || []).map((item: any) => ({
+    const posters = ((response.images.posters as any[]) || []).map((item: any) => ({
       ...item,
       imageType: 'poster' as const,
     }));
@@ -77,7 +79,7 @@ export async function GET(request: NextRequest) {
     const total = allImages.length;
 
     if (!page || !pageSize) {
-      return NextResponse.json({
+      return apiSuccess({
         total,
         list: allImages,
       });
@@ -88,7 +90,7 @@ export async function GET(request: NextRequest) {
     const start = (safePage - 1) * pageSize;
     const list = allImages.slice(start, start + pageSize);
 
-    return NextResponse.json({
+    return apiSuccess({
       page: safePage,
       pageSize,
       total,
@@ -96,10 +98,7 @@ export async function GET(request: NextRequest) {
       list,
     });
   } catch (error) {
-    console.error('TMDB图片信息获取失败:', error);
-    return NextResponse.json(
-      { error: '获取图片信息失败', details: (error as Error).message },
-      { status: 500 }
-    );
+    logger.error('TMDB图片信息获取失败:', error);
+    return apiError('获取图片信息失败: ' + (error as Error).message, 500);
   }
 }

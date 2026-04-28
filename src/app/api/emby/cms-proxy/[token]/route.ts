@@ -1,9 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiSuccess } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';
 import { EmbyClient } from '@/lib/emby.client';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -14,23 +17,21 @@ export const runtime = 'nodejs';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> },
 ) {
   const { searchParams } = new URL(request.url);
+  const { token } = await params;
   const ac = searchParams.get('ac');
   const wd = searchParams.get('wd'); // 搜索关键词
   const ids = searchParams.get('ids'); // 视频ID
 
   // 检查必要参数
   if (ac !== 'videolist' && ac !== 'list' && ac !== 'detail') {
-    return NextResponse.json(
-      { code: 400, msg: '不支持的操作' },
-      { status: 400 }
-    );
+    return apiSuccess({ code: 400, msg: '不支持的操作' }, { status: 400 });
   }
 
   // 验证 TVBox Token（从路径中获取）
-  const requestToken = params.token;
+  const requestToken = token;
   const globalToken = process.env.TVBOX_SUBSCRIBE_TOKEN;
 
   // 检查是否是全局token或用户token
@@ -52,7 +53,7 @@ export async function GET(
   }
 
   if (!isValidToken) {
-    return NextResponse.json({
+    return apiSuccess({
       code: 401,
       msg: '无效的访问token',
       page: 1,
@@ -68,7 +69,7 @@ export async function GET(
 
     // 验证 Emby 配置（多源）
     if (!config.EmbyConfig?.Sources || config.EmbyConfig.Sources.length === 0) {
-      return NextResponse.json({
+      return apiSuccess({
         code: 0,
         msg: 'Emby 未配置或未启用',
         page: 1,
@@ -90,13 +91,19 @@ export async function GET(
     if (wd) {
       // 搜索模式
       if (ac === 'detail') {
-        return await handleDetailBySearch(client, wd, requestToken, embyKey, request);
+        return await handleDetailBySearch(
+          client,
+          wd,
+          requestToken,
+          embyKey,
+          request,
+        );
       }
       return await handleSearch(client, wd, requestToken);
     } else if (ids || ac === 'detail') {
       // 详情模式
       if (!ids) {
-        return NextResponse.json({
+        return apiSuccess({
           code: 0,
           msg: '缺少视频ID',
           page: 1,
@@ -112,8 +119,8 @@ export async function GET(
       return await handleSearch(client, '', requestToken);
     }
   } catch (error) {
-    console.error('[Emby CMS Proxy] 错误:', error);
-    return NextResponse.json({
+    logger.error('[Emby CMS Proxy] 错误:', error);
+    return apiSuccess({
       code: 500,
       msg: (error as Error).message,
       page: 1,
@@ -147,7 +154,7 @@ async function handleSearch(client: EmbyClient, query: string, token: string) {
     type_name: item.Type === 'Movie' ? '电影' : '电视剧',
   }));
 
-  return NextResponse.json({
+  return apiSuccess({
     code: 1,
     msg: '数据列表',
     page: 1,
@@ -166,7 +173,7 @@ async function handleDetailBySearch(
   query: string,
   token: string,
   embyKey: string | undefined,
-  request: NextRequest
+  request: NextRequest,
 ) {
   const result = await client.getItems({
     searchTerm: query,
@@ -177,7 +184,7 @@ async function handleDetailBySearch(
   });
 
   if (result.Items.length === 0) {
-    return NextResponse.json({
+    return apiSuccess({
       code: 0,
       msg: '未找到该视频',
       page: 1,
@@ -188,7 +195,13 @@ async function handleDetailBySearch(
     });
   }
 
-  return await handleDetail(client, result.Items[0].Id, token, embyKey, request);
+  return await handleDetail(
+    client,
+    result.Items[0].Id,
+    token,
+    embyKey,
+    request,
+  );
 }
 
 /**
@@ -199,14 +212,18 @@ async function handleDetail(
   itemId: string,
   token: string,
   embyKey: string | undefined,
-  request: NextRequest
+  request: NextRequest,
 ) {
   const item = await client.getItem(itemId);
 
   // 获取当前请求的 baseUrl
-  const host = request.headers.get('host') || request.headers.get('x-forwarded-host');
-  const proto = request.headers.get('x-forwarded-proto') ||
-    (host?.includes('localhost') || host?.includes('127.0.0.1') ? 'http' : 'https');
+  const host =
+    request.headers.get('host') || request.headers.get('x-forwarded-host');
+  const proto =
+    request.headers.get('x-forwarded-proto') ||
+    (host?.includes('localhost') || host?.includes('127.0.0.1')
+      ? 'http'
+      : 'https');
   const baseUrl = process.env.SITE_BASE || `${proto}://${host}`;
 
   const embyKeyParam = embyKey ? `&embyKey=${embyKey}` : '';
@@ -236,7 +253,7 @@ async function handleDetail(
     vodPlayUrl = episodes.join('#');
   }
 
-  return NextResponse.json({
+  return apiSuccess({
     code: 1,
     msg: '数据列表',
     page: 1,

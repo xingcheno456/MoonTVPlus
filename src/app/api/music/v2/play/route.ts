@@ -1,7 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
-import { extractSongmid, fetchLxLyric, MusicQuality, normalizeMusicQuality, normalizeSong, lxPostJson } from '@/lib/music-v2';
+import { apiSuccess } from '@/lib/api-response';
+import {
+  extractSongmid,
+  fetchLxLyric,
+  lxPostJson,
+  MusicQuality,
+  normalizeMusicQuality,
+  normalizeSong,
+} from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -19,13 +29,21 @@ type PlayMetaPayload = {
 };
 
 const globalMusicPlayMetaCache = globalThis as typeof globalThis & {
-  __musicV2PlayMetaCache?: Map<string, { expiresAt: number; payload: PlayMetaPayload }>;
+  __musicV2PlayMetaCache?: Map<
+    string,
+    { expiresAt: number; payload: PlayMetaPayload }
+  >;
 };
 
-const playMetaCache = globalMusicPlayMetaCache.__musicV2PlayMetaCache ?? new Map<string, { expiresAt: number; payload: PlayMetaPayload }>();
+const playMetaCache =
+  globalMusicPlayMetaCache.__musicV2PlayMetaCache ??
+  new Map<string, { expiresAt: number; payload: PlayMetaPayload }>();
 globalMusicPlayMetaCache.__musicV2PlayMetaCache = playMetaCache;
 
-function buildStableStreamUrl(song: ReturnType<typeof normalizeSong>, quality: string) {
+function buildStableStreamUrl(
+  song: ReturnType<typeof normalizeSong>,
+  quality: string,
+) {
   const params = new URLSearchParams({
     songId: song.songId,
     source: song.source,
@@ -46,7 +64,10 @@ function buildStableStreamUrl(song: ReturnType<typeof normalizeSong>, quality: s
   return `/api/music/v2/stream?${params.toString()}`;
 }
 
-function getPlayMetaCacheKey(song: ReturnType<typeof normalizeSong>, quality: string) {
+function getPlayMetaCacheKey(
+  song: ReturnType<typeof normalizeSong>,
+  quality: string,
+) {
   return `${song.source}:${song.songId}:${quality}`;
 }
 
@@ -70,20 +91,25 @@ function setCachedPlayMeta(cacheKey: string, payload: PlayMetaPayload) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const requestedQuality = ((body?.quality || '320k') as MusicQuality);
+    const requestedQuality = (body?.quality || '320k') as MusicQuality;
     const quality = normalizeMusicQuality(requestedQuality);
     const includeUrl = body?.includeUrl !== false;
     const song = normalizeSong(body?.song || {});
 
     if (!song.songId || !song.source || !song.name || !song.artist) {
-      return badRequest(`歌曲信息不完整: songId=${song.songId || ''}, source=${song.source || ''}, name=${song.name || ''}, artist=${song.artist || ''}`);
+      return badRequest(
+        `歌曲信息不完整: songId=${song.songId || ''}, source=${song.source || ''}, name=${song.name || ''}, artist=${song.artist || ''}`,
+      );
     }
 
     const cacheKey = getPlayMetaCacheKey(song, quality);
     let cachedMeta = getCachedPlayMeta(cacheKey);
 
     if (!cachedMeta) {
-      let lyric: { lyric?: string; tlyric?: string } = { lyric: '', tlyric: '' };
+      let lyric: { lyric?: string; tlyric?: string } = {
+        lyric: '',
+        tlyric: '',
+      };
       try {
         lyric = await fetchLxLyric(song);
       } catch {
@@ -100,16 +126,23 @@ export async function POST(request: NextRequest) {
       setCachedPlayMeta(cacheKey, cachedMeta);
     }
 
-    let play: {
-      url: string;
-      directUrl: string;
-      quality: string;
-      requestedQuality: MusicQuality;
-    } | undefined;
+    let play:
+      | {
+          url: string;
+          directUrl: string;
+          quality: string;
+          requestedQuality: MusicQuality;
+        }
+      | undefined;
     let attempts = cachedMeta.meta.attempts || [];
 
     if (includeUrl) {
-      const urlResult = await lxPostJson<{ url?: string; type?: string; attempts?: any[]; error?: string }>(
+      const urlResult = await lxPostJson<{
+        url?: string;
+        type?: string;
+        attempts?: any[];
+        error?: string;
+      }>(
         '/api/music/url',
         {
           songInfo: {
@@ -121,17 +154,17 @@ export async function POST(request: NextRequest) {
           },
           quality,
         },
-        'auto'
+        'auto',
       );
 
       if (!urlResult?.url) {
-        return NextResponse.json({
-          success: false,
-          error: {
-            code: 'MUSIC_PLAY_FAILED',
-            message: urlResult?.error || '获取播放地址失败',
-          },
-        }, { status: 502 });
+        return apiSuccess({
+            success: false,
+            error: {
+              code: 'MUSIC_PLAY_FAILED',
+              message: urlResult?.error || '获取播放地址失败',
+            },
+          }, { status: 502 });
       }
 
       attempts = urlResult.attempts || attempts;
@@ -143,9 +176,7 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
+    return apiSuccess({ data: {
         song: cachedMeta.song,
         ...(play ? { play } : {}),
         lyric: {
@@ -156,10 +187,9 @@ export async function POST(request: NextRequest) {
           attempts,
           includeUrl,
         },
-      },
-    });
+      }, });
   } catch (error) {
-    console.error('[music-v2] play route error:', error);
+    logger.error('[music-v2] play route error:', error);
     return internalError('获取播放信息失败', (error as Error).message);
   }
 }

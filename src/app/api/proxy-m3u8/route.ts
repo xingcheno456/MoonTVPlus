@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';
 import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -23,28 +26,19 @@ export async function GET(request: NextRequest) {
     const envToken = process.env.NEXT_PUBLIC_PROXY_M3U8_TOKEN;
     if (envToken && envToken.trim() !== '') {
       if (!token || token !== envToken) {
-        return NextResponse.json(
-          { error: '无效的访问令牌' },
-          { status: 401 }
-        );
+        return apiError('无效的访问令牌', 401);
       }
     }
 
     if (!m3u8Url) {
-      return NextResponse.json(
-        { error: '缺少必要参数: url' },
-        { status: 400 }
-      );
+      return apiError('缺少必要参数: url', 400);
     }
 
     const DIRECT_PLAY_SOURCE = 'directplay';
     // 安全校验：防 SSRF / 域名重绑定，只允许合法的公网 URL。对所有经过 proxy-m3u8 的请求强制校验，不仅限于 directplay
     const isSafeUrl = await validateProxyUrlServerSide(m3u8Url);
     if (!isSafeUrl) {
-      return NextResponse.json(
-        { error: 'Proxy request to local or invalid network is forbidden' },
-        { status: 403 }
-      );
+      return apiError('Proxy request to local or invalid network is forbidden', 403);
     }
 
     // 获取当前请求的 origin
@@ -52,7 +46,8 @@ export async function GET(request: NextRequest) {
     let origin = process.env.SITE_BASE;
     if (!origin) {
       // 从请求头中获取 Host 和协议
-      let host = request.headers.get('host') || request.headers.get('x-forwarded-host');
+      let host =
+        request.headers.get('host') || request.headers.get('x-forwarded-host');
 
       // 安全校验：防 Host 头注入漏洞 (要求仅包含合法域名或 IP 格式字符)
       if (host && !/^[a-zA-Z0-9.-]+(:\d+)?$/.test(host)) {
@@ -64,12 +59,15 @@ export async function GET(request: NextRequest) {
         try {
           host = new URL(request.url).host;
         } catch {
-          return NextResponse.json({ error: 'Invalid Request Host' }, { status: 400 });
+          return apiError('Invalid Request Host', 400);
         }
       }
 
-      const proto = request.headers.get('x-forwarded-proto') ||
-        (host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https');
+      const proto =
+        request.headers.get('x-forwarded-proto') ||
+        (host.includes('localhost') || host.includes('127.0.0.1')
+          ? 'http'
+          : 'https');
       origin = `${proto}://${host}`;
     }
 
@@ -77,36 +75,37 @@ export async function GET(request: NextRequest) {
     const m3u8UrlObj = new URL(m3u8Url);
     const response = await fetch(m3u8Url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': '*/*',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: '*/*',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         'Accept-Encoding': 'gzip, deflate, br',
-        'Referer': `${m3u8UrlObj.protocol}//${m3u8UrlObj.host}/`,
+        Referer: `${m3u8UrlObj.protocol}//${m3u8UrlObj.host}/`,
       },
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: '获取 m3u8 文件失败' },
-        { status: response.status }
-      );
+      return apiError('获取 m3u8 文件失败', 400);
     }
 
     // 后端 MIME Sniffing: 防御伪装成 m3u8 的大文件二进制流
     // 使用白名单策略：只有明确属于文本/m3u8 类型的才放行解析
-    const contentType = (response.headers.get('content-type') || '').toLowerCase();
-    const isTextType = (
-      contentType === '' ||                                        // 无 Content-Type 时保守放行（后续有内容校验兜底）
-      contentType.includes('application/vnd.apple.mpegurl') ||     // 标准 m3u8
-      contentType.includes('application/x-mpegurl') ||             // 兼容 m3u8
-      contentType.includes('audio/mpegurl') ||                     // 兼容 m3u8
-      contentType.includes('text/') ||                             // text/plain 等
-      contentType.includes('application/json')                     // 部分 API 返回 JSON 格式的错误
-    );
+    const contentType = (
+      response.headers.get('content-type') || ''
+    ).toLowerCase();
+    const isTextType =
+      contentType === '' || // 无 Content-Type 时保守放行（后续有内容校验兜底）
+      contentType.includes('application/vnd.apple.mpegurl') || // 标准 m3u8
+      contentType.includes('application/x-mpegurl') || // 兼容 m3u8
+      contentType.includes('audio/mpegurl') || // 兼容 m3u8
+      contentType.includes('text/') || // text/plain 等
+      contentType.includes('application/json'); // 部分 API 返回 JSON 格式的错误
 
     if (!isTextType) {
       if (source === DIRECT_PLAY_SOURCE) {
-        console.log(`[Proxy-M3U8] 检测到非文本媒体流 (Content-Type: ${contentType}), 针对 directplay 直链代理模式，直接透传二进制流, URL: ${m3u8Url}`);
+        logger.info(
+          `[Proxy-M3U8] 检测到非文本媒体流 (Content-Type: ${contentType}), 针对 directplay 直链代理模式，直接透传二进制流, URL: ${m3u8Url}`,
+        );
         // 构造一个新的 Response 对象用于二进制直接透传，确保包含了支持跨域的 header
         const newHeaders = new Headers(response.headers);
         newHeaders.set('Access-Control-Allow-Origin', '*');
@@ -122,16 +121,15 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      console.warn(`[Proxy-M3U8] 拦截到非文本媒体流 (Content-Type: ${contentType}), 拒绝按文本解析, URL: ${m3u8Url}`);
-      return NextResponse.json(
-        {
+      logger.warn(
+        `[Proxy-M3U8] 拦截到非文本媒体流 (Content-Type: ${contentType}), 拒绝按文本解析, URL: ${m3u8Url}`,
+      );
+      return apiSuccess({
           error: 'Unsupported Media Type',
           details: `The source returned Content-Type "${contentType}", which is not a text m3u8 playlist.`,
           fallbackToDirect: true,
-          originalUrl: m3u8Url
-        },
-        { status: 415, headers: { 'Access-Control-Allow-Origin': '*' } }
-      );
+          originalUrl: m3u8Url,
+        }, { status: 415, headers: { 'Access-Control-Allow-Origin': '*' } });
     }
 
     let m3u8Content = await response.text();
@@ -139,8 +137,14 @@ export async function GET(request: NextRequest) {
     // 二次内容校验：即使 Content-Type 通过了白名单，检查实际内容是否为有效的 m3u8
     // 有些服务器返回 text/plain 但实际内容是 HTML 错误页或其他格式
     const trimmedContent = m3u8Content.trimStart();
-    if (trimmedContent.length > 0 && !trimmedContent.startsWith('#EXTM3U') && !trimmedContent.startsWith('#EXT')) {
-      console.warn(`[Proxy-M3U8] 内容校验失败：响应体不以 #EXTM3U 或 #EXT 开头, 可能非有效 m3u8, URL: ${m3u8Url}`);
+    if (
+      trimmedContent.length > 0 &&
+      !trimmedContent.startsWith('#EXTM3U') &&
+      !trimmedContent.startsWith('#EXT')
+    ) {
+      logger.warn(
+        `[Proxy-M3U8] 内容校验失败：响应体不以 #EXTM3U 或 #EXT 开头, 可能非有效 m3u8, URL: ${m3u8Url}`,
+      );
       // 不直接拒绝（可能是不规范但仍可播放的 m3u8），仅打印警告继续处理
     }
 
@@ -152,17 +156,28 @@ export async function GET(request: NextRequest) {
       try {
         // 移除 TypeScript 类型注解,转换为纯 JavaScript
         const jsCode = customAdFilterCode
-          .replace(/(\w+)\s*:\s*(string|number|boolean|any|void|never|unknown|object)\s*([,)])/g, '$1$3')
-          .replace(/\)\s*:\s*(string|number|boolean|any|void|never|unknown|object)\s*\{/g, ') {')
-          .replace(/(const|let|var)\s+(\w+)\s*:\s*(string|number|boolean|any|void|never|unknown|object)\s*=/g, '$1 $2 =');
+          .replace(
+            /(\w+)\s*:\s*(string|number|boolean|any|void|never|unknown|object)\s*([,)])/g,
+            '$1$3',
+          )
+          .replace(
+            /\)\s*:\s*(string|number|boolean|any|void|never|unknown|object)\s*\{/g,
+            ') {',
+          )
+          .replace(
+            /(const|let|var)\s+(\w+)\s*:\s*(string|number|boolean|any|void|never|unknown|object)\s*=/g,
+            '$1 $2 =',
+          );
 
         // 创建并执行自定义函数
-        const customFunction = new Function('type', 'm3u8Content',
-          jsCode + '\nreturn filterAdsFromM3U8(type, m3u8Content);'
+        const customFunction = new Function(
+          'type',
+          'm3u8Content',
+          jsCode + '\nreturn filterAdsFromM3U8(type, m3u8Content);',
         );
         m3u8Content = customFunction(source, m3u8Content);
       } catch (err) {
-        console.error('执行自定义去广告代码失败,使用默认规则:', err);
+        logger.error('执行自定义去广告代码失败,使用默认规则:', err);
         // 继续使用默认规则
         m3u8Content = filterAdsFromM3U8Default(source, m3u8Content);
       }
@@ -172,7 +187,13 @@ export async function GET(request: NextRequest) {
     }
 
     // 处理 m3u8 中的相对链接
-    m3u8Content = resolveM3u8Links(m3u8Content, m3u8Url, source, origin, token || '');
+    m3u8Content = resolveM3u8Links(
+      m3u8Content,
+      m3u8Url,
+      source,
+      origin,
+      token || '',
+    );
 
     // 返回处理后的 m3u8 内容
     return new NextResponse(m3u8Content, {
@@ -183,11 +204,8 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('代理 m3u8 失败:', error);
-    return NextResponse.json(
-      { error: '代理失败', details: (error as Error).message },
-      { status: 500 }
-    );
+    logger.error('代理 m3u8 失败:', error);
+    return apiError('代理失败: ' + (error as Error).message, 500);
   }
 }
 
@@ -208,7 +226,7 @@ function filterAdsFromM3U8Default(type: string, m3u8Content: string): string {
     'advert',
     'advertisement',
     '/adjump',
-    'redtraffic'
+    'redtraffic',
   ];
 
   // 按行分割M3U8内容
@@ -230,8 +248,8 @@ function filterAdsFromM3U8Default(type: string, m3u8Content: string): string {
       // 检查下一行 URL 是否包含广告关键字
       if (i + 1 < lines.length) {
         const nextLine = lines[i + 1];
-        const containsAdKeyword = adKeywords.some(keyword =>
-          nextLine.toLowerCase().includes(keyword.toLowerCase())
+        const containsAdKeyword = adKeywords.some((keyword) =>
+          nextLine.toLowerCase().includes(keyword.toLowerCase()),
         );
 
         if (containsAdKeyword) {
@@ -256,7 +274,13 @@ function filterAdsFromM3U8Default(type: string, m3u8Content: string): string {
  * - 子 m3u8 链接 → 指向 /api/proxy-m3u8（递归代理）
  * - ts 分片/密钥 → directplay 模式指向 /api/proxy/vod/segment（解决 CORS）
  */
-function resolveM3u8Links(m3u8Content: string, baseUrl: string, source: string, proxyOrigin: string, token: string): string {
+function resolveM3u8Links(
+  m3u8Content: string,
+  baseUrl: string,
+  source: string,
+  proxyOrigin: string,
+  token: string,
+): string {
   const lines = m3u8Content.split('\n');
   const resolvedLines = [];
 

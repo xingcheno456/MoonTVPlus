@@ -1,19 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { db } from '@/lib/db';
-import { badRequest, getMusicV2Username, internalError, unauthorized } from '@/lib/music-v2-api';
+import {
+  getMusicV2Username,
+  internalError,
+  unauthorized,
+} from '@/lib/music-v2-api';
 
 export const runtime = 'nodejs';
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ playlistId: string }> }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ playlistId: string }> },
+) {
   const username = await getMusicV2Username(request);
   if (!username) return unauthorized();
 
   try {
     const { playlistId } = await params;
     const playlist = await db.getMusicV2Playlist(playlistId);
-    if (!playlist) return NextResponse.json({ success: false, error: { code: 'NOT_FOUND', message: '歌单不存在' } }, { status: 404 });
-    if (playlist.username !== username) return NextResponse.json({ success: false, error: { code: 'FORBIDDEN', message: '无权限操作此歌单' } }, { status: 403 });
+    if (!playlist)
+      return apiError('歌单不存在', 404, 'NOT_FOUND');
+    if (playlist.username !== username)
+      return apiError('无权限操作此歌单', 403, 'FORBIDDEN');
 
     const body = await request.json();
     await db.updateMusicV2Playlist(playlistId, {
@@ -22,24 +32,29 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       cover: body?.cover,
     });
     const updated = await db.getMusicV2Playlist(playlistId);
-    return NextResponse.json({ success: true, data: { playlist: updated } });
+    return apiSuccess({ data: { playlist: updated } });
   } catch (error) {
     return internalError('更新歌单失败', (error as Error).message);
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ playlistId: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ playlistId: string }> },
+) {
   const username = await getMusicV2Username(request);
   if (!username) return unauthorized();
 
   try {
     const { playlistId } = await params;
     const playlist = await db.getMusicV2Playlist(playlistId);
-    if (!playlist) return NextResponse.json({ success: false, error: { code: 'NOT_FOUND', message: '歌单不存在' } }, { status: 404 });
-    if (playlist.username !== username) return NextResponse.json({ success: false, error: { code: 'FORBIDDEN', message: '无权限操作此歌单' } }, { status: 403 });
+    if (!playlist)
+      return apiError('歌单不存在', 404, 'NOT_FOUND');
+    if (playlist.username !== username)
+      return apiError('无权限操作此歌单', 403, 'FORBIDDEN');
 
     await db.deleteMusicV2Playlist(playlistId);
-    return NextResponse.json({ success: true });
+    return apiSuccess({ success: true });
   } catch (error) {
     return internalError('删除歌单失败', (error as Error).message);
   }

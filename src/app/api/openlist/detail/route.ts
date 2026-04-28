@@ -1,7 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+ 
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
@@ -11,6 +12,8 @@ import {
   VideoInfo,
 } from '@/lib/openlist-cache';
 import { parseVideoFileName } from '@/lib/video-parser';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -22,14 +25,14 @@ export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const { searchParams } = new URL(request.url);
     const folderName = searchParams.get('folder');
 
     if (!folderName) {
-      return NextResponse.json({ error: '缺少参数' }, { status: 400 });
+      return apiError('缺少参数', 400);
     }
 
     const config = await getConfig();
@@ -42,7 +45,7 @@ export async function GET(request: NextRequest) {
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json({ error: 'OpenList 未配置或未启用' }, { status: 400 });
+      return apiError('OpenList 未配置或未启用', 400);
     }
 
     // folderName 已经是完整路径，直接使用
@@ -50,7 +53,7 @@ export async function GET(request: NextRequest) {
     const client = new OpenListClient(
       openListConfig.URL,
       openListConfig.Username,
-      openListConfig.Password
+      openListConfig.Password,
     );
 
     // 1. 尝试读取缓存的 videoinfo.json
@@ -66,8 +69,9 @@ export async function GET(request: NextRequest) {
           const downloadUrl = fileResponse.data.raw_url;
           const contentResponse = await fetch(downloadUrl, {
             headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-              'Accept': '*/*',
+              'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              Accept: '*/*',
               'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
             },
           });
@@ -80,7 +84,7 @@ export async function GET(request: NextRequest) {
           }
         }
       } catch (error) {
-        console.log('videoinfo.json 不存在，将解析文件名');
+        logger.info('videoinfo.json 不存在，将解析文件名');
       }
     }
 
@@ -89,10 +93,7 @@ export async function GET(request: NextRequest) {
       const listResponse = await client.listDirectory(folderPath);
 
       if (listResponse.code !== 200) {
-        return NextResponse.json(
-          { error: 'OpenList 列表获取失败3' },
-          { status: 500 }
-        );
+        return apiError('OpenList 列表获取失败3', 500);
       }
 
       // 过滤视频文件
@@ -106,7 +107,7 @@ export async function GET(request: NextRequest) {
             item.name.endsWith('.avi') ||
             item.name.endsWith('.m3u8') ||
             item.name.endsWith('.flv') ||
-            item.name.endsWith('.ts'))
+            item.name.endsWith('.ts')),
       );
 
       videoInfo = {
@@ -123,7 +124,7 @@ export async function GET(request: NextRequest) {
         const parsed = parseVideoFileName(file.name);
 
         videoInfo.episodes[file.name] = {
-          episode: parsed.episode || (i + 1), // 如果解析失败，使用索引+1作为集数
+          episode: parsed.episode || i + 1, // 如果解析失败，使用索引+1作为集数
           season: parsed.season,
           title: parsed.title,
           parsed_from: 'filename',
@@ -140,9 +141,23 @@ export async function GET(request: NextRequest) {
 
     // 定义视频文件扩展名（不区分大小写）
     const videoExtensions = [
-      '.mp4', '.mkv', '.avi', '.m3u8', '.flv', '.ts',
-      '.mov', '.wmv', '.webm', '.rmvb', '.rm', '.mpg',
-      '.mpeg', '.3gp', '.f4v', '.m4v', '.vob'
+      '.mp4',
+      '.mkv',
+      '.avi',
+      '.m3u8',
+      '.flv',
+      '.ts',
+      '.mov',
+      '.wmv',
+      '.webm',
+      '.rmvb',
+      '.rm',
+      '.mpg',
+      '.mpeg',
+      '.3gp',
+      '.f4v',
+      '.m4v',
+      '.vob',
     ];
 
     const videoFiles = listResponse.data.content.filter((item) => {
@@ -157,7 +172,7 @@ export async function GET(request: NextRequest) {
 
       // 检查是否是视频文件（不区分大小写）
       const lowerName = item.name.toLowerCase();
-      return videoExtensions.some(ext => lowerName.endsWith(ext));
+      return videoExtensions.some((ext) => lowerName.endsWith(ext));
     });
 
     // 5. 构建集数信息（不包含播放链接）
@@ -194,7 +209,9 @@ export async function GET(request: NextRequest) {
         // 优先使用解析出的标题，其次是"第X集"格式，最后才是文件名
         let displayTitle = episodeInfo.title;
         if (!displayTitle && episodeInfo.episode) {
-          displayTitle = episodeInfo.isOVA ? `OVA ${episodeInfo.episode}` : `第${episodeInfo.episode}集`;
+          displayTitle = episodeInfo.isOVA
+            ? `OVA ${episodeInfo.episode}`
+            : `第${episodeInfo.episode}集`;
         }
         if (!displayTitle) {
           displayTitle = file.name;
@@ -220,17 +237,11 @@ export async function GET(request: NextRequest) {
         return a.fileName.localeCompare(b.fileName);
       });
 
-    return NextResponse.json({
-      success: true,
-      folder: folderName,
+    return apiSuccess({ folder: folderName,
       episodes,
-      videoInfo,
-    });
+      videoInfo, });
   } catch (error) {
-    console.error('获取视频详情失败:', error);
-    return NextResponse.json(
-      { error: '获取失败', details: (error as Error).message },
-      { status: 500 }
-    );
+    logger.error('获取视频详情失败:', error);
+    return apiError('获取失败: ' + (error as Error).message, 500);
   }
 }

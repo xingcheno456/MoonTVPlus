@@ -1,9 +1,12 @@
-/* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
+import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -36,19 +39,13 @@ export async function GET(request: NextRequest) {
     const quality = searchParams.get('quality');
 
     if (!platform || !id || !quality) {
-      return NextResponse.json(
-        { error: '缺少必要参数: platform, id, quality' },
-        { status: 400 }
-      );
+      return apiError('缺少必要参数: platform, id, quality', 400);
     }
 
     // 获取OpenList客户端
     const openListClient = await getOpenListClient();
     if (!openListClient) {
-      return NextResponse.json(
-        { error: 'OpenList未配置或未启用' },
-        { status: 503 }
-      );
+      return apiError('OpenList未配置或未启用', 503);
     }
 
     // 获取配置
@@ -62,10 +59,7 @@ export async function GET(request: NextRequest) {
     const fileResponse = await openListClient.getFile(audioPath);
 
     if (fileResponse.code !== 200 || !fileResponse.data?.raw_url) {
-      return NextResponse.json(
-        { error: '音频文件未找到' },
-        { status: 404 }
-      );
+      return apiError('音频文件未找到', 404);
     }
 
     // 检查是否有 Range 请求头
@@ -82,14 +76,15 @@ export async function GET(request: NextRequest) {
         status: 304,
         headers: {
           'Cache-Control': 'public, max-age=31536000, immutable',
-          'ETag': generatedETag,
+          ETag: generatedETag,
         },
       });
     }
 
     // 构建上游请求头
     const upstreamHeaders: Record<string, string> = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
     };
 
     // 如果有 Range 请求，转发给上游
@@ -106,7 +101,14 @@ export async function GET(request: NextRequest) {
     }
 
     // 从OpenList获取音频流
-    const response = await fetch(fileResponse.data.raw_url, {
+    const rawUrl = fileResponse.data.raw_url;
+
+    const isSafeUrl = await validateProxyUrlServerSide(rawUrl);
+    if (!isSafeUrl) {
+      return apiError('Proxy request to local or invalid network is forbidden', 403);
+    }
+
+    const response = await fetch(rawUrl, {
       headers: upstreamHeaders,
     });
 
@@ -116,16 +118,13 @@ export async function GET(request: NextRequest) {
         status: 304,
         headers: {
           'Cache-Control': 'public, max-age=31536000, immutable',
-          'ETag': generatedETag,
+          ETag: generatedETag,
         },
       });
     }
 
     if (!response.ok && response.status !== 206) {
-      return NextResponse.json(
-        { error: '获取音频失败' },
-        { status: response.status }
-      );
+      return apiError('获取音频失败', 400);
     }
 
     // 获取响应头
@@ -173,13 +172,10 @@ export async function GET(request: NextRequest) {
       headers,
     });
   } catch (error) {
-    console.error('代理OpenList音频失败:', error);
-    return NextResponse.json(
-      {
+    logger.error('代理OpenList音频失败:', error);
+    return apiSuccess({
         error: '代理请求失败',
         details: (error as Error).message,
-      },
-      { status: 500 }
-    );
+      }, { status: 500 });
   }
 }

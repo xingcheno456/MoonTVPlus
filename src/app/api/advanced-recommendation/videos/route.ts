@@ -1,27 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { apiError, apiSuccess } from '@/lib/api-response';
+import { parseSearchParams, validateAuth } from '@/lib/api-validation';
+import { commonSchemas } from '@/lib/api-schemas';
 import {
   executeSavedSourceScript,
   normalizeScriptRecommendResults,
   normalizeScriptSources,
 } from '@/lib/source-script';
+import { z } from 'zod';
+
+const recommendQuerySchema = z.object({
+  source: commonSchemas.source,
+  page: commonSchemas.page,
+});
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authResult = validateAuth(request);
+  if ('status' in authResult) return authResult;
 
-  const { searchParams } = new URL(request.url);
-  const sourceKey = searchParams.get('source');
-  const page = Number(searchParams.get('page') || '1');
-
-  if (!sourceKey) {
-    return NextResponse.json({ error: '缺少参数: source' }, { status: 400 });
-  }
+  const paramResult = parseSearchParams(request, recommendQuerySchema);
+  if ('error' in paramResult) return paramResult.error;
+  const { source: sourceKey, page } = paramResult.data;
 
   try {
     let sources = [{ id: 'default', name: '默认源' }];
@@ -51,16 +53,13 @@ export async function GET(request: NextRequest) {
       defaultSourceId: sources[0]?.id || 'default',
     });
 
-    return NextResponse.json({
+    return apiSuccess({
       results,
       page: Number(execution.result?.page || page),
       pageCount: Number(execution.result?.pageCount || 1),
       total: Number(execution.result?.total || results.length),
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: (error as Error).message || '获取高级推荐失败' },
-      { status: 500 }
-    );
+    return apiError((error as Error).message || '获取高级推荐失败', 500);
   }
 }

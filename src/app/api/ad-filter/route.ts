@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
-
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getConfig } from '@/lib/config';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'; // 禁用缓存
@@ -22,21 +23,18 @@ export async function GET(request: Request) {
 
     if (full) {
       // 返回完整代码和版本号
-      return NextResponse.json({
+      return apiSuccess({
         code: config.SiteConfig?.CustomAdFilterCode || '',
         version,
       });
     } else {
       // 只返回版本号
-      return NextResponse.json({
+      return apiSuccess({
         version,
       });
     }
   } catch (error) {
-    console.error('获取去广告代码配置失败:', error);
-    return NextResponse.json(
-      { error: '获取配置失败', details: (error as Error).message },
-      { status: 500 }
-    );
+    logger.error('获取去广告代码配置失败:', error);
+    return apiError('获取配置失败: ' + (error as Error).message, 500);
   }
 }

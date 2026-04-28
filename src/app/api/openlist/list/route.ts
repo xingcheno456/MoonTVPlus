@@ -1,7 +1,7 @@
-/* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
@@ -13,6 +13,8 @@ import {
 } from '@/lib/openlist-cache';
 import { getTMDBImageUrl } from '@/lib/tmdb.search';
 
+import { logger } from '../../../../lib/logger';
+
 export const runtime = 'nodejs';
 
 /**
@@ -23,7 +25,7 @@ export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -42,16 +44,13 @@ export async function GET(request: NextRequest) {
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json(
-        { error: 'OpenList 未配置或未启用', list: [], total: 0 },
-        { status: 200 }
-      );
+      return apiError('OpenList 未配置或未启用', 200);
     }
 
     const client = new OpenListClient(
       openListConfig.URL,
       openListConfig.Username,
-      openListConfig.Password
+      openListConfig.Password,
     );
 
     // 读取 metainfo (从数据库或缓存)
@@ -85,63 +84,52 @@ export async function GET(request: NextRequest) {
               setCachedMetaInfo(metaInfo);
             }
           } catch (parseError) {
-            console.error('[OpenList List] JSON 解析或验证失败:', parseError);
+            logger.error('[OpenList List] JSON 解析或验证失败:', parseError);
             throw new Error(`JSON 解析失败: ${(parseError as Error).message}`);
           }
         } else {
           throw new Error('数据库中没有 metainfo 数据');
         }
       } catch (error) {
-        console.error('[OpenList List] 从数据库读取 metainfo 失败:', error);
-        return NextResponse.json(
-          {
+        logger.error('[OpenList List] 从数据库读取 metainfo 失败:', error);
+        return apiSuccess({
             error: 'metainfo 读取失败',
             details: (error as Error).message,
             list: [],
             total: 0,
-          },
-          { status: 200 }
-        );
+          }, { status: 200 });
       }
     }
 
     if (!metaInfo) {
-      return NextResponse.json(
-        { error: '无数据', list: [], total: 0 },
-        { status: 200 }
-      );
+      return apiError('无数据', 200);
     }
 
     // 验证 metaInfo 结构
     if (!metaInfo.folders || typeof metaInfo.folders !== 'object') {
-      return NextResponse.json(
-        { error: 'metainfo.json 结构无效', list: [], total: 0 },
-        { status: 200 }
-      );
+      return apiError('metainfo.json 结构无效', 200);
     }
 
     // 转换为数组并分页
     const allVideos = Object.entries(metaInfo.folders)
       .filter(([, info]) => includeFailed || !info.failed) // 根据参数过滤失败的视频
-      .map(
-        ([key, info]) => {
-          return {
-            id: key,
-            folder: info.folderName,
-            tmdbId: info.tmdb_id,
-            title: info.title,
-            poster: getTMDBImageUrl(info.poster_path),
-            releaseDate: info.release_date,
-            overview: info.overview,
-            voteAverage: info.vote_average,
-            mediaType: info.media_type,
-            lastUpdated: info.last_updated,
-            failed: info.failed || false,
-            seasonNumber: info.season_number,
-            seasonName: info.season_name,
-          };
-        }
-      );
+      .map(([key, info]) => {
+        return {
+          id: key,
+          folder: info.folderName,
+          tmdbId: info.tmdb_id,
+          title: info.title,
+          poster: getTMDBImageUrl(info.poster_path),
+          releaseDate: info.release_date,
+          overview: info.overview,
+          voteAverage: info.vote_average,
+          mediaType: info.media_type,
+          lastUpdated: info.last_updated,
+          failed: info.failed || false,
+          seasonNumber: info.season_number,
+          seasonName: info.season_name,
+        };
+      });
 
     // 按更新时间倒序排序
     allVideos.sort((a, b) => b.lastUpdated - a.lastUpdated);
@@ -151,19 +139,18 @@ export async function GET(request: NextRequest) {
     const end = start + pageSize;
     const list = allVideos.slice(start, end);
 
-    return NextResponse.json({
-      success: true,
-      list,
+    return apiSuccess({ list,
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize),
-    });
+      totalPages: Math.ceil(total / pageSize), });
   } catch (error) {
-    console.error('获取视频列表失败:', error);
-    return NextResponse.json(
-      { error: '获取失败', details: (error as Error).message, list: [], total: 0 },
-      { status: 500 }
-    );
+    logger.error('获取视频列表失败:', error);
+    return apiSuccess({
+        error: '获取失败',
+        details: (error as Error).message,
+        list: [],
+        total: 0,
+      }, { status: 500 });
   }
 }

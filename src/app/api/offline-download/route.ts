@@ -3,14 +3,21 @@
  */
 
 import * as fs from 'fs';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import * as path from 'path';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { OfflineDownloader, OfflineDownloadTask } from '@/lib/offline-downloader';
+import {
+  OfflineDownloader,
+  OfflineDownloadTask,
+} from '@/lib/offline-downloader';
+
+import { logger } from '../../../lib/logger';
 
 // 检查是否启用离线下载功能
-const OFFLINE_DOWNLOAD_ENABLED = process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true';
+const OFFLINE_DOWNLOAD_ENABLED =
+  process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true';
 const OFFLINE_DOWNLOAD_DIR = process.env.OFFLINE_DOWNLOAD_DIR || '/data';
 
 // 全局下载器实例
@@ -44,7 +51,7 @@ function saveTasks(): void {
 
     fs.writeFileSync(TASKS_FILE, JSON.stringify(tasksArray, null, 2), 'utf-8');
   } catch (error) {
-    console.error('保存任务失败:', error);
+    logger.error('保存任务失败:', error);
   }
 }
 
@@ -53,16 +60,16 @@ function saveTasks(): void {
  */
 function loadTasks(): void {
   try {
-    console.log('尝试加载任务文件:', TASKS_FILE);
+    logger.info('尝试加载任务文件:', TASKS_FILE);
 
     if (!fs.existsSync(TASKS_FILE)) {
-      console.log('任务文件不存在:', TASKS_FILE);
+      logger.info('任务文件不存在:', TASKS_FILE);
       return;
     }
 
     const content = fs.readFileSync(TASKS_FILE, 'utf-8');
     const tasksArray = JSON.parse(content);
-    console.log(`从文件读取到 ${tasksArray.length} 个任务`);
+    logger.info(`从文件读取到 ${tasksArray.length} 个任务`);
 
     for (const taskData of tasksArray) {
       const task: OfflineDownloadTask = {
@@ -80,9 +87,9 @@ function loadTasks(): void {
       tasks.set(task.id, task);
     }
 
-    console.log(`已加载 ${tasks.size} 个离线下载任务到内存`);
+    logger.info(`已加载 ${tasks.size} 个离线下载任务到内存`);
   } catch (error) {
-    console.error('加载任务失败:', error);
+    logger.error('加载任务失败:', error);
   }
 }
 
@@ -117,7 +124,7 @@ function checkPermission(request: NextRequest): boolean {
  */
 export async function GET(request: NextRequest) {
   if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
+    return apiError('无权限', 403);
   }
 
   // 确保下载器已初始化（这会触发任务加载）
@@ -133,13 +140,17 @@ export async function GET(request: NextRequest) {
     const episodeIndex = searchParams.get('episodeIndex');
 
     if (!source || !videoId || episodeIndex === null) {
-      return NextResponse.json({ error: '参数不完整' }, { status: 400 });
+      return apiError('参数不完整', 400);
     }
 
     const downloader = getDownloader();
-    const downloaded = downloader.checkDownloaded(source, videoId, parseInt(episodeIndex));
+    const downloaded = downloader.checkDownloaded(
+      source,
+      videoId,
+      parseInt(episodeIndex),
+    );
 
-    return NextResponse.json({ downloaded });
+    return apiSuccess({ downloaded });
   }
 
   // 获取所有任务列表
@@ -150,7 +161,7 @@ export async function GET(request: NextRequest) {
     updatedAt: task.updatedAt.toISOString(),
   }));
 
-  return NextResponse.json({ tasks: taskList });
+  return apiSuccess({ tasks: taskList });
 }
 
 /**
@@ -158,15 +169,21 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
+    return apiError('无权限', 403);
   }
 
   try {
     const body = await request.json();
     const { source, videoId, episodeIndex, title, m3u8Url, metadata } = body;
 
-    if (!source || !videoId || episodeIndex === undefined || !title || !m3u8Url) {
-      return NextResponse.json({ error: '参数不完整' }, { status: 400 });
+    if (
+      !source ||
+      !videoId ||
+      episodeIndex === undefined ||
+      !title ||
+      !m3u8Url
+    ) {
+      return apiError('参数不完整', 400);
     }
 
     const downloader = getDownloader();
@@ -176,70 +193,72 @@ export async function POST(request: NextRequest) {
       (t) =>
         t.source === source &&
         t.videoId === videoId &&
-        t.episodeIndex === episodeIndex
+        t.episodeIndex === episodeIndex,
     );
 
     if (existingTask) {
       // 如果任务正在下载或等待中，不允许重复创建
-      if (existingTask.status === 'downloading' || existingTask.status === 'pending') {
-        return NextResponse.json(
-          {
+      if (
+        existingTask.status === 'downloading' ||
+        existingTask.status === 'pending'
+      ) {
+        return apiSuccess({
             task: {
               ...existingTask,
               createdAt: existingTask.createdAt.toISOString(),
               updatedAt: existingTask.updatedAt.toISOString(),
             },
             message: '该任务正在下载中，请勿重复添加',
-          },
-          { status: 400 }
-        );
+          }, { status: 400 });
       }
 
       // 如果任务已完成，不允许重复创建
       if (existingTask.status === 'completed') {
-        return NextResponse.json(
-          {
+        return apiSuccess({
             task: {
               ...existingTask,
               createdAt: existingTask.createdAt.toISOString(),
               updatedAt: existingTask.updatedAt.toISOString(),
             },
             message: '该视频已下载完成，如需重新下载请先删除任务',
-          },
-          { status: 400 }
-        );
+          }, { status: 400 });
       }
 
       // 如果任务处于错误或暂停状态，提示用户使用重试功能
       if (existingTask.status === 'error' || existingTask.status === 'paused') {
-        return NextResponse.json(
-          {
+        return apiSuccess({
             task: {
               ...existingTask,
               createdAt: existingTask.createdAt.toISOString(),
               updatedAt: existingTask.updatedAt.toISOString(),
             },
             message: '该任务已存在但未完成，请使用重试功能继续下载',
-          },
-          { status: 400 }
-        );
+          }, { status: 400 });
       }
     }
 
     // 2. 检查文件系统中是否已下载完成（防止任务被删除但文件还在的情况）
-    const downloaded = downloader.checkDownloaded(source, videoId, episodeIndex);
+    const downloaded = downloader.checkDownloaded(
+      source,
+      videoId,
+      episodeIndex,
+    );
     if (downloaded) {
-      return NextResponse.json(
-        {
+      return apiSuccess({
           message: '该视频文件已存在，无需重复下载',
           downloaded: true,
-        },
-        { status: 400 }
-      );
+        }, { status: 400 });
     }
 
     // 创建新任务
-    const task = await downloader.createTask(source, videoId, episodeIndex, title, m3u8Url, metadata);
+    const task = await downloader.createTask(
+      source,
+      videoId,
+      episodeIndex,
+      title,
+      m3u8Url,
+      metadata,
+    );
     tasks.set(task.id, task);
     saveTasks(); // 持久化任务
 
@@ -251,7 +270,7 @@ export async function POST(request: NextRequest) {
         saveTasks(); // 持久化任务
       })
       .catch((error) => {
-        console.error('下载失败:', error);
+        logger.error('下载失败:', error);
         task.status = 'error';
         task.errorMessage = error.message;
         tasks.set(task.id, task);
@@ -264,7 +283,7 @@ export async function POST(request: NextRequest) {
 
     activeDownloads.set(task.id, downloadPromise);
 
-    return NextResponse.json({
+    return apiSuccess({
       task: {
         ...task,
         createdAt: task.createdAt.toISOString(),
@@ -273,11 +292,8 @@ export async function POST(request: NextRequest) {
       message: '任务已创建',
     });
   } catch (error) {
-    console.error('创建任务失败:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '创建任务失败' },
-      { status: 500 }
-    );
+    logger.error('创建任务失败:', error);
+    return apiError(error instanceof Error ? error.message : '创建任务失败', 500);
   }
 }
 
@@ -286,7 +302,7 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
+    return apiError('无权限', 403);
   }
 
   try {
@@ -294,12 +310,12 @@ export async function DELETE(request: NextRequest) {
     const taskId = searchParams.get('taskId');
 
     if (!taskId) {
-      return NextResponse.json({ error: '缺少任务ID' }, { status: 400 });
+      return apiError('缺少任务ID', 400);
     }
 
     const task = tasks.get(taskId);
     if (!task) {
-      return NextResponse.json({ error: '任务不存在' }, { status: 404 });
+      return apiError('任务不存在', 404);
     }
 
     const downloader = getDownloader();
@@ -316,7 +332,7 @@ export async function DELETE(request: NextRequest) {
       activeDownloads.delete(taskId);
 
       // 等待一小段时间，让下载操作有机会停止
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
     // 删除文件
@@ -326,13 +342,10 @@ export async function DELETE(request: NextRequest) {
     tasks.delete(taskId);
     saveTasks(); // 持久化任务
 
-    return NextResponse.json({ message: '任务已删除' });
+    return apiError('任务已删除', 400);
   } catch (error) {
-    console.error('删除任务失败:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '删除任务失败' },
-      { status: 500 }
-    );
+    logger.error('删除任务失败:', error);
+    return apiError(error instanceof Error ? error.message : '删除任务失败', 500);
   }
 }
 
@@ -341,7 +354,7 @@ export async function DELETE(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
+    return apiError('无权限', 403);
   }
 
   try {
@@ -350,26 +363,26 @@ export async function PUT(request: NextRequest) {
     const action = searchParams.get('action');
 
     if (!taskId) {
-      return NextResponse.json({ error: '缺少任务ID' }, { status: 400 });
+      return apiError('缺少任务ID', 400);
     }
 
     if (action !== 'retry') {
-      return NextResponse.json({ error: '无效的操作' }, { status: 400 });
+      return apiError('无效的操作', 400);
     }
 
     const task = tasks.get(taskId);
     if (!task) {
-      return NextResponse.json({ error: '任务不存在' }, { status: 404 });
+      return apiError('任务不存在', 404);
     }
 
     // 检查任务状态，只有错误、暂停或完成状态可以重试
     if (task.status === 'downloading' || task.status === 'pending') {
-      return NextResponse.json({ error: '任务正在进行中，无法重试' }, { status: 400 });
+      return apiError('任务正在进行中，无法重试', 400);
     }
 
     // 检查是否已经在重试中
     if (activeDownloads.has(taskId)) {
-      return NextResponse.json({ error: '任务已在重试中' }, { status: 400 });
+      return apiError('任务已在重试中', 400);
     }
 
     const downloader = getDownloader();
@@ -390,7 +403,7 @@ export async function PUT(request: NextRequest) {
         saveTasks(); // 持久化任务
       })
       .catch((error) => {
-        console.error('重试下载失败:', error);
+        logger.error('重试下载失败:', error);
         task.status = 'error';
         task.errorMessage = error.message;
         tasks.set(task.id, task);
@@ -403,7 +416,7 @@ export async function PUT(request: NextRequest) {
 
     activeDownloads.set(task.id, downloadPromise);
 
-    return NextResponse.json({
+    return apiSuccess({
       task: {
         ...task,
         createdAt: task.createdAt.toISOString(),
@@ -412,10 +425,7 @@ export async function PUT(request: NextRequest) {
       message: '任务已重新开始',
     });
   } catch (error) {
-    console.error('重试任务失败:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '重试任务失败' },
-      { status: 500 }
-    );
+    logger.error('重试任务失败:', error);
+    return apiError(error instanceof Error ? error.message : '重试任务失败', 500);
   }
 }

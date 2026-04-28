@@ -3,7 +3,14 @@
 import { History } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { deleteMangaReadRecord, deleteMangaShelf, getAllMangaReadRecords, getAllMangaShelf, saveMangaShelf, subscribeToDataUpdates } from '@/lib/db.client';
+import {
+  deleteMangaReadRecord,
+  deleteMangaShelf,
+  getAllMangaReadRecords,
+  getAllMangaShelf,
+  saveMangaShelf,
+  subscribeToDataUpdates,
+} from '@/lib/db.client';
 import { MangaReadRecord, MangaShelfItem } from '@/lib/manga.types';
 
 import MangaHistoryCard from '@/components/manga/MangaHistoryCard';
@@ -12,7 +19,10 @@ function MangaHistorySkeleton() {
   return (
     <div className='grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6'>
       {Array.from({ length: 12 }).map((_, index) => (
-        <div key={index} className='overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950'>
+        <div
+          key={index}
+          className='overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950'
+        >
           <div className='aspect-[3/4] w-full animate-pulse bg-gray-200 dark:bg-gray-800' />
           <div className='space-y-3 p-3'>
             <div className='h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
@@ -38,8 +48,12 @@ export default function MangaHistoryPage() {
       .catch(() => undefined)
       .finally(() => setLoading(false));
 
-    const unsubscribeHistory = subscribeToDataUpdates<Record<string, MangaReadRecord>>('mangaHistoryUpdated', setHistory);
-    const unsubscribeShelf = subscribeToDataUpdates<Record<string, MangaShelfItem>>('mangaShelfUpdated', setShelf);
+    const unsubscribeHistory = subscribeToDataUpdates<
+      Record<string, MangaReadRecord>
+    >('mangaHistoryUpdated', setHistory);
+    const unsubscribeShelf = subscribeToDataUpdates<
+      Record<string, MangaShelfItem>
+    >('mangaShelfUpdated', setShelf);
 
     return () => {
       unsubscribeHistory();
@@ -48,10 +62,10 @@ export default function MangaHistoryPage() {
   }, []);
 
   const historyList = useMemo(
-    () => Object.entries(history).sort(([, a], [, b]) => b.saveTime - a.saveTime),
-    [history]
+    () =>
+      Object.entries(history).sort(([, a], [, b]) => b.saveTime - a.saveTime),
+    [history],
   );
-
 
   const toggleShelf = async (item: MangaReadRecord) => {
     const key = `${item.sourceId}+${item.mangaId}`;
@@ -93,7 +107,8 @@ export default function MangaHistoryPage() {
   return (
     <section className='mx-auto max-w-6xl'>
       <div className='mb-4 flex items-center gap-2 text-sm text-gray-500'>
-        <History className='h-4 w-4 text-violet-500' /> 共 {historyList.length} 条阅读记录
+        <History className='h-4 w-4 text-violet-500' /> 共 {historyList.length}{' '}
+        条阅读记录
       </div>
       {loading ? (
         <MangaHistorySkeleton />

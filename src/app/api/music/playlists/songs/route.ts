@@ -1,9 +1,11 @@
-/* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -13,17 +15,17 @@ export async function GET(request: NextRequest) {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     // 检查用户状态
     if (authInfo.username !== process.env.USERNAME) {
       const userInfoV2 = await db.getUserInfoV2(authInfo.username);
       if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
+        return apiError('用户不存在', 401);
       }
       if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
+        return apiError('用户已被封禁', 401);
       }
     }
 
@@ -31,30 +33,24 @@ export async function GET(request: NextRequest) {
     const playlistId = searchParams.get('playlistId');
 
     if (!playlistId) {
-      return NextResponse.json(
-        { error: '歌单ID不能为空' },
-        { status: 400 }
-      );
+      return apiError('歌单ID不能为空', 400);
     }
 
     // 检查歌单是否存在且属于当前用户
     const playlist = await db.getMusicPlaylist(playlistId);
     if (!playlist) {
-      return NextResponse.json({ error: '歌单不存在' }, { status: 404 });
+      return apiError('歌单不存在', 404);
     }
     if (playlist.username !== authInfo.username) {
-      return NextResponse.json({ error: '无权限访问此歌单' }, { status: 403 });
+      return apiError('无权限访问此歌单', 403);
     }
 
     const songs = await db.getPlaylistSongs(playlistId);
 
-    return NextResponse.json({ songs });
+    return apiSuccess({ songs });
   } catch (error) {
-    console.error('GET /api/music/playlists/songs error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    logger.error('GET /api/music/playlists/songs error:', error);
+    return apiError('Internal server error', 500);
   }
 }
 
@@ -64,17 +60,17 @@ export async function POST(request: NextRequest) {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     // 检查用户状态
     if (authInfo.username !== process.env.USERNAME) {
       const userInfoV2 = await db.getUserInfoV2(authInfo.username);
       if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
+        return apiError('用户不存在', 401);
       }
       if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
+        return apiError('用户已被封禁', 401);
       }
     }
 
@@ -82,35 +78,30 @@ export async function POST(request: NextRequest) {
     const { playlistId, song } = body;
 
     if (!playlistId) {
-      return NextResponse.json(
-        { error: '歌单ID不能为空' },
-        { status: 400 }
-      );
+      return apiError('歌单ID不能为空', 400);
     }
 
     if (!song || !song.platform || !song.id || !song.name || !song.artist) {
-      return NextResponse.json(
-        { error: '歌曲信息不完整' },
-        { status: 400 }
-      );
+      return apiError('歌曲信息不完整', 400);
     }
 
     // 检查歌单是否存在且属于当前用户
     const playlist = await db.getMusicPlaylist(playlistId);
     if (!playlist) {
-      return NextResponse.json({ error: '歌单不存在' }, { status: 404 });
+      return apiError('歌单不存在', 404);
     }
     if (playlist.username !== authInfo.username) {
-      return NextResponse.json({ error: '无权限操作此歌单' }, { status: 403 });
+      return apiError('无权限操作此歌单', 403);
     }
 
     // 检查歌曲是否已在歌单中
-    const exists = await db.isSongInPlaylist(playlistId, song.platform, song.id);
+    const exists = await db.isSongInPlaylist(
+      playlistId,
+      song.platform,
+      song.id,
+    );
     if (exists) {
-      return NextResponse.json(
-        { error: '歌曲已在歌单中' },
-        { status: 400 }
-      );
+      return apiError('歌曲已在歌单中', 400);
     }
 
     await db.addSongToPlaylist(playlistId, {
@@ -123,13 +114,10 @@ export async function POST(request: NextRequest) {
       duration: song.duration || 0,
     });
 
-    return NextResponse.json({ success: true });
+    return apiSuccess({ success: true });
   } catch (error) {
-    console.error('POST /api/music/playlists/songs error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    logger.error('POST /api/music/playlists/songs error:', error);
+    return apiError('Internal server error', 500);
   }
 }
 
@@ -139,17 +127,17 @@ export async function DELETE(request: NextRequest) {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     // 检查用户状态
     if (authInfo.username !== process.env.USERNAME) {
       const userInfoV2 = await db.getUserInfoV2(authInfo.username);
       if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
+        return apiError('用户不存在', 401);
       }
       if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
+        return apiError('用户已被封禁', 401);
       }
     }
 
@@ -159,29 +147,23 @@ export async function DELETE(request: NextRequest) {
     const songId = searchParams.get('songId');
 
     if (!playlistId || !platform || !songId) {
-      return NextResponse.json(
-        { error: '参数不完整' },
-        { status: 400 }
-      );
+      return apiError('参数不完整', 400);
     }
 
     // 检查歌单是否存在且属于当前用户
     const playlist = await db.getMusicPlaylist(playlistId);
     if (!playlist) {
-      return NextResponse.json({ error: '歌单不存在' }, { status: 404 });
+      return apiError('歌单不存在', 404);
     }
     if (playlist.username !== authInfo.username) {
-      return NextResponse.json({ error: '无权限操作此歌单' }, { status: 403 });
+      return apiError('无权限操作此歌单', 403);
     }
 
     await db.removeSongFromPlaylist(playlistId, platform, songId);
 
-    return NextResponse.json({ success: true });
+    return apiSuccess({ success: true });
   } catch (error) {
-    console.error('DELETE /api/music/playlists/songs error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    logger.error('DELETE /api/music/playlists/songs error:', error);
+    return apiError('Internal server error', 500);
   }
 }

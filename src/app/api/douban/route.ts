@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server';
-
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getCacheTime } from '@/lib/config';
 import { fetchDoubanData } from '@/lib/douban';
 import { DoubanItem, DoubanResult } from '@/lib/types';
@@ -26,31 +25,19 @@ export async function GET(request: Request) {
 
   // 验证参数
   if (!type || !tag) {
-    return NextResponse.json(
-      { error: '缺少必要参数: type 或 tag' },
-      { status: 400 }
-    );
+    return apiError('缺少必要参数: type 或 tag', 400);
   }
 
   if (!['tv', 'movie'].includes(type)) {
-    return NextResponse.json(
-      { error: 'type 参数必须是 tv 或 movie' },
-      { status: 400 }
-    );
+    return apiError('type 参数必须是 tv 或 movie', 400);
   }
 
   if (pageSize < 1 || pageSize > 100) {
-    return NextResponse.json(
-      { error: 'pageSize 必须在 1-100 之间' },
-      { status: 400 }
-    );
+    return apiError('pageSize 必须在 1-100 之间', 400);
   }
 
   if (pageStart < 0) {
-    return NextResponse.json(
-      { error: 'pageStart 不能小于 0' },
-      { status: 400 }
-    );
+    return apiError('pageStart 不能小于 0', 400);
   }
 
   if (tag === 'top250') {
@@ -79,7 +66,7 @@ export async function GET(request: Request) {
     };
 
     const cacheTime = await getCacheTime();
-    return NextResponse.json(response, {
+    return apiSuccess(response, {
       headers: {
         'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
         'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
@@ -88,10 +75,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: '获取豆瓣数据失败', details: (error as Error).message },
-      { status: 500 }
-    );
+    return apiError('获取豆瓣数据失败: ' + (error as Error).message, 500);
   }
 }
 
@@ -109,7 +93,7 @@ function handleTop250(pageStart: number) {
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
       Referer: 'https://movie.douban.com/',
       Accept:
-        'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp */*;q=0.8',
     },
   };
 
@@ -155,7 +139,7 @@ function handleTop250(pageStart: number) {
       };
 
       const cacheTime = await getCacheTime();
-      return NextResponse.json(apiResponse, {
+      return apiSuccess(apiResponse, {
         headers: {
           'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
           'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
@@ -166,12 +150,9 @@ function handleTop250(pageStart: number) {
     })
     .catch((error) => {
       clearTimeout(timeoutId);
-      return NextResponse.json(
-        {
+      return apiSuccess({
           error: '获取豆瓣 Top250 数据失败',
           details: (error as Error).message,
-        },
-        { status: 500 }
-      );
+        }, { status: 500 });
     });
 }

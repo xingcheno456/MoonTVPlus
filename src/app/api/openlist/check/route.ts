@@ -1,9 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+ 
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { OpenListClient } from '@/lib/openlist.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -16,7 +19,7 @@ export async function POST(request: NextRequest) {
     // 权限检查
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     // 获取请求参数
@@ -24,10 +27,7 @@ export async function POST(request: NextRequest) {
     const { url, username, password } = body;
 
     if (!url || !username || !password) {
-      return NextResponse.json(
-        { error: '缺少必要参数' },
-        { status: 400 }
-      );
+      return apiError('缺少必要参数', 400);
     }
 
     // 创建客户端并检查连通性
@@ -35,27 +35,18 @@ export async function POST(request: NextRequest) {
     const result = await client.checkConnectivity();
 
     if (result.success) {
-      return NextResponse.json({
-        success: true,
-        message: result.message,
-      });
+      return apiSuccess({ message: result.message, });
     } else {
-      return NextResponse.json(
-        {
+      return apiSuccess({
           success: false,
           error: result.message,
-        },
-        { status: 400 }
-      );
+        }, { status: 400 });
     }
   } catch (error) {
-    console.error('检查 OpenList 连通性失败:', error);
-    return NextResponse.json(
-      {
+    logger.error('检查 OpenList 连通性失败:', error);
+    return apiSuccess({
         success: false,
         error: error instanceof Error ? error.message : '检查失败',
-      },
-      { status: 500 }
-    );
+      }, { status: 500 });
   }
 }

@@ -9,28 +9,53 @@ const nextConfig = {
   output: isCloudflare ? undefined : 'standalone',
   eslint: {
     dirs: ['src'],
-    // 在生产构建时忽略 ESLint 错误
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
 
-  reactStrictMode: false,
-  swcMinify: true,
+  reactStrictMode: true,
 
   experimental: {
     instrumentationHook: process.env.NODE_ENV === 'production' && !isCloudflare,
   },
 
-  // Uncoment to add domain whitelist
   images: {
     unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: '**.tmdb.org',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.doubanio.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.hdslb.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.bilivideo.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.douyinpic.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.byteimg.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.douyinvod.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'localhost',
       },
       {
         protocol: 'http',
-        hostname: '**',
+        hostname: 'localhost',
       },
     ],
   },
@@ -94,7 +119,7 @@ const nextConfig = {
   },
 };
 
-const withPWA = require('next-pwa')({
+const withPWA = require('@ducanh2912/next-pwa').default({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
   register: true,

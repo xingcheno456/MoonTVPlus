@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+ 
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getTVSeasons } from '@/lib/tmdb.search';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -16,19 +19,19 @@ export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const { searchParams } = new URL(request.url);
     const tvIdStr = searchParams.get('tvId');
 
     if (!tvIdStr) {
-      return NextResponse.json({ error: '缺少 tvId 参数' }, { status: 400 });
+      return apiError('缺少 tvId 参数', 400);
     }
 
     const tvId = parseInt(tvIdStr, 10);
     if (isNaN(tvId)) {
-      return NextResponse.json({ error: 'tvId 必须是数字' }, { status: 400 });
+      return apiError('tvId 必须是数字', 400);
     }
 
     const config = await getConfig();
@@ -37,30 +40,23 @@ export async function GET(request: NextRequest) {
     const tmdbReverseProxy = config.SiteConfig.TMDBReverseProxy;
 
     if (!tmdbApiKey) {
-      return NextResponse.json(
-        { error: 'TMDB API Key 未配置' },
-        { status: 400 }
-      );
+      return apiError('TMDB API Key 未配置', 400);
     }
 
-    const result = await getTVSeasons(tmdbApiKey, tvId, tmdbProxy, tmdbReverseProxy);
+    const result = await getTVSeasons(
+      tmdbApiKey,
+      tvId,
+      tmdbProxy,
+      tmdbReverseProxy,
+    );
 
     if (result.code === 200 && result.seasons) {
-      return NextResponse.json({
-        success: true,
-        seasons: result.seasons,
-      });
+      return apiSuccess({ seasons: result.seasons, });
     } else {
-      return NextResponse.json(
-        { error: '获取季度列表失败', code: result.code },
-        { status: result.code }
-      );
+      return apiError('获取季度列表失败', result.code, String(result.code));
     }
   } catch (error) {
-    console.error('获取季度列表失败:', error);
-    return NextResponse.json(
-      { error: '获取失败', details: (error as Error).message },
-      { status: 500 }
-    );
+    logger.error('获取季度列表失败:', error);
+    return apiError('获取失败: ' + (error as Error).message, 500);
   }
 }

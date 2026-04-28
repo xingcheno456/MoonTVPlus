@@ -1,9 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -15,7 +18,7 @@ export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -23,18 +26,14 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type') || 'video'; // video, music, ebook, all
 
     if (!keyword) {
-      return NextResponse.json({ error: '缺少搜索关键词' }, { status: 400 });
+      return apiError('缺少搜索关键词', 400);
     }
 
     const config = await getConfig();
     const xiaoyaConfig = config.XiaoyaConfig;
 
-    if (
-      !xiaoyaConfig ||
-      !xiaoyaConfig.Enabled ||
-      !xiaoyaConfig.ServerURL
-    ) {
-      return NextResponse.json({ error: '小雅未配置或未启用' }, { status: 400 });
+    if (!xiaoyaConfig || !xiaoyaConfig.Enabled || !xiaoyaConfig.ServerURL) {
+      return apiError('小雅未配置或未启用', 400);
     }
 
     // 使用小雅的搜索引擎
@@ -42,7 +41,8 @@ export async function GET(request: NextRequest) {
 
     const response = await fetch(searchUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
     });
 
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       try {
         path = decodeURIComponent(path);
       } catch (e) {
-        console.error('URL 解码失败:', path, e);
+        logger.error('URL 解码失败:', path, e);
       }
 
       // 提取文件名（路径的最后一部分）
@@ -84,15 +84,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
+    return apiSuccess({
       videos: results,
       total: results.length,
     });
   } catch (error) {
-    console.error('小雅搜索失败:', error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 }
-    );
+    logger.error('小雅搜索失败:', error);
+    return apiError((error as Error).message, 500);
   }
 }

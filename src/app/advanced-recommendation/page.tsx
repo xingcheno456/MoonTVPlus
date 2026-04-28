@@ -38,7 +38,9 @@ export default function AdvancedRecommendationPage() {
       setIsLoadingSources(true);
       try {
         const response = await fetch('/api/advanced-recommendation/sources');
-        const data = await response.json();
+        const _raw_data = await response.json();
+
+        const data = _raw_data.success === true ? _raw_data.data : _raw_data;
 
         if (!response.ok) {
           throw new Error(data.error || '获取脚本源失败');
@@ -97,16 +99,20 @@ export default function AdvancedRecommendationPage() {
       setIsLoadingVideos(true);
       try {
         const response = await fetch(
-          `/api/advanced-recommendation/videos?source=${encodeURIComponent(selectedSource)}&page=${page}`
+          `/api/advanced-recommendation/videos?source=${encodeURIComponent(selectedSource)}&page=${page}`,
         );
-        const data = await response.json();
+        const _raw_data = await response.json();
+
+        const data = _raw_data.success === true ? _raw_data.data : _raw_data;
 
         if (!response.ok) {
           throw new Error(data.error || '获取推荐失败');
         }
 
         const nextResults = Array.isArray(data.results) ? data.results : [];
-        setVideos((prev) => (page === 1 ? nextResults : [...prev, ...nextResults]));
+        setVideos((prev) =>
+          page === 1 ? nextResults : [...prev, ...nextResults],
+        );
         setHasMore(Number(data.page || page) < Number(data.pageCount || 1));
       } catch (err) {
         setError(err instanceof Error ? err.message : '获取推荐失败');
@@ -128,7 +134,7 @@ export default function AdvancedRecommendationPage() {
           setPage((prev) => prev + 1);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     observer.observe(loadMoreRef.current);
@@ -137,31 +143,31 @@ export default function AdvancedRecommendationPage() {
 
   return (
     <PageLayout activePath='/advanced-recommendation'>
-      <div className='px-4 sm:px-10 py-4 sm:py-8 mb-10'>
+      <div className='mb-10 px-4 py-4 sm:px-10 sm:py-8'>
         <div className='mb-6'>
-          <h1 className='text-2xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-            <Blend className='w-6 h-6 text-green-500' />
+          <h1 className='flex items-center gap-2 text-2xl font-bold text-gray-800 dark:text-gray-200'>
+            <Blend className='h-6 w-6 text-green-500' />
             高级推荐
           </h1>
-          <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>
+          <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
             浏览视频源脚本提供的推荐内容
           </p>
         </div>
 
-        <div className='max-w-6xl mx-auto space-y-6'>
+        <div className='mx-auto max-w-6xl space-y-6'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+            <label className='mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300'>
               选择脚本源
             </label>
             {isLoadingSources ? (
-              <div className='flex items-center justify-center h-12 bg-gray-50/80 rounded-lg border border-gray-200/50 dark:bg-gray-800 dark:border-gray-700'>
+              <div className='flex h-12 items-center justify-center rounded-lg border border-gray-200/50 bg-gray-50/80 dark:border-gray-700 dark:bg-gray-800'>
                 <Loader2 className='h-5 w-5 animate-spin text-gray-400' />
                 <span className='ml-2 text-sm text-gray-500 dark:text-gray-400'>
                   加载脚本源中...
                 </span>
               </div>
             ) : sources.length === 0 ? (
-              <div className='flex items-center justify-center h-24 rounded-xl border border-dashed border-gray-300 bg-gray-50/70 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400'>
+              <div className='flex h-24 items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50/70 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400'>
                 暂无可用的视频源脚本
               </div>
             ) : (
@@ -187,7 +193,7 @@ export default function AdvancedRecommendationPage() {
           {!isLoadingSources && sources.length > 0 && (
             <>
               {videos.length > 0 ? (
-                <div className='grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4'>
+                <div className='grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-5 lg:grid-cols-6'>
                   {videos.map((video, index) => (
                     <VideoCard
                       key={`${video.source}-${video.id}-${index}`}
@@ -209,7 +215,7 @@ export default function AdvancedRecommendationPage() {
                   ))}
                 </div>
               ) : !isLoadingVideos && !error ? (
-                <div className='flex items-center justify-center h-32 rounded-xl border border-dashed border-gray-300 bg-gray-50/70 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400'>
+                <div className='flex h-32 items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50/70 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400'>
                   当前脚本暂无推荐内容
                 </div>
               ) : null}

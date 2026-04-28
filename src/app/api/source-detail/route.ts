@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { apiError, apiSuccess } from '@/lib/api-response';
+import { detailQuerySchema } from '@/lib/api-schemas';
+import { parseSearchParams, validateAuth } from '@/lib/api-validation';
 import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
 import { getDetailFromApiV2 } from '@/lib/downstream';
 import { getProxyToken } from '@/lib/emby-token';
@@ -13,6 +15,8 @@ import {
   parseScriptSourceValue,
 } from '@/lib/source-script';
 
+import { logger } from '../../../lib/logger';
+
 export const runtime = 'nodejs';
 
 /**
@@ -20,20 +24,16 @@ export const runtime = 'nodejs';
  * 这个API专门用于play页面快速获取当前源的详情
  */
 export async function GET(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authResult = validateAuth(request);
+  if ('status' in authResult) return authResult;
+  const { username: _username } = authResult;
 
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id');
-  const sourceCode = searchParams.get('source');
-  const fileName = searchParams.get('fileName'); // 小雅源：用户点击的文件名
-  const title = searchParams.get('title');
+  const paramResult = parseSearchParams(request, detailQuerySchema);
+  if ('error' in paramResult) return paramResult.error;
+  const { id, source: sourceCode } = paramResult.data;
 
-  if (!id || !sourceCode) {
-    return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
-  }
+  const fileName = new URL(request.url).searchParams.get('fileName');
+  const title = new URL(request.url).searchParams.get('title');
 
   const parsedScriptSource = parseScriptSourceValue(sourceCode);
   if (parsedScriptSource) {
@@ -44,11 +44,12 @@ export async function GET(request: NextRequest) {
         payload: {},
       });
       const sources = normalizeScriptSources(sourcesExecution.result);
-      const sourceInfo =
-        sources.find((item) => item.id === parsedScriptSource.sourceId) || {
-          id: parsedScriptSource.sourceId,
-          name: parsedScriptSource.sourceId,
-        };
+      const sourceInfo = sources.find(
+        (item) => item.id === parsedScriptSource.sourceId,
+      ) || {
+        id: parsedScriptSource.sourceId,
+        name: parsedScriptSource.sourceId,
+      };
 
       const detailExecution = await executeSavedSourceScript({
         key: parsedScriptSource.scriptKey,
@@ -69,12 +70,9 @@ export async function GET(request: NextRequest) {
         result: detailExecution.result,
       });
 
-      return NextResponse.json(normalized);
+      return apiSuccess(normalized);
     } catch (error) {
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: 500 }
-      );
+      return apiError((error as Error).message, 500);
     }
   }
 
@@ -84,7 +82,10 @@ export async function GET(request: NextRequest) {
       const config = await getConfig();
 
       // 检查是否有启用的 Emby 源
-      if (!config.EmbyConfig?.Sources || config.EmbyConfig.Sources.length === 0) {
+      if (
+        !config.EmbyConfig?.Sources ||
+        config.EmbyConfig.Sources.length === 0
+      ) {
         throw new Error('Emby 未配置或未启用');
       }
 
@@ -97,13 +98,15 @@ export async function GET(request: NextRequest) {
       // 使用 EmbyManager 获取客户端和配置
       const { embyManager } = await import('@/lib/emby-manager');
       const sources = await embyManager.getEnabledSources();
-      const sourceConfig = sources.find(s => s.key === embyKey);
+      const sourceConfig = sources.find((s) => s.key === embyKey);
       const sourceName = sourceConfig?.name || 'Emby';
 
       const client = await embyManager.getClient(embyKey);
 
       // 获取代理 token（如果启用了代理）
-      const proxyToken = client.isProxyEnabled() ? await getProxyToken(request) : null;
+      const proxyToken = client.isProxyEnabled()
+        ? await getProxyToken(request)
+        : null;
 
       // 获取媒体详情
       const item = await client.getItem(id);
@@ -118,7 +121,12 @@ export async function GET(request: NextRequest) {
           source_name: sourceName,
           id: item.Id,
           title: item.Name,
-          poster: client.getImageUrl(item.Id, 'Primary', undefined, proxyToken || undefined),
+          poster: client.getImageUrl(
+            item.Id,
+            'Primary',
+            undefined,
+            proxyToken || undefined,
+          ),
           year: item.ProductionYear?.toString() || '',
           douban_id: 0,
           desc: item.Overview || '',
@@ -128,7 +136,7 @@ export async function GET(request: NextRequest) {
           proxyMode: false,
         };
 
-        return NextResponse.json(result);
+        return apiSuccess(result);
       } else if (item.Type === 'Series') {
         // 剧集 - 获取所有季和集
         const seasons = await client.getSeasons(item.Id);
@@ -152,11 +160,18 @@ export async function GET(request: NextRequest) {
           source_name: sourceName,
           id: item.Id,
           title: item.Name,
-          poster: client.getImageUrl(item.Id, 'Primary', undefined, proxyToken || undefined),
+          poster: client.getImageUrl(
+            item.Id,
+            'Primary',
+            undefined,
+            proxyToken || undefined,
+          ),
           year: item.ProductionYear?.toString() || '',
           douban_id: 0,
           desc: item.Overview || '',
-          episodes: await Promise.all(allEpisodes.map((ep) => client.getStreamUrl(ep.Id))),
+          episodes: await Promise.all(
+            allEpisodes.map((ep) => client.getStreamUrl(ep.Id)),
+          ),
           episodes_titles: allEpisodes.map((ep) => {
             const seasonNum = ep.ParentIndexNumber || 1;
             const episodeNum = ep.IndexNumber || 1;
@@ -166,15 +181,12 @@ export async function GET(request: NextRequest) {
           proxyMode: false,
         };
 
-        return NextResponse.json(result);
+        return apiSuccess(result);
       } else {
         throw new Error('不支持的媒体类型');
       }
     } catch (error) {
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: 500 }
-      );
+      return apiError((error as Error).message, 500);
     }
   }
 
@@ -184,32 +196,29 @@ export async function GET(request: NextRequest) {
       const config = await getConfig();
       const xiaoyaConfig = config.XiaoyaConfig;
 
-      if (
-        !xiaoyaConfig ||
-        !xiaoyaConfig.Enabled ||
-        !xiaoyaConfig.ServerURL
-      ) {
+      if (!xiaoyaConfig || !xiaoyaConfig.Enabled || !xiaoyaConfig.ServerURL) {
         throw new Error('小雅未配置或未启用');
       }
 
       const { XiaoyaClient } = await import('@/lib/xiaoya.client');
-      const { getXiaoyaMetadata, getXiaoyaEpisodes } = await import('@/lib/xiaoya-metadata');
+      const { getXiaoyaMetadata, getXiaoyaEpisodes } =
+        await import('@/lib/xiaoya-metadata');
       const { base58Decode, base58Encode } = await import('@/lib/utils');
 
       const client = new XiaoyaClient(
         xiaoyaConfig.ServerURL,
         xiaoyaConfig.Username,
         xiaoyaConfig.Password,
-        xiaoyaConfig.Token
+        xiaoyaConfig.Token,
       );
 
       // 对id进行base58解码得到目录路径
       let decodedDirPath: string;
       try {
         decodedDirPath = base58Decode(id);
-        console.log('[xiaoya] 解码目录路径:', decodedDirPath);
+        logger.info('[xiaoya] 解码目录路径:', decodedDirPath);
       } catch (decodeError) {
-        console.error('[xiaoya] Base58解码失败:', decodeError);
+        logger.error('[xiaoya] Base58解码失败:', decodeError);
         throw new Error('无效的视频ID');
       }
 
@@ -223,7 +232,7 @@ export async function GET(request: NextRequest) {
       if (fileName) {
         // 拼接目录路径和文件名
         clickedFilePath = `${decodedDirPath}${decodedDirPath.endsWith('/') ? '' : '/'}${fileName}`;
-        console.log('[xiaoya] 用户点击的文件路径:', clickedFilePath);
+        logger.info('[xiaoya] 用户点击的文件路径:', clickedFilePath);
       }
 
       // 获取元数据（使用目录路径或点击的文件路径）
@@ -233,7 +242,7 @@ export async function GET(request: NextRequest) {
         metadataPath,
         config.SiteConfig.TMDBApiKey,
         config.SiteConfig.TMDBProxy,
-        config.SiteConfig.TMDBReverseProxy
+        config.SiteConfig.TMDBReverseProxy,
       );
 
       // 获取集数列表（使用目录路径或点击的文件路径）
@@ -242,8 +251,10 @@ export async function GET(request: NextRequest) {
       // 如果有点击的文件路径，找到对应的集数索引
       let clickedFileIndex = -1;
       if (clickedFilePath) {
-        clickedFileIndex = episodes.findIndex(ep => ep.path === clickedFilePath);
-        console.log('[xiaoya] 文件在集数列表中的索引:', clickedFileIndex);
+        clickedFileIndex = episodes.findIndex(
+          (ep) => ep.path === clickedFilePath,
+        );
+        logger.info('[xiaoya] 文件在集数列表中的索引:', clickedFileIndex);
       }
 
       const result = {
@@ -255,23 +266,24 @@ export async function GET(request: NextRequest) {
         year: metadata.year || '',
         douban_id: 0,
         desc: metadata.plot || '',
-        episodes: episodes.map(ep => `/api/xiaoya/play?path=${encodeURIComponent(base58Encode(ep.path))}`),
-        episodes_titles: episodes.map(ep => ep.title),
+        episodes: episodes.map(
+          (ep) =>
+            `/api/xiaoya/play?path=${encodeURIComponent(base58Encode(ep.path))}`,
+        ),
+        episodes_titles: episodes.map((ep) => ep.title),
         subtitles: [],
         proxyMode: false,
         // 返回用户点击的文件索引（如果找到的话）
-        initialEpisodeIndex: clickedFileIndex >= 0 ? clickedFileIndex : undefined,
+        initialEpisodeIndex:
+          clickedFileIndex >= 0 ? clickedFileIndex : undefined,
         // 返回元数据来源
         metadataSource: metadata.source,
       };
 
-      return NextResponse.json(result);
+      return apiSuccess(result);
     } catch (error) {
-      console.error('[xiaoya] 获取详情失败:', error);
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: 500 }
-      );
+      logger.error('[xiaoya] 获取详情失败:', error);
+      return apiError((error as Error).message, 500);
     }
   }
 
@@ -302,39 +314,72 @@ export async function GET(request: NextRequest) {
       const client = new OpenListClient(
         openListConfig.URL,
         openListConfig.Username,
-        openListConfig.Password
+        openListConfig.Password,
       );
 
-      const videoExtensions = ['.mp4', '.mkv', '.avi', '.m3u8', '.flv', '.ts', '.mov', '.wmv', '.webm', '.rmvb', '.rm', '.mpg', '.mpeg', '.3gp', '.f4v', '.m4v', '.vob'];
+      const videoExtensions = [
+        '.mp4',
+        '.mkv',
+        '.avi',
+        '.m3u8',
+        '.flv',
+        '.ts',
+        '.mov',
+        '.wmv',
+        '.webm',
+        '.rmvb',
+        '.rm',
+        '.mpg',
+        '.mpeg',
+        '.3gp',
+        '.f4v',
+        '.m4v',
+        '.vob',
+      ];
 
-      const listTempDirectory = async (currentPath: string, page: number, pageSize: number) => {
-        const load = async (refresh = false) => client.listDirectory(currentPath, page, pageSize, refresh);
+      const listTempDirectory = async (
+        currentPath: string,
+        page: number,
+        pageSize: number,
+      ) => {
+        const load = async (refresh = false) =>
+          client.listDirectory(currentPath, page, pageSize, refresh);
 
         let response = await load(page === 1);
         if (response.code === 200) {
           return response;
         }
 
-        const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
+        const parentPath =
+          currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
         await client.refreshDirectory(parentPath);
         response = await load(true);
 
         if (response.code !== 200) {
-          const message = response.message || '目录不存在或 OpenList 路径未映射';
-          throw new Error(`读取临时目录失败: ${message}（路径: ${currentPath}）`);
+          const message =
+            response.message || '目录不存在或 OpenList 路径未映射';
+          throw new Error(
+            `读取临时目录失败: ${message}（路径: ${currentPath}）`,
+          );
         }
 
         return response;
       };
 
-      const collectFiles = async (currentPath: string): Promise<Array<{ path: string; name: string }>> => {
+      const collectFiles = async (
+        currentPath: string,
+      ): Promise<Array<{ path: string; name: string }>> => {
         const allFiles: Array<{ path: string; name: string }> = [];
         let currentPage = 1;
         const pageSize = 100;
         let hasMore = true;
 
         while (hasMore) {
-          const response = await listTempDirectory(currentPath, currentPage, pageSize);
+          const response = await listTempDirectory(
+            currentPath,
+            currentPage,
+            pageSize,
+          );
 
           for (const item of response.data.content) {
             const itemPath = `${currentPath}${currentPath.endsWith('/') ? '' : '/'}${item.name}`;
@@ -343,7 +388,9 @@ export async function GET(request: NextRequest) {
               allFiles.push(...nested);
             } else if (
               !item.name.startsWith('.') &&
-              videoExtensions.some((ext) => item.name.toLowerCase().endsWith(ext))
+              videoExtensions.some((ext) =>
+                item.name.toLowerCase().endsWith(ext),
+              )
             ) {
               allFiles.push({
                 path: itemPath,
@@ -370,7 +417,8 @@ export async function GET(request: NextRequest) {
       const episodes = files
         .map((file, index) => {
           const parsed = parseVideoFileName(file.name);
-          const fileDir = file.path.substring(0, file.path.lastIndexOf('/')) || '/';
+          const fileDir =
+            file.path.substring(0, file.path.lastIndexOf('/')) || '/';
           return {
             fileName: file.name,
             fileDir,
@@ -389,24 +437,27 @@ export async function GET(request: NextRequest) {
             : a.fileName.localeCompare(b.fileName);
         });
 
-      return NextResponse.json({
+      return apiSuccess({
         source: 'quark-temp',
         source_name: '夸克临时播放',
         id,
-        title: title || folderPath.split('/').filter(Boolean).pop() || '夸克临时播放',
+        title:
+          title ||
+          folderPath.split('/').filter(Boolean).pop() ||
+          '夸克临时播放',
         poster: '',
         year: '',
         douban_id: 0,
         desc: `临时播放目录：${folderPath}`,
-        episodes: episodes.map((ep) => `/api/openlist/play?folder=${encodeURIComponent(ep.fileDir)}&fileName=${encodeURIComponent(ep.fileName)}`),
+        episodes: episodes.map(
+          (ep) =>
+            `/api/openlist/play?folder=${encodeURIComponent(ep.fileDir)}&fileName=${encodeURIComponent(ep.fileName)}`,
+        ),
         episodes_titles: episodes.map((ep) => ep.title),
         proxyMode: false,
       });
     } catch (error) {
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: 500 }
-      );
+      return apiError((error as Error).message, 500);
     }
   }
 
@@ -432,7 +483,8 @@ export async function GET(request: NextRequest) {
       let metaInfo: any = null;
       let folderMeta: any = null;
       try {
-        const { getCachedMetaInfo, setCachedMetaInfo } = await import('@/lib/openlist-cache');
+        const { getCachedMetaInfo, setCachedMetaInfo } =
+          await import('@/lib/openlist-cache');
         const { db } = await import('@/lib/db');
 
         metaInfo = getCachedMetaInfo();
@@ -460,13 +512,14 @@ export async function GET(request: NextRequest) {
 
       // 2. 直接调用 OpenList 客户端获取视频列表
       const { OpenListClient } = await import('@/lib/openlist.client');
-      const { getCachedVideoInfo, setCachedVideoInfo } = await import('@/lib/openlist-cache');
+      const { getCachedVideoInfo, setCachedVideoInfo } =
+        await import('@/lib/openlist-cache');
       const { parseVideoFileName } = await import('@/lib/video-parser');
 
       const client = new OpenListClient(
         openListConfig.URL,
         openListConfig.Username,
-        openListConfig.Password
+        openListConfig.Password,
       );
 
       let videoInfo = getCachedVideoInfo(folderPath);
@@ -479,7 +532,11 @@ export async function GET(request: NextRequest) {
       let hasMore = true;
 
       while (hasMore) {
-        const listResponse = await client.listDirectory(folderPath, currentPage, pageSize);
+        const listResponse = await client.listDirectory(
+          folderPath,
+          currentPage,
+          pageSize,
+        );
 
         if (listResponse.code !== 200) {
           throw new Error('OpenList 列表获取失败4');
@@ -492,10 +549,35 @@ export async function GET(request: NextRequest) {
         currentPage++;
       }
 
-      const videoExtensions = ['.mp4', '.mkv', '.avi', '.m3u8', '.flv', '.ts', '.mov', '.wmv', '.webm', '.rmvb', '.rm', '.mpg', '.mpeg', '.3gp', '.f4v', '.m4v', '.vob'];
+      const videoExtensions = [
+        '.mp4',
+        '.mkv',
+        '.avi',
+        '.m3u8',
+        '.flv',
+        '.ts',
+        '.mov',
+        '.wmv',
+        '.webm',
+        '.rmvb',
+        '.rm',
+        '.mpg',
+        '.mpeg',
+        '.3gp',
+        '.f4v',
+        '.m4v',
+        '.vob',
+      ];
       const videoFiles = allFiles.filter((item) => {
-        if (item.is_dir || item.name.startsWith('.') || item.name.endsWith('.json')) return false;
-        return videoExtensions.some(ext => item.name.toLowerCase().endsWith(ext));
+        if (
+          item.is_dir ||
+          item.name.startsWith('.') ||
+          item.name.endsWith('.json')
+        )
+          return false;
+        return videoExtensions.some((ext) =>
+          item.name.toLowerCase().endsWith(ext),
+        );
       });
 
       if (!videoInfo) {
@@ -505,7 +587,7 @@ export async function GET(request: NextRequest) {
           const file = videoFiles[i];
           const parsed = parseVideoFileName(file.name);
           videoInfo.episodes[file.name] = {
-            episode: parsed.episode || (i + 1),
+            episode: parsed.episode || i + 1,
             season: parsed.season,
             title: parsed.title,
             parsed_from: 'filename',
@@ -520,25 +602,46 @@ export async function GET(request: NextRequest) {
           const parsed = parseVideoFileName(file.name);
           let episodeInfo;
           if (parsed.episode) {
-            episodeInfo = { episode: parsed.episode, season: parsed.season, title: parsed.title, parsed_from: 'filename', isOVA: parsed.isOVA };
+            episodeInfo = {
+              episode: parsed.episode,
+              season: parsed.season,
+              title: parsed.title,
+              parsed_from: 'filename',
+              isOVA: parsed.isOVA,
+            };
           } else {
-            episodeInfo = videoInfo!.episodes[file.name] || { episode: index + 1, season: undefined, title: undefined, parsed_from: 'filename' };
+            episodeInfo = videoInfo!.episodes[file.name] || {
+              episode: index + 1,
+              season: undefined,
+              title: undefined,
+              parsed_from: 'filename',
+            };
           }
           let displayTitle = episodeInfo.title;
           if (!displayTitle && episodeInfo.episode) {
-            displayTitle = episodeInfo.isOVA ? `OVA ${episodeInfo.episode}` : `第${episodeInfo.episode}集`;
+            displayTitle = episodeInfo.isOVA
+              ? `OVA ${episodeInfo.episode}`
+              : `第${episodeInfo.episode}集`;
           }
           if (!displayTitle) {
             displayTitle = file.name;
           }
-          return { fileName: file.name, episode: episodeInfo.episode || 0, season: episodeInfo.season, title: displayTitle, isOVA: episodeInfo.isOVA };
+          return {
+            fileName: file.name,
+            episode: episodeInfo.episode || 0,
+            season: episodeInfo.season,
+            title: displayTitle,
+            isOVA: episodeInfo.isOVA,
+          };
         })
         .sort((a, b) => {
           // OVA 排在最后
           if (a.isOVA && !b.isOVA) return 1;
           if (!a.isOVA && b.isOVA) return -1;
           // 都是 OVA 或都不是 OVA，按集数排序
-          return a.episode !== b.episode ? a.episode - b.episode : a.fileName.localeCompare(b.fileName);
+          return a.episode !== b.episode
+            ? a.episode - b.episode
+            : a.fileName.localeCompare(b.fileName);
         });
 
       // 3. 从 metainfo 中获取元数据
@@ -549,35 +652,39 @@ export async function GET(request: NextRequest) {
         source_name: '私人影库',
         id: id,
         title: folderMeta?.title || folderName,
-        poster: folderMeta?.poster_path ? getTMDBImageUrl(folderMeta.poster_path) : '',
-        year: folderMeta?.release_date ? folderMeta.release_date.split('-')[0] : '',
+        poster: folderMeta?.poster_path
+          ? getTMDBImageUrl(folderMeta.poster_path)
+          : '',
+        year: folderMeta?.release_date
+          ? folderMeta.release_date.split('-')[0]
+          : '',
         douban_id: 0,
         desc: folderMeta?.overview || '',
-        episodes: episodes.map((ep) => `/api/openlist/play?folder=${encodeURIComponent(folderName)}&fileName=${encodeURIComponent(ep.fileName)}`),
+        episodes: episodes.map(
+          (ep) =>
+            `/api/openlist/play?folder=${encodeURIComponent(folderName)}&fileName=${encodeURIComponent(ep.fileName)}`,
+        ),
         episodes_titles: episodes.map((ep) => ep.title),
         proxyMode: false, // openlist 源不使用代理模式
       };
 
-      return NextResponse.json(result);
+      return apiSuccess(result);
     } catch (error) {
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: 500 }
-      );
+      return apiError((error as Error).message, 500);
     }
   }
 
   if (!/^[\w-]+$/.test(id)) {
-    return NextResponse.json({ error: '无效的视频ID格式' }, { status: 400 });
+    return apiError('无效的视频ID格式', 400);
   }
 
   // 对于其他采集源，直接按 id 获取详情。
   try {
-    const apiSites = await getAvailableApiSites(authInfo.username);
+    const apiSites = await getAvailableApiSites(_username);
     const apiSite = apiSites.find((site) => site.key === sourceCode);
 
     if (!apiSite) {
-      return NextResponse.json({ error: '无效的API来源' }, { status: 400 });
+      return apiError('无效的API来源', 400);
     }
 
     const result = await getDetailFromApiV2(apiSite, id);
@@ -590,7 +697,7 @@ export async function GET(request: NextRequest) {
 
     const cacheTime = await getCacheTime();
 
-    return NextResponse.json(resultWithProxy, {
+    return apiSuccess(resultWithProxy, {
       headers: {
         'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
         'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
@@ -599,9 +706,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 }
-    );
+    return apiError((error as Error).message, 500);
   }
 }

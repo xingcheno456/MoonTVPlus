@@ -1,11 +1,13 @@
-/* eslint-disable no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { MusicPlayRecord } from '@/lib/db.client';
 import { getCachedSongs, setCachedSong } from '@/lib/music-song-cache';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -14,7 +16,7 @@ export async function GET(request: NextRequest) {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     // 检查用户状态
@@ -22,17 +24,17 @@ export async function GET(request: NextRequest) {
       // 非站长，检查用户存在或被封禁
       const userInfoV2 = await db.getUserInfoV2(authInfo.username);
       if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
+        return apiError('用户不存在', 401);
       }
       if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
+        return apiError('用户已被封禁', 401);
       }
     }
 
     const records = await db.getAllMusicPlayRecords(authInfo.username);
 
     // 从缓存中获取歌曲信息并填充到记录中
-    const keys = Object.keys(records).map(key => {
+    const keys = Object.keys(records).map((key) => {
       const [platform, id] = key.split('+');
       return { platform, id };
     });
@@ -51,13 +53,10 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    return NextResponse.json(enrichedRecords, { status: 200 });
+    return apiSuccess(enrichedRecords, { status: 200 });
   } catch (err) {
-    console.error('获取音乐播放记录失败', err);
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    );
+    logger.error('获取音乐播放记录失败', err);
+    return apiError('Internal Server Error', 500);
   }
 }
 
@@ -66,17 +65,17 @@ export async function POST(request: NextRequest) {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const userInfoV2 = await db.getUserInfoV2(authInfo.username);
       if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
+        return apiError('用户不存在', 401);
       }
       if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
+        return apiError('用户已被封禁', 401);
       }
     }
 
@@ -85,32 +84,27 @@ export async function POST(request: NextRequest) {
     // 检查是否是批量添加
     if (Array.isArray(body.records)) {
       // 批量添加
-      const records: Array<{ platform: string; id: string; record: MusicPlayRecord }> = [];
+      const records: Array<{
+        platform: string;
+        id: string;
+        record: MusicPlayRecord;
+      }> = [];
 
       for (const item of body.records) {
         const { key, record } = item;
         if (!key || !record) {
-          return NextResponse.json(
-            { error: 'Missing key or record in batch item' },
-            { status: 400 }
-          );
+          return apiError('Missing key or record in batch item', 400);
         }
 
         // 验证音乐播放记录数据
         if (!record.platform || !record.id || !record.name || !record.artist) {
-          return NextResponse.json(
-            { error: 'Invalid record data in batch item' },
-            { status: 400 }
-          );
+          return apiError('Invalid record data in batch item', 400);
         }
 
         // 从key中解析platform和id
         const [platform, id] = key.split('+');
         if (!platform || !id) {
-          return NextResponse.json(
-            { error: 'Invalid key format in batch item' },
-            { status: 400 }
-          );
+          return apiError('Invalid key format in batch item', 400);
         }
 
         records.push({ platform, id, record });
@@ -128,33 +122,24 @@ export async function POST(request: NextRequest) {
       // 批量保存到数据库
       await db.batchSaveMusicPlayRecords(authInfo.username, records);
 
-      return NextResponse.json({ success: true, count: records.length }, { status: 200 });
+      return apiSuccess({ count: records.length }, { status: 200 });
     } else {
       // 单个添加（保持向后兼容）
       const { key, record }: { key: string; record: MusicPlayRecord } = body;
 
       if (!key || !record) {
-        return NextResponse.json(
-          { error: 'Missing key or record' },
-          { status: 400 }
-        );
+        return apiError('Missing key or record', 400);
       }
 
       // 验证音乐播放记录数据
       if (!record.platform || !record.id || !record.name || !record.artist) {
-        return NextResponse.json(
-          { error: 'Invalid record data' },
-          { status: 400 }
-        );
+        return apiError('Invalid record data', 400);
       }
 
       // 从key中解析platform和id
       const [platform, id] = key.split('+');
       if (!platform || !id) {
-        return NextResponse.json(
-          { error: 'Invalid key format' },
-          { status: 400 }
-        );
+        return apiError('Invalid key format', 400);
       }
 
       await db.saveMusicPlayRecord(authInfo.username, platform, id, record);
@@ -168,14 +153,11 @@ export async function POST(request: NextRequest) {
         pic: record.pic,
       });
 
-      return NextResponse.json({ success: true }, { status: 200 });
+      return apiSuccess({ success: true }, { status: 200 });
     }
   } catch (err) {
-    console.error('保存音乐播放记录失败', err);
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    );
+    logger.error('保存音乐播放记录失败', err);
+    return apiError('Internal Server Error', 500);
   }
 }
 
@@ -184,17 +166,17 @@ export async function DELETE(request: NextRequest) {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const userInfoV2 = await db.getUserInfoV2(authInfo.username);
       if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
+        return apiError('用户不存在', 401);
       }
       if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
+        return apiError('用户已被封禁', 401);
       }
     }
 
@@ -205,10 +187,7 @@ export async function DELETE(request: NextRequest) {
       // 删除单条记录
       const [platform, id] = key.split('+');
       if (!platform || !id) {
-        return NextResponse.json(
-          { error: 'Invalid key format' },
-          { status: 400 }
-        );
+        return apiError('Invalid key format', 400);
       }
       await db.deleteMusicPlayRecord(authInfo.username, platform, id);
     } else {
@@ -216,12 +195,9 @@ export async function DELETE(request: NextRequest) {
       await db.clearAllMusicPlayRecords(authInfo.username);
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return apiSuccess({ success: true }, { status: 200 });
   } catch (err) {
-    console.error('删除音乐播放记录失败', err);
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    );
+    logger.error('删除音乐播放记录失败', err);
+    return apiError('Internal Server Error', 500);
   }
 }

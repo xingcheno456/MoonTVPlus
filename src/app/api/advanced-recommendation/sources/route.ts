@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { listEnabledSourceScripts } from '@/lib/source-script';
 
@@ -8,13 +9,13 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
     const scripts = await listEnabledSourceScripts();
 
-    return NextResponse.json({
+    return apiSuccess({
       sources: scripts.map((item) => ({
         key: item.key,
         name: item.name,
@@ -22,9 +23,6 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: '获取高级推荐脚本失败' },
-      { status: 500 }
-    );
+    return apiError('获取高级推荐脚本失败', 500);
   }
 }

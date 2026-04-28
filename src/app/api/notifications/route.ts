@@ -1,40 +1,37 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getStorage } from '@/lib/db';
 
+import { logger } from '../../../lib/logger';
+
 export const runtime = 'nodejs';
 
-// GET: 获取所有通知
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
     const storage = getStorage();
     const notifications = await storage.getNotifications(authInfo.username);
-    const unreadCount = await storage.getUnreadNotificationCount(authInfo.username);
-
-    return NextResponse.json({
-      notifications,
-      unreadCount,
-    });
-  } catch (error) {
-    console.error('获取通知失败:', error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 }
+    const unreadCount = await storage.getUnreadNotificationCount(
+      authInfo.username,
     );
+
+    return apiSuccess({ notifications, unreadCount });
+  } catch (error) {
+    logger.error('获取通知失败:', error);
+    return apiError((error as Error).message, 500);
   }
 }
 
-// POST: 标记通知为已读或删除通知
 export async function POST(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
@@ -45,25 +42,22 @@ export async function POST(request: NextRequest) {
 
     if (action === 'mark_read' && notificationId) {
       await storage.markNotificationAsRead(authInfo.username, notificationId);
-      return NextResponse.json({ message: '已标记为已读' });
+      return apiSuccess({ message: '已标记为已读' });
     }
 
     if (action === 'delete' && notificationId) {
       await storage.deleteNotification(authInfo.username, notificationId);
-      return NextResponse.json({ message: '已删除' });
+      return apiSuccess({ message: '已删除' });
     }
 
     if (action === 'clear_all') {
       await storage.clearAllNotifications(authInfo.username);
-      return NextResponse.json({ message: '已清空所有通知' });
+      return apiSuccess({ message: '已清空所有通知' });
     }
 
-    return NextResponse.json({ error: '无效的操作' }, { status: 400 });
+    return apiError('无效的操作', 400);
   } catch (error) {
-    console.error('操作通知失败:', error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 }
-    );
+    logger.error('操作通知失败:', error);
+    return apiError((error as Error).message, 500);
   }
 }

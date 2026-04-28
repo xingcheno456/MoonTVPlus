@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { OpenListClient } from '@/lib/openlist.client';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -16,26 +19,17 @@ export async function POST(req: NextRequest) {
     // 检查权限
     const authInfo = getAuthInfoFromCookie(req);
     if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json(
-        { error: '无权限访问' },
-        { status: 403 }
-      );
+      return apiError('无权限访问', 403);
     }
 
     const { url, name } = await req.json();
 
     if (!url || typeof url !== 'string') {
-      return NextResponse.json(
-        { error: '下载链接不能为空' },
-        { status: 400 }
-      );
+      return apiError('下载链接不能为空', 400);
     }
 
     if (!name || typeof name !== 'string') {
-      return NextResponse.json(
-        { error: '资源名称不能为空' },
-        { status: 400 }
-      );
+      return apiError('资源名称不能为空', 400);
     }
 
     // 获取 OpenList 配置
@@ -43,17 +37,15 @@ export async function POST(req: NextRequest) {
     const openlistConfig = config.OpenListConfig;
 
     if (!openlistConfig?.Enabled) {
-      return NextResponse.json(
-        { error: '私人影库功能未启用' },
-        { status: 400 }
-      );
+      return apiError('私人影库功能未启用', 400);
     }
 
-    if (!openlistConfig.URL || !openlistConfig.Username || !openlistConfig.Password) {
-      return NextResponse.json(
-        { error: 'OpenList 配置不完整' },
-        { status: 400 }
-      );
+    if (
+      !openlistConfig.URL ||
+      !openlistConfig.Username ||
+      !openlistConfig.Password
+    ) {
+      return apiError('OpenList 配置不完整', 400);
     }
 
     // 构建下载路径（使用离线下载目录）
@@ -64,7 +56,7 @@ export async function POST(req: NextRequest) {
     const client = new OpenListClient(
       openlistConfig.URL,
       openlistConfig.Username,
-      openlistConfig.Password
+      openlistConfig.Password,
     );
 
     // 获取 Token 并调用 API
@@ -75,7 +67,7 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': token,
+        Authorization: token,
       },
       body: JSON.stringify({
         path: downloadPath,
@@ -91,17 +83,10 @@ export async function POST(req: NextRequest) {
       throw new Error(data.message || '添加离线下载任务失败');
     }
 
-    return NextResponse.json({
-      success: true,
-      message: '已添加到离线下载队列',
-      path: downloadPath,
-    });
-
+    return apiSuccess({ message: '已添加到离线下载队列',
+      path: downloadPath, });
   } catch (error: any) {
-    console.error('添加离线下载任务失败:', error);
-    return NextResponse.json(
-      { error: error.message || '添加离线下载任务失败' },
-      { status: 500 }
-    );
+    logger.error('添加离线下载任务失败:', error);
+    return apiError(error.message || '添加离线下载任务失败', 500);
   }
 }

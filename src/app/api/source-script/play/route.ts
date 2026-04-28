@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import {
   parseScriptPlayUrlValue,
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
+      return apiError('未授权', 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -28,17 +29,17 @@ export async function GET(request: NextRequest) {
     const format = searchParams.get('format');
 
     if (!key || !sourceId || !episodeIndexRaw || !playUrlEncoded) {
-      return NextResponse.json({ error: '缺少参数' }, { status: 400 });
+      return apiError('缺少参数', 400);
     }
 
     const episodeIndex = Number.parseInt(episodeIndexRaw, 10);
     if (!Number.isInteger(episodeIndex) || episodeIndex < 0) {
-      return NextResponse.json({ error: '无效的 episodeIndex' }, { status: 400 });
+      return apiError('无效的 episodeIndex', 400);
     }
 
     const playUrl = parseScriptPlayUrlValue(playUrlEncoded);
     if (!playUrl) {
-      return NextResponse.json({ error: '无效的播放地址' }, { status: 400 });
+      return apiError('无效的播放地址', 400);
     }
 
     const result = await resolveSavedScriptPlayUrl({
@@ -53,14 +54,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (format === 'json') {
-      return NextResponse.json(result);
+      return apiSuccess(result);
     }
 
     return NextResponse.redirect(result.url);
   } catch (error) {
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 }
-    );
+    return apiError((error as Error).message, 500);
   }
 }

@@ -1,7 +1,10 @@
 import * as cheerio from 'cheerio/slim';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { fetchDoubanWithVerification } from '@/lib/douban-anti-crawler';
+
+import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -23,7 +26,7 @@ export async function GET(request: NextRequest) {
   const limit = searchParams.get('limit') || '20';
 
   if (!doubanId) {
-    return NextResponse.json({ error: 'Missing douban ID' }, { status: 400 });
+    return apiError('Missing douban ID', 400);
   }
 
   try {
@@ -33,10 +36,7 @@ export async function GET(request: NextRequest) {
     const response = await fetchDoubanWithVerification(url);
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to fetch douban page' },
-        { status: response.status }
-      );
+      return apiError('Failed to fetch douban page', 400);
     }
 
     const html = await response.text();
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     const comments: DoubanComment[] = [];
 
-    console.log('开始解析豆瓣评论，start:', start, 'limit:', limit);
+    logger.info('开始解析豆瓣评论，start:', start, 'limit:', limit);
 
     // 解析每条短评
     $('.comment-item').each((index, element) => {
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    console.log('解析到评论数:', comments.length);
+    logger.info('解析到评论数:', comments.length);
 
     // 获取总评论数 - 尝试多种方式
     let total = 0;
@@ -132,36 +132,33 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log('豆瓣评论统计:', {
+    logger.info('豆瓣评论统计:', {
       total,
       commentsCount: comments.length,
       start,
       limit,
-      hasMore: parseInt(start) + comments.length < total || (total === 0 && comments.length >= parseInt(limit)),
+      hasMore:
+        parseInt(start) + comments.length < total ||
+        (total === 0 && comments.length >= parseInt(limit)),
     });
 
-    return NextResponse.json(
-      {
+    return apiSuccess({
         comments,
         total,
         start: parseInt(start),
         limit: parseInt(limit),
         // 如果知道总数，就用总数判断；否则如果获取了完整页，假设还有更多
-        hasMore: total > 0
-          ? parseInt(start) + comments.length < total
-          : comments.length >= parseInt(limit),
-      },
-      {
+        hasMore:
+          total > 0
+            ? parseInt(start) + comments.length < total
+            : comments.length >= parseInt(limit),
+      }, {
         headers: {
           'Cache-Control': 'public, max-age=600, s-maxage=600',
         },
-      }
-    );
+      });
   } catch (error) {
-    console.error('Douban comments fetch error:', error);
-    return NextResponse.json(
-      { error: 'Failed to parse douban comments' },
-      { status: 500 }
-    );
+    logger.error('Douban comments fetch error:', error);
+    return apiError('Failed to parse douban comments', 500);
   }
 }

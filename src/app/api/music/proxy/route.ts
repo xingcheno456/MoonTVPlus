@@ -1,6 +1,9 @@
-/* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
+
+import { apiError, apiSuccess } from '@/lib/api-response';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -11,10 +14,7 @@ export async function GET(request: NextRequest) {
     const url = searchParams.get('url');
 
     if (!url) {
-      return NextResponse.json(
-        { error: '缺少 url 参数' },
-        { status: 400 }
-      );
+      return apiError('缺少 url 参数', 400);
     }
 
     // 安全检查：只允许代理音乐平台的音频和图片 CDN
@@ -36,22 +36,17 @@ export async function GET(request: NextRequest) {
     try {
       urlObj = new URL(url);
     } catch {
-      return NextResponse.json(
-        { error: '无效的 URL' },
-        { status: 400 }
-      );
+      return apiError('无效的 URL', 400);
     }
 
-    const isAllowed = allowedDomains.some(domain =>
-      urlObj.hostname === domain || urlObj.hostname.endsWith(`.${domain}`)
+    const isAllowed = allowedDomains.some(
+      (domain) =>
+        urlObj.hostname === domain || urlObj.hostname.endsWith(`.${domain}`),
     );
 
     if (!isAllowed) {
-      console.warn(`拒绝代理音频请求: ${urlObj.hostname}`);
-      return NextResponse.json(
-        { error: '不允许的目标域名' },
-        { status: 403 }
-      );
+      logger.warn(`拒绝代理音频请求: ${urlObj.hostname}`);
+      return apiError('不允许的目标域名', 403);
     }
 
     // 检查是否有 Range 请求头
@@ -59,8 +54,9 @@ export async function GET(request: NextRequest) {
 
     // 构建上游请求头
     const upstreamHeaders: Record<string, string> = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'Referer': 'http://www.kuwo.cn/',
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      Referer: 'http://www.kuwo.cn/',
     };
 
     // 如果有 Range 请求，转发给上游
@@ -74,10 +70,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok && response.status !== 206) {
-      return NextResponse.json(
-        { error: '获取音频失败' },
-        { status: response.status }
-      );
+      return apiError('获取音频失败', 400);
     }
 
     // 获取响应头
@@ -109,13 +102,10 @@ export async function GET(request: NextRequest) {
       headers,
     });
   } catch (error) {
-    console.error('代理音频失败:', error);
-    return NextResponse.json(
-      {
+    logger.error('代理音频失败:', error);
+    return apiSuccess({
         error: '代理请求失败',
         details: (error as Error).message,
-      },
-      { status: 500 }
-    );
+      }, { status: 500 });
   }
 }

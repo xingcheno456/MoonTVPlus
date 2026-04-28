@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiSuccess } from '@/lib/api-response';
 import { getCachedEmbyList, setCachedEmbyList } from '@/lib/emby-cache';
 import { embyManager } from '@/lib/emby-manager';
 import { getProxyToken } from '@/lib/emby-token';
+
+import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -25,7 +28,7 @@ export async function GET(request: NextRequest) {
     if (isDefaultSort) {
       const cached = getCachedEmbyList(page, pageSize, parentId, embyKey);
       if (cached) {
-        return NextResponse.json(cached);
+        return apiSuccess(cached);
       }
     }
 
@@ -33,7 +36,9 @@ export async function GET(request: NextRequest) {
     const client = await embyManager.getClient(embyKey);
 
     // 获取代理 token（如果启用了代理）
-    const proxyToken = client.isProxyEnabled() ? await getProxyToken(request) : null;
+    const proxyToken = client.isProxyEnabled()
+      ? await getProxyToken(request)
+      : null;
 
     // 获取媒体列表
     const result = await client.getItems({
@@ -50,7 +55,12 @@ export async function GET(request: NextRequest) {
     const list = result.Items.map((item) => ({
       id: item.Id,
       title: item.Name,
-      poster: client.getImageUrl(item.Id, 'Primary', undefined, proxyToken || undefined),
+      poster: client.getImageUrl(
+        item.Id,
+        'Primary',
+        undefined,
+        proxyToken || undefined,
+      ),
       year: item.ProductionYear?.toString() || '',
       rating: item.CommunityRating || 0,
       mediaType: item.Type === 'Movie' ? 'movie' : 'tv',
@@ -71,10 +81,10 @@ export async function GET(request: NextRequest) {
       setCachedEmbyList(page, pageSize, response, parentId, embyKey);
     }
 
-    return NextResponse.json(response);
+    return apiSuccess(response);
   } catch (error) {
-    console.error('获取 Emby 列表失败:', error);
-    return NextResponse.json({
+    logger.error('获取 Emby 列表失败:', error);
+    return apiSuccess({
       error: '获取 Emby 列表失败: ' + (error as Error).message,
       list: [],
       totalPages: 0,
