@@ -11,7 +11,11 @@ interface VideoInfoCacheEntry {
 }
 
 const METAINFO_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7天
-const VIDEOINFO_CACHE_TTL_MS = (parseInt(process.env.VIDEOINFO_CACHE_MINUTES || '1440', 10)) * 60 * 1000; // 默认1天
+const VIDEOINFO_CACHE_TTL_MS =
+  parseInt(process.env.VIDEOINFO_CACHE_MINUTES || '1440', 10) * 60 * 1000; // 默认1天
+
+// 添加缓存大小上限，防止内存泄漏
+const MAX_VIDEOINFO_CACHE_SIZE = parseInt(process.env.VIDEOINFO_CACHE_MAX || '500', 10);
 
 const METAINFO_CACHE: Map<string, MetaInfoCacheEntry> = new Map();
 const VIDEOINFO_CACHE: Map<string, VideoInfoCacheEntry> = new Map();
@@ -88,10 +92,14 @@ export function getCachedVideoInfo(folderPath: string): VideoInfo | null {
   return entry.data;
 }
 
-export function setCachedVideoInfo(
-  folderPath: string,
-  data: VideoInfo
-): void {
+export function setCachedVideoInfo(folderPath: string, data: VideoInfo): void {
+  // 超过上限时清理最旧的条目
+  if (VIDEOINFO_CACHE.size >= MAX_VIDEOINFO_CACHE_SIZE) {
+    const entries = Array.from(VIDEOINFO_CACHE.entries());
+    entries.sort((a, b) => a[1].expiresAt - b[1].expiresAt);
+    const toDelete = entries.slice(0, Math.ceil(MAX_VIDEOINFO_CACHE_SIZE * 0.2));
+    toDelete.forEach(([key]) => VIDEOINFO_CACHE.delete(key));
+  }
   VIDEOINFO_CACHE.set(folderPath, {
     expiresAt: Date.now() + VIDEOINFO_CACHE_TTL_MS,
     data,
