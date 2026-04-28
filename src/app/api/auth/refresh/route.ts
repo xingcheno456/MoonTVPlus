@@ -1,19 +1,12 @@
-/* eslint-disable no-console */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie, parseAuthInfo } from '@/lib/auth';
+import { generateHmacSignature } from '@/lib/crypto';
+import { STORAGE_TYPE } from '@/lib/db';
 import { refreshAccessToken } from '@/lib/middleware-auth';
-import { TOKEN_CONFIG } from '@/lib/refresh-token';
 
 export const runtime = 'nodejs';
-
-const STORAGE_TYPE =
-  (process.env.NEXT_PUBLIC_STORAGE_TYPE as
-    | 'localstorage'
-    | 'redis'
-    | 'upstash'
-    | 'kvrocks'
-    | undefined) || 'localstorage';
 
 function buildRefreshResponse(authToken?: string | null) {
   const body: Record<string, unknown> = { ok: true };
@@ -27,24 +20,45 @@ function buildRefreshResponse(authToken?: string | null) {
     }
   }
 
-  return NextResponse.json(body);
+  return apiSuccess(body);
 }
 
 export async function POST(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
 
   if (!authInfo) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   if (STORAGE_TYPE === 'localstorage') {
-    if (!authInfo.password || authInfo.password !== process.env.PASSWORD) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // localstorage mode: verify HMAC signature instead of comparing stored password
+    if (
+      !authInfo.username ||
+      !authInfo.role ||
+      !authInfo.timestamp ||
+      !authInfo.signature
+    ) {
+      return apiError('Unauthorized', 401);
+    }
+
+    // Recompute the signature and compare
+    const dataToSign = JSON.stringify({
+      username: authInfo.username,
+      role: authInfo.role,
+      timestamp: authInfo.timestamp,
+    });
+    const expectedSignature = await generateHmacSignature(
+      dataToSign,
+      process.env.PASSWORD || '',
+    );
+
+    if (authInfo.signature !== expectedSignature) {
+      return apiError('Unauthorized', 401);
     }
 
     const authCookie = request.cookies.get('auth');
     if (!authCookie?.value) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     const response = buildRefreshResponse(authCookie.value);
@@ -55,7 +69,7 @@ export async function POST(request: NextRequest) {
       expires,
       sameSite: 'lax',
       httpOnly: false,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
     });
     return response;
   }
@@ -68,17 +82,14 @@ export async function POST(request: NextRequest) {
     !authInfo.refreshToken ||
     !authInfo.refreshExpires
   ) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   const now = Date.now();
 
   // 只检查 Refresh Token 是否过期
   if (now >= authInfo.refreshExpires) {
-    return NextResponse.json(
-      { error: 'Refresh token expired' },
-      { status: 401 }
-    );
+    return apiError('Refresh token expired', 401);
   }
 
   // 只要 Refresh Token 有效，就允许刷新（即使 Access Token 已过期）
@@ -88,11 +99,11 @@ export async function POST(request: NextRequest) {
     authInfo.role,
     authInfo.tokenId,
     authInfo.refreshToken,
-    authInfo.refreshExpires
+    authInfo.refreshExpires,
   );
 
   if (!newAuthData) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   const response = buildRefreshResponse(newAuthData);
@@ -102,7 +113,7 @@ export async function POST(request: NextRequest) {
     expires,
     sameSite: 'lax',
     httpOnly: false,
-    secure: false,
+    secure: process.env.NODE_ENV === 'production',
   });
   return response;
 }

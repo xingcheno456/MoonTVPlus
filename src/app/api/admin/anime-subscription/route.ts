@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { apiError, apiSuccess } from '@/lib/api-response';
+import { validateAdminAuth } from '@/lib/api-validation';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+
+import { logger } from '../../../../lib/logger';
+
 import { AnimeSubscription } from '@/types/anime-subscription';
 
 export const runtime = 'nodejs';
@@ -14,11 +18,8 @@ export const runtime = 'nodejs';
  */
 export async function GET(req: NextRequest) {
   try {
-    // 权限检查
-    const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
-    }
+    const adminAuth = validateAdminAuth(req);
+    if ('status' in adminAuth) return adminAuth;
 
     const config = await getConfig();
     const animeConfig = config.AnimeSubscriptionConfig || {
@@ -26,13 +27,10 @@ export async function GET(req: NextRequest) {
       Subscriptions: [],
     };
 
-    return NextResponse.json(animeConfig);
+    return apiSuccess(animeConfig);
   } catch (error: any) {
-    console.error('获取追番订阅配置失败:', error);
-    return NextResponse.json(
-      { error: error.message || '获取配置失败' },
-      { status: 500 }
-    );
+    logger.error('获取追番订阅配置失败:', error);
+    return apiError(error.message || '获取配置失败', 500);
   }
 }
 
@@ -42,23 +40,20 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    // 权限检查
-    const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
-    }
+    const adminAuth = validateAdminAuth(req);
+    if ('status' in adminAuth) return adminAuth;
 
     const { title, filterText, source, enabled, lastEpisode } =
       await req.json();
 
     // 验证必填字段
     if (!title || !filterText || !source) {
-      return NextResponse.json({ error: '缺少必填字段' }, { status: 400 });
+      return apiError('缺少必填字段', 400);
     }
 
     // 验证 source
     if (!['acgrip', 'mikan', 'dmhy'].includes(source)) {
-      return NextResponse.json({ error: '无效的搜索源' }, { status: 400 });
+      return apiError('无效的搜索源', 400);
     }
 
     const config = await getConfig();
@@ -71,10 +66,7 @@ export async function POST(req: NextRequest) {
     if (lastEpisode !== undefined) {
       episodeNum = parseInt(String(lastEpisode), 10);
       if (isNaN(episodeNum) || episodeNum < 0) {
-        return NextResponse.json(
-          { error: '集数必须是非负整数' },
-          { status: 400 }
-        );
+        return apiError('集数必须是非负整数', 400);
       }
     }
 
@@ -89,18 +81,15 @@ export async function POST(req: NextRequest) {
       lastEpisode: episodeNum,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      createdBy: authInfo.username || 'unknown',
+      createdBy: adminAuth.username || 'unknown',
     };
 
     config.AnimeSubscriptionConfig.Subscriptions.push(newSubscription);
     await db.saveAdminConfig(config);
 
-    return NextResponse.json(newSubscription);
+    return apiSuccess(newSubscription);
   } catch (error: any) {
-    console.error('创建追番订阅失败:', error);
-    return NextResponse.json(
-      { error: error.message || '创建订阅失败' },
-      { status: 500 }
-    );
+    logger.error('创建追番订阅失败:', error);
+    return apiError(error.message || '创建订阅失败', 500);
   }
 }

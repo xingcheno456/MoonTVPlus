@@ -1,5 +1,5 @@
-/* eslint-disable no-console */
 
+import { logger } from './logger';
 import { TOKEN_CONFIG } from './token-config';
 
 // Re-export TOKEN_CONFIG for backward compatibility
@@ -28,27 +28,31 @@ interface TokenData {
 export function generateTokenId(): string {
   const array = new Uint8Array(16);
   crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
+    '',
+  );
 }
 
 // 生成随机 Refresh Token
 export function generateRefreshToken(): string {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
+    '',
+  );
 }
 
 // 存储 Refresh Token（使用 Redis Hash）
 export async function storeRefreshToken(
   username: string,
   tokenId: string,
-  tokenData: TokenData
+  tokenData: TokenData,
 ): Promise<void> {
   const hashKey = `user_tokens:${username}`;
   const storage = await loadStorage();
 
   if (!storage || typeof (storage as any).adapter?.hSet !== 'function') {
-    console.warn('Redis Hash not supported, skipping token storage');
+    logger.warn('Redis Hash not supported, skipping token storage');
     return;
   }
 
@@ -56,11 +60,11 @@ export async function storeRefreshToken(
     await (storage as any).adapter.hSet(
       hashKey,
       tokenId,
-      JSON.stringify(tokenData)
+      JSON.stringify(tokenData),
     );
-    console.log(`Stored refresh token for ${username}:${tokenId}`);
+    logger.info(`Stored refresh token for ${username}:${tokenId}`);
   } catch (error) {
-    console.error('Failed to store refresh token:', error);
+    logger.error('Failed to store refresh token:', error);
     throw error;
   }
 }
@@ -69,13 +73,13 @@ export async function storeRefreshToken(
 export async function verifyRefreshToken(
   username: string,
   tokenId: string,
-  refreshToken: string
+  refreshToken: string,
 ): Promise<boolean> {
   const hashKey = `user_tokens:${username}`;
   const storage = await loadStorage();
 
   if (!storage || typeof (storage as any).adapter?.hGet !== 'function') {
-    console.warn('Redis Hash not supported');
+    logger.warn('Redis Hash not supported');
     return false;
   }
 
@@ -105,12 +109,12 @@ export async function verifyRefreshToken(
     await (storage as any).adapter.hSet(
       hashKey,
       tokenId,
-      JSON.stringify(tokenData)
+      JSON.stringify(tokenData),
     );
 
     return true;
   } catch (error) {
-    console.error('Failed to verify refresh token:', error);
+    logger.error('Failed to verify refresh token:', error);
     return false;
   }
 }
@@ -118,37 +122,39 @@ export async function verifyRefreshToken(
 // 撤销单个 Token
 export async function revokeRefreshToken(
   username: string,
-  tokenId: string
+  tokenId: string,
 ): Promise<void> {
   const hashKey = `user_tokens:${username}`;
   const storage = await loadStorage();
 
   if (!storage || typeof (storage as any).adapter?.hDel !== 'function') {
-    console.warn('Redis Hash not supported');
+    logger.warn('Redis Hash not supported');
     return;
   }
 
   try {
     await (storage as any).adapter.hDel(hashKey, tokenId);
-    console.log(`Revoked refresh token for ${username}:${tokenId}`);
+    logger.info(`Revoked refresh token for ${username}:${tokenId}`);
   } catch (error) {
-    console.error('Failed to revoke refresh token:', error);
+    logger.error('Failed to revoke refresh token:', error);
   }
 }
 
 // 获取用户的所有设备
-export async function getUserDevices(username: string): Promise<Array<{
-  tokenId: string;
-  deviceInfo: string;
-  createdAt: number;
-  lastUsed: number;
-  expiresAt: number;
-}>> {
+export async function getUserDevices(username: string): Promise<
+  Array<{
+    tokenId: string;
+    deviceInfo: string;
+    createdAt: number;
+    lastUsed: number;
+    expiresAt: number;
+  }>
+> {
   const hashKey = `user_tokens:${username}`;
   const storage = await loadStorage();
 
   if (!storage || typeof (storage as any).adapter?.hGetAll !== 'function') {
-    console.warn('Redis Hash not supported');
+    logger.warn('Redis Hash not supported');
     return [];
   }
 
@@ -181,13 +187,13 @@ export async function getUserDevices(username: string): Promise<Array<{
           expiresAt: tokenData.expiresAt,
         });
       } catch (err) {
-        console.error(`Failed to parse token data for ${tokenId}:`, err);
+        logger.error(`Failed to parse token data for ${tokenId}:`, err);
       }
     }
 
     return devices;
   } catch (error) {
-    console.error('Failed to get user devices:', error);
+    logger.error('Failed to get user devices:', error);
     return [];
   }
 }
@@ -198,15 +204,15 @@ export async function revokeAllRefreshTokens(username: string): Promise<void> {
   const storage = await loadStorage();
 
   if (!storage || typeof (storage as any).adapter?.del !== 'function') {
-    console.warn('Redis Hash not supported');
+    logger.warn('Redis Hash not supported');
     return;
   }
 
   try {
     await (storage as any).adapter.del(hashKey);
-    console.log(`Revoked all refresh tokens for ${username}`);
+    logger.info(`Revoked all refresh tokens for ${username}`);
   } catch (error) {
-    console.error('Failed to revoke all refresh tokens:', error);
+    logger.error('Failed to revoke all refresh tokens:', error);
   }
 }
 
@@ -238,17 +244,17 @@ export async function cleanupExpiredTokens(username: string): Promise<number> {
           cleanedCount++;
         }
       } catch (err) {
-        console.error(`Failed to parse token data for ${tokenId}:`, err);
+        logger.error(`Failed to parse token data for ${tokenId}:`, err);
       }
     }
 
     if (cleanedCount > 0) {
-      console.log(`Cleaned up ${cleanedCount} expired tokens for ${username}`);
+      logger.info(`Cleaned up ${cleanedCount} expired tokens for ${username}`);
     }
 
     return cleanedCount;
   } catch (error) {
-    console.error('Failed to cleanup expired tokens:', error);
+    logger.error('Failed to cleanup expired tokens:', error);
     return 0;
   }
 }

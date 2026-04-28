@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { apiError, apiSuccess } from '@/lib/api-response';
+import { validateAdminAuth } from '@/lib/api-validation';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+
+import { logger } from '../../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -13,19 +16,13 @@ export const runtime = 'nodejs';
  */
 export async function PUT(req: NextRequest) {
   try {
-    // 权限检查
-    const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
-    }
+    const adminAuth = validateAdminAuth(req);
+    if ('status' in adminAuth) return adminAuth;
 
     const { enabled } = await req.json();
 
     if (typeof enabled !== 'boolean') {
-      return NextResponse.json(
-        { error: 'enabled 必须是布尔值' },
-        { status: 400 }
-      );
+      return apiError('enabled 必须是布尔值', 400);
     }
 
     const config = await getConfig();
@@ -36,12 +33,9 @@ export async function PUT(req: NextRequest) {
     config.AnimeSubscriptionConfig.Enabled = enabled;
     await db.saveAdminConfig(config);
 
-    return NextResponse.json({ success: true, enabled });
+    return apiSuccess({ enabled });
   } catch (error: any) {
-    console.error('切换追番功能状态失败:', error);
-    return NextResponse.json(
-      { error: error.message || '切换状态失败' },
-      { status: 500 }
-    );
+    logger.error('切换追番功能状态失败:', error);
+    return apiError('切换状态失败', 500);
   }
 }

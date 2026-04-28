@@ -14,7 +14,8 @@ interface CachedUserInfo {
 
 class UserInfoCache {
   private cache: Map<string, CachedUserInfo> = new Map();
-  private readonly TTL = 6 * 60 * 60 * 1000; // 6小时过期
+  private readonly TTL = 6 * 60 * 60 * 1000;
+  private readonly MAX_SIZE = 500;
 
   get(username: string): CachedUserInfo | null {
     const cached = this.cache.get(username);
@@ -30,6 +31,10 @@ class UserInfoCache {
   }
 
   set(username: string, userInfo: Omit<CachedUserInfo, 'cachedAt'>): void {
+    if (this.cache.size >= this.MAX_SIZE && !this.cache.has(username)) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) this.cache.delete(oldestKey);
+    }
     this.cache.set(username, {
       ...userInfo,
       cachedAt: Date.now(),
@@ -59,7 +64,8 @@ class UserInfoCache {
 // 站长存在状态缓存
 class OwnerExistenceCache {
   private cache: Map<string, { exists: boolean; cachedAt: number }> = new Map();
-  private readonly TTL = 10 * 60 * 1000; // 10分钟过期
+  private readonly TTL = 10 * 60 * 1000;
+  private readonly MAX_SIZE = 100;
 
   get(ownerUsername: string): boolean | null {
     const cached = this.cache.get(ownerUsername);
@@ -75,6 +81,10 @@ class OwnerExistenceCache {
   }
 
   set(ownerUsername: string, exists: boolean): void {
+    if (this.cache.size >= this.MAX_SIZE && !this.cache.has(ownerUsername)) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) this.cache.delete(oldestKey);
+    }
     this.cache.set(ownerUsername, {
       exists,
       cachedAt: Date.now(),
@@ -118,7 +128,9 @@ if (!_userInfoCache) {
 export const userInfoCache = _userInfoCache as UserInfoCache;
 
 const ownerExistenceGlobalKey = Symbol.for('__MOONTV_OWNER_EXISTENCE_CACHE__');
-let _ownerExistenceCache: OwnerExistenceCache | undefined = (global as any)[ownerExistenceGlobalKey];
+let _ownerExistenceCache: OwnerExistenceCache | undefined = (global as any)[
+  ownerExistenceGlobalKey
+];
 
 if (!_ownerExistenceCache) {
   _ownerExistenceCache = new OwnerExistenceCache();

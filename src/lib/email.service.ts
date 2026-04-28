@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 
 import type { AdminConfig } from './admin.types';
+import { logger } from './logger';
 
 export interface EmailOptions {
   to: string;
@@ -14,7 +15,7 @@ export class EmailService {
    */
   static async sendViaSMTP(
     config: NonNullable<AdminConfig['EmailConfig']>['smtp'],
-    options: EmailOptions
+    options: EmailOptions,
   ): Promise<void> {
     if (!config) {
       throw new Error('SMTP配置不存在');
@@ -43,7 +44,7 @@ export class EmailService {
    */
   static async sendViaResend(
     config: NonNullable<AdminConfig['EmailConfig']>['resend'],
-    options: EmailOptions
+    options: EmailOptions,
   ): Promise<void> {
     if (!config) {
       throw new Error('Resend配置不存在');
@@ -74,25 +75,25 @@ export class EmailService {
    */
   static async send(
     emailConfig: AdminConfig['EmailConfig'],
-    options: EmailOptions
+    options: EmailOptions,
   ): Promise<void> {
     if (!emailConfig || !emailConfig.enabled) {
-      console.log('邮件通知未启用，跳过发送');
+      logger.info('邮件通知未启用，跳过发送');
       return;
     }
 
     try {
       if (emailConfig.provider === 'smtp' && emailConfig.smtp) {
         await this.sendViaSMTP(emailConfig.smtp, options);
-        console.log(`邮件已通过SMTP发送至: ${options.to}`);
+        logger.info(`邮件已通过SMTP发送至: ${options.to}`);
       } else if (emailConfig.provider === 'resend' && emailConfig.resend) {
         await this.sendViaResend(emailConfig.resend, options);
-        console.log(`邮件已通过Resend发送至: ${options.to}`);
+        logger.info(`邮件已通过Resend发送至: ${options.to}`);
       } else {
         throw new Error('邮件配置不完整');
       }
     } catch (error) {
-      console.error('邮件发送失败:', error);
+      logger.error('邮件发送失败:', error);
       throw error;
     }
   }
@@ -103,7 +104,7 @@ export class EmailService {
   static async sendTestEmail(
     emailConfig: AdminConfig['EmailConfig'],
     toEmail: string,
-    siteName?: string
+    siteName?: string,
   ): Promise<void> {
     const displayName = siteName || 'MoonTVPlus';
     await this.send(emailConfig, {

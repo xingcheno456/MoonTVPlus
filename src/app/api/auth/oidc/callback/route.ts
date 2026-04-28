@@ -1,7 +1,8 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { generateHmacSignature } from '@/lib/crypto';
 import { db } from '@/lib/db';
 import {
   generateRefreshToken,
@@ -10,31 +11,9 @@ import {
   TOKEN_CONFIG,
 } from '@/lib/refresh-token';
 
+import { logger } from '../../../../../lib/logger';
+
 export const runtime = 'nodejs';
-
-// 生成签名
-async function generateSignature(
-  data: string,
-  secret: string
-): Promise<string> {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-  const messageData = encoder.encode(data);
-
-  const key = await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-
-  const signature = await crypto.subtle.sign('HMAC', key, messageData);
-
-  return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
 
 // 获取设备信息
 function getDeviceInfo(userAgent: string): string {
@@ -50,7 +29,11 @@ function getDeviceInfo(userAgent: string): string {
     return 'OrionTV';
   }
 
-  if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+  if (
+    ua.includes('mobile') ||
+    ua.includes('android') ||
+    ua.includes('iphone')
+  ) {
     if (ua.includes('android')) return 'Android Mobile';
     if (ua.includes('iphone')) return 'iPhone';
     return 'Mobile Device';
@@ -71,7 +54,7 @@ function getDeviceInfo(userAgent: string): string {
 async function generateAuthCookie(
   username: string,
   role: 'owner' | 'admin' | 'user',
-  deviceInfo: string
+  deviceInfo: string,
 ): Promise<string> {
   const authData: any = { role };
 
@@ -83,9 +66,9 @@ async function generateAuthCookie(
     const dataToSign = JSON.stringify({
       username: authData.username,
       role: authData.role,
-      timestamp: authData.timestamp
+      timestamp: authData.timestamp,
     });
-    const signature = await generateSignature(dataToSign, process.env.PASSWORD);
+    const signature = await generateHmacSignature(dataToSign, process.env.PASSWORD);
     authData.signature = signature;
 
     // 生成双 Token
@@ -108,7 +91,7 @@ async function generateAuthCookie(
     });
   }
 
-  return encodeURIComponent(JSON.stringify(authData));
+  return JSON.stringify(authData);
 }
 
 export async function GET(request: NextRequest) {
@@ -123,16 +106,16 @@ export async function GET(request: NextRequest) {
 
     // 检查是否有错误
     if (error) {
-      console.error('OIDC认证错误:', error);
+      logger.error('OIDC认证错误:', error);
       return NextResponse.redirect(
-        new URL(`/login?error=${encodeURIComponent('OIDC认证失败')}`, origin)
+        new URL(`/login?error=${encodeURIComponent('OIDC认证失败')}`, origin),
       );
     }
 
     // 验证必需参数
     if (!code || !state) {
       return NextResponse.redirect(
-        new URL('/login?error=' + encodeURIComponent('缺少必需参数'), origin)
+        new URL('/login?error=' + encodeURIComponent('缺少必需参数'), origin),
       );
     }
 
@@ -140,7 +123,7 @@ export async function GET(request: NextRequest) {
     const storedState = request.cookies.get('oidc_state')?.value;
     if (!storedState || storedState !== state) {
       return NextResponse.redirect(
-        new URL('/login?error=' + encodeURIComponent('状态验证失败'), origin)
+        new URL('/login?error=' + encodeURIComponent('状态验证失败'), origin),
       );
     }
 
@@ -148,9 +131,14 @@ export async function GET(request: NextRequest) {
     const siteConfig = config.SiteConfig;
 
     // 检查OIDC配置
-    if (!siteConfig.OIDCTokenEndpoint || !siteConfig.OIDCUserInfoEndpoint || !siteConfig.OIDCClientId || !siteConfig.OIDCClientSecret) {
+    if (
+      !siteConfig.OIDCTokenEndpoint ||
+      !siteConfig.OIDCUserInfoEndpoint ||
+      !siteConfig.OIDCClientId ||
+      !siteConfig.OIDCClientSecret
+    ) {
       return NextResponse.redirect(
-        new URL('/login?error=' + encodeURIComponent('OIDC配置不完整'), origin)
+        new URL('/login?error=' + encodeURIComponent('OIDC配置不完整'), origin),
       );
     }
 
@@ -172,9 +160,9 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenResponse.ok) {
-      console.error('获取token失败:', await tokenResponse.text());
+      logger.error('获取token失败:', await tokenResponse.text());
       return NextResponse.redirect(
-        new URL('/login?error=' + encodeURIComponent('获取token失败'), origin)
+        new URL('/login?error=' + encodeURIComponent('获取token失败'), origin),
       );
     }
 
@@ -184,21 +172,24 @@ export async function GET(request: NextRequest) {
 
     if (!accessToken || !idToken) {
       return NextResponse.redirect(
-        new URL('/login?error=' + encodeURIComponent('token无效'), origin)
+        new URL('/login?error=' + encodeURIComponent('token无效'), origin),
       );
     }
 
     // 获取用户信息
     const userInfoResponse = await fetch(siteConfig.OIDCUserInfoEndpoint, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 
     if (!userInfoResponse.ok) {
-      console.error('获取用户信息失败:', await userInfoResponse.text());
+      logger.error('获取用户信息失败:', await userInfoResponse.text());
       return NextResponse.redirect(
-        new URL('/login?error=' + encodeURIComponent('获取用户信息失败'), origin)
+        new URL(
+          '/login?error=' + encodeURIComponent('获取用户信息失败'),
+          origin,
+        ),
       );
     }
 
@@ -207,7 +198,7 @@ export async function GET(request: NextRequest) {
 
     if (!oidcSub) {
       return NextResponse.redirect(
-        new URL('/login?error=' + encodeURIComponent('用户信息无效'), origin)
+        new URL('/login?error=' + encodeURIComponent('用户信息无效'), origin),
       );
     }
 
@@ -223,7 +214,7 @@ export async function GET(request: NextRequest) {
         // 检查用户是否被封禁
         if (userInfoV2.banned) {
           return NextResponse.redirect(
-            new URL('/login?error=' + encodeURIComponent('用户被封禁'), origin)
+            new URL('/login?error=' + encodeURIComponent('用户被封禁'), origin),
           );
         }
       }
@@ -234,7 +225,11 @@ export async function GET(request: NextRequest) {
       const response = NextResponse.redirect(new URL('/', origin));
       const userAgent = request.headers.get('user-agent') || 'Unknown';
       const deviceInfo = getDeviceInfo(userAgent);
-      const cookieValue = await generateAuthCookie(username, userRole, deviceInfo);
+      const cookieValue = await generateAuthCookie(
+        username,
+        userRole,
+        deviceInfo,
+      );
       const expires = new Date(Date.now() + TOKEN_CONFIG.REFRESH_TOKEN_AGE);
 
       response.cookies.set('auth', cookieValue, {
@@ -242,7 +237,7 @@ export async function GET(request: NextRequest) {
         expires,
         sameSite: 'lax',
         httpOnly: false,
-        secure: false,
+        secure: process.env.NODE_ENV === 'production',
       });
 
       // 清除state cookie
@@ -254,7 +249,10 @@ export async function GET(request: NextRequest) {
     // 用户不存在,检查是否允许注册
     if (!siteConfig.EnableOIDCRegistration) {
       return NextResponse.redirect(
-        new URL('/login?error=' + encodeURIComponent('该OIDC账号未注册'), origin)
+        new URL(
+          '/login?error=' + encodeURIComponent('该OIDC账号未注册'),
+          origin,
+        ),
       );
     }
 
@@ -281,10 +279,10 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('OIDC回调处理失败:', error);
+    logger.error('OIDC回调处理失败:', error);
     const origin = process.env.SITE_BASE || request.nextUrl.origin;
     return NextResponse.redirect(
-      new URL('/login?error=' + encodeURIComponent('服务器错误'), origin)
+      new URL('/login?error=' + encodeURIComponent('服务器错误'), origin),
     );
   }
 }
