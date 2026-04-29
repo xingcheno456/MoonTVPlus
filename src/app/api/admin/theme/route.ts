@@ -14,9 +14,7 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
-    return apiSuccess({
-        error: '不支持本地存储进行管理员配置',
-      }, { status: 400 });
+    return apiError('不支持本地存储进行管理员配置', 400);
   }
 
   try {
@@ -70,9 +68,7 @@ export async function POST(request: NextRequest) {
 
       for (const url of urls) {
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
-          return apiSuccess({
-              error: `登录界面背景图URL格式错误：${url}，每个URL必须以http://或https://开头`,
-            }, { status: 400 });
+          return apiError(`登录界面背景图URL格式错误：${url}，每个URL必须以http://或https://开头`, 400);
         }
       }
     }
@@ -85,9 +81,7 @@ export async function POST(request: NextRequest) {
 
       for (const url of urls) {
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
-          return apiSuccess({
-              error: `注册界面背景图URL格式错误：${url}，每个URL必须以http://或https://开头`,
-            }, { status: 400 });
+          return apiError(`注册界面背景图URL格式错误：${url}，每个URL必须以http://或https://开头`, 400);
         }
       }
     }
@@ -130,9 +124,6 @@ export async function POST(request: NextRequest) {
       });
   } catch (error) {
     logger.error('更新主题配置失败:', error);
-    return apiSuccess({
-        error: '更新主题配置失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError('更新主题配置失败', 500);
   }
 }

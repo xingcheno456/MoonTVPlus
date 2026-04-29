@@ -123,8 +123,6 @@ export async function POST(request: NextRequest) {
         return apiError('未知操作', 400);
     }
   } catch (error) {
-    return apiSuccess({
-        error: (error as Error).message || '脚本操作失败',
-      }, { status: 500 });
+    return apiError((error as Error).message || '脚本操作失败', 500);
   }
 }

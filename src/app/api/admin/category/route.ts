@@ -21,9 +21,7 @@ interface BaseBody {
 export async function POST(request: NextRequest) {
   const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
-    return apiSuccess({
-        error: '不支持本地存储进行管理员配置',
-      }, { status: 400 });
+    return apiError('不支持本地存储进行管理员配置', 400);
   }
 
   try {
@@ -156,9 +154,6 @@ export async function POST(request: NextRequest) {
       });
   } catch (error) {
     logger.error('分类管理操作失败:', error);
-    return apiSuccess({
-        error: '分类管理操作失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError('分类管理操作失败', 500);
   }
 }

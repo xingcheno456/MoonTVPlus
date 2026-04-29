@@ -45,9 +45,6 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess({ message: `连接成功，当前语言下检测到 ${sources.length} 个源`, });
   } catch (error) {
-    return apiSuccess({
-        success: false,
-        message: error instanceof Error ? error.message : '测试连接失败',
-      }, { status: 400 });
+    return apiError(error instanceof Error ? error.message : '测试连接失败', 400);
   }
 }

@@ -11,9 +11,7 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
-    return apiSuccess({
-        error: '不支持本地存储进行管理员配置',
-      }, { status: 400 });
+    return apiError('不支持本地存储进行管理员配置', 400);
   }
 
   const authInfo = getAuthInfoFromCookie(request);
@@ -35,9 +33,6 @@ export async function GET(request: NextRequest) {
         },
       });
   } catch (error) {
-    return apiSuccess({
-        error: '重载配置失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError('重载配置失败', 500);
   }
 }

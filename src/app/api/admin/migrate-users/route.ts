@@ -13,9 +13,7 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
-    return apiSuccess({
-        error: '不支持本地存储进行数据迁移',
-      }, { status: 400 });
+    return apiError('不支持本地存储进行数据迁移', 400);
   }
 
   try {
@@ -59,9 +57,6 @@ export async function POST(request: NextRequest) {
       });
   } catch (error) {
     logger.error('用户数据迁移失败:', error);
-    return apiSuccess({
-        error: '用户数据迁移失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError('用户数据迁移失败', 500);
   }
 }

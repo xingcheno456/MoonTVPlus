@@ -7178,6 +7178,11 @@ const ConfigFileComponent = ({
 
   // 保存配置文件
   const handleSave = async () => {
+    if (!configContent || !configContent.trim()) {
+      showError('配置文件内容不能为空', showAlert);
+      return;
+    }
+
     await withLoading('saveConfig', async () => {
       try {
         const resp = await fetch('/api/admin/config_file', {
@@ -11602,22 +11607,22 @@ const MovieRequestsComponent = ({
     try {
       if (!config) throw new Error('配置未加载');
 
-      const updatedConfig = {
-        ...config,
-        SiteConfig: {
-          ...config.SiteConfig,
-          EnableMovieRequest: enableMovieRequest,
-          MovieRequestCooldown: movieRequestCooldown,
-        },
+      const updatedSiteConfig = {
+        ...config.SiteConfig,
+        EnableMovieRequest: enableMovieRequest,
+        MovieRequestCooldown: movieRequestCooldown,
       };
 
-      const response = await fetch('/api/admin/config', {
+      const response = await fetch('/api/admin/site', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedConfig),
+        body: JSON.stringify(updatedSiteConfig),
       });
 
-      if (!response.ok) throw new Error('保存失败');
+      if (!response.ok) {
+        const _apiRes_data = await response.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        throw new Error(data.error || `保存失败: ${response.status}`);
+      }
 
       showSuccess('求片设置已保存', showAlert);
       await refreshConfig();

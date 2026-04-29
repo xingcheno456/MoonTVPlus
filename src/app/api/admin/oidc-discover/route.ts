@@ -11,9 +11,7 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
-    return apiSuccess({
-        error: '不支持本地存储进行管理员配置',
-      }, { status: 400 });
+    return apiError('不支持本地存储进行管理员配置', 400);
   }
 
   try {
@@ -43,9 +41,7 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       logger.error('获取OIDC配置失败:', response.status, response.statusText);
-      return apiSuccess({
-          error: `无法获取OIDC配置: ${response.status} ${response.statusText}`,
-        }, { status: 400 });
+      return apiError(`无法获取OIDC配置: ${response.status} ${response.statusText}`, 400);
     }
 
     const data = await response.json();
@@ -56,9 +52,7 @@ export async function POST(request: NextRequest) {
       !data.token_endpoint ||
       !data.userinfo_endpoint
     ) {
-      return apiSuccess({
-          error: 'OIDC配置不完整，缺少必需的端点',
-        }, { status: 400 });
+      return apiError('OIDC配置不完整，缺少必需的端点', 400);
     }
 
     // 返回端点配置

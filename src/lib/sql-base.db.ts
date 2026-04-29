@@ -1607,10 +1607,56 @@ export abstract class SQLStorageBase implements IStorage {
 
   async deleteUserV2(userName: string): Promise<void> {
     try {
-      await this.db
-        .prepare('DELETE FROM users WHERE username = ?')
+      const playlistIds = await this.db
+        .prepare('SELECT id FROM music_playlists WHERE username = ?')
         .bind(userName)
-        .run();
+        .all();
+      const v2PlaylistIds = await this.db
+        .prepare('SELECT id FROM music_v2_playlists WHERE username = ?')
+        .bind(userName)
+        .all();
+
+      const stmts = [
+        this.db.prepare('DELETE FROM play_records WHERE username = ?').bind(userName),
+        this.db.prepare('DELETE FROM favorites WHERE username = ?').bind(userName),
+        this.db.prepare('DELETE FROM music_play_records WHERE username = ?').bind(userName),
+        this.db.prepare('DELETE FROM music_v2_history WHERE username = ?').bind(userName),
+        this.db.prepare('DELETE FROM search_history WHERE username = ?').bind(userName),
+        this.db.prepare('DELETE FROM manga_shelf WHERE username = ?').bind(userName),
+        this.db.prepare('DELETE FROM manga_read_records WHERE username = ?').bind(userName),
+        this.db.prepare('DELETE FROM skip_configs WHERE username = ?').bind(userName),
+        this.db.prepare('DELETE FROM danmaku_filter_configs WHERE username = ?').bind(userName),
+        this.db.prepare('DELETE FROM notifications WHERE username = ?').bind(userName),
+        this.db.prepare('DELETE FROM user_movie_requests WHERE username = ?').bind(userName),
+        this.db.prepare('DELETE FROM favorite_check_times WHERE username = ?').bind(userName),
+        this.db.prepare('DELETE FROM users WHERE username = ?').bind(userName),
+      ];
+
+      if (playlistIds.results) {
+        for (const row of playlistIds.results) {
+          stmts.push(
+            this.db.prepare('DELETE FROM music_playlist_songs WHERE playlist_id = ?').bind(row.id),
+            this.db.prepare('DELETE FROM music_playlists WHERE id = ?').bind(row.id),
+          );
+        }
+      }
+
+      if (v2PlaylistIds.results) {
+        for (const row of v2PlaylistIds.results) {
+          stmts.push(
+            this.db.prepare('DELETE FROM music_v2_playlist_items WHERE playlist_id = ?').bind(row.id),
+            this.db.prepare('DELETE FROM music_v2_playlists WHERE id = ?').bind(row.id),
+          );
+        }
+      }
+
+      if (this.db.batch) {
+        await this.db.batch(stmts);
+      } else {
+        for (const stmt of stmts) {
+          await stmt.run();
+        }
+      }
 
       userInfoCache?.delete(userName);
     } catch (err) {

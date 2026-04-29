@@ -14,9 +14,7 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   const storageType = STORAGE_TYPE;
   if (storageType === 'localstorage') {
-    return apiSuccess({
-        error: '不支持本地存储进行管理员配置',
-      }, { status: 400 });
+    return apiError('不支持本地存储进行管理员配置', 400);
   }
 
   try {
@@ -55,6 +53,8 @@ export async function POST(request: NextRequest) {
       MagnetDmhyReverseProxy,
       MagnetAcgripReverseProxy,
       EnableComments,
+      EnableMovieRequest,
+      MovieRequestCooldown,
       CustomAdFilterCode,
       CustomAdFilterVersion,
       EnableRegistration,
@@ -104,6 +104,8 @@ export async function POST(request: NextRequest) {
       MagnetDmhyReverseProxy?: string;
       MagnetAcgripReverseProxy?: string;
       EnableComments: boolean;
+      EnableMovieRequest?: boolean;
+      MovieRequestCooldown?: number;
       CustomAdFilterCode?: string;
       CustomAdFilterVersion?: number;
       EnableRegistration?: boolean;
@@ -163,6 +165,10 @@ export async function POST(request: NextRequest) {
       (MagnetAcgripReverseProxy !== undefined &&
         typeof MagnetAcgripReverseProxy !== 'string') ||
       typeof EnableComments !== 'boolean' ||
+      (EnableMovieRequest !== undefined &&
+        typeof EnableMovieRequest !== 'boolean') ||
+      (MovieRequestCooldown !== undefined &&
+        typeof MovieRequestCooldown !== 'number') ||
       (CustomAdFilterCode !== undefined &&
         typeof CustomAdFilterCode !== 'string') ||
       (CustomAdFilterVersion !== undefined &&
@@ -201,6 +207,10 @@ export async function POST(request: NextRequest) {
       return apiError('参数格式错误', 400);
     }
 
+    if (RequireRegistrationInviteCode && (!RegistrationInviteCode || !RegistrationInviteCode.trim())) {
+      return apiError('已开启注册邀请码时，邀请码不能为空', 400);
+    }
+
     const adminConfig = await getConfig();
 
     // 更新缓存中的站点设置
@@ -233,6 +243,8 @@ export async function POST(request: NextRequest) {
       MagnetDmhyReverseProxy,
       MagnetAcgripReverseProxy,
       EnableComments,
+      EnableMovieRequest,
+      MovieRequestCooldown,
       CustomAdFilterCode,
       CustomAdFilterVersion,
       EnableRegistration,
