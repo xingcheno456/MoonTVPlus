@@ -124,24 +124,29 @@ describe('registerBodySchema', () => {
 });
 
 describe('changePasswordBodySchema', () => {
-  it('应接受合法的新密码', () => {
-    const result = changePasswordBodySchema.parse({ newPassword: 'NewPass2024!' });
+  it('应接受合法的旧密码和新密码', () => {
+    const result = changePasswordBodySchema.parse({ oldPassword: 'OldPass2024!', newPassword: 'NewPass2024!' });
+    expect(result.oldPassword).toBe('OldPass2024!');
     expect(result.newPassword).toBe('NewPass2024!');
   });
 
   it('新密码少于 6 个字符时应拒绝', () => {
     expect(() =>
-      changePasswordBodySchema.parse({ newPassword: '12345' }),
+      changePasswordBodySchema.parse({ oldPassword: 'OldPass', newPassword: '12345' }),
     ).toThrow(/至少6个字符/);
   });
 
   it('新密码超过 100 个字符时应拒绝', () => {
     expect(() =>
-      changePasswordBodySchema.parse({ newPassword: 'x'.repeat(101) }),
+      changePasswordBodySchema.parse({ oldPassword: 'OldPass', newPassword: 'x'.repeat(101) }),
     ).toThrow(/最多100个字符/);
   });
 
   it('缺少 newPassword 字段时应拒绝', () => {
-    expect(() => changePasswordBodySchema.parse({})).toThrow();
+    expect(() => changePasswordBodySchema.parse({ oldPassword: 'OldPass' })).toThrow();
+  });
+
+  it('缺少 oldPassword 字段时应拒绝', () => {
+    expect(() => changePasswordBodySchema.parse({ newPassword: 'NewPass2024!' })).toThrow();
   });
 });

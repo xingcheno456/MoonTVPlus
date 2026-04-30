@@ -150,7 +150,7 @@ export async function DELETE(
       await storage.removeUserMovieRequest(username, id);
     }
 
-    return apiError('删除成功', 400);
+    return apiSuccess({ message: '删除成功' });
   } catch (error) {
     logger.error('删除求片失败:', error);
     return apiError((error as Error).message, 500);

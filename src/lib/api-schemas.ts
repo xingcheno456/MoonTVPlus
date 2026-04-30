@@ -46,5 +46,6 @@ export const registerBodySchema = z.object({
 });
 
 export const changePasswordBodySchema = z.object({
+  oldPassword: z.string().min(1, '旧密码不能为空'),
   newPassword: z.string().min(6, '新密码至少6个字符').max(100, '新密码最多100个字符'),
 });

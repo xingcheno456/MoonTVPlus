@@ -35,9 +35,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     logger.error('重置TVBox订阅token失败:', error);
-    return apiSuccess({
-        error: '重置订阅token失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError('重置订阅token失败', 500);
   }
 }

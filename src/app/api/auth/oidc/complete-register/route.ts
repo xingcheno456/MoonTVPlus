@@ -140,9 +140,10 @@ export async function POST(request: NextRequest) {
     if (minTrustLevel > 0) {
       const userTrustLevel = oidcSession.trust_level ?? 0;
       if (userTrustLevel < minTrustLevel) {
-        return apiSuccess({
-            error: `您的信任等级(${userTrustLevel})不满足最低要求(${minTrustLevel})`,
-          }, { status: 403 });
+        return apiError(
+          `您的信任等级(${userTrustLevel})不满足最低要求(${minTrustLevel})`,
+          403,
+        );
       }
     }
 

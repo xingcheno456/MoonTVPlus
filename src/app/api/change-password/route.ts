@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   try {
     const bodyResult = await parseJsonBody(request, changePasswordBodySchema);
     if ('error' in bodyResult) return bodyResult.error;
-    const { newPassword } = bodyResult.data;
+    const { oldPassword, newPassword } = bodyResult.data;
 
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
@@ -33,6 +33,19 @@ export async function POST(request: NextRequest) {
 
     if (username === process.env.USERNAME) {
       return apiError('站长不能通过此接口修改密码', 403);
+    }
+
+    const userInfo = await db.getUserInfoV2(username);
+    if (!userInfo) {
+      return apiError('用户不存在', 401);
+    }
+    if (userInfo.banned) {
+      return apiError('用户已被封禁', 401);
+    }
+
+    const isOldPasswordValid = await db.verifyUserV2(username, oldPassword);
+    if (!isOldPasswordValid) {
+      return apiError('旧密码不正确', 400);
     }
 
     await db.changePasswordV2(username, newPassword);

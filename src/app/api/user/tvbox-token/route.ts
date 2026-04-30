@@ -36,9 +36,6 @@ export async function GET(request: NextRequest) {
     return apiSuccess({ token });
   } catch (error) {
     logger.error('获取TVBox订阅token失败:', error);
-    return apiSuccess({
-        error: '获取订阅token失败',
-        details: (error as Error).message,
-      }, { status: 500 });
+    return apiError('获取订阅token失败', 500);
   }
 }

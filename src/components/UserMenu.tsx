@@ -293,6 +293,7 @@ export const UserMenu: React.FC = () => {
   ];
 
   // 修改密码相关状态
+  const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
@@ -1012,6 +1013,7 @@ export const UserMenu: React.FC = () => {
 
   const handleCloseChangePassword = () => {
     setIsChangePasswordOpen(false);
+    setOldPassword('');
     setNewPassword('');
     setConfirmPassword('');
     setPasswordError('');
@@ -1061,6 +1063,11 @@ export const UserMenu: React.FC = () => {
   const handleSubmitChangePassword = async () => {
     setPasswordError('');
 
+    if (!oldPassword) {
+      setPasswordError('旧密码不得为空');
+      return;
+    }
+
     // 验证密码
     if (!newPassword) {
       setPasswordError('新密码不得为空');
@@ -1081,6 +1088,7 @@ export const UserMenu: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          oldPassword,
           newPassword,
         }),
       });
@@ -3608,6 +3616,21 @@ export const UserMenu: React.FC = () => {
 
           {/* 表单 */}
           <div className='space-y-4'>
+            {/* 旧密码输入 */}
+            <div>
+              <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                旧密码
+              </label>
+              <input
+                type='password'
+                className='w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-500 transition-colors focus:border-transparent focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400'
+                placeholder='请输入旧密码'
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                disabled={passwordLoading}
+              />
+            </div>
+
             {/* 新密码输入 */}
             <div>
               <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
@@ -3658,7 +3681,7 @@ export const UserMenu: React.FC = () => {
             <button
               onClick={handleSubmitChangePassword}
               className='flex-1 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-600'
-              disabled={passwordLoading || !newPassword || !confirmPassword}
+              disabled={passwordLoading || !oldPassword || !newPassword || !confirmPassword}
             >
               {passwordLoading ? '修改中...' : '确认修改'}
             </button>
