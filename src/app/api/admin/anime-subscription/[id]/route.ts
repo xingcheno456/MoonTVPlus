@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig } from '@/lib/config';
+import { getConfig, setCachedConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
 import { logger } from '../../../../../lib/logger';
@@ -64,6 +64,7 @@ export async function PUT(
     subscription.updatedAt = Date.now();
 
     await db.saveAdminConfig(config);
+    await setCachedConfig(config);
 
     return apiSuccess(subscription);
   } catch (error: any) {
@@ -98,6 +99,7 @@ export async function DELETE(
 
     subscriptions.splice(index, 1);
     await db.saveAdminConfig(config);
+    await setCachedConfig(config);
 
     return apiSuccess({ success: true });
   } catch (error: any) {

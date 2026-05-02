@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig } from '@/lib/config';
+import { getConfig, setCachedConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { XiaoyaClient } from '@/lib/xiaoya.client';
 
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
       };
 
       await db.saveAdminConfig(config);
+      await setCachedConfig(config);
 
       return apiSuccess({ message: '保存成功' });
     }

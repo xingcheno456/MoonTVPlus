@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig } from '@/lib/config';
+import { getConfig, setCachedConfig } from '@/lib/config';
 import { db, STORAGE_TYPE } from '@/lib/db';
 
 import { logger } from '../../../../lib/logger';
@@ -155,6 +155,7 @@ export async function POST(request: NextRequest) {
 
     // 持久化到存储
     await db.saveAdminConfig(adminConfig);
+    await setCachedConfig(adminConfig);
 
     return apiSuccess({ ok: true }, {
         headers: {

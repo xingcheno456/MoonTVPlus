@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig } from '@/lib/config';
+import { getConfig, setCachedConfig } from '@/lib/config';
 import { db, STORAGE_TYPE } from '@/lib/db';
 
 import { logger } from '../../../../lib/logger';
@@ -444,6 +444,7 @@ export async function POST(request: NextRequest) {
 
     // 将更新后的配置写入数据库
     await db.saveAdminConfig(adminConfig);
+    await setCachedConfig(adminConfig);
 
     return apiSuccess({ ok: true }, {
         headers: {

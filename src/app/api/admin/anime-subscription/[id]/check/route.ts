@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { checkSubscription } from '@/lib/anime-subscription';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig } from '@/lib/config';
+import { getConfig, setCachedConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
 import { logger } from '../../../../../../lib/logger';
@@ -39,6 +39,7 @@ export async function POST(
 
     // 保存配置
     await db.saveAdminConfig(config);
+    await setCachedConfig(config);
 
     return apiSuccess({ ...result, });
   } catch (error: any) {

@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig, refineConfig } from '@/lib/config';
+import { getConfig, refineConfig, setCachedConfig } from '@/lib/config';
 import { db, STORAGE_TYPE } from '@/lib/db';
 
 import { logger } from '../../../../lib/logger';
@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
     adminConfig = refineConfig(adminConfig);
     // 更新配置文件
     await db.saveAdminConfig(adminConfig);
+    await setCachedConfig(adminConfig);
 
     // 清除短剧视频源缓存（因为配置文件可能包含新的视频源）
     try {

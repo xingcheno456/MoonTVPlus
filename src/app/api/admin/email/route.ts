@@ -3,8 +3,8 @@ import { NextRequest } from 'next/server';
 import type { AdminConfig } from '@/lib/admin.types';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig } from '@/lib/config';
-import { getStorage } from '@/lib/db';
+import { getConfig, setCachedConfig } from '@/lib/config';
+import { db, getStorage } from '@/lib/db';
 import { EmailService } from '@/lib/email.service';
 
 import { logger } from '../../../../lib/logger';
@@ -155,7 +155,8 @@ export async function POST(request: NextRequest) {
 
       // 更新配置
       adminConfig.EmailConfig = emailConfig;
-      await storage.setAdminConfig(adminConfig);
+      await db.saveAdminConfig(adminConfig);
+      await setCachedConfig(adminConfig);
 
       return apiSuccess({ message: '邮件配置保存成功' });
     }

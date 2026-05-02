@@ -7112,12 +7112,77 @@ function PlayPageClient() {
                         } else if (statusCode) {
                           setVideoError(`HTTP ${statusCode} 错误`);
                         } else {
-                          // CORS 错误或其他网络错误
-                          // 如果是直链直连模式（URL 不含代理前缀），记录原始 URL 以便用户一键启用代理
+                          const isProxied =
+                            url.includes('/api/proxy-m3u8') ||
+                            url.includes('/api/proxy/vod/m3u8');
+
+                          if (!isProxied) {
+                            logger.info(
+                              '[HLS] 直连失败，尝试使用代理重试:',
+                              url,
+                            );
+                            hls.destroy();
+
+                            let proxyUrl: string;
+                            if (currentSourceRef.current === 'directplay') {
+                              const tokenParam = proxyToken
+                                ? `&token=${encodeURIComponent(proxyToken)}`
+                                : '';
+                              proxyUrl = `/api/proxy-m3u8?url=${encodeURIComponent(url)}&source=directplay${tokenParam}`;
+                            } else {
+                              proxyUrl = `/api/proxy/vod/m3u8?url=${encodeURIComponent(url)}&source=${encodeURIComponent(currentSourceRef.current || '')}`;
+                            }
+
+                            const retryHls = new Hls({
+                              debug: false,
+                              enableWorker: true,
+                              lowLatencyMode: false,
+                              autoStartLoad: true,
+                              maxBufferLength: bufferConfig.maxBufferLength,
+                              backBufferLength:
+                                bufferConfig.backBufferLength,
+                              maxBufferSize: bufferConfig.maxBufferSize,
+                              loader: loaderClass as new (
+                                ...args: unknown[]
+                              ) => unknown,
+                            });
+
+                            retryHls.on(
+                              Hls.Events.MANIFEST_PARSED,
+                              () => {
+                                logger.info(
+                                  '[HLS代理] Manifest解析完成',
+                                );
+                                if (video.paused) {
+                                  video.play().catch(() => {});
+                                }
+                              },
+                            );
+
+                            retryHls.on(
+                              Hls.Events.ERROR,
+                              (_event: string, errorData: HlsErrorData) => {
+                                if (errorData.fatal) {
+                                  logger.error(
+                                    '[HLS代理] 代理重试也失败:',
+                                    errorData,
+                                  );
+                                  retryHls.destroy();
+                                  setVideoError(
+                                    '无法访问视频源（直连和代理均失败，请检查网络或更换播放源）',
+                                  );
+                                }
+                              },
+                            );
+
+                            retryHls.loadSource(proxyUrl);
+                            retryHls.attachMedia(video);
+                            video.hls = retryHls;
+                            return;
+                          }
+
                           if (
-                            currentSourceRef.current === 'directplay' &&
-                            !url.includes('/api/proxy-m3u8') &&
-                            !url.includes('/api/proxy/vod/m3u8')
+                            currentSourceRef.current === 'directplay'
                           ) {
                             setCorsFailedUrl(url);
                           }

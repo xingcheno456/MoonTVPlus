@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig } from '@/lib/config';
+import { getConfig, setCachedConfig } from '@/lib/config';
 import { db, STORAGE_TYPE } from '@/lib/db';
 
 import { logger } from '../../../../lib/logger';
@@ -287,6 +287,7 @@ export async function POST(request: NextRequest) {
 
     // 持久化到存储
     await db.saveAdminConfig(adminConfig);
+    await setCachedConfig(adminConfig);
 
     // 清除短剧视频源缓存（因为视频源发生了变动）
     try {

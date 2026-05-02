@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig } from '@/lib/config';
+import { getConfig, setCachedConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
 import { logger } from '../../../../lib/logger';
@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
 
     config.AnimeSubscriptionConfig.Subscriptions.push(newSubscription);
     await db.saveAdminConfig(config);
+    await setCachedConfig(config);
 
     return apiSuccess(newSubscription);
   } catch (error: any) {
