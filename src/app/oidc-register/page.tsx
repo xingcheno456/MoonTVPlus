@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
 import { CURRENT_VERSION } from '@/lib/version';
+import { parseApiResponse } from '@/lib/api-response';
 
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -25,7 +26,7 @@ function OIDCRegisterPageClient() {
       try {
         const res = await fetch('/api/auth/oidc/session-info');
         if (res.ok) {
-          const _apiRes_data = await res.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+          const data = await parseApiResponse<any>(res);
           setOidcInfo(data);
         } else {
           // session无效,跳转到登录页
@@ -63,7 +64,7 @@ function OIDCRegisterPageClient() {
         // 注册成功,跳转到首页
         router.replace('/');
       } else {
-        const _apiRes_data = await res.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(res).catch(() => ({} as any));
         setError(data.error || '注册失败');
       }
     } catch (error) {

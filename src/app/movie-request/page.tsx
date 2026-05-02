@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 
 import { getTMDBImageUrl } from '@/lib/tmdb.client';
 import { processImageUrl } from '@/lib/utils';
+import { parseApiResponse } from '@/lib/api-response';
 
 import PageLayout from '@/components/PageLayout';
 
@@ -75,7 +76,7 @@ export default function MovieRequestPage() {
       const response = await fetch(
         `/api/tmdb/search?query=${encodeURIComponent(searchKeyword)}`,
       );
-      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+      const data = await parseApiResponse<any>(response);
 
       if (data.results) {
         setSearchResults(data.results.slice(0, 20));
@@ -104,7 +105,7 @@ export default function MovieRequestPage() {
 
       try {
         const response = await fetch(`/api/tmdb/seasons?tvId=${item.id}`);
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
         if (data.seasons) {
           const validSeasons = data.seasons.filter(
             (s: any) => s.season_number > 0,
@@ -163,7 +164,7 @@ export default function MovieRequestPage() {
         }),
       });
 
-      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+      const data = await parseApiResponse<any>(response);
 
       if (response.ok) {
         setShowSeasonDialog(false);
@@ -208,7 +209,7 @@ export default function MovieRequestPage() {
     const fetchMyRequests = async () => {
       try {
         const response = await fetch('/api/movie-requests?my=true');
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
         if (data.requests) {
           setMyRequests(data.requests);
         }
@@ -226,7 +227,7 @@ export default function MovieRequestPage() {
   const refreshMyRequests = async () => {
     try {
       const response = await fetch('/api/movie-requests?my=true');
-      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+      const data = await parseApiResponse<any>(response);
       if (data.requests) {
         setMyRequests(data.requests);
       }

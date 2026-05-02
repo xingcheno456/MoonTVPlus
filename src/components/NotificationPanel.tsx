@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { Notification } from '@/lib/types';
+import { parseApiResponse } from '@/lib/api-response';
 
 import { logger } from '../lib/logger';
 
@@ -30,7 +31,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     try {
       const response = await fetch('/api/notifications');
       if (response.ok) {
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
         setNotifications(data.notifications || []);
       }
     } catch (error) {

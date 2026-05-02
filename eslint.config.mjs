@@ -84,6 +84,14 @@ const eslintConfig = [
         },
       ],
 
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "VariableDeclarator[id.name=/^_apiRes_/]",
+          message: '禁止手动解包 API 响应，请使用 parseApiResponse() 或 apiClient',
+        },
+      ],
+
       'simple-import-sort/exports': 'warn',
       'simple-import-sort/imports': [
         'warn',

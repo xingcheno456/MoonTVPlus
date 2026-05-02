@@ -41,6 +41,7 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { clearAllDanmakuCache, getDanmakuCacheStats } from '@/lib/danmaku/api';
 import { CURRENT_VERSION } from '@/lib/version';
 import { UpdateStatus } from '@/lib/version_check';
+import { parseApiResponse } from '@/lib/api-response';
 
 import { DeviceManagementPanel } from './DeviceManagementPanel';
 import { DownloadManagementPanel } from './DownloadManagementPanel';
@@ -316,7 +317,7 @@ export const UserMenu: React.FC = () => {
     try {
       const response = await fetch('/api/notifications');
       if (response.ok) {
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<{ unreadCount?: number }>(response);
         const count = data.unreadCount || 0;
         setUnreadCount(count);
         // 同步到全局，让其他 UserMenu 实例也能获取
@@ -420,8 +421,8 @@ export const UserMenu: React.FC = () => {
       // 获取用户的 TVBox token
       const response = await fetch('/api/user/tvbox-token');
       if (response.ok) {
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
-        const token = data.token;
+        const data = await parseApiResponse<{ token?: string }>(response);
+        const token = data.token || '';
         setTvboxToken(token);
 
         setSubscribeUrl(
@@ -456,8 +457,8 @@ export const UserMenu: React.FC = () => {
 
           const messageEl = document.getElementById('tvbox-token-message');
           if (response.ok) {
-            const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
-            const token = data.token;
+            const data = await parseApiResponse<{ token?: string }>(response);
+            const token = data.token || '';
             setTvboxToken(token);
 
             setSubscribeUrl(
@@ -478,7 +479,7 @@ export const UserMenu: React.FC = () => {
               }, 3000);
             }
           } else {
-            const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+            const data = await parseApiResponse<{ error?: string }>(response);
             if (messageEl) {
               messageEl.textContent = data.error || '重置失败，请重试';
               messageEl.className =
@@ -546,7 +547,7 @@ export const UserMenu: React.FC = () => {
       const savedDoubanDataSource = localStorage.getItem('doubanDataSource');
       const defaultDoubanProxyType =
         (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
-        'cmliussss-cdn-tencent';
+        'cmliussss-cdn-ali';
       if (savedDoubanDataSource !== null) {
         setDoubanDataSource(savedDoubanDataSource);
       } else if (defaultDoubanProxyType) {
@@ -577,7 +578,7 @@ export const UserMenu: React.FC = () => {
       );
       const defaultDoubanImageProxyType =
         (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
-        'cmliussss-cdn-tencent';
+        'cmliussss-cdn-ali';
       if (savedDoubanImageProxyType !== null) {
         setDoubanImageProxyType(savedDoubanImageProxyType);
       } else if (defaultDoubanImageProxyType) {
@@ -768,7 +769,7 @@ export const UserMenu: React.FC = () => {
     try {
       const response = await fetch('/api/user/email-settings');
       if (response.ok) {
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<{ email?: string; emailNotifications?: boolean }>(response);
         setUserEmail(data.email || '');
         setEmailNotifications(data.emailNotifications || false);
       }
@@ -802,7 +803,7 @@ export const UserMenu: React.FC = () => {
           setEmailSettingsMessageType(null);
         }, 3000);
       } else {
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<{ error?: string }>(response);
         setEmailSettingsMessage(data.error || '保存失败');
         setEmailSettingsMessageType('error');
       }
@@ -821,7 +822,7 @@ export const UserMenu: React.FC = () => {
     try {
       const response = await fetch('/api/auth/devices');
       if (response.ok) {
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<{ devices?: any[] }>(response);
         setDevices(data.devices || []);
       }
     } catch (error) {
@@ -1495,12 +1496,12 @@ export const UserMenu: React.FC = () => {
   const handleResetSettings = () => {
     const defaultDoubanProxyType =
       (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
-      'cmliussss-cdn-tencent';
+      'cmliussss-cdn-ali';
     const defaultDoubanProxy =
       (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY || '';
     const defaultDoubanImageProxyType =
       (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
-      'cmliussss-cdn-tencent';
+      'cmliussss-cdn-ali';
     const defaultDoubanImageProxyUrl =
       (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
     const defaultFluidSearch =

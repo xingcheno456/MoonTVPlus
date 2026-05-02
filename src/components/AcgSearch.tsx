@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import Toast, { ToastProps } from '@/components/Toast';
+import { parseApiResponse } from '@/lib/api-response';
 
 interface AcgSearchItem {
   title: string;
@@ -85,7 +86,7 @@ export default function AcgSearch({
         throw new Error(errorData.error || '搜索失败');
       }
 
-      const _apiRes_data = await response.json(); const data: AcgSearchResult = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+      const data = await parseApiResponse<AcgSearchResult>(response);
 
       if (isLoadMore) {
         // 追加新数据

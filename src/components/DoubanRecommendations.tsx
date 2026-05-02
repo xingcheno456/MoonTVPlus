@@ -7,6 +7,7 @@ import {
   recommendationCacheKeys,
   setRecommendationCache,
 } from '@/lib/recommendations/cache';
+import { parseApiResponse } from '@/lib/api-response';
 import { useEnableComments } from '@/hooks/useEnableComments';
 
 import ScrollableRow from '@/components/ScrollableRow';
@@ -60,7 +61,7 @@ export default function DoubanRecommendations({
         throw new Error('获取推荐失败');
       }
 
-      const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
+      const result = await parseApiResponse<any>(response);
       logger.info('获取到推荐:', result.recommendations);
 
       const recommendationsData = result.recommendations || [];

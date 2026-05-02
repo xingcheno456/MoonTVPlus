@@ -17,6 +17,7 @@ import {
   getTMDBImageUrl,
   type TMDBItem,
 } from '@/lib/tmdb.client';
+import { parseApiResponse } from '@/lib/api-response';
 
 import ProxyImage from '@/components/ProxyImage';
 
@@ -207,7 +208,7 @@ export default function BannerCarousel({
         // 如果缓存过期或没有缓存，后台更新数据
         if (!cachedData || cacheExpired) {
           const response = await fetch('/api/tmdb/trending');
-          const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
+          const result = await parseApiResponse<any>(response);
 
           if (result.code === 200 && result.list.length > 0) {
             const newDataSource = result.source || 'TMDB'; // 获取数据源标识

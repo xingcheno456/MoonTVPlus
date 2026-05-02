@@ -21,6 +21,7 @@ import { getDoubanCategories } from '@/lib/douban.client';
 import { getTMDBImageUrl, TMDBItem } from '@/lib/tmdb.client';
 import { DoubanItem } from '@/lib/types';
 import { base58Encode, processImageUrl } from '@/lib/utils';
+import { parseApiResponse } from '@/lib/api-response';
 
 import AIChatPanel from '@/components/AIChatPanel';
 import BannerCarousel from '@/components/BannerCarousel';
@@ -296,7 +297,7 @@ function HomeClient() {
           try {
             const duanjuResponse = await fetch('/api/duanju/recommends');
             if (duanjuResponse.ok) {
-              const _apiRes_duanjuResult = await duanjuResponse.json(); const duanjuResult = _apiRes_duanjuResult.success === true ? _apiRes_duanjuResult.data : _apiRes_duanjuResult;
+              const duanjuResult = await parseApiResponse<any>(duanjuResponse);
               if (
                 duanjuResult.code === 200 &&
                 duanjuResult.data &&
@@ -313,7 +314,7 @@ function HomeClient() {
           try {
             const response = await fetch('/api/tmdb/upcoming');
             if (response.ok) {
-              const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
+              const result = await parseApiResponse<any>(response);
               if (
                 result.code === 200 &&
                 result.data &&

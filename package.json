@@ -21,7 +21,8 @@
     "watch-room:server": "node server/watch-room-standalone-server.js --port 3001 --auth YOUR_SECRET_KEY",
     "init:sqlite": "node scripts/init-sqlite.js",
     "init:postgres": "node scripts/init-postgres.js",
-    "db:reset": "node -e \"try{['.data/moontv.db','.data/moontv.db-shm','.data/moontv.db-wal'].forEach(f=>{try{require('fs').unlinkSync(f)}catch{}})}\" && node scripts/init-sqlite.js"
+    "db:reset": "node -e \"try{['.data/moontv.db','.data/moontv.db-shm','.data/moontv.db-wal'].forEach(f=>{try{require('fs').unlinkSync(f)}catch{}})}\" && node scripts/init-sqlite.js",
+    "check:api-unwrap": "node -e \"const{execSync}=require('child_process');try{const r=execSync('rg -l _apiRes_ src/',{encoding:'utf8'});if(r.trim()){console.error('ERROR: Found manual API unwrapping in:');console.error(r);process.exit(1)}else{console.log('OK: No manual API unwrapping found')}}catch(e){if(e.status===1){console.log('OK: No manual API unwrapping found')}else{throw e}}\""
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

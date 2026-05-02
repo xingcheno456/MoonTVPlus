@@ -6,6 +6,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 
 import { ApiSite } from '@/lib/config';
 import { SearchResult } from '@/lib/types';
+import { parseApiResponse } from '@/lib/api-response';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import PageLayout from '@/components/PageLayout';
@@ -42,7 +43,7 @@ function SourceSearchPageClient() {
       setIsLoadingSources(true);
       try {
         const response = await fetch('/api/source-search/sources');
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
         if (data.sources && Array.isArray(data.sources)) {
           setApiSites(data.sources);
           // 默认选择第一个源
@@ -75,7 +76,7 @@ function SourceSearchPageClient() {
         const response = await fetch(
           `/api/source-search/categories?source=${encodeURIComponent(selectedSource)}`,
         );
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
         if (data.categories && Array.isArray(data.categories)) {
           setCategories(data.categories);
           // 默认选择第一个分类
@@ -103,7 +104,7 @@ function SourceSearchPageClient() {
         const response = await fetch(
           `/api/source-search/videos?source=${encodeURIComponent(selectedSource)}&categoryId=${encodeURIComponent(selectedCategory)}&page=${currentPage}`,
         );
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
         if (data.results && Array.isArray(data.results)) {
           if (currentPage === 1) {
             setVideos(data.results);
@@ -132,7 +133,7 @@ function SourceSearchPageClient() {
         const response = await fetch(
           `/api/source-search/search?source=${encodeURIComponent(selectedSource)}&keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}`,
         );
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
         if (data.results && Array.isArray(data.results)) {
           if (currentPage === 1) {
             setVideos(data.results);

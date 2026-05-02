@@ -7,6 +7,7 @@ import {
   recommendationCacheKeys,
   setRecommendationCache,
 } from '@/lib/recommendations/cache';
+import { parseApiResponse } from '@/lib/api-response';
 import { useEnableComments } from '@/hooks/useEnableComments';
 import { useRecommendationDataSource } from '@/hooks/useRecommendationDataSource';
 
@@ -88,7 +89,7 @@ export default function SmartRecommendations({
         throw new Error('获取豆瓣推荐失败');
       }
 
-      const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
+      const result = await parseApiResponse<any>(response);
       const recommendationsData = result.recommendations || [];
       setRecommendations(recommendationsData);
 
@@ -141,7 +142,7 @@ export default function SmartRecommendations({
         throw new Error('获取TMDB推荐失败');
       }
 
-      const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
+      const result = await parseApiResponse<any>(response);
       const recommendationsData = result.recommendations || [];
       setRecommendations(recommendationsData);
 

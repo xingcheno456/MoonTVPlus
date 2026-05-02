@@ -2,6 +2,7 @@
  
 
 import { useEffect, useState } from 'react';
+import { parseApiResponse } from '@/lib/api-response';
 
 import { logger } from '../lib/logger';
 
@@ -62,7 +63,7 @@ export default function AddToPlaylistModal({
       setLoading(true);
       const response = await fetch('/api/music/v2/playlists');
       if (response.ok) {
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
         setPlaylists(data.data?.playlists || []);
       }
     } catch (error) {
@@ -95,7 +96,7 @@ export default function AddToPlaylistModal({
         setShowCreateForm(false);
         await loadPlaylists();
       } else {
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
         onError?.(data.error || '创建歌单失败');
       }
     } catch (error) {
@@ -134,7 +135,7 @@ export default function AddToPlaylistModal({
         onSuccess?.();
         onClose();
       } else {
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
         onError?.(data.error || '添加失败');
       }
     } catch (error) {

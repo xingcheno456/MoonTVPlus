@@ -15,6 +15,7 @@ import { Suspense, useEffect, useState } from 'react';
 
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
+import { parseApiResponse } from '@/lib/api-response';
 
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -291,7 +292,7 @@ function LoginPageClient() {
         if (res.status === 401) {
           setError('密码错误');
         } else {
-          const _apiRes_data = await res.json().catch(() => ({})); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+          const data = await parseApiResponse<{ error?: string }>(res).catch(() => ({} as any));
           setError(data.error ?? '服务器错误');
         }
       }

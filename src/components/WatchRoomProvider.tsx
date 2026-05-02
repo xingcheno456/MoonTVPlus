@@ -11,6 +11,7 @@ import React, {
 } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { parseApiResponse } from '@/lib/api-response';
 import { useWatchRoom } from '@/hooks/useWatchRoom';
 
 import Toast, { ToastProps } from '@/components/Toast';
@@ -229,7 +230,7 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
         // 使用公共 API 获取观影室配置（不需要管理员权限）
         const response = await fetch('/api/server-config');
         if (response.ok) {
-          const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+          const data = await parseApiResponse<any>(response);
           // API 返回格式: { SiteName, StorageType, Version, WatchRoom }
           const watchRoomConfig: WatchRoomConfig = {
             enabled: data.WatchRoom?.enabled ?? false, // 默认不启用
@@ -252,7 +253,7 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
               try {
                 const authResponse = await fetch('/api/watch-room-auth');
                 if (authResponse.ok) {
-                  const _apiRes_authData = await authResponse.json(); const authData = _apiRes_authData.success === true ? _apiRes_authData.data : _apiRes_authData;
+                  const authData = await parseApiResponse<any>(authResponse);
                   watchRoomConfig.externalServerAuth =
                     authData.externalServerAuth;
                 } else {

@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 import { PansouLink, PansouSearchResult } from '@/lib/pansou.client';
+import { parseApiResponse } from '@/lib/api-response';
 
 import Toast, { ToastProps } from '@/components/Toast';
 
@@ -103,7 +104,7 @@ export default function PansouSearch({
         throw new Error(errorData.error || '搜索失败');
       }
 
-      const _apiRes_data = await response.json(); const data: PansouSearchResult = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+      const data = await parseApiResponse<PansouSearchResult>(response);
       setResults(data);
     } catch (err: any) {
       const errorMsg = err.message || '搜索失败，请检查配置';

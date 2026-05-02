@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { parseApiResponse } from '@/lib/api-response';
 
 import { logger } from '../lib/logger';
 
@@ -47,11 +48,11 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
       });
 
       if (!response.ok) {
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
         throw new Error(data.error || '生成AI评论失败');
       }
 
-      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+      const data = await parseApiResponse<any>(response);
       logger.info('AI评论生成成功:', data.comments.length);
 
       setComments(data.comments);

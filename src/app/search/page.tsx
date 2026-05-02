@@ -32,6 +32,7 @@ import {
 } from '@/lib/db.client';
 import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
+import { parseApiResponse } from '@/lib/api-response';
 
 import AcgSearch from '@/components/AcgSearch';
 import CapsuleSwitch from '@/components/CapsuleSwitch';
@@ -1307,9 +1308,8 @@ function SearchPageClient() {
       } else {
         // 传统搜索：使用普通接口
         fetch(`/api/search?q=${encodeURIComponent(trimmed)}`)
-          .then((response) => response.json())
-          .then((_apiRes_data) => {
-            const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+          .then((response) => parseApiResponse<{ results?: SearchResult[] }>(response))
+          .then((data) => {
             if (currentQueryRef.current !== trimmed) return;
 
             if (data.results && Array.isArray(data.results)) {

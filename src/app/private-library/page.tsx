@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { base58Encode } from '@/lib/utils';
+import { parseApiResponse } from '@/lib/api-response';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import PageLayout from '@/components/PageLayout';
@@ -148,7 +149,7 @@ export default function PrivateLibraryPage() {
         throw new Error('搜索失败');
       }
 
-      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+      const data = await parseApiResponse<any>(response);
       if (data.error) {
         setError(data.error);
         setXiaoyaSearchResults([]);
@@ -190,7 +191,7 @@ export default function PrivateLibraryPage() {
       try {
         const response = await fetch('/api/emby/sources');
         if (response.ok) {
-          const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+          const data = await parseApiResponse<any>(response);
           setEmbySourceOptions(data.sources || []);
 
           // 如果没有设置embyKey，使用第一个源
@@ -278,7 +279,7 @@ export default function PrivateLibraryPage() {
       try {
         const params = new URLSearchParams({ embyKey });
         const response = await fetch(`/api/emby/views?${params.toString()}`);
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
 
         if (data.error) {
           logger.error('获取 Emby 媒体库列表失败:', data.error);
@@ -499,7 +500,7 @@ export default function PrivateLibraryPage() {
           throw new Error('获取视频列表失败');
         }
 
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
 
         if (data.error) {
           setError(data.error);

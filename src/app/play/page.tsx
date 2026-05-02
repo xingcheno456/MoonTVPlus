@@ -77,6 +77,7 @@ import {
   setRecommendationCache,
 } from '@/lib/recommendations/cache';
 import { getTMDBImageUrl } from '@/lib/tmdb.search';
+import { parseApiResponse } from '@/lib/api-response';
 import {
   DanmakuFilterConfig,
   EpisodeFilterConfig,
@@ -501,7 +502,7 @@ function PlayPageClient() {
             return;
           }
 
-          const _apiRes_fullData = await fullResponse.json(); const fullData = _apiRes_fullData.success === true ? _apiRes_fullData.data : _apiRes_fullData;
+          const fullData = await parseApiResponse<{ code?: string; version?: number }>(fullResponse);
           const code = fullData.code;
 
           if (code) {
@@ -1510,7 +1511,7 @@ function PlayPageClient() {
           return;
         }
 
-        const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
+        const result = await parseApiResponse<{ backdrop?: string }>(response);
 
         if (result.backdrop) {
           setTmdbBackdrop(processImageUrl(result.backdrop));
@@ -1760,7 +1761,7 @@ function PlayPageClient() {
         throw new Error('转码服务连接失败');
       }
 
-      const _apiRes_data = await response.json().catch(() => null); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+      const data = await parseApiResponse<{ playlist_url?: string; play_url?: string; error?: string; message?: string }>(response).catch(() => null);
       if (!response.ok) {
         throw new Error(
           data?.error || data?.message || `转码请求失败 (${response.status})`,
@@ -2430,7 +2431,7 @@ function PlayPageClient() {
       );
 
       if (response.ok) {
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<{ downloaded?: boolean }>(response);
         return data.downloaded || false;
       }
     } catch (error) {
@@ -2644,7 +2645,7 @@ function PlayPageClient() {
       const fetchUrl = `${currentXiaoyaUrlRef.current}${separator}format=json&t=${Date.now()}`;
 
       const response = await fetch(fetchUrl);
-      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+      const data = await parseApiResponse<{ url?: string }>(response);
 
       if (!data.url) {
         throw new Error('未获取到有效链接');
@@ -2915,7 +2916,7 @@ function PlayPageClient() {
         const fetchUrl = `${newUrl}${separator}format=json`;
 
         const response = await fetch(fetchUrl);
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<{ url?: string; qualities?: Array<{ name: string; url: string }> }>(response);
         if (requestSeq !== videoUrlRequestSeqRef.current) {
           return;
         }
@@ -3150,7 +3151,7 @@ function PlayPageClient() {
             }),
           });
 
-          const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+          const data = await parseApiResponse<{ error?: string }>(response);
 
           if (response.ok) {
             successCount++;
@@ -4097,7 +4098,7 @@ function PlayPageClient() {
         if (!detailResponse.ok) {
           throw new Error('获取视频详情失败');
         }
-        const _apiRes_detailData = await detailResponse.json(); const detailData = (_apiRes_detailData.success === true ? _apiRes_detailData.data : _apiRes_detailData) as SearchResult;
+        const detailData = await parseApiResponse<SearchResult>(detailResponse);
         const sourcesWithCorrections = applyCorrectionsToSources([detailData]);
         setAvailableSources(sourcesWithCorrections);
         return sourcesWithCorrections;
@@ -4346,7 +4347,7 @@ function PlayPageClient() {
         if (!response.ok) {
           throw new Error('搜索失败');
         }
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<{ results?: SearchResult[] }>(response);
         const allResults = (data.results || []) as SearchResult[];
 
         setHasCompletedSearchRequest(true);
@@ -5060,7 +5061,7 @@ function PlayPageClient() {
             `/api/source-detail?source=${newSource}&id=${newId}&title=${encodeURIComponent(newTitle)}`,
           );
           if (detailResponse.ok) {
-            const _apiRes_detailData = await detailResponse.json(); const detailData = _apiRes_detailData.success === true ? _apiRes_detailData.data : _apiRes_detailData;
+            const detailData = await parseApiResponse<any>(detailResponse);
             if (!detailData) {
               throw new Error('获取的详情数据为空');
             }

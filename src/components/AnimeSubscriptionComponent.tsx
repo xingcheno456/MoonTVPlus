@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { AdminConfig } from '@/lib/admin.types';
+import { parseApiResponse } from '@/lib/api-response';
 
 import { AnimeSubscription } from '@/types/anime-subscription';
 
@@ -357,7 +358,7 @@ export default function AnimeSubscriptionComponent({
         throw new Error('检查失败');
       }
 
-      const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
+      const result = await parseApiResponse<any>(response);
       showAlert({
         type: 'success',
         title: '检查完成',

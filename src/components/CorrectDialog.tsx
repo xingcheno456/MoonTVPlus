@@ -9,6 +9,7 @@ import { createPortal } from 'react-dom';
 
 import { getTMDBImageUrl } from '@/lib/tmdb.search';
 import { processImageUrl } from '@/lib/utils';
+import { parseApiResponse } from '@/lib/api-response';
 
 import { logger } from '../lib/logger';
 
@@ -152,7 +153,7 @@ export default function CorrectDialog({
         throw new Error('搜索失败');
       }
 
-      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+      const data = await parseApiResponse<any>(response);
 
       if (data.success && data.results) {
         setResults(data.results);
@@ -181,7 +182,7 @@ export default function CorrectDialog({
         throw new Error('获取季度列表失败');
       }
 
-      const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+      const data = await parseApiResponse<any>(response);
 
       if (data.success && data.seasons) {
         return data.seasons as TMDBSeason[];

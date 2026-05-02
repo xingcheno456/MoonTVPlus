@@ -11,6 +11,7 @@ import remarkGfm from 'remark-gfm';
 
 import { VideoContext } from '@/lib/ai-orchestrator';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { parseApiResponse } from '@/lib/api-response';
 
 import { logger } from '../lib/logger';
 
@@ -219,7 +220,7 @@ export default function AIChatPanel({
       });
 
       if (!response.ok) {
-        const _apiRes_errorData = await response.json().catch(() => ({})); const errorData = _apiRes_errorData.success === true ? _apiRes_errorData.data : _apiRes_errorData;
+        const errorData = await parseApiResponse<any>(response).catch(() => ({} as any));
         const errorMsg =
           errorData.error ||
           errorData.details ||
@@ -317,7 +318,7 @@ export default function AIChatPanel({
         }
       } else {
         // 处理非流式响应
-        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
+        const data = await parseApiResponse<any>(response);
         const content = data.content || '';
 
         // 更新最后一条消息为完整响应

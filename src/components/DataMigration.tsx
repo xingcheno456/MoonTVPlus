@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { parseApiResponse } from '@/lib/api-response';
 
 import { logger } from '../lib/logger';
 
@@ -235,7 +236,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
       });
 
       if (!response.ok) {
-        const _apiRes_errorData = await response.json().catch(() => ({})); const errorData = _apiRes_errorData.success === true ? _apiRes_errorData.data : _apiRes_errorData;
+        const errorData = await parseApiResponse<{ error?: string }>(response).catch(() => ({} as any));
         throw new Error(errorData.error || `导出失败: ${response.status}`);
       }
 
