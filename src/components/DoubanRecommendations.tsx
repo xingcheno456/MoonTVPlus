@@ -60,7 +60,7 @@ export default function DoubanRecommendations({
         throw new Error('获取推荐失败');
       }
 
-      const result = await response.json();
+      const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
       logger.info('获取到推荐:', result.recommendations);
 
       const recommendationsData = result.recommendations || [];

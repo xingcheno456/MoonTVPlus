@@ -501,7 +501,8 @@ function PlayPageClient() {
             return;
           }
 
-          const { code } = await fullResponse.json();
+          const _apiRes_fullData = await fullResponse.json(); const fullData = _apiRes_fullData.success === true ? _apiRes_fullData.data : _apiRes_fullData;
+          const code = fullData.code;
 
           if (code) {
             localStorage.setItem('custom_ad_filter_code_cache', code);
@@ -4096,7 +4097,7 @@ function PlayPageClient() {
         if (!detailResponse.ok) {
           throw new Error('获取视频详情失败');
         }
-        const detailData = (await detailResponse.json()) as SearchResult;
+        const _apiRes_detailData = await detailResponse.json(); const detailData = (_apiRes_detailData.success === true ? _apiRes_detailData.data : _apiRes_detailData) as SearchResult;
         const sourcesWithCorrections = applyCorrectionsToSources([detailData]);
         setAvailableSources(sourcesWithCorrections);
         return sourcesWithCorrections;

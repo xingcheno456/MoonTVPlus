@@ -88,7 +88,7 @@ export default function SmartRecommendations({
         throw new Error('获取豆瓣推荐失败');
       }
 
-      const result = await response.json();
+      const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
       const recommendationsData = result.recommendations || [];
       setRecommendations(recommendationsData);
 
@@ -141,7 +141,7 @@ export default function SmartRecommendations({
         throw new Error('获取TMDB推荐失败');
       }
 
-      const result = await response.json();
+      const _apiRes_result = await response.json(); const result = _apiRes_result.success === true ? _apiRes_result.data : _apiRes_result;
       const recommendationsData = result.recommendations || [];
       setRecommendations(recommendationsData);
 

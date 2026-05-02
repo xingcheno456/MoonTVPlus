@@ -48,7 +48,7 @@ export default function SearchSuggestions({
         },
       );
       if (response.ok) {
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         const apiSuggestions = data.suggestions.map(
           (item: { text: string }) => ({
             text: item.text,

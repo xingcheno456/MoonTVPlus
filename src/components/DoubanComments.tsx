@@ -52,7 +52,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
           throw new Error('获取评论失败');
         }
 
-        const data = await response.json();
+        const _apiRes_data = await response.json(); const data = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
         logger.info('获取到评论数据:', {
           newComments: data.comments.length,
           total: data.total,

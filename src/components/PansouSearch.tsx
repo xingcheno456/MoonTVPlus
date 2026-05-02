@@ -103,7 +103,7 @@ export default function PansouSearch({
         throw new Error(errorData.error || '搜索失败');
       }
 
-      const data: PansouSearchResult = await response.json();
+      const _apiRes_data = await response.json(); const data: PansouSearchResult = _apiRes_data.success === true ? _apiRes_data.data : _apiRes_data;
       setResults(data);
     } catch (err: any) {
       const errorMsg = err.message || '搜索失败，请检查配置';

@@ -12373,11 +12373,11 @@ function AdminPageClient() {
       const response = await fetch(`/api/admin/config`);
 
       if (!response.ok) {
-        const data = (await response.json()) as any;
-        throw new Error(`获取配置失败: ${data.error}`);
+        const _apiRes_errorData = await response.json(); const errorData = _apiRes_errorData.success === true ? _apiRes_errorData.data : _apiRes_errorData;
+        throw new Error(`获取配置失败: ${errorData.error}`);
       }
 
-      const data = (await response.json()) as AdminConfigResult;
+      const _apiRes_data = await response.json(); const data = (_apiRes_data.success === true ? _apiRes_data.data : _apiRes_data) as AdminConfigResult;
       setConfig(data.Config);
       setRole(data.Role);
     } catch (err) {
