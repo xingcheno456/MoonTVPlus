@@ -34,7 +34,7 @@ export type StorageType =
 
 export const STORAGE_TYPE: StorageType =
   (process.env.NEXT_PUBLIC_STORAGE_TYPE as StorageType | undefined) ||
-  'localstorage';
+  'd1';
 
 interface DatabaseAdapter {
   get(key: string): Promise<string | null>;
