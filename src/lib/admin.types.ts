@@ -225,16 +225,6 @@ export interface AdminConfig {
     Password?: string; // 密码认证（备选）
     DisableVideoPreview?: boolean; // 禁用预览视频，直接返回直连链接
   };
-  SuwayomiConfig?: {
-    Enabled: boolean; // 是否启用漫画展馆
-    ServerURL: string; // Suwayomi 服务地址
-    AuthMode?: 'none' | 'basic_auth' | 'simple_login'; // 认证模式
-    Username?: string; // 登录用户名
-    Password?: string; // 登录密码
-    DefaultLang?: string; // 默认语言，如 zh
-    SourceIds?: string[]; // 限制可用源
-    MaxSources?: number; // 搜索时最多查询多少个源
-  };
   EmailConfig?: {
     enabled: boolean; // 是否启用邮件通知
     provider: 'smtp' | 'resend'; // 邮件发送方式

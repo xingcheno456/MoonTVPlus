@@ -4798,7 +4798,23 @@ function PlayPageClient() {
       }, 1000);
     };
 
-    initAll();
+    const globalTimeout = setTimeout(() => {
+      logger.error('初始化播放页超时（45秒），强制结束加载');
+      setError('加载超时，请检查网络连接或刷新重试');
+      setLoading(false);
+    }, 45000);
+
+    initAll()
+      .catch((err) => {
+        logger.error('初始化播放页失败:', err);
+        setError(
+          '初始化失败: ' + (err instanceof Error ? err.message : '未知错误'),
+        );
+        setLoading(false);
+      })
+      .finally(() => {
+        clearTimeout(globalTimeout);
+      });
   }, []);
 
   // 跳过片头片尾配置处理

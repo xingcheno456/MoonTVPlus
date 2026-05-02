@@ -2,7 +2,7 @@
 
 ## 项目概览
 
-基于 **Next.js 15 + React 19** 的影视聚合平台，支持多种存储后端（SQLite/PostgreSQL/Redis/D1/Upstash/Kvrocks），功能涵盖视频搜索、弹幕、直播、漫画、音乐、AI助手等。项目规模：100+ API 路由、80+ 组件、60+ lib 模块。
+基于 **Next.js 15 + React 19** 的影视聚合平台，支持多种存储后端（SQLite/PostgreSQL/Redis/D1/Upstash/Kvrocks），功能涵盖视频搜索、弹幕、直播、音乐、AI助手等。项目规模：100+ API 路由、80+ 组件、60+ lib 模块。
 
 ---
 

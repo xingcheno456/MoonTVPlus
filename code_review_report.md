@@ -6,7 +6,7 @@
 
 ## 项目概览
 
-MoonTVplus 是一个基于 Next.js 15.5 的视频聚合和流媒体平台（Netflix-like 前端），聚合第三方 Apple CMS V10 格式的视频源 API。特性包括：多源聚合搜索、弹幕、Anime4K WebGPU 超分、观影室（WebSocket/WebRTC）、M3U8 下载、私有库集成（Emby/OpenList/Xiaoya）、PWA、AI 聊天、音乐播放、漫画阅读等。
+MoonTVplus 是一个基于 Next.js 15.5 的视频聚合和流媒体平台（Netflix-like 前端），聚合第三方 Apple CMS V10 格式的视频源 API。特性包括：多源聚合搜索、弹幕、Anime4K WebGPU 超分、观影室（WebSocket/WebRTC）、M3U8 下载、私有库集成（Emby/OpenList/Xiaoya）、PWA、AI 聊天、音乐播放等。
 
 | 层级 | 技术栈 |
 |------|--------|
@@ -128,7 +128,7 @@ MoonTVplus 是一个基于 Next.js 15.5 的视频聚合和流媒体平台（Netf
 
 #### 3.1.2 `AdminConfig` 类型过于庞大 (291 行) 🔴 未修改
 
-`src/lib/admin.types.ts` 中的 `AdminConfig` 是一个巨型接口（291 行），嵌套了 SiteConfig、UserConfig、SourceConfig、LiveConfig、WebLiveConfig、ThemeConfig、OpenListConfig、NetDiskConfig、AIConfig、EmbyConfig、XiaoyaConfig、MusicConfig、SuwayomiConfig、EmailConfig、AnimeSubscriptionConfig 等 **15 个子配置**，且部分子配置内部字段极多（如 AIConfig 有 40+ 字段）。
+`src/lib/admin.types.ts` 中的 `AdminConfig` 是一个巨型接口（291 行），嵌套了 SiteConfig、UserConfig、SourceConfig、LiveConfig、WebLiveConfig、ThemeConfig、OpenListConfig、NetDiskConfig、AIConfig、EmbyConfig、XiaoyaConfig、MusicConfig、EmailConfig、AnimeSubscriptionConfig 等 **14 个子配置**，且部分子配置内部字段极多（如 AIConfig 有 40+ 字段）。
 
 **当前状态**: 未拆分，所有子配置仍在单一文件中。
 
@@ -189,7 +189,7 @@ src/lib/config/
 
 | # | 问题 | 位置 | 状态 |
 |---|------|------|------|
-| 14 | **缺少组件目录结构** — 70+ 组件平铺在 `src/components/` 下，仅 `manga/` 和 `watch-room/` 有子目录 | `src/components/` | 🔴 未修改 |
+| 14 | **缺少组件目录结构** — 70+ 组件平铺在 `src/components/` 下，仅 `watch-room/` 有子目录 | `src/components/` | 🔴 未修改 |
 | 15 | `tsconfig.json` target 为 ES2017，过旧 | `tsconfig.json:3` | 🔴 未修改 |
 | 16 | ESLint 配置使用 FlatCompat 兼容模式 | `eslint.config.mjs` | 🔴 未修改 |
 | 17 | `next-router-mock` 在 App Router 项目中可能不需要 | `jest.setup.js` | 🔴 未修改 |

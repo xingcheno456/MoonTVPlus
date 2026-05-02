@@ -16,11 +16,6 @@ function mergeWithEnvOverrides(adminConfig: AdminConfig): AdminConfig {
   );
 
   const VALID_BOOL_VALUES = new Set(['true', 'false']);
-  const VALID_SUWAYOMI_AUTH_MODES = new Set([
-    'none',
-    'basic_auth',
-    'simple_login',
-  ]);
 
   if (adminConfig.SiteConfig) {
     if (process.env.NEXT_PUBLIC_SITE_NAME) {
@@ -82,68 +77,6 @@ function mergeWithEnvOverrides(adminConfig: AdminConfig): AdminConfig {
     if (process.env.TMDB_REVERSE_PROXY) {
       adminConfig.SiteConfig.TMDBReverseProxy =
         process.env.TMDB_REVERSE_PROXY;
-    }
-  }
-
-  if (!adminConfig.SuwayomiConfig) {
-    const hasSuwayomiEnv = Boolean(
-      process.env.SUWAYOMI_ENABLED ||
-      process.env.SUWAYOMI_URL ||
-      process.env.NEXT_PUBLIC_SUWAYOMI_URL ||
-      process.env.SUWAYOMI_AUTH_MODE ||
-      process.env.SUWAYOMI_USERNAME ||
-      process.env.SUWAYOMI_PASSWORD,
-    );
-    if (hasSuwayomiEnv) {
-      adminConfig.SuwayomiConfig = {
-        Enabled: false,
-        ServerURL: '',
-        AuthMode: 'none',
-        Username: '',
-        Password: '',
-        DefaultLang: 'zh',
-        SourceIds: [],
-        MaxSources: 10,
-      };
-    }
-  }
-  if (adminConfig.SuwayomiConfig) {
-    if (VALID_BOOL_VALUES.has(process.env.SUWAYOMI_ENABLED || '')) {
-      adminConfig.SuwayomiConfig.Enabled =
-        process.env.SUWAYOMI_ENABLED === 'true';
-    }
-    if (process.env.SUWAYOMI_URL || process.env.NEXT_PUBLIC_SUWAYOMI_URL) {
-      adminConfig.SuwayomiConfig.ServerURL =
-        process.env.SUWAYOMI_URL ||
-        process.env.NEXT_PUBLIC_SUWAYOMI_URL ||
-        '';
-    }
-    if (
-      process.env.SUWAYOMI_AUTH_MODE &&
-      VALID_SUWAYOMI_AUTH_MODES.has(process.env.SUWAYOMI_AUTH_MODE)
-    ) {
-      adminConfig.SuwayomiConfig.AuthMode = process.env
-        .SUWAYOMI_AUTH_MODE as 'none' | 'basic_auth' | 'simple_login';
-    }
-    if (process.env.SUWAYOMI_USERNAME) {
-      adminConfig.SuwayomiConfig.Username = process.env.SUWAYOMI_USERNAME;
-    }
-    if (process.env.SUWAYOMI_PASSWORD) {
-      adminConfig.SuwayomiConfig.Password = process.env.SUWAYOMI_PASSWORD;
-    }
-    if (process.env.SUWAYOMI_DEFAULT_LANG) {
-      adminConfig.SuwayomiConfig.DefaultLang =
-        process.env.SUWAYOMI_DEFAULT_LANG;
-    }
-    if (process.env.SUWAYOMI_MAX_SOURCES) {
-      const maxSources = Number(process.env.SUWAYOMI_MAX_SOURCES);
-      if (
-        !isNaN(maxSources) &&
-        maxSources > 0 &&
-        Number.isInteger(maxSources)
-      ) {
-        adminConfig.SuwayomiConfig.MaxSources = maxSources;
-      }
     }
   }
 

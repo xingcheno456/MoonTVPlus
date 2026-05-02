@@ -4,7 +4,6 @@ import {
   MusicV2PlaylistItem,
   MusicV2PlaylistRecord,
 } from './music-v2';
-import { MangaReadRecord, MangaShelfItem } from './manga.types';
 
 // 播放记录数据结构
 export interface PlayRecord {
@@ -96,33 +95,6 @@ export interface IConfigStorage {
   getGlobalValue(key: string): Promise<string | null>;
   setGlobalValue(key: string, value: string): Promise<void>;
   deleteGlobalValue(key: string): Promise<void>;
-}
-
-export interface IMangaStorage {
-  getMangaShelf(userName: string, key: string): Promise<MangaShelfItem | null>;
-  setMangaShelf(
-    userName: string,
-    key: string,
-    item: MangaShelfItem,
-  ): Promise<void>;
-  getAllMangaShelf(
-    userName: string,
-  ): Promise<{ [key: string]: MangaShelfItem }>;
-  deleteMangaShelf(userName: string, key: string): Promise<void>;
-  getMangaReadRecord(
-    userName: string,
-    key: string,
-  ): Promise<MangaReadRecord | null>;
-  setMangaReadRecord(
-    userName: string,
-    key: string,
-    record: MangaReadRecord,
-  ): Promise<void>;
-  getAllMangaReadRecords(
-    userName: string,
-  ): Promise<{ [key: string]: MangaReadRecord }>;
-  deleteMangaReadRecord(userName: string, key: string): Promise<void>;
-  cleanupOldMangaReadRecords?(userName: string): Promise<void>;
 }
 
 export interface INotificationStorage {
@@ -333,7 +305,6 @@ export type IStorage = IPlayRecordStorage &
   IFavoriteStorage &
   IUserStorage &
   IConfigStorage &
-  IMangaStorage &
   INotificationStorage &
   IMovieRequestStorage &
   IMusicStorage &
@@ -420,7 +391,6 @@ export interface EpisodeFilterConfig {
 // 通知类型枚举
 export type NotificationType =
   | 'favorite_update' // 收藏更新
-  | 'manga_update' // 漫画更新
   | 'system' // 系统通知
   | 'announcement' // 公告
   | 'movie_request' // 新求片通知（给管理员）

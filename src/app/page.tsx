@@ -3,7 +3,6 @@
 
 
 import {
-  BookOpen,
   Bot,
   ChevronRight,
   Link as LinkIcon,
@@ -79,7 +78,6 @@ function HomeClient() {
   );
   const [sourceSearchEnabled, setSourceSearchEnabled] = useState(true);
   const [musicEnabled, setMusicEnabled] = useState(false);
-  const [mangaEnabled, setMangaEnabled] = useState(false);
   const [showDirectPlayDialog, setShowDirectPlayDialog] = useState(false);
   const [directPlayUrl, setDirectPlayUrl] = useState('');
 
@@ -176,14 +174,6 @@ function HomeClient() {
     if (typeof window !== 'undefined') {
       const enabled = !!(window as any).RUNTIME_CONFIG?.MUSIC_ENABLED;
       setMusicEnabled(enabled);
-    }
-  }, []);
-
-  // 检查漫画功能是否启用
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const enabled = !!(window as any).RUNTIME_CONFIG?.SUWAYOMI_ENABLED;
-      setMangaEnabled(enabled);
     }
   }, []);
 
@@ -700,17 +690,6 @@ function HomeClient() {
                     title='音乐视听'
                   >
                     <Music size={18} />
-                  </button>
-                </Link>
-              )}
-
-              {mangaEnabled && (
-                <Link href='/manga'>
-                  <button
-                    className='rounded-lg p-1.5 text-emerald-500 transition-colors hover:text-emerald-600'
-                    title='漫画展馆'
-                  >
-                    <BookOpen size={18} />
                   </button>
                 </Link>
               )}

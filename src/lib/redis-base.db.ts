@@ -4,7 +4,6 @@ import { createClient, RedisClientType } from 'redis';
 
 import { AdminConfig } from './admin.types';
 import { logger } from './logger';
-import { MangaReadRecord, MangaShelfItem } from './manga.types';
 import {
   MusicV2HistoryRecord,
   MusicV2PlaylistItem,
@@ -1108,14 +1107,6 @@ export abstract class BaseRedisStorage implements IStorage {
     // 删除收藏夹（新hash结构）
     await this.withRetry(() => this.adapter.del(this.favHashKey(userName)));
 
-    // 删除漫画书架与历史
-    await this.withRetry(() =>
-      this.adapter.del(this.mangaShelfHashKey(userName)),
-    );
-    await this.withRetry(() =>
-      this.adapter.del(this.mangaReadHashKey(userName)),
-    );
-
     // 删除旧的收藏key（如果有）
     const favoritePattern = `u:${userName}:fav:*`;
     const favoriteKeys = await this.withRetry(() =>
@@ -1655,122 +1646,6 @@ export abstract class BaseRedisStorage implements IStorage {
       );
     } else {
       await this.withRetry(() => this.adapter.del(key));
-    }
-  }
-
-  // ---------- 漫画书架 ----------
-  private mangaShelfHashKey(user: string) {
-    return `u:${user}:manga:shelf`;
-  }
-
-  async getMangaShelf(
-    userName: string,
-    key: string,
-  ): Promise<MangaShelfItem | null> {
-    const val = await this.withRetry(() =>
-      this.adapter.hGet(this.mangaShelfHashKey(userName), key),
-    );
-    return val ? (JSON.parse(val) as MangaShelfItem) : null;
-  }
-
-  async setMangaShelf(
-    userName: string,
-    key: string,
-    item: MangaShelfItem,
-  ): Promise<void> {
-    await this.withRetry(() =>
-      this.adapter.hSet(
-        this.mangaShelfHashKey(userName),
-        key,
-        JSON.stringify(item),
-      ),
-    );
-  }
-
-  async getAllMangaShelf(
-    userName: string,
-  ): Promise<Record<string, MangaShelfItem>> {
-    const hashData = await this.withRetry(() =>
-      this.adapter.hGetAll(this.mangaShelfHashKey(userName)),
-    );
-    const result: Record<string, MangaShelfItem> = {};
-    for (const [key, value] of Object.entries(hashData)) {
-      if (value) result[key] = JSON.parse(value) as MangaShelfItem;
-    }
-    return result;
-  }
-
-  async deleteMangaShelf(userName: string, key: string): Promise<void> {
-    await this.withRetry(() =>
-      this.adapter.hDel(this.mangaShelfHashKey(userName), key),
-    );
-  }
-
-  // ---------- 漫画阅读历史 ----------
-  private mangaReadHashKey(user: string) {
-    return `u:${user}:manga:history`;
-  }
-
-  async getMangaReadRecord(
-    userName: string,
-    key: string,
-  ): Promise<MangaReadRecord | null> {
-    const val = await this.withRetry(() =>
-      this.adapter.hGet(this.mangaReadHashKey(userName), key),
-    );
-    return val ? (JSON.parse(val) as MangaReadRecord) : null;
-  }
-
-  async setMangaReadRecord(
-    userName: string,
-    key: string,
-    record: MangaReadRecord,
-  ): Promise<void> {
-    await this.withRetry(() =>
-      this.adapter.hSet(
-        this.mangaReadHashKey(userName),
-        key,
-        JSON.stringify(record),
-      ),
-    );
-  }
-
-  async getAllMangaReadRecords(
-    userName: string,
-  ): Promise<Record<string, MangaReadRecord>> {
-    const hashData = await this.withRetry(() =>
-      this.adapter.hGetAll(this.mangaReadHashKey(userName)),
-    );
-    const result: Record<string, MangaReadRecord> = {};
-    for (const [key, value] of Object.entries(hashData)) {
-      if (value) result[key] = JSON.parse(value) as MangaReadRecord;
-    }
-    return result;
-  }
-
-  async deleteMangaReadRecord(userName: string, key: string): Promise<void> {
-    await this.withRetry(() =>
-      this.adapter.hDel(this.mangaReadHashKey(userName), key),
-    );
-  }
-
-  async cleanupOldMangaReadRecords(userName: string): Promise<void> {
-    const records = await this.getAllMangaReadRecords(userName);
-    const maxRecords = parseInt(
-      process.env.MAX_MANGA_HISTORY_PER_USER || '100',
-      10,
-    );
-    const threshold = maxRecords + 10;
-    if (Object.keys(records).length <= threshold) return;
-    const keys = Object.entries(records)
-      .sort(([, a], [, b]) => b.saveTime - a.saveTime)
-      .slice(maxRecords)
-      .map(([key]) => key);
-
-    if (keys.length > 0) {
-      await this.withRetry(() =>
-        this.adapter.hDel(this.mangaReadHashKey(userName), ...keys),
-      );
     }
   }
 
