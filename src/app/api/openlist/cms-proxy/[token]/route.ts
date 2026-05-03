@@ -187,7 +187,7 @@ async function handleSearch(
   query: string,
   request: NextRequest,
 ) {
-  const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
+  const { getTMDBImageUrl } = await import('@/lib/tmdb-image');
 
   const lowerQuery = query.toLowerCase();
   const results = Object.entries(metaInfo.folders)
@@ -278,7 +278,7 @@ async function handleDetail(
   token: string,
   request: NextRequest,
 ) {
-  const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
+  const { getTMDBImageUrl } = await import('@/lib/tmdb-image');
 
   // 查找文件夹信息
   const folderMeta = metaInfo.folders?.[folderKey];

@@ -76,9 +76,7 @@ export async function getInitConfig(
           : BUILTIN_DANMAKU_API_BASE),
       DanmakuApiToken: process.env.DANMAKU_API_TOKEN || '87654321',
       DanmakuAutoLoadDefault: true,
-      TMDBApiKey: process.env.TMDB_API_KEY || '',
-      TMDBProxy: process.env.TMDB_PROXY || '',
-      TMDBReverseProxy: process.env.TMDB_REVERSE_PROXY || '',
+
       PansouApiUrl: '',
       PansouUsername: '',
       PansouPassword: '',

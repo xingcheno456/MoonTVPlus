@@ -113,9 +113,6 @@ async function findNFO(
 export async function getXiaoyaMetadata(
   xiaoyaClient: XiaoyaClient,
   videoPath: string,
-  tmdbApiKey?: string,
-  tmdbProxy?: string,
-  tmdbReverseProxy?: string,
 ): Promise<XiaoyaMetadata> {
   const pathParts = videoPath.split('/').filter(Boolean);
 
@@ -232,82 +229,6 @@ export async function getXiaoyaMetadata(
       mediaType: nfoData.mediaType,
       source: 'nfo',
     };
-  }
-
-  // 优先级 3: 实时搜索 TMDb（使用文件名）
-  if (tmdbApiKey) {
-    const fileName = pathParts[pathParts.length - 1];
-    const searchQuery = fileName
-      .replace(/\.(mp4|mkv|avi|m3u8|flv|ts)$/i, '')
-      .replace(/[[\]()]/g, ' ')
-      .trim();
-
-    // 如果文件名是纯数字（可能带小数点）或者是 SxxExx 格式，跳过文件名搜索，直接使用文件夹名
-    const isPureNumber = /^[\d.]+$/.test(searchQuery);
-    const isSeasonEpisode = /^S\d+E\d+/i.test(searchQuery);
-
-    if (!isPureNumber && !isSeasonEpisode) {
-      const { searchTMDB, getTMDBImageUrl } = await import('./tmdb.search');
-      const tmdbResult = await searchTMDB(
-        tmdbApiKey,
-        searchQuery,
-        tmdbProxy,
-        undefined,
-        tmdbReverseProxy,
-      );
-
-      if (tmdbResult.code === 200 && tmdbResult.result) {
-        return {
-          tmdbId: tmdbResult.result.id,
-          title:
-            tmdbResult.result.title || tmdbResult.result.name || folderName,
-          year:
-            tmdbResult.result.release_date?.substring(0, 4) ||
-            tmdbResult.result.first_air_date?.substring(0, 4),
-          rating: tmdbResult.result.vote_average,
-          plot: tmdbResult.result.overview,
-          poster: tmdbResult.result.poster_path
-            ? getTMDBImageUrl(tmdbResult.result.poster_path)
-            : undefined,
-          mediaType: tmdbResult.result.media_type,
-          source: isFilePath ? 'file' : 'tmdb',
-        };
-      }
-    }
-  }
-
-  // 优先级 4: 实时搜索 TMDb（使用文件夹名）
-  if (tmdbApiKey) {
-    const searchQuery = folderName
-      .replace(/[[\](){}]/g, ' ')
-      .replace(/\d{4}/g, '')
-      .trim();
-
-    const { searchTMDB, getTMDBImageUrl } = await import('./tmdb.search');
-    const tmdbResult = await searchTMDB(
-      tmdbApiKey,
-      searchQuery,
-      tmdbProxy,
-      undefined,
-      tmdbReverseProxy,
-    );
-
-    if (tmdbResult.code === 200 && tmdbResult.result) {
-      return {
-        tmdbId: tmdbResult.result.id,
-        title: tmdbResult.result.title || tmdbResult.result.name || folderName,
-        year:
-          tmdbResult.result.release_date?.substring(0, 4) ||
-          tmdbResult.result.first_air_date?.substring(0, 4),
-        rating: tmdbResult.result.vote_average,
-        plot: tmdbResult.result.overview,
-        poster: tmdbResult.result.poster_path
-          ? getTMDBImageUrl(tmdbResult.result.poster_path)
-          : undefined,
-        mediaType: tmdbResult.result.media_type,
-        source: 'tmdb',
-      };
-    }
   }
 
   // 降级：只返回文件夹名

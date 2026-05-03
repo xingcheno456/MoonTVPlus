@@ -68,7 +68,6 @@ export default async function RootLayout({
   let enableComments = false;
   let danmakuAutoLoadDefault = true;
   let recommendationDataSource = 'Mixed';
-  let tmdbApiKey = '';
   let openListEnabled = false;
   let embyEnabled = false;
   let xiaoyaEnabled = false;
@@ -124,7 +123,6 @@ export default async function RootLayout({
     danmakuAutoLoadDefault = config.SiteConfig.DanmakuAutoLoadDefault !== false;
     recommendationDataSource =
       config.SiteConfig.RecommendationDataSource || 'Mixed';
-    tmdbApiKey = config.SiteConfig.TMDBApiKey || '';
     loginBackgroundImage = config.ThemeConfig?.loginBackgroundImage || '';
     registerBackgroundImage = config.ThemeConfig?.registerBackgroundImage || '';
     progressThumbType = config.ThemeConfig?.progressThumbType || 'default';
@@ -281,7 +279,6 @@ export default async function RootLayout({
           <SiteProvider
             siteName={siteName}
             announcement={announcement}
-            tmdbApiKey={tmdbApiKey}
           >
             <WatchRoomProvider>
               <DownloadProvider>

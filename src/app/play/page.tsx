@@ -76,7 +76,7 @@ import {
   recommendationCacheKeys,
   setRecommendationCache,
 } from '@/lib/recommendations/cache';
-import { getTMDBImageUrl } from '@/lib/tmdb.search';
+import { getTMDBImageUrl } from '@/lib/tmdb-image';
 import { parseApiResponse } from '@/lib/api-response';
 import {
   DanmakuFilterConfig,

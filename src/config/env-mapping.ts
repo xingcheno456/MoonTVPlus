@@ -58,16 +58,7 @@ export function mergeWithEnvOverrides(adminConfig: AdminConfig): AdminConfig {
     if (process.env.DANMAKU_API_TOKEN) {
       adminConfig.SiteConfig.DanmakuApiToken = process.env.DANMAKU_API_TOKEN;
     }
-    if (process.env.TMDB_API_KEY) {
-      adminConfig.SiteConfig.TMDBApiKey = process.env.TMDB_API_KEY;
-    }
-    if (process.env.TMDB_PROXY) {
-      adminConfig.SiteConfig.TMDBProxy = process.env.TMDB_PROXY;
-    }
-    if (process.env.TMDB_REVERSE_PROXY) {
-      adminConfig.SiteConfig.TMDBReverseProxy =
-        process.env.TMDB_REVERSE_PROXY;
-    }
+
   }
 
   return adminConfig;

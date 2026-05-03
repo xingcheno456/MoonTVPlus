@@ -5,7 +5,6 @@
  */
 
 import { fetchDoubanData as fetchDoubanAPI } from '@/lib/douban';
-import { getNextApiKey } from '@/lib/tmdb.client';
 
 import { logger } from './logger';
 
@@ -57,24 +56,10 @@ export interface DoubanListItem {
   actors?: string[];
 }
 
-export interface TmdbDetailData {
-  title?: string;
-  name?: string;
-  overview?: string;
-  vote_average?: number;
-  genres?: Array<{ name: string }>;
-  release_date?: string;
-  first_air_date?: string;
-  poster_path?: string;
-  backdrop_path?: string;
-  [key: string]: unknown;
-}
-
 export interface OrchestrationResult {
   systemPrompt: string;
   webSearchResults?: string | null;
   doubanData?: { list?: DoubanListItem[]; items?: unknown[]; title?: string; rating?: number | string; year?: string; genres?: string[]; directors?: string[]; actors?: string[]; intro?: string; reviews?: unknown[] } | null;
-  tmdbData?: TmdbDetailData | null;
 }
 
 /**
@@ -297,65 +282,6 @@ async function fetchDoubanData(params: {
     return null;
   } catch (error) {
     logger.error('❌ 豆瓣数据获取失败:', error);
-    return null;
-  }
-}
-
-/**
- * 获取TMDB数据
- * 服务器端直接调用TMDB API
- */
-async function fetchTMDBData(
-  params: {
-    id?: number;
-    type?: 'movie' | 'tv';
-  },
-  tmdbApiKey?: string,
-  tmdbProxy?: string,
-  tmdbReverseProxy?: string,
-): Promise<TmdbDetailData | null> {
-  try {
-    const actualKey = getNextApiKey(tmdbApiKey || '');
-    if (!actualKey) {
-      logger.info('⚠️ TMDB API Key 未配置，跳过TMDB数据获取');
-      return null;
-    }
-
-    if (!params.id || !params.type) {
-      logger.info('⚠️ TMDB数据获取参数不完整:', params);
-      return null;
-    }
-
-    // 使用反代代理或默认 Base URL
-    const baseUrl = tmdbReverseProxy || 'https://api.themoviedb.org';
-    // 使用 TMDB API 获取详情
-    // TMDB API: https://api.themoviedb.org/3/{type}/{id}
-    const url = `${baseUrl}/3/${params.type}/${params.id}?api_key=${actualKey}&language=zh-CN&append_to_response=keywords,similar`;
-
-    logger.info('📡 获取TMDB详情:', params.type, params.id);
-
-    const fetchOptions: RequestInit = tmdbProxy
-      ? {
-          signal: AbortSignal.timeout(15000),
-        }
-      : {
-          signal: AbortSignal.timeout(15000),
-        };
-
-    const response = await fetch(url, fetchOptions);
-
-    if (!response.ok) {
-      logger.error(
-        '❌ TMDB API 请求失败:',
-        response.status,
-        response.statusText,
-      );
-      return null;
-    }
-
-    return await response.json();
-  } catch (error) {
-    logger.error('❌ TMDB数据获取失败:', error);
     return null;
   }
 }
@@ -594,10 +520,6 @@ export async function orchestrateDataSources(
     tavilyApiKey?: string;
     serperApiKey?: string;
     serpApiKey?: string;
-    // TMDB 配置
-    tmdbApiKey?: string;
-    tmdbProxy?: string;
-    tmdbReverseProxy?: string;
     // 决策模型配置
     enableDecisionModel?: boolean;
     decisionProvider?: 'openai' | 'claude' | 'custom';
@@ -627,8 +549,6 @@ export async function orchestrateDataSources(
         (config.webSearchProvider === 'serpapi' && config.serpApiKey))
     );
 
-    const hasTMDB = !!config.tmdbApiKey;
-
     decision = await callDecisionModel(
       userMessage,
       context,
@@ -640,8 +560,8 @@ export async function orchestrateDataSources(
       },
       {
         webSearch: hasWebSearchProvider,
-        douban: true, // 豆瓣始终可用（服务器端直接调用）
-        tmdb: hasTMDB,
+        douban: true,
+        tmdb: false,
       },
     );
 
@@ -683,7 +603,6 @@ export async function orchestrateDataSources(
 
   let webSearchPromise: Promise<{ results?: WebSearchFormatted[]; organic?: WebSearchFormatted[]; organic_results?: WebSearchFormatted[] } | null> | null = null;
   let doubanPromise: Promise<OrchestrationResult['doubanData']> | null = null;
-  let tmdbPromise: Promise<TmdbDetailData | null> | null = null;
 
   // 联网搜索
   if (
@@ -736,27 +655,12 @@ export async function orchestrateDataSources(
     }
   }
 
-  // TMDB数据
-  if (intent.needTMDB && context?.tmdb_id && context?.type) {
-    tmdbPromise = fetchTMDBData(
-      {
-        id: context.tmdb_id,
-        type: context.type,
-      },
-      config?.tmdbApiKey,
-      config?.tmdbProxy,
-      config?.tmdbReverseProxy,
-    );
-    dataPromises.push(tmdbPromise);
-  }
-
   // 3. 等待所有数据获取完成
   const results = await Promise.allSettled(dataPromises);
 
   type DoubanDataType = NonNullable<OrchestrationResult['doubanData']>;
   let webSearchData: { results?: WebSearchFormatted[]; organic?: WebSearchFormatted[]; organic_results?: WebSearchFormatted[] } | null = null;
   let doubanData: DoubanDataType | null = null;
-  let tmdbData: TmdbDetailData | null = null;
 
   let resultIndex = 0;
   if (webSearchPromise) {
@@ -771,12 +675,6 @@ export async function orchestrateDataSources(
       doubanData = result.value as NonNullable<typeof doubanData>;
     }
   }
-  if (tmdbPromise) {
-    const result = results[resultIndex++];
-    if (result.status === 'fulfilled') {
-      tmdbData = result.value as TmdbDetailData;
-    }
-  }
 
   // 4. 构建系统提示词
   // 获取UTC+8时区的日期
@@ -789,7 +687,7 @@ export async function orchestrateDataSources(
 ${today}
 
 ## 你的能力
-- 提供影视推荐（基于豆瓣热门榜单和TMDB数据）
+- 提供影视推荐（基于豆瓣热门榜单）
 - 回答影视相关问题（剧情、演员、评分等）
 - 搜索最新影视资讯（如果启用了联网搜索）
 
@@ -854,24 +752,6 @@ ${today}
     }
   }
 
-  // 添加TMDB数据
-  if (tmdbData) {
-    systemPrompt += `\n## 【TMDB数据】（国际数据和详细元信息）\n`;
-    systemPrompt += JSON.stringify(
-      {
-        title: tmdbData.title || tmdbData.name,
-        overview: tmdbData.overview,
-        vote_average: tmdbData.vote_average,
-        genres: tmdbData.genres,
-        keywords: tmdbData.keywords,
-        similar: Array.isArray(tmdbData.similar) ? tmdbData.similar.slice(0, 5) : undefined,
-      },
-      null,
-      2,
-    );
-    systemPrompt += '\n';
-  }
-
   // 添加当前视频上下文
   if (context?.title) {
     systemPrompt += `\n## 【当前视频上下文】\n`;
@@ -898,6 +778,5 @@ ${today}
     systemPrompt,
     webSearchResults: webSearchData,
     doubanData,
-    tmdbData,
   };
 }

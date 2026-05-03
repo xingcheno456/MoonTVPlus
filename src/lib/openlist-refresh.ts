@@ -20,7 +20,6 @@ import {
   updateScanTaskProgress,
 } from '@/lib/scan-task';
 import { parseSeasonFromTitle } from '@/lib/season-parser';
-import { getTVSeasonDetails, searchTMDB } from '@/lib/tmdb.search';
 
 import { logger } from './logger';
 
@@ -115,14 +114,6 @@ export async function startOpenListRefresh(
     throw new Error('OpenList 未配置或未启用');
   }
 
-  const tmdbApiKey = config.SiteConfig.TMDBApiKey;
-  const tmdbProxy = config.SiteConfig.TMDBProxy;
-  const tmdbReverseProxy = config.SiteConfig.TMDBReverseProxy;
-
-  if (!tmdbApiKey) {
-    throw new Error('TMDB API Key 未配置');
-  }
-
   // 检测是否需要迁移
   if (openListConfig.RootPath && !openListConfig.RootPaths) {
     await migrateToMultiRoot(openListConfig);
@@ -141,9 +132,6 @@ export async function startOpenListRefresh(
     taskId,
     openListConfig.URL,
     rootPaths,
-    tmdbApiKey,
-    tmdbProxy,
-    tmdbReverseProxy,
     openListConfig.Username,
     openListConfig.Password,
     clearMetaInfo,
@@ -163,9 +151,6 @@ async function performMultiRootScan(
   taskId: string,
   url: string,
   rootPaths: string[],
-  tmdbApiKey: string,
-  tmdbProxy: string | undefined,
-  tmdbReverseProxy: string | undefined,
   username: string,
   password: string,
   clearMetaInfo: boolean,
@@ -182,9 +167,6 @@ async function performMultiRootScan(
         taskId,
         url,
         rootPath,
-        tmdbApiKey,
-        tmdbProxy,
-        tmdbReverseProxy,
         username,
         password,
         clearMetaInfo && i === 0, // 只在第一个根目录时清除
@@ -204,9 +186,6 @@ async function performScan(
   taskId: string,
   url: string,
   rootPath: string,
-  tmdbApiKey: string,
-  tmdbProxy?: string,
-  tmdbReverseProxy?: string,
   username?: string,
   password?: string,
   clearMetaInfo?: boolean,
@@ -313,7 +292,6 @@ async function performScan(
         let searchQuery: string;
         let seasonNumber: number | null = null;
         let year: number | null = null;
-        let searchResult: any;
 
         if (scanMode === 'torrent' || scanMode === 'hybrid') {
           const torrentInfo = parseTorrentName(folder.name);
@@ -325,23 +303,9 @@ async function performScan(
           logger.info(
             `[OpenList Refresh] 解析结果 - 标题: ${searchQuery}, 季度: ${seasonNumber}, 年份: ${year}`,
           );
-
-          searchResult = await searchTMDB(
-            tmdbApiKey,
-            searchQuery,
-            tmdbProxy,
-            year || undefined,
-            tmdbReverseProxy,
-          );
         }
 
-        if (
-          scanMode === 'name' ||
-          (scanMode === 'hybrid' &&
-            (!searchResult ||
-              searchResult.code !== 200 ||
-              !searchResult.result))
-        ) {
+        if (scanMode === 'name' || scanMode === 'hybrid') {
           const seasonInfo = parseSeasonFromTitle(folder.name);
           searchQuery = seasonInfo.cleanTitle || folder.name;
           seasonNumber = seasonInfo.seasonNumber;
@@ -353,88 +317,21 @@ async function performScan(
           logger.info(
             `[OpenList Refresh] 清理后标题: ${searchQuery}, 季度: ${seasonNumber}, 年份: ${year}`,
           );
-
-          searchResult = await searchTMDB(
-            tmdbApiKey,
-            searchQuery,
-            tmdbProxy,
-            year || undefined,
-            tmdbReverseProxy,
-          );
         }
 
-        if (searchResult.code === 200 && searchResult.result) {
-          const result = searchResult.result;
-
-          const folderInfo: any = {
-            folderName: fullFolderPath,
-            tmdb_id: result.id,
-            title: result.title || result.name || folder.name,
-            poster_path: result.poster_path,
-            release_date: result.release_date || result.first_air_date || '',
-            overview: result.overview,
-            vote_average: result.vote_average,
-            media_type: result.media_type,
-            last_updated: Date.now(),
-            failed: false,
-          };
-
-          if (result.media_type === 'tv' && seasonNumber) {
-            try {
-              const seasonDetails = await getTVSeasonDetails(
-                tmdbApiKey,
-                result.id,
-                seasonNumber,
-                tmdbProxy,
-                tmdbReverseProxy,
-              );
-
-              if (seasonDetails.code === 200 && seasonDetails.season) {
-                folderInfo.season_number = seasonDetails.season.season_number;
-                folderInfo.season_name = seasonDetails.season.name;
-
-                if (seasonDetails.season.season_number > 1) {
-                  folderInfo.title = `${folderInfo.title} ${seasonDetails.season.name}`;
-                }
-
-                if (seasonDetails.season.poster_path) {
-                  folderInfo.poster_path = seasonDetails.season.poster_path;
-                }
-                if (seasonDetails.season.overview) {
-                  folderInfo.overview = seasonDetails.season.overview;
-                }
-                if (seasonDetails.season.air_date) {
-                  folderInfo.release_date = seasonDetails.season.air_date;
-                }
-              } else {
-                logger.warn(
-                  `[OpenList Refresh] 获取季度 ${seasonNumber} 详情失败`,
-                );
-                folderInfo.season_number = seasonNumber;
-              }
-            } catch (error) {
-              logger.error(`[OpenList Refresh] 获取季度详情异常:`, error);
-              folderInfo.season_number = seasonNumber;
-            }
-          }
-
-          metaInfo.folders[folderKey] = folderInfo;
-          newCount++;
-        } else {
-          metaInfo.folders[folderKey] = {
-            folderName: fullFolderPath,
-            tmdb_id: 0,
-            title: folder.name,
-            poster_path: null,
-            release_date: '',
-            overview: '',
-            vote_average: 0,
-            media_type: 'movie',
-            last_updated: Date.now(),
-            failed: true,
-          };
-          errorCount++;
-        }
+        metaInfo.folders[folderKey] = {
+          folderName: fullFolderPath,
+          tmdb_id: 0,
+          title: folder.name,
+          poster_path: null,
+          release_date: '',
+          overview: '',
+          vote_average: 0,
+          media_type: 'movie',
+          last_updated: Date.now(),
+          failed: false,
+        };
+        newCount++;
 
         await new Promise((resolve) => setTimeout(resolve, 300));
       } catch (error) {

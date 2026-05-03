@@ -18,7 +18,7 @@ import {
   GetBangumiCalendarData,
 } from '@/lib/bangumi.client';
 import { getDoubanCategories } from '@/lib/douban.client';
-import { getTMDBImageUrl, TMDBItem } from '@/lib/tmdb.client';
+import { getTMDBImageUrl, TMDBItem } from '@/lib/tmdb-image';
 import { DoubanItem } from '@/lib/types';
 import { base58Encode, processImageUrl } from '@/lib/utils';
 import { parseApiResponse } from '@/lib/api-response';

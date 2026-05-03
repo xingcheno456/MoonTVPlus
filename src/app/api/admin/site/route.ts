@@ -39,9 +39,6 @@ export async function POST(request: NextRequest) {
       DanmakuApiBase,
       DanmakuApiToken,
       DanmakuAutoLoadDefault,
-      TMDBApiKey,
-      TMDBProxy,
-      TMDBReverseProxy,
       BannerDataSource,
       RecommendationDataSource,
       PansouApiUrl,
@@ -90,9 +87,6 @@ export async function POST(request: NextRequest) {
       DanmakuApiBase: string;
       DanmakuApiToken: string;
       DanmakuAutoLoadDefault?: boolean;
-      TMDBApiKey?: string;
-      TMDBProxy?: string;
-      TMDBReverseProxy?: string;
       BannerDataSource?: string;
       RecommendationDataSource?: string;
       PansouApiUrl?: string;
@@ -147,10 +141,6 @@ export async function POST(request: NextRequest) {
       typeof DanmakuApiToken !== 'string' ||
       (DanmakuAutoLoadDefault !== undefined &&
         typeof DanmakuAutoLoadDefault !== 'boolean') ||
-      (TMDBApiKey !== undefined && typeof TMDBApiKey !== 'string') ||
-      (TMDBProxy !== undefined && typeof TMDBProxy !== 'string') ||
-      (TMDBReverseProxy !== undefined &&
-        typeof TMDBReverseProxy !== 'string') ||
       (BannerDataSource !== undefined &&
         typeof BannerDataSource !== 'string') ||
       (RecommendationDataSource !== undefined &&
@@ -229,9 +219,6 @@ export async function POST(request: NextRequest) {
       DanmakuApiBase,
       DanmakuApiToken,
       DanmakuAutoLoadDefault,
-      TMDBApiKey,
-      TMDBProxy,
-      TMDBReverseProxy,
       BannerDataSource,
       RecommendationDataSource,
       PansouApiUrl,

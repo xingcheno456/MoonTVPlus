@@ -16,7 +16,7 @@ import {
   getGenreNames,
   getTMDBImageUrl,
   type TMDBItem,
-} from '@/lib/tmdb.client';
+} from '@/lib/tmdb-image';
 import { parseApiResponse } from '@/lib/api-response';
 
 import ProxyImage from '@/components/ProxyImage';
@@ -169,7 +169,7 @@ export default function BannerCarousel({
     const fetchTrending = async () => {
       try {
         // 先尝试从所有可能的数据源缓存中读取，找到最新的缓存
-        const sources = ['TMDB', 'TX', 'Douban'];
+        const sources = ['TX', 'Douban'];
         let cachedData = null;
         let validSource = null;
         let cacheExpired = false;
@@ -207,18 +207,33 @@ export default function BannerCarousel({
 
         // 如果缓存过期或没有缓存，后台更新数据
         if (!cachedData || cacheExpired) {
-          const response = await fetch('/api/tmdb/trending');
-          const result = await parseApiResponse<any>(response);
+          let response: Response | null = null;
+          let result: any = null;
 
-          if (result.code === 200 && result.list.length > 0) {
-            const newDataSource = result.source || 'TMDB'; // 获取数据源标识
+          try {
+            response = await fetch('/api/tx/trending');
+            result = await parseApiResponse<any>(response);
+          } catch {
+            logger.warn('TX 数据源获取失败，尝试 Douban');
+          }
+
+          if (!result || result.code !== 200 || !result.list?.length) {
+            try {
+              response = await fetch('/api/douban/trending');
+              result = await parseApiResponse<any>(response);
+            } catch {
+              logger.warn('Douban 数据源获取失败');
+            }
+          }
+
+          if (result && result.code === 200 && result.list?.length > 0) {
+            const newDataSource = result.source || 'Douban';
             const cacheKey = getLocalStorageKey(newDataSource);
 
             setItems(result.list);
-            setDataSource(newDataSource); // 设置数据源
-            setTrailersLoaded(false); // 重置预告片加载状态
+            setDataSource(newDataSource);
+            setTrailersLoaded(false);
 
-            // 保存到 localStorage（使用数据源特定的key）
             try {
               localStorage.setItem(
                 cacheKey,
@@ -228,7 +243,6 @@ export default function BannerCarousel({
                 }),
               );
             } catch (e) {
-              // localStorage 可能已满，忽略错误
               logger.error('保存到 localStorage 失败:', e);
             }
           }

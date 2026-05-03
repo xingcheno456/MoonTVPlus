@@ -290,7 +290,7 @@ export async function getOpenListDetail(id: string): Promise<SearchResult> {
     });
 
   // 3. 从 metainfo 中获取元数据
-  const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
+  const { getTMDBImageUrl } = await import('@/lib/tmdb-image');
 
   return {
     source: 'openlist',
@@ -352,9 +352,6 @@ export async function getXiaoyaDetail(id: string): Promise<SearchResult> {
   const metadata = await getXiaoyaMetadata(
     client,
     decodedDirPath,
-    config.SiteConfig.TMDBApiKey,
-    config.SiteConfig.TMDBProxy,
-    config.SiteConfig.TMDBReverseProxy,
   );
 
   // 获取集数列表

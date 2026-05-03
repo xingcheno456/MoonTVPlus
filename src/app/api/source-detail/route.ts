@@ -240,9 +240,6 @@ export async function GET(request: NextRequest) {
       const metadata = await getXiaoyaMetadata(
         client,
         metadataPath,
-        config.SiteConfig.TMDBApiKey,
-        config.SiteConfig.TMDBProxy,
-        config.SiteConfig.TMDBReverseProxy,
       );
 
       // 获取集数列表（使用目录路径或点击的文件路径）
@@ -645,7 +642,7 @@ export async function GET(request: NextRequest) {
         });
 
       // 3. 从 metainfo 中获取元数据
-      const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
+      const { getTMDBImageUrl } = await import('@/lib/tmdb-image');
 
       const result = {
         source: 'openlist',

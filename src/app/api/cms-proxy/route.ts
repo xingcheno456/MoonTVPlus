@@ -11,7 +11,7 @@ import {
   setCachedMetaInfo,
 } from '@/lib/openlist-cache';
 import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
-import { getTMDBImageUrl } from '@/lib/tmdb.search';
+import { getTMDBImageUrl } from '@/lib/tmdb-image';
 import { yellowWords } from '@/lib/yellow';
 
 import { logger } from '../../../lib/logger';

@@ -21,12 +21,8 @@ export interface AdminConfig {
     DanmakuApiBase: string;
     DanmakuApiToken: string;
     DanmakuAutoLoadDefault?: boolean; // 是否默认自动加载弹幕（用户可在本地覆盖）
-    // TMDB配置
-    TMDBApiKey?: string;
-    TMDBProxy?: string;
-    TMDBReverseProxy?: string;
-    BannerDataSource?: string; // 轮播图数据源：TMDB、TX 或 Douban
-    RecommendationDataSource?: string; // 更多推荐数据源：Douban、TMDB、Mixed、MixedSmart
+    BannerDataSource?: string; // 轮播图数据源：TX 或 Douban
+    RecommendationDataSource?: string; // 更多推荐数据源：Douban、Mixed、MixedSmart
     // Pansou配置
     PansouApiUrl?: string;
     PansouUsername?: string;

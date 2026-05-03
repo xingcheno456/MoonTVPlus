@@ -250,7 +250,7 @@ export async function GET(request: NextRequest) {
         });
 
       // 3. 从 metainfo 中获取元数据
-      const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
+      const { getTMDBImageUrl } = await import('@/lib/tmdb-image');
 
       const result = {
         source: 'openlist',

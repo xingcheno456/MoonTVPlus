@@ -353,9 +353,6 @@ interface SiteConfig {
   DanmakuApiBase: string;
   DanmakuApiToken: string;
   DanmakuAutoLoadDefault?: boolean;
-  TMDBApiKey?: string;
-  TMDBProxy?: string;
-  TMDBReverseProxy?: string;
   BannerDataSource?: string;
   RecommendationDataSource?: string;
   PansouApiUrl?: string;
@@ -8172,9 +8169,6 @@ const SiteConfigComponent = ({
     DanmakuApiBase: 'https://mtvpls-danmu.netlify.app/87654321',
     DanmakuApiToken: '87654321',
     DanmakuAutoLoadDefault: true,
-    TMDBApiKey: '',
-    TMDBProxy: '',
-    TMDBReverseProxy: '',
     BannerDataSource: 'Douban',
     RecommendationDataSource: 'Mixed',
     PansouApiUrl: '',
@@ -8277,9 +8271,6 @@ const SiteConfigComponent = ({
         DanmakuApiToken: config.SiteConfig.DanmakuApiToken || '87654321',
         DanmakuAutoLoadDefault:
           config.SiteConfig.DanmakuAutoLoadDefault !== false,
-        TMDBApiKey: config.SiteConfig.TMDBApiKey || '',
-        TMDBProxy: config.SiteConfig.TMDBProxy || '',
-        TMDBReverseProxy: config.SiteConfig.TMDBReverseProxy || '',
         BannerDataSource: config.SiteConfig.BannerDataSource || 'Douban',
         RecommendationDataSource:
           config.SiteConfig.RecommendationDataSource || 'Mixed',
@@ -8956,92 +8947,6 @@ const SiteConfigComponent = ({
       </details>
 
       {/* TMDB 配置 */}
-      <details className='border-t border-gray-200 pt-4 dark:border-gray-700'>
-        <summary className='cursor-pointer text-sm font-semibold text-gray-900 dark:text-gray-100'>
-          TMDB 配置
-        </summary>
-        <div className='mt-4 space-y-4'>
-          <p className='text-xs text-amber-600 dark:text-amber-400'>
-            由于国内网络环境限制，TMDB 服务通常需要配置代理后才能正常使用。
-          </p>
-          {/* TMDB API Key */}
-          <div>
-            <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
-              TMDB API Key
-            </label>
-            <input
-              type='text'
-              placeholder='请输入 TMDB API Key（多个key用英文逗号分隔）'
-              value={siteSettings.TMDBApiKey}
-              onChange={(e) =>
-                setSiteSettings((prev) => ({
-                  ...prev,
-                  TMDBApiKey: e.target.value,
-                }))
-              }
-              className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
-            />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              配置后首页将显示 TMDB 即将上映电影。支持配置多个 API
-              Key（用英文逗号分隔）以实现轮询，避免单个 Key 请求限制。获取 API
-              Key 请访问{' '}
-              <a
-                href='https://www.themoviedb.org/settings/api'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300'
-              >
-                TMDB API 设置页面
-              </a>
-            </p>
-          </div>
-
-          {/* TMDB Proxy */}
-          <div>
-            <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
-              TMDB 系统代理
-            </label>
-            <input
-              type='text'
-              placeholder='请输入代理地址（可选）'
-              value={siteSettings.TMDBProxy}
-              onChange={(e) =>
-                setSiteSettings((prev) => ({
-                  ...prev,
-                  TMDBProxy: e.target.value,
-                }))
-              }
-              className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
-            />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              配置代理服务器地址，用于访问 TMDB API（可选）
-            </p>
-          </div>
-
-          {/* TMDB Reverse Proxy */}
-          <div>
-            <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
-              TMDB 反代代理
-            </label>
-            <input
-              type='text'
-              placeholder='请输入反代 Base URL（可选）'
-              value={siteSettings.TMDBReverseProxy}
-              onChange={(e) =>
-                setSiteSettings((prev) => ({
-                  ...prev,
-                  TMDBReverseProxy: e.target.value,
-                }))
-              }
-              className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-transparent focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
-            />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              配置 TMDB 反向代理 Base URL（可选）
-            </p>
-          </div>
-        </div>
-      </details>
-
       <details className='border-t border-gray-200 pt-4 dark:border-gray-700'>
         <summary className='cursor-pointer text-sm font-semibold text-gray-900 dark:text-gray-100'>
           磁链配置
@@ -12585,32 +12490,6 @@ function AdminPageClient() {
               </>
             )}
           </div>
-
-          {/* TMDB 未配置提示 */}
-          {config && !config.SiteConfig.TMDBApiKey && (
-            <div className='mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20'>
-              <div className='flex items-start gap-3'>
-                <div className='mt-0.5 flex-shrink-0'>
-                  <svg
-                    className='h-5 w-5 text-blue-600 dark:text-blue-400'
-                    fill='currentColor'
-                    viewBox='0 0 20 20'
-                  >
-                    <path
-                      fillRule='evenodd'
-                      d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z'
-                      clipRule='evenodd'
-                    />
-                  </svg>
-                </div>
-                <div className='flex-1'>
-                  <p className='text-sm font-medium text-blue-800 dark:text-blue-300'>
-                    未配置 TMDB API Key，配置后可获得更丰富的影视信息和推荐内容
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* 配置文件标签 - 仅站长可见 */}
           {role === 'owner' && (

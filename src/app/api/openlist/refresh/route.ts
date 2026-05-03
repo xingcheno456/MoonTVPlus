@@ -4,7 +4,6 @@ import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig } from '@/lib/config';
 import { startOpenListRefresh } from '@/lib/openlist-refresh';
 
 import { logger } from '../../../../lib/logger';
@@ -21,15 +20,6 @@ export async function POST(request: NextRequest) {
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
       return apiError('未授权', 401);
-    }
-
-    // 检查 TMDB API Key 是否配置
-    const config = await getConfig();
-    if (
-      !config.SiteConfig.TMDBApiKey ||
-      config.SiteConfig.TMDBApiKey.trim() === ''
-    ) {
-      return apiError('请先在站点配置中配置 TMDB API Key', 400);
     }
 
     // 获取请求参数

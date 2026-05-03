@@ -159,7 +159,7 @@ async function searchOpenList(
     (async () => {
       try {
         const { getCachedMetaInfo, setCachedMetaInfo } = await import('@/lib/openlist-cache');
-        const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
+        const { getTMDBImageUrl } = await import('@/lib/tmdb-image');
         const { db } = await import('@/lib/db');
 
         let metaInfo = getCachedMetaInfo();
