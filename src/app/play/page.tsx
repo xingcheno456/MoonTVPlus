@@ -831,6 +831,16 @@ function PlayPageClient() {
     );
   };
 
+  const needsNoReferrer = (source?: string) => {
+    if (!source) return false;
+    return (
+      source === 'xiaoya' ||
+      source === 'openlist' ||
+      source === 'quark-temp' ||
+      source.startsWith('script:')
+    );
+  };
+
   const isM3u8LikeUrl = (url?: string) => {
     if (!url) return false;
     const normalizedUrl = url.toLowerCase();
@@ -2839,13 +2849,18 @@ function PlayPageClient() {
     clearRefreshTimer(); // 清除旧的定时器
     isInitialLoadRef.current = true; // 重置为首次加载
 
-    // 动态设置 referrer policy：不发送 Referer
     const existingMeta = document.querySelector('meta[name="referrer"]');
-    if (!existingMeta) {
-      const meta = document.createElement('meta');
-      meta.name = 'referrer';
-      meta.content = 'no-referrer';
-      document.head.appendChild(meta);
+    if (needsNoReferrer(detailData?.source)) {
+      if (!existingMeta) {
+        const meta = document.createElement('meta');
+        meta.name = 'referrer';
+        meta.content = 'no-referrer';
+        document.head.appendChild(meta);
+      }
+    } else {
+      if (existingMeta) {
+        existingMeta.remove();
+      }
     }
 
     if (
@@ -6923,7 +6938,7 @@ function PlayPageClient() {
           moreVideoAttr: {
             playsInline: true,
             'webkit-playsinline': 'true',
-            referrerpolicy: 'no-referrer',
+            ...(needsNoReferrer(detail?.source) ? { referrerpolicy: 'no-referrer' } : {}),
           } as Record<string, unknown>,
           // HLS 支持配置
           customType: {
