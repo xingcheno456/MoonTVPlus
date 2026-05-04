@@ -3,6 +3,7 @@
 import { createClient, RedisClientType } from 'redis';
 
 import { AdminConfig } from './admin.types';
+import { hashPassword, verifyPassword, isLegacyPasswordHash } from './crypto-node';
 import { logger } from './logger';
 import {
   MusicV2HistoryRecord,
@@ -1191,16 +1192,6 @@ export abstract class BaseRedisStorage implements IStorage {
     return `oidc:sub:${oidcSub}`;
   }
 
-  // SHA256加密密码
-  private async hashPassword(password: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  // 创建新用户（新版本）
   async createUserV2(
     userName: string,
     password: string,
@@ -1209,7 +1200,7 @@ export abstract class BaseRedisStorage implements IStorage {
     oidcSub?: string,
     enabledApis?: string[],
   ): Promise<void> {
-    const hashedPassword = await this.hashPassword(password);
+    const hashedPassword = hashPassword(password);
     const createdAt = Date.now();
 
     // 存储用户信息到Hash
@@ -1258,7 +1249,6 @@ export abstract class BaseRedisStorage implements IStorage {
     }
   }
 
-  // 验证用户密码（新版本）
   async verifyUserV2(userName: string, password: string): Promise<boolean> {
     const userInfo = await this.withRetry(() =>
       this.adapter.hGetAll(this.userInfoKey(userName)),
@@ -1268,8 +1258,17 @@ export abstract class BaseRedisStorage implements IStorage {
       return false;
     }
 
-    const hashedPassword = await this.hashPassword(password);
-    return userInfo.password === hashedPassword;
+    const storedHash = userInfo.password;
+    const isValid = verifyPassword(password, storedHash);
+
+    if (isValid && isLegacyPasswordHash(storedHash)) {
+      const newHash = hashPassword(password);
+      await this.withRetry(() =>
+        this.adapter.hSet(this.userInfoKey(userName), 'password', newHash),
+      );
+    }
+
+    return isValid;
   }
 
   // 获取用户信息（新版本）
@@ -1444,9 +1443,8 @@ export abstract class BaseRedisStorage implements IStorage {
     userInfoCache?.delete(userName);
   }
 
-  // 修改用户密码（新版本）
   async changePasswordV2(userName: string, newPassword: string): Promise<void> {
-    const hashedPassword = await this.hashPassword(newPassword);
+    const hashedPassword = hashPassword(newPassword);
     await this.withRetry(() =>
       this.adapter.hSet(this.userInfoKey(userName), 'password', hashedPassword),
     );

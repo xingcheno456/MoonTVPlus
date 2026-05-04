@@ -2,7 +2,7 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { validateAdminAuth } from '@/lib/api-validation';
 import { clearConfigCache } from '@/lib/config';
 import { STORAGE_TYPE } from '@/lib/db';
 
@@ -14,13 +14,10 @@ export async function GET(request: NextRequest) {
     return apiError('不支持本地存储进行管理员配置', 400);
   }
 
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return apiError('Unauthorized', 401);
-  }
-  const username = authInfo.username;
+  const adminAuth = validateAdminAuth(request);
+  if ('status' in adminAuth) return adminAuth;
 
-  if (username !== process.env.USERNAME) {
+  if (adminAuth.auth.role !== 'owner') {
     return apiError('仅支持站长重载配置', 401);
   }
 

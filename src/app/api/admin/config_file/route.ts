@@ -3,7 +3,7 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { validateAdminAuth } from '@/lib/api-validation';
 import { getConfig, refineConfig } from '@/lib/config';
 import { db, STORAGE_TYPE } from '@/lib/db';
 
@@ -17,22 +17,16 @@ export async function POST(request: NextRequest) {
     return apiError('不支持本地存储进行管理员配置', 400);
   }
 
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return apiError('Unauthorized', 401);
+  const adminAuth = validateAdminAuth(request);
+  if ('status' in adminAuth) return adminAuth;
+
+  if (adminAuth.auth.role !== 'owner') {
+    return apiError('权限不足，只有站长可以修改配置文件', 401);
   }
-  const username = authInfo.username;
 
   try {
-    // 检查用户权限
     let adminConfig = await getConfig();
 
-    // 仅站长可以修改配置文件
-    if (username !== process.env.USERNAME) {
-      return apiError('权限不足，只有站长可以修改配置文件', 401);
-    }
-
-    // 获取请求体
     const body = await request.json();
     const { configFile, subscriptionUrl, autoUpdate, lastCheckTime } = body;
 
@@ -40,7 +34,6 @@ export async function POST(request: NextRequest) {
       return apiError('配置文件内容不能为空', 400);
     }
 
-    // 验证 JSON 格式
     try {
       JSON.parse(configFile);
     } catch (e) {
@@ -56,7 +49,6 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // 更新订阅配置
     if (subscriptionUrl !== undefined) {
       adminConfig.ConfigSubscribtion.URL = subscriptionUrl;
     }
@@ -66,16 +58,13 @@ export async function POST(request: NextRequest) {
     adminConfig.ConfigSubscribtion.LastCheck = lastCheckTime || '';
 
     adminConfig = refineConfig(adminConfig);
-    // 更新配置文件
     await db.saveAdminConfig(adminConfig);
 
-    // 清除短剧视频源缓存（因为配置文件可能包含新的视频源）
     try {
       await db.deleteGlobalValue('duanju');
       logger.info('已清除短剧视频源缓存');
     } catch (error) {
       logger.error('清除短剧视频源缓存失败:', error);
-      // 不影响主流程，继续执行
     }
 
     return apiSuccess({ message: '配置文件更新成功', });

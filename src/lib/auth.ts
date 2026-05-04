@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { logger } from './logger';
 
@@ -60,6 +60,57 @@ export function parseAuthInfo(value?: string | null): AuthInfo | null {
   }
 }
 
+export function buildAuthInfoCookieValue(authToken: string): string {
+  const authInfo = parseAuthInfo(authToken);
+  if (!authInfo) return '';
+  return JSON.stringify({
+    username: authInfo.username,
+    role: authInfo.role,
+  });
+}
+
+export function setAuthCookies(
+  response: NextResponse,
+  authValue: string,
+  expires: Date,
+): void {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const authInfoValue = buildAuthInfoCookieValue(authValue);
+
+  response.cookies.set('auth', authValue, {
+    path: '/',
+    expires,
+    sameSite: 'lax',
+    httpOnly: true,
+    secure: isProduction,
+  });
+
+  if (authInfoValue) {
+    response.cookies.set('auth_info', authInfoValue, {
+      path: '/',
+      expires,
+      sameSite: 'lax',
+      httpOnly: false,
+      secure: isProduction,
+    });
+  }
+}
+
+export function clearAuthCookies(response: NextResponse): void {
+  response.cookies.set('auth', '', {
+    path: '/',
+    expires: new Date(0),
+    sameSite: 'lax',
+    httpOnly: true,
+  });
+  response.cookies.set('auth_info', '', {
+    path: '/',
+    expires: new Date(0),
+    sameSite: 'lax',
+    httpOnly: false,
+  });
+}
+
 // 从cookie获取认证信息 (服务端使用)
 export function getAuthInfoFromCookie(request: NextRequest): AuthInfo | null {
   const authHeader = request.headers.get('authorization');
@@ -106,7 +157,7 @@ export function getAuthInfoFromBrowserCookie(): AuthInfo | null {
       {} as Record<string, string>,
     );
 
-    const authCookie = cookies['auth'];
+    const authCookie = cookies['auth_info'];
     if (!authCookie) {
       return null;
     }
@@ -124,12 +175,15 @@ export function clearAuthCookie(): void {
   }
 
   try {
-    // 清除 auth cookie，设置过期时间为过去
-    document.cookie =
-      'auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
-    // 如果有其他域名或路径的cookie，也尝试清除
+    const expireStr = '=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    document.cookie = 'auth' + expireStr;
+    document.cookie = 'auth_info' + expireStr;
     document.cookie =
       'auth=; path=/; domain=' +
+      window.location.hostname +
+      '; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    document.cookie =
+      'auth_info=; path=/; domain=' +
       window.location.hostname +
       '; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
   } catch (error) {

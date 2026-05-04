@@ -2,23 +2,20 @@
 
 import { NextRequest } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { validateAdminAuth } from '@/lib/api-validation';
 import { getProgress } from '@/lib/data-migration-progress';
 
 export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
-  // 验证身份和权限
-  const authInfo = getAuthInfoFromCookie(req);
-  if (!authInfo || !authInfo.username) {
-    return new Response('Unauthorized', { status: 401 });
-  }
+  const adminAuth = validateAdminAuth(req);
+  if ('status' in adminAuth) return new Response('Unauthorized', { status: 401 });
 
-  if (authInfo.username !== process.env.USERNAME) {
+  if (adminAuth.auth.role !== 'owner') {
     return new Response('Forbidden', { status: 403 });
   }
 
-  const username = authInfo.username; // 存储到局部变量以便 TypeScript 类型推断
+  const username = adminAuth.username;
 
   const { searchParams } = new URL(req.url);
   const operation = searchParams.get('operation'); // 'export' or 'import'

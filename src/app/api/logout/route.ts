@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 
 import { apiSuccess } from '@/lib/api-response';
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { getAuthInfoFromCookie, clearAuthCookies } from '@/lib/auth';
 import { revokeRefreshToken } from '@/lib/refresh-token';
 
 import { logger } from '../../../lib/logger';
@@ -21,13 +21,7 @@ export async function POST(request: NextRequest) {
 
   const response = apiSuccess(null);
 
-  response.cookies.set('auth', '', {
-    path: '/',
-    expires: new Date(0),
-    sameSite: 'lax',
-    httpOnly: false,
-    secure: process.env.NODE_ENV === 'production',
-  });
+  clearAuthCookies(response);
 
   return response;
 }

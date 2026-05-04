@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
+import { setAuthCookies } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { generateHmacSignature } from '@/lib/crypto';
 import { db } from '@/lib/db';
@@ -232,15 +233,8 @@ export async function GET(request: NextRequest) {
       );
       const expires = new Date(Date.now() + TOKEN_CONFIG.REFRESH_TOKEN_AGE);
 
-      response.cookies.set('auth', cookieValue, {
-        path: '/',
-        expires,
-        sameSite: 'lax',
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-      });
+      setAuthCookies(response, cookieValue, expires);
 
-      // 清除state cookie
       response.cookies.delete('oidc_state');
 
       return response;

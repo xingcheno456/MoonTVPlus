@@ -2,6 +2,7 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
+import { setAuthCookies } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { generateHmacSignature } from '@/lib/crypto';
 import { db } from '@/lib/db';
@@ -195,15 +196,8 @@ export async function POST(request: NextRequest) {
       );
       const expires = new Date(Date.now() + TOKEN_CONFIG.REFRESH_TOKEN_AGE);
 
-      response.cookies.set('auth', cookieValue, {
-        path: '/',
-        expires,
-        sameSite: 'lax',
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-      });
+      setAuthCookies(response, cookieValue, expires);
 
-      // 清除OIDC session
       response.cookies.delete('oidc_session');
 
       return response;

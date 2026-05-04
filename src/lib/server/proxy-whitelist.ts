@@ -1,5 +1,7 @@
 import { logger } from '../logger';
 
+const DOMAIN_REGEX = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
+
 const DEFAULT_ALLOWED_DOMAINS = [
   'doubanio.com',
   'douban.com',
@@ -25,8 +27,11 @@ function getAllowedDomains(): string[] {
     const extras = extraDomains
       .split(',')
       .map((d) => d.trim().toLowerCase())
-      .filter(Boolean);
-    return [...DEFAULT_ALLOWED_DOMAINS, ...extras];
+      .filter((d) => DOMAIN_REGEX.test(d));
+
+    if (extras.length > 0) {
+      return [...DEFAULT_ALLOWED_DOMAINS, ...extras];
+    }
   }
   return DEFAULT_ALLOWED_DOMAINS;
 }

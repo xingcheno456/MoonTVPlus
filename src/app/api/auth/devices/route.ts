@@ -2,7 +2,7 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { getAuthInfoFromCookie, clearAuthCookies } from '@/lib/auth';
 import {
   getUserDevices,
   revokeAllRefreshTokens,
@@ -74,14 +74,7 @@ export async function POST(request: NextRequest) {
 
     const response = apiSuccess({ ok: true });
 
-    // 清除当前设备的 Cookie
-    response.cookies.set('auth', '', {
-      path: '/',
-      expires: new Date(0),
-      sameSite: 'lax',
-      httpOnly: false,
-      secure: false,
-    });
+    clearAuthCookies(response);
 
     return response;
   } catch (error) {

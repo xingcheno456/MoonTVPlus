@@ -2,7 +2,7 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-import { parseAuthInfo } from '@/lib/auth';
+import { parseAuthInfo, setAuthCookies, clearAuthCookies } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { generateHmacSignature } from '@/lib/crypto';
 import { db, STORAGE_TYPE } from '@/lib/db';
@@ -165,13 +165,7 @@ export async function POST(req: NextRequest) {
       if (!envPassword) {
         const response = buildLoginResponse();
 
-        // 清除可能存在的认证cookie
-        response.cookies.set('auth', '', {
-          path: '/',
-          expires: new Date(0),
-          sameSite: 'lax',
-          httpOnly: true,
-        });
+        clearAuthCookies(response);
 
         return response;
       }
@@ -196,15 +190,9 @@ export async function POST(req: NextRequest) {
       );
       const response = buildLoginResponse(cookieValue);
       const expires = new Date();
-      expires.setDate(expires.getDate() + 60); // 60天过期（Refresh Token 有效期）
+      expires.setDate(expires.getDate() + 60);
 
-      response.cookies.set('auth', cookieValue, {
-        path: '/',
-        expires,
-        sameSite: 'lax',
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-      });
+      setAuthCookies(response, cookieValue, expires);
 
       return response;
     }
@@ -255,15 +243,9 @@ export async function POST(req: NextRequest) {
       );
       const response = buildLoginResponse(cookieValue);
       const expires = new Date();
-      expires.setDate(expires.getDate() + 60); // 60天过期（Refresh Token 有效期）
+      expires.setDate(expires.getDate() + 60);
 
-      response.cookies.set('auth', cookieValue, {
-        path: '/',
-        expires,
-        sameSite: 'lax',
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-      });
+      setAuthCookies(response, cookieValue, expires);
 
       return response;
     } else if (username === process.env.USERNAME) {
@@ -305,15 +287,9 @@ export async function POST(req: NextRequest) {
     );
     const response = buildLoginResponse(cookieValue);
     const expires = new Date();
-    expires.setDate(expires.getDate() + 60); // 60天过期（Refresh Token 有效期）
+    expires.setDate(expires.getDate() + 60);
 
-    response.cookies.set('auth', cookieValue, {
-      path: '/',
-      expires,
-      sameSite: 'lax',
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-    });
+    setAuthCookies(response, cookieValue, expires);
 
     logger.info(`Cookie已设置`);
 

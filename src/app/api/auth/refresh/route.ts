@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-import { getAuthInfoFromCookie, parseAuthInfo } from '@/lib/auth';
-import { generateHmacSignature } from '@/lib/crypto';
+import { getAuthInfoFromCookie, parseAuthInfo, setAuthCookies } from '@/lib/auth';
+import { verifyHmacSignature } from '@/lib/crypto';
 import { STORAGE_TYPE } from '@/lib/db';
 import { refreshAccessToken } from '@/lib/middleware-auth';
 
@@ -41,18 +41,18 @@ export async function POST(request: NextRequest) {
       return apiError('Unauthorized', 401);
     }
 
-    // Recompute the signature and compare
     const dataToSign = JSON.stringify({
       username: authInfo.username,
       role: authInfo.role,
       timestamp: authInfo.timestamp,
     });
-    const expectedSignature = await generateHmacSignature(
+    const isValid = await verifyHmacSignature(
       dataToSign,
+      authInfo.signature,
       process.env.PASSWORD || '',
     );
 
-    if (authInfo.signature !== expectedSignature) {
+    if (!isValid) {
       return apiError('Unauthorized', 401);
     }
 
@@ -64,13 +64,7 @@ export async function POST(request: NextRequest) {
     const response = buildRefreshResponse(authCookie.value);
     const expires = new Date();
     expires.setDate(expires.getDate() + 60);
-    response.cookies.set('auth', authCookie.value, {
-      path: '/',
-      expires,
-      sameSite: 'lax',
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-    });
+    setAuthCookies(response, authCookie.value, expires);
     return response;
   }
 
@@ -108,12 +102,6 @@ export async function POST(request: NextRequest) {
 
   const response = buildRefreshResponse(newAuthData);
   const expires = new Date(authInfo.refreshExpires);
-  response.cookies.set('auth', newAuthData, {
-    path: '/',
-    expires,
-    sameSite: 'lax',
-    httpOnly: false,
-    secure: process.env.NODE_ENV === 'production',
-  });
+  setAuthCookies(response, newAuthData, expires);
   return response;
 }

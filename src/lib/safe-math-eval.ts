@@ -1,5 +1,9 @@
 const SAFE_CHARS = /^[\d\s+\-*/().]+$/;
 
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function safeEvalMathExpression(
   expr: string,
   context: Record<string, any>,
@@ -12,7 +16,7 @@ export function safeEvalMathExpression(
 
   let substituted = trimmed;
   for (const [key, val] of Object.entries(context)) {
-    const regex = new RegExp(`\\b${key}\\b`, 'g');
+    const regex = new RegExp(`\\b${escapeRegExp(key)}\\b`, 'g');
     const replacement =
       typeof val === 'number'
         ? String(val)
@@ -93,7 +97,10 @@ function parseTerm(tokens: string[], pos: { index: number }): number {
     const op = tokens[pos.index++];
     const right = parseFactor(tokens, pos);
     if (op === '*') left = left * right;
-    else if (op === '/') left = right === 0 ? 0 : left / right;
+    else if (op === '/') {
+      if (right === 0) throw new Error('Division by zero');
+      left = left / right;
+    }
     else left = left % right;
   }
   return left;

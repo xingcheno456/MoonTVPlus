@@ -2,7 +2,7 @@
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { validateAdminAuth } from '@/lib/api-validation';
 import { getConfig } from '@/lib/config';
 import { db, STORAGE_TYPE } from '@/lib/db';
 
@@ -17,13 +17,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return apiError('Unauthorized', 401);
-    }
+    const adminAuth = validateAdminAuth(request);
+    if ('status' in adminAuth) return adminAuth;
 
-    // 只有站长可以执行迁移
-    if (authInfo.username !== process.env.USERNAME) {
+    if (adminAuth.auth.role !== 'owner') {
       return apiError('权限不足', 401);
     }
 

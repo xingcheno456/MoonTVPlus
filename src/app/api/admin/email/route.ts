@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 
 import type { AdminConfig } from '@/lib/admin.types';
 import { apiError, apiSuccess } from '@/lib/api-response';
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { validateAdminAuth } from '@/lib/api-validation';
 import { getConfig } from '@/lib/config';
 import { getStorage } from '@/lib/db';
 import { EmailService } from '@/lib/email.service';
@@ -11,23 +11,11 @@ import { logger } from '../../../../lib/logger';
 
 export const runtime = 'nodejs';
 
-/**
- * GET - 获取邮件配置
- */
 export async function GET(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return apiError('Unauthorized', 401);
-  }
+  const adminAuth = validateAdminAuth(request);
+  if ('status' in adminAuth) return adminAuth;
 
   try {
-    const storage = getStorage();
-    const userInfo = await storage.getUserInfoV2?.(authInfo.username);
-
-    // 只有管理员和站长可以访问
-    if (!userInfo || (userInfo.role !== 'admin' && userInfo.role !== 'owner')) {
-      return apiError('Forbidden', 403);
-    }
 
     const adminConfig = await getConfig();
     const emailConfig = adminConfig?.EmailConfig || {
@@ -68,19 +56,11 @@ export async function GET(request: NextRequest) {
  * POST - 保存邮件配置或发送测试邮件
  */
 export async function POST(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return apiError('Unauthorized', 401);
-  }
+  const adminAuth = validateAdminAuth(request);
+  if ('status' in adminAuth) return adminAuth;
 
   try {
     const storage = getStorage();
-    const userInfo = await storage.getUserInfoV2?.(authInfo.username);
-
-    // 只有管理员和站长可以访问
-    if (!userInfo || (userInfo.role !== 'admin' && userInfo.role !== 'owner')) {
-      return apiError('Forbidden', 403);
-    }
 
     const body = await request.json();
     const { action, config, testEmail } = body;

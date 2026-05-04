@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import { gunzip } from 'zlib';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
+import { validateAdminAuth } from '@/lib/api-validation';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { configSelfCheck, setCachedConfig } from '@/lib/config';
 import { SimpleCrypto } from '@/lib/crypto-node';
@@ -25,18 +26,14 @@ export async function POST(req: NextRequest) {
       return apiError('不支持本地存储进行数据迁移', 400);
     }
 
-    // 验证身份和权限
-    const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo || !authInfo.username) {
-      return apiError('未登录', 401);
-    }
+    const adminAuth = validateAdminAuth(req);
+    if ('status' in adminAuth) return adminAuth;
 
-    // 检查用户权限（只有站长可以导入数据）
-    if (authInfo.username !== process.env.USERNAME) {
+    if (adminAuth.auth.role !== 'owner') {
       return apiError('权限不足，只有站长可以导入数据', 401);
     }
 
-    const username = authInfo.username; // 存储到局部变量以便 TypeScript 类型推断
+    const username = adminAuth.username;
 
     // 解析表单数据
     const formData = await req.formData();

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { AdminConfig } from './admin.types';
+import { hashPassword, verifyPassword, isLegacyPasswordHash } from './crypto-node';
 import { DatabaseAdapter } from './d1-adapter';
 import { logger } from './logger';
 import {
@@ -1155,16 +1156,6 @@ export abstract class SQLStorageBase implements IStorage {
     };
   }
 
-  protected async hashPassword(password: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  // ==================== 用户管理 ====================
-
   async verifyUser(userName: string, password: string): Promise<boolean> {
     try {
       if (
@@ -1183,8 +1174,18 @@ export abstract class SQLStorageBase implements IStorage {
 
       if (!user || !user.password_hash) return false;
 
-      const hashedPassword = await this.hashPassword(password);
-      return user.password_hash === hashedPassword;
+      const storedHash = user.password_hash as string;
+      const isValid = verifyPassword(password, storedHash);
+
+      if (isValid && isLegacyPasswordHash(storedHash)) {
+        const newHash = hashPassword(password);
+        await this.db
+          .prepare('UPDATE users SET password_hash = ? WHERE username = ?')
+          .bind(newHash, userName)
+          .run();
+      }
+
+      return isValid;
     } catch (err) {
       logger.error('SQLStorageBase.verifyUser error:', err);
       return false;
@@ -1211,7 +1212,7 @@ export abstract class SQLStorageBase implements IStorage {
 
   async changePassword(userName: string, newPassword: string): Promise<void> {
     try {
-      const passwordHash = await this.hashPassword(newPassword);
+      const passwordHash = hashPassword(newPassword);
 
       await this.db
         .prepare('UPDATE users SET password_hash = ? WHERE username = ?')
@@ -1338,7 +1339,7 @@ export abstract class SQLStorageBase implements IStorage {
     enabledApis?: string[],
   ): Promise<void> {
     try {
-      const passwordHash = await this.hashPassword(password);
+      const passwordHash = hashPassword(password);
 
       await this.db
         .prepare(
@@ -1475,8 +1476,18 @@ export abstract class SQLStorageBase implements IStorage {
 
       if (!user) return false;
 
-      const hashedPassword = await this.hashPassword(password);
-      return user.password_hash === hashedPassword;
+      const storedHash = user.password_hash as string;
+      const isValid = verifyPassword(password, storedHash);
+
+      if (isValid && isLegacyPasswordHash(storedHash)) {
+        const newHash = hashPassword(password);
+        await this.db
+          .prepare('UPDATE users SET password_hash = ? WHERE username = ?')
+          .bind(newHash, userName)
+          .run();
+      }
+
+      return isValid;
     } catch (err) {
       logger.error('SQLStorageBase.verifyUserV2 error:', err);
       return false;
@@ -1536,7 +1547,7 @@ export abstract class SQLStorageBase implements IStorage {
 
   async changePasswordV2(userName: string, newPassword: string): Promise<void> {
     try {
-      const passwordHash = await this.hashPassword(newPassword);
+      const passwordHash = hashPassword(newPassword);
 
       await this.db
         .prepare('UPDATE users SET password_hash = ? WHERE username = ?')

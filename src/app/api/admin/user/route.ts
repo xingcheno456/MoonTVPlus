@@ -4,7 +4,6 @@ import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { validateAdminAuth } from '@/lib/api-validation';
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db, STORAGE_TYPE } from '@/lib/db';
 
@@ -36,15 +35,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return apiError('Unauthorized', 401);
-    }
-    const username = authInfo.username;
-
     const {
-      targetUsername, // 目标用户名
-      targetPassword, // 目标用户密码（仅在添加用户时需要）
+      targetUsername,
+      targetPassword,
       action,
     } = body as {
       targetUsername?: string;
@@ -56,13 +49,19 @@ export async function POST(request: NextRequest) {
       return apiError('参数格式错误', 400);
     }
 
-    // 用户组操作和批量操作不需要targetUsername
     if (
       !targetUsername &&
       !['userGroup', 'batchUpdateUserGroups'].includes(action)
     ) {
       return apiError('缺少目标用户名', 400);
     }
+
+    const adminConfig = await getConfig();
+
+    const adminAuth = validateAdminAuth(request);
+    if ('status' in adminAuth) return adminAuth;
+    const operatorRole = adminAuth.auth.role as 'owner' | 'admin';
+    const operatorUsername = adminAuth.username;
 
     if (
       action !== 'changePassword' &&
@@ -71,19 +70,10 @@ export async function POST(request: NextRequest) {
       action !== 'userGroup' &&
       action !== 'updateUserGroups' &&
       action !== 'batchUpdateUserGroups' &&
-      username === targetUsername
+      operatorUsername === targetUsername
     ) {
       return apiError('无法对自己进行此操作', 400);
     }
-
-    // 获取配置与存储
-    const adminConfig = await getConfig();
-
-    // 判定操作者角色
-    const adminAuth = validateAdminAuth(request);
-    if ('status' in adminAuth) return adminAuth;
-    const operatorRole = adminAuth.auth.role as 'owner' | 'admin';
-    const operatorUsername = adminAuth.username;
 
     // 查找目标用户条目（用户组操作和批量操作不需要）
     let targetEntry: any = null;
@@ -232,7 +222,7 @@ export async function POST(request: NextRequest) {
         if (
           isTargetAdmin &&
           operatorRole !== 'owner' &&
-          username !== targetUsername
+          operatorUsername !== targetUsername
         ) {
           return apiError('仅站长可修改其他管理员密码', 401);
         }
@@ -247,7 +237,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 权限检查：站长可删除所有用户（除了自己），管理员可删除普通用户
-        if (username === targetUsername) {
+        if (operatorUsername === targetUsername) {
           return apiError('不能删除自己', 400);
         }
 
@@ -271,7 +261,7 @@ export async function POST(request: NextRequest) {
         if (
           isTargetAdmin &&
           operatorRole !== 'owner' &&
-          username !== targetUsername
+          operatorUsername !== targetUsername
         ) {
           return apiError('仅站长可配置其他管理员的采集源', 401);
         }
@@ -366,7 +356,7 @@ export async function POST(request: NextRequest) {
         if (
           isTargetAdmin &&
           operatorRole !== 'owner' &&
-          username !== targetUsername
+          operatorUsername !== targetUsername
         ) {
           return apiError('仅站长可配置其他管理员的用户组', 400);
         }
@@ -400,7 +390,7 @@ export async function POST(request: NextRequest) {
             if (
               userV2 &&
               userV2.role === 'admin' &&
-              targetUsername !== username
+              targetUsername !== operatorUsername
             ) {
               return apiError(`管理员无法操作其他管理员 ${targetUsername}`, 400);
             }

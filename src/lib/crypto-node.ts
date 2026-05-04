@@ -1,7 +1,53 @@
 import nodeCrypto from 'crypto';
 
+const PASSWORD_PBKDF2_ITERATIONS = 600000;
+const PASSWORD_KEY_LENGTH = 32;
+const PASSWORD_SALT_LENGTH = 32;
+const PASSWORD_DIGEST = 'sha256';
+const PASSWORD_HASH_PREFIX = 'pbkdf2:';
+
 export function sha256(data: string): string {
   return nodeCrypto.createHash('sha256').update(data).digest('hex');
+}
+
+export function hashPassword(password: string): string {
+  const salt = nodeCrypto.randomBytes(PASSWORD_SALT_LENGTH);
+  const hash = nodeCrypto.pbkdf2Sync(
+    password,
+    salt,
+    PASSWORD_PBKDF2_ITERATIONS,
+    PASSWORD_KEY_LENGTH,
+    PASSWORD_DIGEST,
+  );
+  return `${PASSWORD_HASH_PREFIX}${PASSWORD_PBKDF2_ITERATIONS}:${salt.toString('hex')}:${hash.toString('hex')}`;
+}
+
+export function verifyPassword(password: string, storedHash: string): boolean {
+  if (storedHash.startsWith(PASSWORD_HASH_PREFIX)) {
+    const parts = storedHash.substring(PASSWORD_HASH_PREFIX.length).split(':');
+    if (parts.length !== 3) return false;
+    const iterations = parseInt(parts[0], 10);
+    const salt = Buffer.from(parts[1], 'hex');
+    const expectedHash = parts[2];
+    const hash = nodeCrypto.pbkdf2Sync(
+      password,
+      salt,
+      iterations,
+      PASSWORD_KEY_LENGTH,
+      PASSWORD_DIGEST,
+    );
+    return nodeCrypto.timingSafeEqual(hash, Buffer.from(expectedHash, 'hex'));
+  }
+
+  const legacyHash = sha256(password);
+  return nodeCrypto.timingSafeEqual(
+    Buffer.from(legacyHash, 'hex'),
+    Buffer.from(storedHash, 'hex'),
+  );
+}
+
+export function isLegacyPasswordHash(storedHash: string): boolean {
+  return !storedHash.startsWith(PASSWORD_HASH_PREFIX) && storedHash.length === 64;
 }
 
 export function generateFolderKey(
