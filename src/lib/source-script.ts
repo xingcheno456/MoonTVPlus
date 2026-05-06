@@ -10,7 +10,7 @@ import { Worker } from 'worker_threads';
 import { db } from '@/lib/db';
 
 const SOURCE_SCRIPT_REGISTRY_KEY = 'source-script:registry';
-const DEFAULT_TIMEOUT_MS = 20000;
+const DEFAULT_TIMEOUT_MS = 10000;
 
 // ---- 内存缓存 ----
 let _registryCache: { data: SourceScriptRegistry; ts: number } | null = null;
