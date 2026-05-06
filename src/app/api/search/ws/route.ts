@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest } from 'next/server';
 
 import { apiError } from '@/lib/api-response';
@@ -127,7 +125,7 @@ export async function GET(request: NextRequest) {
 
       // 记录已完成的源数量
       let completedSources = 0;
-      const allResults: any[] = [];
+      const allResults: unknown[] = [];
 
       // 搜索 Emby（如果配置了）- 异步带超时，支持多源
       if (hasEmby) {
@@ -282,16 +280,17 @@ export async function GET(request: NextRequest) {
 
               if (metaInfo && metaInfo.folders) {
                 return Object.entries(metaInfo.folders)
-                  .filter(([key, info]: [string, any]) => {
-                    const matchFolder = info.folderName
+                  .filter(([key, info]: [string, unknown]) => {
+                    const folderInfo = info as { folderName: string; title: string };
+                    const matchFolder = folderInfo.folderName
                       .toLowerCase()
                       .includes(query.toLowerCase());
-                    const matchTitle = info.title
+                    const matchTitle = folderInfo.title
                       .toLowerCase()
                       .includes(query.toLowerCase());
                     return matchFolder || matchTitle;
                   })
-                  .map(([key, info]: [string, any]) => ({
+                  .map(([key, info]: [string, unknown]) => {
                     id: key,
                     source: 'openlist',
                     source_name: '私人影库',
@@ -316,7 +315,7 @@ export async function GET(request: NextRequest) {
             setTimeout(() => reject(new Error('OpenList timeout')), 20000),
           ),
         ])
-          .then((openlistResults: any) => {
+          .then((openlistResults: unknown) => {
             completedSources++;
             if (!streamClosed) {
               // 添加安全检查，确保结果是数组

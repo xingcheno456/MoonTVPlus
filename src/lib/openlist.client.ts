@@ -1,7 +1,5 @@
 import { logger } from './logger';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
-// Token 内存缓存
 const tokenCache = new Map<string, { token: string; expiresAt: number }>();
 
 export interface OpenListFile {
@@ -297,7 +295,7 @@ export class OpenListClient {
   }
 
   // 获取视频预览流
-  async getVideoPreview(path: string): Promise<any> {
+  async getVideoPreview(path: string): Promise<Response> {
     const response = await this.fetchWithRetry(`${this.baseURL}/api/fs/other`, {
       method: 'POST',
       headers: await this.getHeaders(),

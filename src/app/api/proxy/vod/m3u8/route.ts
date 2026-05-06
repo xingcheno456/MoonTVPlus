@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { apiError } from '@/lib/api-response';
 import { commonSchemas } from '@/lib/api-schemas';
 import { parseSearchParams } from '@/lib/api-validation';
@@ -47,7 +45,7 @@ export async function GET(request: Request) {
   const { url, source } = paramResult.data;
 
   const config = await getConfig();
-  const videoSource = config.SourceConfig?.find((s: any) => s.key === source);
+  const videoSource = config.SourceConfig?.find((s: { key: string }) => s.key === source);
 
   if (!videoSource) {
     return apiError('Source not found', 404);

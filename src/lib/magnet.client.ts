@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 function isCloudflareEnvironment(): boolean {
   return (
     process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare'
@@ -35,8 +33,8 @@ export async function universalMagnetFetch(
     return fetch(url, {
       ...init,
       signal: AbortSignal.timeout(30000),
-      dispatcher: dispatcher as any,
-    } as any);
+      dispatcher: dispatcher as RequestInit['dispatcher'],
+    } as RequestInit);
   }
 
   return fetch(url, {

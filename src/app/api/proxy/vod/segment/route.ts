@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { apiError } from '@/lib/api-response';
 import { commonSchemas } from '@/lib/api-schemas';
 import { parseSearchParams } from '@/lib/api-validation';
@@ -26,7 +24,7 @@ export async function GET(request: Request) {
   if (source !== DIRECT_PLAY_SOURCE) {
     // 检查该视频源是否启用了代理模式
     const config = await getConfig();
-    const videoSource = config.SourceConfig?.find((s: any) => s.key === source);
+    const videoSource = config.SourceConfig?.find((s: { key: string }) => s.key === source);
 
     if (!videoSource) {
       return apiError('Source not found', 404);
