@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { verifyHmacSignature } from '@/lib/crypto';
 import { logger } from '@/lib/logger';
+import { CSP_HEADER_VALUE } from '@/lib/security/csp';
 import { TOKEN_CONFIG } from '@/lib/token-config';
 
 type StorageType = 'localstorage' | 'redis' | 'upstash' | 'kvrocks' | 'd1' | 'postgres';
@@ -11,88 +12,83 @@ const STORAGE_TYPE: StorageType = (process.env.NEXT_PUBLIC_STORAGE_TYPE as Stora
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 跳过不需要认证的路径
-  if (shouldSkipAuth(pathname)) {
-    return NextResponse.next();
-  }
+  let response: NextResponse;
 
-  if (!process.env.PASSWORD) {
-    // 如果未配置密码，重定向到警告页面
+  if (shouldSkipAuth(pathname)) {
+    response = NextResponse.next();
+  } else if (!process.env.PASSWORD) {
     const warningUrl = new URL('/warning', request.url);
-    return warningUrl.pathname === pathname
+    response = warningUrl.pathname === pathname
       ? NextResponse.next()
       : NextResponse.redirect(warningUrl);
-  }
+  } else {
+    const authInfo = getAuthInfoFromCookie(request);
 
-  // 从cookie获取认证信息
-  const authInfo = getAuthInfoFromCookie(request);
-
-  if (!authInfo) {
-    return handleAuthFailure(request, pathname);
-  }
-
-  // 统一验证签名（localstorage 和数据库模式均使用 HMAC 签名，不再存储明文密码）
-  if (
-    !authInfo.username ||
-    !authInfo.role ||
-    !authInfo.signature ||
-    !authInfo.timestamp
-  ) {
-    return handleAuthFailure(request, pathname);
-  }
-
-  // 验证签名
-  const dataToSign = JSON.stringify({
-    username: authInfo.username,
-    role: authInfo.role,
-    timestamp: authInfo.timestamp,
-  });
-  let isValidSignature = false;
-  try {
-    isValidSignature = await verifyHmacSignature(
-      dataToSign,
-      authInfo.signature,
-      process.env.PASSWORD || '',
-    );
-  } catch (error) {
-    logger.error('签名验证异常:', error);
-  }
-
-  if (!isValidSignature) {
-    return handleAuthFailure(request, pathname);
-  }
-
-  // 数据库模式：额外验证双 Token 和过期时间
-  if (STORAGE_TYPE !== 'localstorage') {
-    if (!authInfo.tokenId || !authInfo.refreshToken || !authInfo.refreshExpires) {
-      logger.info(
-        `Old cookie format detected for ${authInfo.username}, forcing re-login`,
-      );
-      return handleAuthFailure(request, pathname);
-    }
-
-    const now = Date.now();
-
-    if (now >= authInfo.refreshExpires) {
-      logger.info(
-        `Refresh token expired for ${authInfo.username}, redirecting to login`,
-      );
-      return handleAuthFailure(request, pathname);
-    }
-
-    const ACCESS_TOKEN_AGE = TOKEN_CONFIG.ACCESS_TOKEN_AGE;
-    const age = now - authInfo.timestamp;
-
-    if (age > ACCESS_TOKEN_AGE) {
-      logger.info(`Access token expired for ${authInfo.username}`);
-      if (pathname.startsWith('/api')) {
-        return new NextResponse('Access token expired', { status: 401 });
+    if (!authInfo) {
+      response = handleAuthFailure(request, pathname);
+    } else if (
+      !authInfo.username ||
+      !authInfo.role ||
+      !authInfo.signature ||
+      !authInfo.timestamp
+    ) {
+      response = handleAuthFailure(request, pathname);
+    } else {
+      const dataToSign = JSON.stringify({
+        username: authInfo.username,
+        role: authInfo.role,
+        timestamp: authInfo.timestamp,
+      });
+      let isValidSignature = false;
+      try {
+        isValidSignature = await verifyHmacSignature(
+          dataToSign,
+          authInfo.signature,
+          process.env.PASSWORD || '',
+        );
+      } catch (error) {
+        logger.error('签名验证异常:', error);
       }
-      logger.info(`Allowing page request to pass, frontend will refresh token`);
+
+      if (!isValidSignature) {
+        response = handleAuthFailure(request, pathname);
+      } else if (STORAGE_TYPE !== 'localstorage') {
+        if (!authInfo.tokenId || !authInfo.refreshToken || !authInfo.refreshExpires) {
+          logger.info(
+            `Old cookie format detected for ${authInfo.username}, forcing re-login`,
+          );
+          response = handleAuthFailure(request, pathname);
+        } else {
+          const now = Date.now();
+          if (now >= authInfo.refreshExpires) {
+            logger.info(
+              `Refresh token expired for ${authInfo.username}, redirecting to login`,
+            );
+            response = handleAuthFailure(request, pathname);
+          } else {
+            const ACCESS_TOKEN_AGE = TOKEN_CONFIG.ACCESS_TOKEN_AGE;
+            const age = now - authInfo.timestamp;
+            if (age > ACCESS_TOKEN_AGE) {
+              logger.info(`Access token expired for ${authInfo.username}`);
+              if (pathname.startsWith('/api')) {
+                response = new NextResponse('Access token expired', { status: 401 });
+              } else {
+                logger.info(`Allowing page request to pass, frontend will refresh token`);
+                response = NextResponse.next();
+              }
+            } else {
+              response = NextResponse.next();
+            }
+          }
+        }
+      } else {
+        response = NextResponse.next();
+      }
     }
   }
 
-  return NextResponse.next();
+  response.headers.set('Content-Security-Policy', CSP_HEADER_VALUE);
+  return response;
 }
 
 // 处理认证失败的情况
