@@ -1,8 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import nodeFetch from 'node-fetch';
-
 function isCloudflareEnvironment(): boolean {
   return (
     process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare'
@@ -26,22 +23,24 @@ export async function universalMagnetFetch(
       ...init,
       signal: AbortSignal.timeout(15000),
     });
-    return response as unknown as Response;
+    return response;
   }
 
-  const fetchOptions: any = proxy
-    ? {
-        ...init,
-        agent: new HttpsProxyAgent(proxy, {
-          timeout: 30000,
-          keepAlive: false,
-        }),
-        signal: AbortSignal.timeout(30000),
-      }
-    : {
-        ...init,
-        signal: AbortSignal.timeout(15000),
-      };
+  if (proxy) {
+    const { ProxyAgent } = await import('undici');
+    const dispatcher = new ProxyAgent({
+      uri: proxy,
+      requestTls: { rejectUnauthorized: false },
+    });
+    return fetch(url, {
+      ...init,
+      signal: AbortSignal.timeout(30000),
+      dispatcher: dispatcher as any,
+    } as any);
+  }
 
-  return nodeFetch(url, fetchOptions) as unknown as Response;
+  return fetch(url, {
+    ...init,
+    signal: AbortSignal.timeout(15000),
+  });
 }
