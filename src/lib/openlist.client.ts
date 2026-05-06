@@ -42,6 +42,14 @@ export class OpenListClient {
     private password: string,
   ) {}
 
+  get serverBaseURL(): string {
+    return this.baseURL;
+  }
+
+  async getAuthToken(): Promise<string> {
+    return this.getToken();
+  }
+
   /**
    * 使用账号密码登录获取Token
    */

@@ -369,7 +369,8 @@ export async function GET(request: NextRequest) {
             ),
           ]);
 
-          const results = (await searchPromise) as any[];
+          const searchResult = await searchPromise;
+          const results: unknown[] = Array.isArray(searchResult) ? searchResult : [];
 
           // 添加安全检查，确保结果是数组
           const safeResults = Array.isArray(results) ? results : [];
@@ -479,7 +480,7 @@ export async function GET(request: NextRequest) {
           ]);
 
           const sources = normalizeScriptSources(
-            (sourcesExecution as any).result,
+            sourcesExecution,
           );
           const sourceResults = await Promise.all(
             sources.map(async (source) => {
@@ -509,7 +510,7 @@ export async function GET(request: NextRequest) {
                 scriptName: script.name,
                 sourceId: source.id,
                 sourceName: source.name,
-                result: (execution as any).result,
+                result: execution,
               });
             }),
           );

@@ -12,7 +12,7 @@ const imageProxyQuerySchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const paramResult = parseSearchParams(request as any, imageProxyQuerySchema);
+  const paramResult = parseSearchParams(request, imageProxyQuerySchema);
   if ('error' in paramResult) return paramResult.error;
   const { url: imageUrl } = paramResult.data;
 

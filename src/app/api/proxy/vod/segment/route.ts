@@ -16,7 +16,7 @@ const vodProxySegmentSchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const paramResult = parseSearchParams(request as any, vodProxySegmentSchema);
+  const paramResult = parseSearchParams(request, vodProxySegmentSchema);
   if ('error' in paramResult) return paramResult.error;
   const { url, source } = paramResult.data;
 

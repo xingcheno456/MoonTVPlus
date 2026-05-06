@@ -42,7 +42,7 @@ const vodProxyM3u8Schema = z.object({
 });
 
 export async function GET(request: Request) {
-  const paramResult = parseSearchParams(request as any, vodProxyM3u8Schema);
+  const paramResult = parseSearchParams(request, vodProxyM3u8Schema);
   if ('error' in paramResult) return paramResult.error;
   const { url, source } = paramResult.data;
 

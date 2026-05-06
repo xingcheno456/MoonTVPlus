@@ -32,7 +32,7 @@ export function validateAdminAuth(
 }
 
 export function parseSearchParams<T>(
-  request: NextRequest,
+  request: Request,
   schema: ZodSchema<T>,
 ): { data: T } | { error: NextResponse } {
   const { searchParams } = new URL(request.url);

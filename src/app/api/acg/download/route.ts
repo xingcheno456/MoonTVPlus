@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     );
 
     // 获取 Token 并调用 API
-    const token = await (client as any).getToken();
+    const token = await client.getAuthToken();
     const openlistUrl = `${openlistConfig.URL.replace(/\/$/, '')}/api/fs/add_offline_download`;
 
     const response = await fetch(openlistUrl, {

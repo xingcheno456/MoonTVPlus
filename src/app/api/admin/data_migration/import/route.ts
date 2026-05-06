@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
 
     // 导入用户数据和user:info
     const userData = importData.data.userData;
-    const storage = (db as any).storage;
+    const storage = db.storage;
     // 使用前面已声明的 storageType 变量
     const usersV2Map = new Map(
       (importData.data.usersV2 || []).map((u: any) => [u.username, u]),
@@ -273,7 +273,7 @@ export async function POST(req: NextRequest) {
                   const batch = entries.slice(j, j + DATA_BATCH_SIZE);
                   await Promise.all(
                     batch.map(([key, record]) =>
-                      (db as any).storage.setPlayRecord(username, key, record),
+                      db.storage.setPlayRecord(username, key, record),
                     ),
                   );
                 }
@@ -288,7 +288,7 @@ export async function POST(req: NextRequest) {
                   const batch = entries.slice(j, j + DATA_BATCH_SIZE);
                   await Promise.all(
                     batch.map(([key, favorite]) =>
-                      (db as any).storage.setFavorite(username, key, favorite),
+                      db.storage.setFavorite(username, key, favorite),
                     ),
                   );
                 }

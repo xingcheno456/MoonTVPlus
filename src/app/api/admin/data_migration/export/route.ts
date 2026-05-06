@@ -269,7 +269,7 @@ export async function POST(req: NextRequest) {
 // 辅助函数：获取V2用户的加密密码
 async function getUserPasswordV2(username: string): Promise<string | null> {
   try {
-    const storage = (db as any).storage;
+    const storage = db.storage;
     if (!storage) return null;
 
     // 检查存储类型

@@ -143,10 +143,14 @@ export function generateStorageKey(source: string, id: string): string {
 }
 
 export class DbManager {
-  private storage: IStorage;
+  private _storage: IStorage;
 
   constructor() {
-    this.storage = getStorage();
+    this._storage = getStorage();
+  }
+
+  get storage(): IStorage {
+    return this._storage;
   }
 
   async getPlayRecord(
@@ -155,7 +159,7 @@ export class DbManager {
     id: string,
   ): Promise<PlayRecord | null> {
     const key = generateStorageKey(source, id);
-    return this.storage.getPlayRecord(userName, key);
+    return this._storage.getPlayRecord(userName, key);
   }
 
   async savePlayRecord(
@@ -165,13 +169,13 @@ export class DbManager {
     record: PlayRecord,
   ): Promise<void> {
     const key = generateStorageKey(source, id);
-    await this.storage.setPlayRecord(userName, key, record);
+    await this._storage.setPlayRecord(userName, key, record);
   }
 
   async getAllPlayRecords(userName: string): Promise<{
     [key: string]: PlayRecord;
   }> {
-    return this.storage.getAllPlayRecords(userName);
+    return this._storage.getAllPlayRecords(userName);
   }
 
   async deletePlayRecord(
@@ -180,7 +184,7 @@ export class DbManager {
     id: string,
   ): Promise<void> {
     const key = generateStorageKey(source, id);
-    await this.storage.deletePlayRecord(userName, key);
+    await this._storage.deletePlayRecord(userName, key);
   }
 
   async getFavorite(
@@ -189,7 +193,7 @@ export class DbManager {
     id: string,
   ): Promise<Favorite | null> {
     const key = generateStorageKey(source, id);
-    return this.storage.getFavorite(userName, key);
+    return this._storage.getFavorite(userName, key);
   }
 
   async saveFavorite(
@@ -199,13 +203,13 @@ export class DbManager {
     favorite: Favorite,
   ): Promise<void> {
     const key = generateStorageKey(source, id);
-    await this.storage.setFavorite(userName, key, favorite);
+    await this._storage.setFavorite(userName, key, favorite);
   }
 
   async getAllFavorites(
     userName: string,
   ): Promise<{ [key: string]: Favorite }> {
-    return this.storage.getAllFavorites(userName);
+    return this._storage.getAllFavorites(userName);
   }
 
   async deleteFavorite(
@@ -214,7 +218,7 @@ export class DbManager {
     id: string,
   ): Promise<void> {
     const key = generateStorageKey(source, id);
-    await this.storage.deleteFavorite(userName, key);
+    await this._storage.deleteFavorite(userName, key);
   }
 
   async isFavorited(
@@ -233,7 +237,7 @@ export class DbManager {
     record: MusicPlayRecord,
   ): Promise<void> {
     const key = generateStorageKey(platform, id);
-    await this.storage.setMusicPlayRecord(userName, key, record);
+    await this._storage.setMusicPlayRecord(userName, key, record);
   }
 
   async batchSaveMusicPlayRecords(
@@ -244,13 +248,13 @@ export class DbManager {
       key: generateStorageKey(platform, id),
       record,
     }));
-    await this.storage.batchSetMusicPlayRecords(userName, batchRecords);
+    await this._storage.batchSetMusicPlayRecords(userName, batchRecords);
   }
 
   async getAllMusicPlayRecords(userName: string): Promise<{
     [key: string]: MusicPlayRecord;
   }> {
-    return this.storage.getAllMusicPlayRecords(userName);
+    return this._storage.getAllMusicPlayRecords(userName);
   }
 
   async deleteMusicPlayRecord(
@@ -259,38 +263,38 @@ export class DbManager {
     id: string,
   ): Promise<void> {
     const key = generateStorageKey(platform, id);
-    await this.storage.deleteMusicPlayRecord(userName, key);
+    await this._storage.deleteMusicPlayRecord(userName, key);
   }
 
   async clearAllMusicPlayRecords(userName: string): Promise<void> {
-    await this.storage.clearAllMusicPlayRecords(userName);
+    await this._storage.clearAllMusicPlayRecords(userName);
   }
 
   // Music V2 历史记录
   async listMusicV2History(userName: string): Promise<MusicV2HistoryRecord[]> {
-    return this.storage.listMusicV2History?.(userName) ?? [];
+    return this._storage.listMusicV2History?.(userName) ?? [];
   }
 
   async upsertMusicV2History(
     userName: string,
     record: MusicV2HistoryRecord,
   ): Promise<void> {
-    await this.storage.upsertMusicV2History?.(userName, record);
+    await this._storage.upsertMusicV2History?.(userName, record);
   }
 
   async batchUpsertMusicV2History(
     userName: string,
     records: MusicV2HistoryRecord[],
   ): Promise<void> {
-    await this.storage.batchUpsertMusicV2History?.(userName, records);
+    await this._storage.batchUpsertMusicV2History?.(userName, records);
   }
 
   async deleteMusicV2History(userName: string, songId: string): Promise<void> {
-    await this.storage.deleteMusicV2History?.(userName, songId);
+    await this._storage.deleteMusicV2History?.(userName, songId);
   }
 
   async clearMusicV2History(userName: string): Promise<void> {
-    await this.storage.clearMusicV2History?.(userName);
+    await this._storage.clearMusicV2History?.(userName);
   }
 
   // Music V2 歌单
@@ -298,57 +302,57 @@ export class DbManager {
     userName: string,
     playlist: { id: string; name: string; description?: string; cover?: string },
   ): Promise<void> {
-    await this.storage.createMusicV2Playlist?.(userName, playlist);
+    await this._storage.createMusicV2Playlist?.(userName, playlist);
   }
 
   async getMusicV2Playlist(
     playlistId: string,
   ): Promise<MusicV2PlaylistRecord | null> {
-    return this.storage.getMusicV2Playlist?.(playlistId) ?? null;
+    return this._storage.getMusicV2Playlist?.(playlistId) ?? null;
   }
 
   async listMusicV2Playlists(
     userName: string,
   ): Promise<MusicV2PlaylistRecord[]> {
-    return this.storage.listMusicV2Playlists?.(userName) ?? [];
+    return this._storage.listMusicV2Playlists?.(userName) ?? [];
   }
 
   async updateMusicV2Playlist(
     playlistId: string,
     updates: { name?: string; description?: string; cover?: string; song_count?: number },
   ): Promise<void> {
-    await this.storage.updateMusicV2Playlist?.(playlistId, updates);
+    await this._storage.updateMusicV2Playlist?.(playlistId, updates);
   }
 
   async deleteMusicV2Playlist(playlistId: string): Promise<void> {
-    await this.storage.deleteMusicV2Playlist?.(playlistId);
+    await this._storage.deleteMusicV2Playlist?.(playlistId);
   }
 
   async addMusicV2PlaylistItem(
     playlistId: string,
     item: MusicV2PlaylistItem,
   ): Promise<void> {
-    await this.storage.addMusicV2PlaylistItem?.(playlistId, item);
+    await this._storage.addMusicV2PlaylistItem?.(playlistId, item);
   }
 
   async removeMusicV2PlaylistItem(
     playlistId: string,
     songId: string,
   ): Promise<void> {
-    await this.storage.removeMusicV2PlaylistItem?.(playlistId, songId);
+    await this._storage.removeMusicV2PlaylistItem?.(playlistId, songId);
   }
 
   async listMusicV2PlaylistItems(
     playlistId: string,
   ): Promise<MusicV2PlaylistItem[]> {
-    return this.storage.listMusicV2PlaylistItems?.(playlistId) ?? [];
+    return this._storage.listMusicV2PlaylistItems?.(playlistId) ?? [];
   }
 
   async hasMusicV2PlaylistItem(
     playlistId: string,
     songId: string,
   ): Promise<boolean> {
-    return this.storage.hasMusicV2PlaylistItem?.(playlistId, songId) ?? false;
+    return this._storage.hasMusicV2PlaylistItem?.(playlistId, songId) ?? false;
   }
 
   // 音乐歌单 (V1)
@@ -356,26 +360,26 @@ export class DbManager {
     userName: string,
     playlist: { id: string; name: string; description?: string; cover?: string },
   ): Promise<void> {
-    await this.storage.createMusicPlaylist?.(userName, playlist);
+    await this._storage.createMusicPlaylist?.(userName, playlist);
   }
 
   async getMusicPlaylist(playlistId: string): Promise<MusicV1Playlist | null> {
-    return this.storage.getMusicPlaylist?.(playlistId) ?? null;
+    return this._storage.getMusicPlaylist?.(playlistId) ?? null;
   }
 
   async getUserMusicPlaylists(userName: string): Promise<MusicV1Playlist[]> {
-    return this.storage.getUserMusicPlaylists?.(userName) ?? [];
+    return this._storage.getUserMusicPlaylists?.(userName) ?? [];
   }
 
   async updateMusicPlaylist(
     playlistId: string,
     updates: { name?: string; description?: string; cover?: string },
   ): Promise<void> {
-    await this.storage.updateMusicPlaylist?.(playlistId, updates);
+    await this._storage.updateMusicPlaylist?.(playlistId, updates);
   }
 
   async deleteMusicPlaylist(playlistId: string): Promise<void> {
-    await this.storage.deleteMusicPlaylist?.(playlistId);
+    await this._storage.deleteMusicPlaylist?.(playlistId);
   }
 
   async addSongToPlaylist(
@@ -390,7 +394,7 @@ export class DbManager {
       duration: number;
     },
   ): Promise<void> {
-    await this.storage.addSongToPlaylist?.(playlistId, song);
+    await this._storage.addSongToPlaylist?.(playlistId, song);
   }
 
   async removeSongFromPlaylist(
@@ -398,11 +402,11 @@ export class DbManager {
     platform: string,
     songId: string,
   ): Promise<void> {
-    await this.storage.removeSongFromPlaylist?.(playlistId, platform, songId);
+    await this._storage.removeSongFromPlaylist?.(playlistId, platform, songId);
   }
 
   async getPlaylistSongs(playlistId: string): Promise<MusicV1PlaylistSong[]> {
-    return this.storage.getPlaylistSongs?.(playlistId) ?? [];
+    return this._storage.getPlaylistSongs?.(playlistId) ?? [];
   }
 
   async isSongInPlaylist(
@@ -410,23 +414,23 @@ export class DbManager {
     platform: string,
     songId: string,
   ): Promise<boolean> {
-    return this.storage.isSongInPlaylist?.(playlistId, platform, songId) ?? false;
+    return this._storage.isSongInPlaylist?.(playlistId, platform, songId) ?? false;
   }
 
   async verifyUser(userName: string, password: string): Promise<boolean> {
-    return this.storage.verifyUser(userName, password);
+    return this._storage.verifyUser(userName, password);
   }
 
   async checkUserExist(userName: string): Promise<boolean> {
-    return this.storage.checkUserExist(userName);
+    return this._storage.checkUserExist(userName);
   }
 
   async changePassword(userName: string, newPassword: string): Promise<void> {
-    await this.storage.changePassword(userName, newPassword);
+    await this._storage.changePassword(userName, newPassword);
   }
 
   async deleteUser(userName: string): Promise<void> {
-    await this.storage.deleteUser(userName);
+    await this._storage.deleteUser(userName);
   }
 
   // 用户相关（新版本）
@@ -438,15 +442,15 @@ export class DbManager {
     oidcSub?: string,
     enabledApis?: string[],
   ): Promise<void> {
-    await this.storage.createUserV2?.(userName, password, role, tags, oidcSub, enabledApis);
+    await this._storage.createUserV2?.(userName, password, role, tags, oidcSub, enabledApis);
   }
 
   async verifyUserV2(userName: string, password: string): Promise<boolean> {
-    return this.storage.verifyUserV2?.(userName, password) ?? false;
+    return this._storage.verifyUserV2?.(userName, password) ?? false;
   }
 
   async getUserInfoV2(userName: string): Promise<UserV2Info | null> {
-    return this.storage.getUserInfoV2?.(userName) ?? null;
+    return this._storage.getUserInfoV2?.(userName) ?? null;
   }
 
   async updateUserInfoV2(
@@ -459,19 +463,19 @@ export class DbManager {
       enabledApis?: string[];
     },
   ): Promise<void> {
-    await this.storage.updateUserInfoV2?.(userName, updates);
+    await this._storage.updateUserInfoV2?.(userName, updates);
   }
 
   async changePasswordV2(userName: string, newPassword: string): Promise<void> {
-    await this.storage.changePasswordV2?.(userName, newPassword);
+    await this._storage.changePasswordV2?.(userName, newPassword);
   }
 
   async checkUserExistV2(userName: string): Promise<boolean> {
-    return this.storage.checkUserExistV2?.(userName) ?? false;
+    return this._storage.checkUserExistV2?.(userName) ?? false;
   }
 
   async getUserByOidcSub(oidcSub: string): Promise<string | null> {
-    return this.storage.getUserByOidcSub?.(oidcSub) ?? null;
+    return this._storage.getUserByOidcSub?.(oidcSub) ?? null;
   }
 
   async getUserListV2(
@@ -479,48 +483,48 @@ export class DbManager {
     limit = 20,
     ownerUsername?: string,
   ): Promise<UserV2ListResult> {
-    return this.storage.getUserListV2?.(offset, limit, ownerUsername) ?? { users: [], total: 0 };
+    return this._storage.getUserListV2?.(offset, limit, ownerUsername) ?? { users: [], total: 0 };
   }
 
   async deleteUserV2(userName: string): Promise<void> {
-    await this.storage.deleteUserV2?.(userName);
+    await this._storage.deleteUserV2?.(userName);
   }
 
   async getUsersByTag(tagName: string): Promise<string[]> {
-    return this.storage.getUsersByTag?.(tagName) ?? [];
+    return this._storage.getUsersByTag?.(tagName) ?? [];
   }
 
   // TVBox订阅token
   async getTvboxSubscribeToken(userName: string): Promise<string | null> {
-    return this.storage.getTvboxSubscribeToken?.(userName) ?? null;
+    return this._storage.getTvboxSubscribeToken?.(userName) ?? null;
   }
 
   async setTvboxSubscribeToken(userName: string, token: string): Promise<void> {
-    await this.storage.setTvboxSubscribeToken?.(userName, token);
+    await this._storage.setTvboxSubscribeToken?.(userName, token);
   }
 
   async getUsernameByTvboxToken(token: string): Promise<string | null> {
-    return this.storage.getUsernameByTvboxToken?.(token) ?? null;
+    return this._storage.getUsernameByTvboxToken?.(token) ?? null;
   }
 
   // 播放记录迁移
   async migratePlayRecords(userName: string): Promise<void> {
-    await this.storage.migratePlayRecords(userName);
+    await this._storage.migratePlayRecords(userName);
   }
 
   // 收藏迁移
   async migrateFavorites(userName: string): Promise<void> {
-    await this.storage.migrateFavorites(userName);
+    await this._storage.migrateFavorites(userName);
   }
 
   // 跳过配置迁移
   async migrateSkipConfigs(userName: string): Promise<void> {
-    await this.storage.migrateSkipConfigs(userName);
+    await this._storage.migrateSkipConfigs(userName);
   }
 
   // 数据迁移
   async migrateUsersFromConfig(adminConfig: AdminConfig): Promise<void> {
-    if (typeof this.storage.createUserV2 !== 'function') {
+    if (typeof this._storage.createUserV2 !== 'function') {
       throw new Error('当前存储类型不支持新版用户存储');
     }
 
@@ -602,28 +606,28 @@ export class DbManager {
 
   // 搜索历史
   async getSearchHistory(userName: string): Promise<string[]> {
-    return this.storage.getSearchHistory(userName);
+    return this._storage.getSearchHistory(userName);
   }
 
   async addSearchHistory(userName: string, keyword: string): Promise<void> {
-    await this.storage.addSearchHistory(userName, keyword);
+    await this._storage.addSearchHistory(userName, keyword);
   }
 
   async deleteSearchHistory(userName: string, keyword?: string): Promise<void> {
-    await this.storage.deleteSearchHistory(userName, keyword);
+    await this._storage.deleteSearchHistory(userName, keyword);
   }
 
   async getAllUsers(): Promise<string[]> {
-    return this.storage.getAllUsers?.() ?? [];
+    return this._storage.getAllUsers?.() ?? [];
   }
 
   // 管理员配置
   async getAdminConfig(): Promise<AdminConfig | null> {
-    return this.storage.getAdminConfig?.() ?? null;
+    return this._storage.getAdminConfig?.() ?? null;
   }
 
   async saveAdminConfig(config: AdminConfig): Promise<void> {
-    await this.storage.setAdminConfig?.(config);
+    await this._storage.setAdminConfig?.(config);
   }
 
   // 跳过片头片尾配置
@@ -632,7 +636,7 @@ export class DbManager {
     source: string,
     id: string,
   ): Promise<SkipConfig | null> {
-    return this.storage.getSkipConfig?.(userName, source, id) ?? null;
+    return this._storage.getSkipConfig?.(userName, source, id) ?? null;
   }
 
   async setSkipConfig(
@@ -641,7 +645,7 @@ export class DbManager {
     id: string,
     config: SkipConfig,
   ): Promise<void> {
-    await this.storage.setSkipConfig?.(userName, source, id, config);
+    await this._storage.setSkipConfig?.(userName, source, id, config);
   }
 
   async deleteSkipConfig(
@@ -649,37 +653,37 @@ export class DbManager {
     source: string,
     id: string,
   ): Promise<void> {
-    await this.storage.deleteSkipConfig?.(userName, source, id);
+    await this._storage.deleteSkipConfig?.(userName, source, id);
   }
 
   async getAllSkipConfigs(
     userName: string,
   ): Promise<{ [key: string]: SkipConfig }> {
-    return this.storage.getAllSkipConfigs?.(userName) ?? {};
+    return this._storage.getAllSkipConfigs?.(userName) ?? {};
   }
 
   // 弹幕过滤配置
   async getDanmakuFilterConfig(
     userName: string,
   ): Promise<DanmakuFilterConfig | null> {
-    return this.storage.getDanmakuFilterConfig?.(userName) ?? null;
+    return this._storage.getDanmakuFilterConfig?.(userName) ?? null;
   }
 
   async setDanmakuFilterConfig(
     userName: string,
     config: DanmakuFilterConfig,
   ): Promise<void> {
-    await this.storage.setDanmakuFilterConfig?.(userName, config);
+    await this._storage.setDanmakuFilterConfig?.(userName, config);
   }
 
   async deleteDanmakuFilterConfig(userName: string): Promise<void> {
-    await this.storage.deleteDanmakuFilterConfig?.(userName);
+    await this._storage.deleteDanmakuFilterConfig?.(userName);
   }
 
   // 数据清理
   async clearAllData(): Promise<void> {
-    if (typeof this.storage.clearAllData === 'function') {
-      await this.storage.clearAllData();
+    if (typeof this._storage.clearAllData === 'function') {
+      await this._storage.clearAllData();
     } else {
       throw new Error('存储类型不支持清空数据操作');
     }
@@ -687,15 +691,15 @@ export class DbManager {
 
   // 通用键值存储
   async getGlobalValue(key: string): Promise<string | null> {
-    return this.storage.getGlobalValue?.(key) ?? null;
+    return this._storage.getGlobalValue?.(key) ?? null;
   }
 
   async setGlobalValue(key: string, value: string): Promise<void> {
-    await this.storage.setGlobalValue?.(key, value);
+    await this._storage.setGlobalValue?.(key, value);
   }
 
   async deleteGlobalValue(key: string): Promise<void> {
-    await this.storage.deleteGlobalValue?.(key);
+    await this._storage.deleteGlobalValue?.(key);
   }
 }
 

@@ -15,7 +15,7 @@ const videoProxySchema = z.object({
 export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
-  const paramResult = parseSearchParams(request as any, videoProxySchema);
+  const paramResult = parseSearchParams(request, videoProxySchema);
   if ('error' in paramResult) return paramResult.error;
   const { url: videoUrl } = paramResult.data;
 

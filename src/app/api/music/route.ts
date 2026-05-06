@@ -126,10 +126,10 @@ async function cacheAudioToOpenList(
       const audioBuffer = await audioResponse.arrayBuffer();
       const audioBlob = Buffer.from(audioBuffer);
 
-      const token = await (openListClient as any).getToken();
+      const token = await openListClient.getAuthToken();
 
       const uploadResponse = await fetch(
-        `${(openListClient as any).baseURL}/api/fs/put`,
+        `${openListClient.serverBaseURL}/api/fs/put`,
         {
           method: 'PUT',
           headers: {

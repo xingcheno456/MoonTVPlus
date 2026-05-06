@@ -16,7 +16,7 @@ const vodProxyKeySchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const paramResult = parseSearchParams(request as any, vodProxyKeySchema);
+  const paramResult = parseSearchParams(request, vodProxyKeySchema);
   if ('error' in paramResult) return paramResult.error;
   const { url, source } = paramResult.data;
 

@@ -219,11 +219,11 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // 保存批量删除的统计信息，稍后返回
-        (body as any)._batchDeleteResult = {
+        const batchDeleteResult = {
           deleted: keysToDelete.length,
           skipped: skippedKeys.length,
         };
+        (body as Record<string, unknown>)._batchDeleteResult = batchDeleteResult;
         break;
       }
       case 'sort': {
@@ -287,13 +287,14 @@ export async function POST(request: NextRequest) {
       // 不影响主流程，继续执行
     }
 
-    // 构建响应数据
-    const responseData: Record<string, any> = { ok: true };
+    const responseData: Record<string, unknown> = { ok: true };
 
-    // 如果是批量删除操作，包含统计信息
-    if (action === 'batch_delete' && (body as any)._batchDeleteResult) {
-      responseData.deleted = (body as any)._batchDeleteResult.deleted;
-      responseData.skipped = (body as any)._batchDeleteResult.skipped;
+    if (action === 'batch_delete') {
+      const deleteResult = (body as Record<string, unknown>)._batchDeleteResult as { deleted: number; skipped: number } | undefined;
+      if (deleteResult) {
+        responseData.deleted = deleteResult.deleted;
+        responseData.skipped = deleteResult.skipped;
+      }
     }
 
     return apiSuccess(responseData, {

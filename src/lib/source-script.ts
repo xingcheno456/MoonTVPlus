@@ -822,7 +822,7 @@ export function parseScriptSourceValue(source: string) {
   };
 }
 
-export function normalizeScriptSources(result: any): ScriptSourceDescriptor[] {
+export function normalizeScriptSources(result: unknown): ScriptSourceDescriptor[] {
   if (!Array.isArray(result)) {
     return [{ id: 'default', name: '默认源' }];
   }
@@ -840,7 +840,7 @@ export function normalizeScriptSearchResults(input: {
   scriptName: string;
   sourceId: string;
   sourceName: string;
-  result: any;
+  result: unknown;
 }) {
   const list = Array.isArray(input.result?.list) ? input.result.list : [];
   return list.map((item: any) => {
