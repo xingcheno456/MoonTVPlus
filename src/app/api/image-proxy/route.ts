@@ -1,6 +1,7 @@
 import { apiError } from '@/lib/api-response';
 import { commonSchemas } from '@/lib/api-schemas';
 import { parseSearchParams } from '@/lib/api-validation';
+import { isDomainAllowed } from '@/lib/server/proxy-whitelist';
 import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
 import { z } from 'zod';
 
@@ -20,6 +21,10 @@ export async function GET(request: Request) {
   const isSafeUrl = await validateProxyUrlServerSide(decodedUrl);
   if (!isSafeUrl) {
     return apiError('Proxy request to local or invalid network is forbidden', 403);
+  }
+
+  if (!isDomainAllowed(decodedUrl)) {
+    return apiError('Domain not in proxy whitelist', 403);
   }
 
   try {
