@@ -57,8 +57,29 @@ export class OfflineDownloader {
   private concurrency = 6;
 
   constructor(baseDir: string) {
-    this.baseDir = baseDir;
+    this.baseDir = path.resolve(baseDir);
     this.ensureDir(this.baseDir);
+  }
+
+  private validatePathSegment(segment: string, label: string): void {
+    if (!segment || typeof segment !== 'string') {
+      throw new Error(`Invalid ${label}: must be a non-empty string`);
+    }
+    if (segment.includes('..') || segment.includes('/') || segment.includes('\\')) {
+      throw new Error(`Invalid ${label}: contains path traversal characters`);
+    }
+    const sanitized = segment.replace(/[^a-zA-Z0-9_\-\.]/g, '');
+    if (sanitized !== segment) {
+      throw new Error(`Invalid ${label}: contains disallowed characters`);
+    }
+  }
+
+  private buildSafePath(...segments: string[]): string {
+    const resolved = path.resolve(this.baseDir, ...segments);
+    if (!resolved.startsWith(this.baseDir + path.sep) && resolved !== this.baseDir) {
+      throw new Error('Path traversal detected: resolved path is outside base directory');
+    }
+    return resolved;
   }
 
   /**
@@ -80,12 +101,9 @@ export class OfflineDownloader {
     },
   ): Promise<OfflineDownloadTask> {
     const taskId = `${source}_${videoId}_${episodeIndex}_${Date.now()}`;
-    const downloadDir = path.join(
-      this.baseDir,
-      source,
-      videoId,
-      `ep${episodeIndex + 1}`,
-    );
+    this.validatePathSegment(source, 'source');
+    this.validatePathSegment(videoId, 'videoId');
+    const downloadDir = this.buildSafePath(source, videoId, `ep${episodeIndex + 1}`);
 
     const task: OfflineDownloadTask = {
       id: taskId,
@@ -730,12 +748,9 @@ export class OfflineDownloader {
     videoId: string,
     episodeIndex: number,
   ): boolean {
-    const downloadDir = path.join(
-      this.baseDir,
-      source,
-      videoId,
-      `ep${episodeIndex + 1}`,
-    );
+    this.validatePathSegment(source, 'source');
+    this.validatePathSegment(videoId, 'videoId');
+    const downloadDir = this.buildSafePath(source, videoId, `ep${episodeIndex + 1}`);
     const playlistPath = path.join(downloadDir, 'playlist.m3u8');
     return fs.existsSync(playlistPath);
   }
@@ -748,12 +763,9 @@ export class OfflineDownloader {
     videoId: string,
     episodeIndex: number,
   ): string | null {
-    const downloadDir = path.join(
-      this.baseDir,
-      source,
-      videoId,
-      `ep${episodeIndex + 1}`,
-    );
+    this.validatePathSegment(source, 'source');
+    this.validatePathSegment(videoId, 'videoId');
+    const downloadDir = this.buildSafePath(source, videoId, `ep${episodeIndex + 1}`);
     const playlistPath = path.join(downloadDir, 'playlist.m3u8');
     return fs.existsSync(playlistPath) ? playlistPath : null;
   }
