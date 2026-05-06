@@ -104,7 +104,7 @@ export default function MovieRequestPage() {
       setShowSeasonDialog(true);
 
       try {
-        const response = await fetch(`/api/tmdb/seasons?tvId=${item.id}`);
+        const response = await fetch(`/api/tmdb/seasons?tvId=${encodeURIComponent(String(item.id))}`);
         const data = await parseApiResponse<any>(response);
         if (data.seasons) {
           const validSeasons = data.seasons.filter(

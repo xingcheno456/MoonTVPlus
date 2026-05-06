@@ -66,7 +66,7 @@ export function OfflineDownloadPanel({
   // 删除任务
   const handleDeleteTask = async (taskId: string) => {
     try {
-      const response = await fetch(`/api/offline-download?taskId=${taskId}`, {
+      const response = await fetch(`/api/offline-download?taskId=${encodeURIComponent(taskId)}`, {
         method: 'DELETE',
       });
 

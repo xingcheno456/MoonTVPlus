@@ -176,7 +176,7 @@ export default function CorrectDialog({
     setLoadingSeasons(true);
     setError('');
     try {
-      const response = await fetch(`/api/tmdb/seasons?tvId=${tvId}`);
+      const response = await fetch(`/api/tmdb/seasons?tvId=${encodeURIComponent(String(tvId))}`);
 
       if (!response.ok) {
         throw new Error('获取季度列表失败');

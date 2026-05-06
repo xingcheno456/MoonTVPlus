@@ -11177,7 +11177,7 @@ const MovieRequestsComponent = ({
   const handleFulfill = async (id: string) => {
     await withLoading(`fulfill_${id}`, async () => {
       try {
-        const response = await fetch(`/api/movie-requests/${id}`, {
+        const response = await fetch(`/api/movie-requests/${encodeURIComponent(id)}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'fulfilled' }),
@@ -11194,7 +11194,7 @@ const MovieRequestsComponent = ({
   const handleDelete = async (id: string) => {
     await withLoading(`delete_${id}`, async () => {
       try {
-        const response = await fetch(`/api/movie-requests/${id}`, {
+        const response = await fetch(`/api/movie-requests/${encodeURIComponent(id)}`, {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('删除失败');

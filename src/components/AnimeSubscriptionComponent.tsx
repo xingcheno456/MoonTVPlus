@@ -317,7 +317,7 @@ export default function AnimeSubscriptionComponent({
       onConfirm: async () => {
         try {
           setLoading(true);
-          const response = await fetch(`/api/admin/anime-subscription/${id}`, {
+          const response = await fetch(`/api/admin/anime-subscription/${encodeURIComponent(id)}`, {
             method: 'DELETE',
           });
 
@@ -380,7 +380,7 @@ export default function AnimeSubscriptionComponent({
   const handleToggleSubscription = async (sub: AnimeSubscription) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/anime-subscription/${sub.id}`, {
+      const response = await fetch(`/api/admin/anime-subscription/${encodeURIComponent(sub.id)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled: !sub.enabled }),

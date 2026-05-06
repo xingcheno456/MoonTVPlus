@@ -339,7 +339,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         // 使用豆瓣ID
         if (doubanId && !isBangumi) {
           setCurrentSource('douban');
-          const response = await fetch(`/api/douban/detail?id=${doubanId}`);
+          const response = await fetch(`/api/douban/detail?id=${encodeURIComponent(doubanId)}`);
           if (!response.ok) {
             throw new Error('获取豆瓣详情失败');
           }
