@@ -4,6 +4,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { verifyHmacSignature } from '@/lib/crypto';
 import { logger } from '@/lib/logger';
 import { CSP_HEADER_VALUE } from '@/lib/security/csp';
+import { checkRateLimit, getRateLimitConfig } from '@/lib/security/rate-limit';
 import { TOKEN_CONFIG } from '@/lib/token-config';
 
 type StorageType = 'localstorage' | 'redis' | 'upstash' | 'kvrocks' | 'd1' | 'postgres';
@@ -85,6 +86,25 @@ export async function middleware(request: NextRequest) {
         response = NextResponse.next();
       }
     }
+  }
+
+  const rateLimitConfig = getRateLimitConfig(pathname);
+  if (rateLimitConfig) {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || request.headers.get('x-real-ip')
+      || '127.0.0.1';
+    const result = checkRateLimit(ip, pathname, rateLimitConfig);
+    if (!result.allowed) {
+      return new NextResponse('Too Many Requests', {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil((result.resetTime - Date.now()) / 1000)),
+          'Content-Security-Policy': CSP_HEADER_VALUE,
+        },
+      });
+    }
+    response.headers.set('X-RateLimit-Remaining', String(result.remaining));
+    response.headers.set('X-RateLimit-Reset', String(result.resetTime));
   }
 
   response.headers.set('Content-Security-Policy', CSP_HEADER_VALUE);
