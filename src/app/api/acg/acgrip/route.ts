@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 import { parseStringPromise } from 'xml2js';
 
@@ -80,6 +79,7 @@ export async function POST(req: NextRequest) {
     const items = parsed.rss.channel[0].item;
 
     // 转换为标准格式
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const results = items.map((item: any) => {
       const description = item.description?.[0] || '';
 
@@ -121,8 +121,8 @@ export async function POST(req: NextRequest) {
       total: results.length,
       items: results,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('ACG.RIP 搜索失败:', error);
-    return apiError(error.message || '搜索失败', 500);
+    return apiError((error as Error).message || '搜索失败', 500);
   }
 }

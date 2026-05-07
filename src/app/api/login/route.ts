@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -45,6 +44,7 @@ async function generateAuthCookie(
   deviceInfo?: string,
 ): Promise<string> {
   const now = Date.now();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const authData: any = { role: role || 'user' };
 
   // note: includePassword parameter is retained for backward compatibility

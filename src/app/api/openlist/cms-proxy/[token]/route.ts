@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest } from 'next/server';
 
 import { apiSuccess } from '@/lib/api-response';
@@ -183,6 +181,7 @@ export async function GET(
  * 处理搜索请求
  */
 async function handleSearch(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metaInfo: any,
   query: string,
   request: NextRequest,
@@ -191,12 +190,14 @@ async function handleSearch(
 
   const lowerQuery = query.toLowerCase();
   const results = Object.entries(metaInfo.folders)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .filter(([folderName, info]: [string, any]) => {
       if (!query) return true; // 空查询返回所有
       const matchFolder = folderName.toLowerCase().includes(lowerQuery);
       const matchTitle = info.title.toLowerCase().includes(lowerQuery);
       return matchFolder || matchTitle;
     })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map(([folderKey, info]: [string, any]) => ({
       vod_id: folderKey,
       vod_name: info.title,
@@ -225,8 +226,10 @@ async function handleSearch(
  * 处理通过搜索关键词获取详情的请求
  */
 async function handleDetailBySearch(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metaInfo: any,
   query: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   openListConfig: any,
   rootPath: string,
   token: string,
@@ -236,6 +239,7 @@ async function handleDetailBySearch(
 
   // 搜索匹配的第一个文件夹
   const matchedEntry = Object.entries(metaInfo.folders).find(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ([folderName, info]: [string, any]) => {
       const matchFolder = folderName.toLowerCase().includes(lowerQuery);
       const matchTitle = info.title.toLowerCase().includes(lowerQuery);
@@ -271,8 +275,10 @@ async function handleDetailBySearch(
  * 处理详情请求
  */
 async function handleDetail(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metaInfo: any,
   folderKey: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   openListConfig: any,
   rootPath: string,
   token: string,
@@ -313,6 +319,7 @@ async function handleDetail(
   let videoInfo = getCachedVideoInfo(folderPath);
 
   // 获取所有分页的视频文件
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allFiles: any[] = [];
   let currentPage = 1;
   const pageSize = 100;

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -166,13 +164,17 @@ export async function GET(request: NextRequest) {
         SD: 4,
       };
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const qualities = taskList
         .filter((task: any) => task.status === 'finished')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((task: any) => ({
           name: task.template_id,
           url: task.url,
         }))
-        .filter((quality: any) => quality.url && quality.url.trim() !== '') // 过滤空URL
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter((quality: any) => quality.url && quality.url.trim() !== '')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .sort(
           (a: any, b: any) =>
             (qualityOrder[a.name] || 999) - (qualityOrder[b.name] || 999),
