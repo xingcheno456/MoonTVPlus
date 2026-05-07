@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import { SearchResult } from '@/lib/types';
 
-import CapsuleSwitch from '@/components/CapsuleSwitch';
-import PageLayout from '@/components/PageLayout';
+import CapsuleSwitch from '@/components/common/CapsuleSwitch';
+import PageLayout from '@/components/layout/PageLayout';
 import VideoCard from '@/components/VideoCard';
 
 interface ScriptSourceOption {

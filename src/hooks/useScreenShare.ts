@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
+import { useWatchRoomContextSafe } from '@/components/player/WatchRoomProvider';
 
 import { logger } from '../lib/logger';
 

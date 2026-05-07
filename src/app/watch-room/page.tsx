@@ -13,9 +13,9 @@ import { useEffect, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
-import PageLayout from '@/components/PageLayout';
-import Toast, { ToastProps } from '@/components/Toast';
-import { useWatchRoomContext } from '@/components/WatchRoomProvider';
+import PageLayout from '@/components/layout/PageLayout';
+import Toast, { ToastProps } from '@/components/common/Toast';
+import { useWatchRoomContext } from '@/components/player/WatchRoomProvider';
 
 import { logger } from '../../lib/logger';
 

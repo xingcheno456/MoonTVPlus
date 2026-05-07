@@ -8,17 +8,17 @@ import './globals.css';
 import { getConfig } from '@/lib/config';
 import { listEnabledSourceScripts } from '@/lib/source-script';
 
-import { StartupCacheCleanup } from '../components/DanmakuCacheCleanup';
-import { DownloadBubble } from '../components/DownloadBubble';
-import { DownloadPanel } from '../components/DownloadPanel';
-import { GlobalErrorIndicator } from '../components/GlobalErrorIndicator';
-import RouteScrollReset from '../components/RouteScrollReset';
+import { StartupCacheCleanup } from '../components/danmaku/DanmakuCacheCleanup';
+import { DownloadBubble } from '../components/player/DownloadBubble';
+import { DownloadPanel } from '../components/player/DownloadPanel';
+import { GlobalErrorIndicator } from '../components/common/GlobalErrorIndicator';
+import RouteScrollReset from '../components/layout/RouteScrollReset';
 import { SiteProvider } from '../components/SiteProvider';
 import { ThemeProvider } from '../components/ThemeProvider';
 import { TokenRefreshManager } from '../components/TokenRefreshManager';
-import TopProgressBar from '../components/TopProgressBar';
+import TopProgressBar from '../components/layout/TopProgressBar';
 import ChatFloatingWindow from '../components/watch-room/ChatFloatingWindow';
-import { WatchRoomProvider } from '../components/WatchRoomProvider';
+import { WatchRoomProvider } from '../components/player/WatchRoomProvider';
 import { DownloadProvider } from '../contexts/DownloadContext';
 
 const inter = Inter({ subsets: ['latin'] });

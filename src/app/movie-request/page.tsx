@@ -9,7 +9,7 @@ import { getTMDBImageUrl } from '@/lib/tmdb-image';
 import { processImageUrl } from '@/lib/utils';
 import { parseApiResponse } from '@/lib/api-response';
 
-import PageLayout from '@/components/PageLayout';
+import PageLayout from '@/components/layout/PageLayout';
 
 import { logger } from '../../lib/logger';
 

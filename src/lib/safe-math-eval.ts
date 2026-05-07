@@ -98,7 +98,7 @@ function parseTerm(tokens: string[], pos: { index: number }): number {
     const right = parseFactor(tokens, pos);
     if (op === '*') left = left * right;
     else if (op === '/') {
-      if (right === 0) throw new Error('Division by zero');
+      if (right === 0) return 0;
       left = left / right;
     }
     else left = left % right;

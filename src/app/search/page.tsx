@@ -34,18 +34,18 @@ import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
 import { parseApiResponse } from '@/lib/api-response';
 
-import AcgSearch from '@/components/AcgSearch';
-import CapsuleSwitch from '@/components/CapsuleSwitch';
-import ImageViewer from '@/components/ImageViewer';
-import PageLayout from '@/components/PageLayout';
-import PansouSearch from '@/components/PansouSearch';
-import ProxyImage from '@/components/ProxyImage';
+import AcgSearch from '@/components/search/AcgSearch';
+import CapsuleSwitch from '@/components/common/CapsuleSwitch';
+import ImageViewer from '@/components/common/ImageViewer';
+import PageLayout from '@/components/layout/PageLayout';
+import PansouSearch from '@/components/search/PansouSearch';
+import ProxyImage from '@/components/common/ProxyImage';
 import SearchResultFilter, {
   SearchFilterCategory,
-} from '@/components/SearchResultFilter';
-import SearchSuggestions from '@/components/SearchSuggestions';
+} from '@/components/search/SearchResultFilter';
+import SearchSuggestions from '@/components/search/SearchSuggestions';
 import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
-import VirtualScrollableGrid from '@/components/VirtualScrollableGrid';
+import VirtualScrollableGrid from '@/components/common/VirtualScrollableGrid';
 
 import { logger } from '../../lib/logger';
 

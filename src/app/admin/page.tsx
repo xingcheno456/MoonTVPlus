@@ -61,9 +61,9 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { parseApiResponse } from '@/lib/api-response';
 
 import AnimeSubscriptionComponent from '@/components/AnimeSubscriptionComponent';
-import CorrectDialog from '@/components/CorrectDialog';
+import CorrectDialog from '@/components/common/CorrectDialog';
 import DataMigration from '@/components/DataMigration';
-import PageLayout from '@/components/PageLayout';
+import PageLayout from '@/components/layout/PageLayout';
 
 import { logger } from '../../lib/logger';
 

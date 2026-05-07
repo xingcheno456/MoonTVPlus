@@ -11,7 +11,7 @@ import React, {
 import { downloadDB } from '@/lib/download-db';
 import { M3U8Downloader, M3U8DownloadTask } from '@/lib/m3u8-downloader';
 
-import Toast from '@/components/Toast';
+import Toast from '@/components/common/Toast';
 
 import { logger } from '../lib/logger';
 

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { detailQuerySchema } from '@/lib/api-schemas';
-import { parseSearchParams, validateAuth, validateAdminAuth } from '@/lib/api-validation';
+import { parseSearchParams, parseJsonBody, validateAuth, validateAdminAuth } from '@/lib/api-validation';
 
 describe('parseSearchParams', () => {
   function createMockRequest(url: string): any {
@@ -47,6 +47,86 @@ describe('parseSearchParams', () => {
   it('should return error for completely missing required fields', () => {
     const request = createMockRequest('http://localhost/api/detail');
     const result = parseSearchParams(request as any, detailQuerySchema);
+    expect('error' in result).toBe(true);
+    if ('error' in result) {
+      expect(result.error.status).toBe(400);
+    }
+  });
+
+  it('should handle duplicate query params as array', () => {
+    const schema = z.object({ tags: z.array(z.string()).optional() });
+    const request = createMockRequest('http://localhost/test?tags=a&tags=b&tags=c');
+    const result = parseSearchParams(request as any, schema);
+    expect('data' in result).toBe(true);
+    if ('data' in result) {
+      expect(result.data.tags).toEqual(['a', 'b', 'c']);
+    }
+  });
+
+  it('should handle non-ZodError exceptions', () => {
+    const schema = z.object({
+      value: z.string().transform(() => {
+        throw new Error('transform error');
+      }),
+    });
+    const request = createMockRequest('http://localhost/test?value=test');
+    const result = parseSearchParams(request as any, schema);
+    expect('error' in result).toBe(true);
+    if ('error' in result) {
+      expect(result.error.status).toBe(400);
+    }
+  });
+});
+
+describe('parseJsonBody', () => {
+  function createMockRequest(body: unknown): any {
+    return {
+      json: async () => body,
+    };
+  }
+
+  it('should parse valid JSON body', async () => {
+    const schema = z.object({ name: z.string(), age: z.number() });
+    const request = createMockRequest({ name: 'test', age: 25 });
+    const result = await parseJsonBody(request as any, schema);
+    expect('data' in result).toBe(true);
+    if ('data' in result) {
+      expect(result.data).toEqual({ name: 'test', age: 25 });
+    }
+  });
+
+  it('should return error for invalid JSON body', async () => {
+    const schema = z.object({ name: z.string().min(1) });
+    const request = createMockRequest({ name: '' });
+    const result = await parseJsonBody(request as any, schema);
+    expect('error' in result).toBe(true);
+    if ('error' in result) {
+      expect(result.error.status).toBe(400);
+    }
+  });
+
+  it('should return error when json() throws', async () => {
+    const schema = z.object({ name: z.string() });
+    const request = {
+      json: async () => {
+        throw new Error('parse error');
+      },
+    };
+    const result = await parseJsonBody(request as any, schema);
+    expect('error' in result).toBe(true);
+    if ('error' in result) {
+      expect(result.error.status).toBe(400);
+    }
+  });
+
+  it('should handle non-ZodError exceptions in transform', async () => {
+    const schema = z.object({
+      value: z.string().transform(() => {
+        throw new Error('transform error');
+      }),
+    });
+    const request = createMockRequest({ value: 'test' });
+    const result = await parseJsonBody(request as any, schema);
     expect('error' in result).toBe(true);
     if ('error' in result) {
       expect(result.error.status).toBe(400);

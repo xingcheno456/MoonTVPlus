@@ -14,10 +14,10 @@ import {
 } from '@/lib/douban.client';
 import { DoubanItem, DoubanResult } from '@/lib/types';
 
-import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
+import DoubanCardSkeleton from '@/components/common/DoubanCardSkeleton';
 import DoubanCustomSelector from '@/components/DoubanCustomSelector';
 import DoubanSelector from '@/components/DoubanSelector';
-import PageLayout from '@/components/PageLayout';
+import PageLayout from '@/components/layout/PageLayout';
 import VideoCard from '@/components/VideoCard';
 
 import { logger } from '../../lib/logger';

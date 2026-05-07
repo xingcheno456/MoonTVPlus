@@ -7,8 +7,8 @@ import { parseApiResponse } from '@/lib/api-response';
 import { createPortal } from 'react-dom';
 
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
-import LyricsPiPWindow from '@/components/LyricsPiPWindow';
-import Toast, { ToastProps } from '@/components/Toast';
+import LyricsPiPWindow from '@/components/player/LyricsPiPWindow';
+import Toast, { ToastProps } from '@/components/common/Toast';
 
 import { logger } from '../../lib/logger';
 

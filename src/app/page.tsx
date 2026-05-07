@@ -23,13 +23,13 @@ import { DoubanItem } from '@/lib/types';
 import { base58Encode, processImageUrl } from '@/lib/utils';
 import { parseApiResponse } from '@/lib/api-response';
 
-import AIChatPanel from '@/components/AIChatPanel';
-import BannerCarousel from '@/components/BannerCarousel';
+import AIChatPanel from '@/components/player/AIChatPanel';
+import BannerCarousel from '@/components/common/BannerCarousel';
 import ContinueWatching from '@/components/ContinueWatching';
-import FireworksCanvas from '@/components/FireworksCanvas';
-import HttpWarningDialog from '@/components/HttpWarningDialog';
-import PageLayout from '@/components/PageLayout';
-import ScrollableRow from '@/components/ScrollableRow';
+import FireworksCanvas from '@/components/common/FireworksCanvas';
+import HttpWarningDialog from '@/components/common/HttpWarningDialog';
+import PageLayout from '@/components/layout/PageLayout';
+import ScrollableRow from '@/components/common/ScrollableRow';
 import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
 

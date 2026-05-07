@@ -11,8 +11,8 @@ import {
   useScreenShare,
 } from '@/hooks/useScreenShare';
 
-import Toast, { ToastProps } from '@/components/Toast';
-import { useWatchRoomContext } from '@/components/WatchRoomProvider';
+import Toast, { ToastProps } from '@/components/common/Toast';
+import { useWatchRoomContext } from '@/components/player/WatchRoomProvider';
 
 const NEW_TAB_KEY_PREFIX = 'watch_room_screen_home_opened_';
 const WATCH_ROOM_NO_CONNECT_KEY = 'watch_room_no_connect';
