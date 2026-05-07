@@ -1,6 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 
 import {
   Blend,
@@ -57,8 +55,14 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
     },
   ]);
 
+interface RuntimeConfig {
+  PRIVATE_LIBRARY_ENABLED?: boolean;
+  ADVANCED_RECOMMENDATION_ENABLED?: boolean;
+  CUSTOM_CATEGORIES?: { name: string; href: string }[];
+}
+
   useEffect(() => {
-    const runtimeConfig = (window as any).RUNTIME_CONFIG;
+    const runtimeConfig: RuntimeConfig | undefined = (window as { RUNTIME_CONFIG?: RuntimeConfig }).RUNTIME_CONFIG;
 
     const items = [
       { icon: Home, label: '首页', href: '/' },
@@ -108,7 +112,7 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
       });
     }
 
-    if (runtimeConfig?.CUSTOM_CATEGORIES?.length > 0) {
+    if (runtimeConfig?.CUSTOM_CATEGORIES && runtimeConfig.CUSTOM_CATEGORIES.length > 0) {
       items.push({
         icon: Star,
         label: '自定义',

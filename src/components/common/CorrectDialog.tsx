@@ -1,6 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 
 import { Search, X } from 'lucide-react';
 import Image from 'next/image';
@@ -153,7 +151,7 @@ export default function CorrectDialog({
         throw new Error('搜索失败');
       }
 
-      const data = await parseApiResponse<any>(response);
+      const data = await parseApiResponse<{ success: boolean; results: TMDBResult[] }>(response);
 
       if (data.success && data.results) {
         setResults(data.results);
@@ -182,7 +180,7 @@ export default function CorrectDialog({
         throw new Error('获取季度列表失败');
       }
 
-      const data = await parseApiResponse<any>(response);
+      const data = await parseApiResponse<{ success: boolean; seasons: TMDBSeason[] }>(response);
 
       if (data.success && data.seasons) {
         return data.seasons as TMDBSeason[];
@@ -242,6 +240,7 @@ export default function CorrectDialog({
         finalTitle = `${finalTitle} ${season.name}`;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const correctionData: any = {
         tmdbId: finalTmdbId,
         title: finalTitle,
@@ -275,6 +274,7 @@ export default function CorrectDialog({
         );
       } else {
         // openlist 等其他源：调用 API
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const body: any = {
           key: videoKey,
           ...correctionData,
@@ -357,6 +357,7 @@ export default function CorrectDialog({
     setError('');
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const correctionData: any = {
         title: manualData.title.trim(),
         posterPath: manualData.posterPath.trim() || null,
@@ -400,7 +401,7 @@ export default function CorrectDialog({
           correctionInfo,
         );
       } else {
-        // openlist 等其他源：调用 API
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const body: any = {
           key: videoKey,
           ...correctionData,
