@@ -84,13 +84,6 @@ export default async function RootLayout({
   let enableOIDCLogin = false;
   let enableOIDCRegistration = false;
   let oidcButtonText = '';
-  let aiEnabled = false;
-  let aiEnableHomepageEntry = false;
-  let aiEnableVideoCardEntry = false;
-  let aiEnablePlayPageEntry = false;
-  let aiEnableComments = false;
-  let aiDefaultMessageNoVideo = '';
-  let aiDefaultMessageWithVideo = '';
   let enableMovieRequest = true;
   let customAdFilterVersion = 0;
   let tuneHubEnabled = false;
@@ -138,14 +131,6 @@ export default async function RootLayout({
     enableOIDCLogin = config.SiteConfig.EnableOIDCLogin || false;
     enableOIDCRegistration = config.SiteConfig.EnableOIDCRegistration || false;
     oidcButtonText = config.SiteConfig.OIDCButtonText || '';
-    // AI配置
-    aiEnabled = config.AIConfig?.Enabled || false;
-    aiEnableHomepageEntry = config.AIConfig?.EnableHomepageEntry || false;
-    aiEnableVideoCardEntry = config.AIConfig?.EnableVideoCardEntry || false;
-    aiEnablePlayPageEntry = config.AIConfig?.EnablePlayPageEntry || false;
-    aiEnableComments = config.AIConfig?.EnableAIComments || false;
-    aiDefaultMessageNoVideo = config.AIConfig?.DefaultMessageNoVideo || '';
-    aiDefaultMessageWithVideo = config.AIConfig?.DefaultMessageWithVideo || '';
     // 求片功能配置
     enableMovieRequest = config.SiteConfig.EnableMovieRequest ?? true;
 
@@ -221,15 +206,6 @@ export default async function RootLayout({
     ENABLE_OIDC_LOGIN: enableOIDCLogin,
     ENABLE_OIDC_REGISTRATION: enableOIDCRegistration,
     OIDC_BUTTON_TEXT: oidcButtonText,
-    AI_ENABLED: aiEnabled,
-    AI_ENABLE_HOMEPAGE_ENTRY: aiEnableHomepageEntry,
-    AI_ENABLE_VIDEOCARD_ENTRY: aiEnableVideoCardEntry,
-    AI_ENABLE_PLAYPAGE_ENTRY: aiEnablePlayPageEntry,
-    AIConfig: {
-      EnableAIComments: aiEnableComments,
-    },
-    AI_DEFAULT_MESSAGE_NO_VIDEO: aiDefaultMessageNoVideo,
-    AI_DEFAULT_MESSAGE_WITH_VIDEO: aiDefaultMessageWithVideo,
     ENABLE_MOVIE_REQUEST: enableMovieRequest,
     ADVANCED_RECOMMENDATION_ENABLED: advancedRecommendationEnabled,
     CUSTOM_AD_FILTER_VERSION: customAdFilterVersion,

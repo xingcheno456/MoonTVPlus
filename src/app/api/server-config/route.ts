@@ -68,11 +68,6 @@ export async function GET(request: NextRequest) {
     progressThumbType: config.ThemeConfig?.progressThumbType || 'default',
     progressThumbPresetId: config.ThemeConfig?.progressThumbPresetId || '',
     progressThumbCustomUrl: config.ThemeConfig?.progressThumbCustomUrl || '',
-    AIEnabled: config.AIConfig?.Enabled || false,
-    AIEnableHomepageEntry: config.AIConfig?.EnableHomepageEntry || false,
-    AIEnableVideoCardEntry: config.AIConfig?.EnableVideoCardEntry || false,
-    AIEnablePlayPageEntry: config.AIConfig?.EnablePlayPageEntry || false,
-    AIDefaultMessageNoVideo: config.AIConfig?.DefaultMessageNoVideo || '',
-    AIDefaultMessageWithVideo: config.AIConfig?.DefaultMessageWithVideo || '',
+
   });
 }

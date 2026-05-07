@@ -8,7 +8,6 @@ import {
   Link,
   PlayCircleIcon,
   Radio,
-  Sparkles,
   Trash2,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -39,7 +38,6 @@ import {
 } from '@/lib/utils';
 import { useLongPress } from '@/hooks/useLongPress';
 
-import AIChatPanel from '@/components/player/AIChatPanel';
 import DetailPanel from '@/components/DetailPanel';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import ImageViewer from '@/components/common/ImageViewer';
@@ -139,32 +137,10 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     const [searchFavorited, setSearchFavorited] = useState<boolean | null>(
       null,
     ); // 搜索结果的收藏状态
-    const [showAIChat, setShowAIChat] = useState(false);
-    const [isAIStreaming, setIsAIStreaming] = useState(false);
-    const [aiEnabled, setAiEnabled] = useState(false);
-    const [aiDefaultMessageWithVideo, setAiDefaultMessageWithVideo] =
-      useState('');
     const [showDetailPanel, setShowDetailPanel] = useState(false);
     const [showImageViewer, setShowImageViewer] = useState(false);
     const [showUpcomingInfo, setShowUpcomingInfo] = useState(false); // 控制即将上映倒计时的显示
     const [displayPoster, setDisplayPoster] = useState(processedPoster);
-
-    // 检查AI功能是否启用
-    useEffect(() => {
-      if (typeof window !== 'undefined') {
-        const enabled =
-          (window as any).RUNTIME_CONFIG?.AI_ENABLED &&
-          (window as any).RUNTIME_CONFIG?.AI_ENABLE_VIDEOCARD_ENTRY;
-        setAiEnabled(enabled);
-
-        // 加载AI默认消息配置
-        const defaultMsg = (window as any).RUNTIME_CONFIG
-          ?.AI_DEFAULT_MESSAGE_WITH_VIDEO;
-        if (defaultMsg) {
-          setAiDefaultMessageWithVideo(defaultMsg);
-        }
-      }
-    }, []);
 
     // 可外部修改的可控字段
     const [dynamicEpisodes, setDynamicEpisodes] = useState<number | undefined>(
@@ -727,23 +703,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         });
       }
 
-      // AI问片功能
-      if (aiEnabled && actualTitle) {
-        actions.push({
-          id: 'ai-chat',
-          label: 'AI问片',
-          icon: <Sparkles size={20} />,
-          onClick: () => {
-            setShowMobileActions(false);
-            // 延迟打开 AIChatPanel，确保 MobileActionSheet 完全清理完成
-            setTimeout(() => {
-              setShowAIChat(true);
-            }, 250);
-          },
-          color: 'default' as const,
-        });
-      }
-
       return actions;
     }, [
       config,
@@ -760,7 +719,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       handleToggleFavorite,
       handleDeleteRecord,
       handlePlayInNewTab,
-      aiEnabled,
       actualTitle,
     ]);
 
@@ -1846,31 +1804,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             setShowImageViewer(true);
           }}
         />
-
-        {/* AI问片面板 - 只在打开或正在流式响应时渲染 */}
-        {aiEnabled && (showAIChat || isAIStreaming) && (
-          <AIChatPanel
-            isOpen={showAIChat}
-            onClose={() => setShowAIChat(false)}
-            onStreamingChange={setIsAIStreaming}
-            context={{
-              title: actualTitle,
-              year: actualYear,
-              douban_id: actualDoubanId,
-              tmdb_id,
-              type: actualSearchType as 'movie' | 'tv',
-              currentEpisode,
-            }}
-            welcomeMessage={
-              aiDefaultMessageWithVideo
-                ? aiDefaultMessageWithVideo.replace(
-                    '{title}',
-                    actualTitle || '',
-                  )
-                : `想了解《${actualTitle}》的更多信息吗？我可以帮你查询剧情、演员、评价等。`
-            }
-          />
-        )}
 
         {/* 详情面板 */}
         {showDetailPanel && (

@@ -3,7 +3,6 @@
 
 
 import {
-  Bot,
   ChevronRight,
   Link as LinkIcon,
   ListVideo,
@@ -23,7 +22,6 @@ import { DoubanItem } from '@/lib/types';
 import { base58Encode, processImageUrl } from '@/lib/utils';
 import { parseApiResponse } from '@/lib/api-response';
 
-import AIChatPanel from '@/components/player/AIChatPanel';
 import BannerCarousel from '@/components/common/BannerCarousel';
 import ContinueWatching from '@/components/ContinueWatching';
 import FireworksCanvas from '@/components/common/FireworksCanvas';
@@ -72,11 +70,6 @@ function HomeClient() {
 
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [showHttpWarning, setShowHttpWarning] = useState(true);
-  const [showAIChat, setShowAIChat] = useState(false);
-  const [aiEnabled, setAiEnabled] = useState(false);
-  const [aiDefaultMessageNoVideo, setAiDefaultMessageNoVideo] = useState(
-    '你好！我是MoonTVPlus的AI影视助手。想看什么电影或剧集？需要推荐吗？',
-  );
   const [sourceSearchEnabled, setSourceSearchEnabled] = useState(true);
   const [musicEnabled, setMusicEnabled] = useState(false);
   const [showDirectPlayDialog, setShowDirectPlayDialog] = useState(false);
@@ -142,23 +135,6 @@ function HomeClient() {
         handleHomeModulesUpdated,
       );
     };
-  }, []);
-
-  // 检查AI功能是否启用
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const enabled =
-        (window as any).RUNTIME_CONFIG?.AI_ENABLED &&
-        (window as any).RUNTIME_CONFIG?.AI_ENABLE_HOMEPAGE_ENTRY;
-      setAiEnabled(enabled);
-
-      // 加载AI默认消息配置
-      const defaultMsg = (window as any).RUNTIME_CONFIG
-        ?.AI_DEFAULT_MESSAGE_NO_VIDEO;
-      if (defaultMsg) {
-        setAiDefaultMessageNoVideo(defaultMsg);
-      }
-    }
   }, []);
 
   // 检查源站寻片功能是否启用
@@ -707,16 +683,6 @@ function HomeClient() {
                 </Link>
               )}
 
-              {/* AI问片入口 */}
-              {aiEnabled && (
-                <button
-                  onClick={() => setShowAIChat(true)}
-                  className='rounded-lg p-2 text-purple-500 transition-colors hover:text-purple-600'
-                  title='AI问片'
-                >
-                  <Bot size={20} />
-                </button>
-              )}
             </div>
 
             {/* 继续观看 */}
@@ -734,15 +700,6 @@ function HomeClient() {
       {/* HTTP 环境警告弹窗 */}
       {showHttpWarning && (
         <HttpWarningDialog onClose={() => setShowHttpWarning(false)} />
-      )}
-
-      {/* AI问片面板 */}
-      {aiEnabled && (
-        <AIChatPanel
-          isOpen={showAIChat}
-          onClose={() => setShowAIChat(false)}
-          welcomeMessage={aiDefaultMessageNoVideo}
-        />
       )}
 
       {/* 公告弹窗 */}

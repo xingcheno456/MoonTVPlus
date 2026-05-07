@@ -291,19 +291,28 @@ export async function GET(request: NextRequest) {
                     return matchFolder || matchTitle;
                   })
                   .map(([key, info]: [string, unknown]) => {
-                    id: key,
-                    source: 'openlist',
-                    source_name: '私人影库',
-                    weight: weightMap.get('openlist') ?? 0,
-                    title: info.title,
-                    poster: getTMDBImageUrl(info.poster_path),
-                    episodes: [],
-                    episodes_titles: [],
-                    year: info.release_date.split('-')[0] || '',
-                    desc: info.overview,
-                    type_name: info.media_type === 'movie' ? '电影' : '电视剧',
-                    douban_id: 0,
-                  }));
+                    const folderInfo = info as {
+                      title: string;
+                      poster_path: string | null;
+                      release_date: string;
+                      overview: string;
+                      media_type: 'movie' | 'tv';
+                    };
+                    return {
+                      id: key,
+                      source: 'openlist',
+                      source_name: '私人影库',
+                      weight: weightMap.get('openlist') ?? 0,
+                      title: folderInfo.title,
+                      poster: getTMDBImageUrl(folderInfo.poster_path),
+                      episodes: [],
+                      episodes_titles: [],
+                      year: folderInfo.release_date.split('-')[0] || '',
+                      desc: folderInfo.overview,
+                      type_name: folderInfo.media_type === 'movie' ? '电影' : '电视剧',
+                      douban_id: 0,
+                    };
+                  });
               }
               return [];
             } catch (error) {

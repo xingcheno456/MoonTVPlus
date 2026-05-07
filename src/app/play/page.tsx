@@ -9,7 +9,6 @@ import {
   Heart,
   Loader2,
   Router,
-  Sparkles,
   X,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -88,12 +87,9 @@ import {
   getVideoResolutionFromM3u8,
   processImageUrl,
 } from '@/lib/utils';
-import { useEnableAIComments } from '@/hooks/useEnableAIComments';
 import { useEnableComments } from '@/hooks/useEnableComments';
 import { usePlaySync } from '@/hooks/usePlaySync';
 
-import AIChatPanel from '@/components/player/AIChatPanel';
-import AIComments from '@/components/player/AIComments';
 import CorrectDialog from '@/components/common/CorrectDialog';
 import DanmakuFilterSettings from '@/components/danmaku/DanmakuFilterSettings';
 import DetailPanel from '@/components/DetailPanel';
@@ -199,8 +195,6 @@ interface WakeLockSentinel {
 
 interface RuntimeConfig {
   ENABLE_OFFLINE_DOWNLOAD?: boolean;
-  AI_ENABLED?: boolean;
-  AI_ENABLE_PLAYPAGE_ENTRY?: boolean;
   CUSTOM_AD_FILTER_VERSION?: number;
   DANMAKU_AUTO_LOAD_DEFAULT?: boolean;
   [key: string]: unknown;
@@ -245,7 +239,6 @@ function PlayPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const enableComments = useEnableComments();
-  const enableAIComments = useEnableAIComments();
   const { addDownloadTask } = useDownload();
   const { siteName } = useSite();
 
@@ -287,12 +280,6 @@ function PlayPageClient() {
   // 网盘搜索弹窗状态
   const [showPansouDialog, setShowPansouDialog] = useState(false);
 
-  // AI问片状态
-  const [showAIChat, setShowAIChat] = useState(false);
-  const [aiEnabled, setAiEnabled] = useState(false);
-  const [aiDefaultMessageWithVideo, setAiDefaultMessageWithVideo] =
-    useState('');
-
   // 纠错弹窗状态
   const [showCorrectDialog, setShowCorrectDialog] = useState(false);
 
@@ -315,16 +302,13 @@ function PlayPageClient() {
 
   // 抽屉管理：打开指定抽屉时关闭其他抽屉
   const openDrawer = (
-    drawerName: 'pansou' | 'aiChat' | 'correct' | 'detail',
+    drawerName: 'pansou' | 'correct' | 'detail',
   ) => {
     if (!isLargeScreen) {
       // 小屏设备不需要互斥
       switch (drawerName) {
         case 'pansou':
           setShowPansouDialog(true);
-          break;
-        case 'aiChat':
-          setShowAIChat(true);
           break;
         case 'correct':
           setShowCorrectDialog(true);
@@ -338,27 +322,9 @@ function PlayPageClient() {
 
     // 大屏设备：关闭其他抽屉
     setShowPansouDialog(drawerName === 'pansou');
-    setShowAIChat(drawerName === 'aiChat');
     setShowCorrectDialog(drawerName === 'correct');
     setShowDetailPanel(drawerName === 'detail');
   };
-
-  // 检查AI功能是否启用
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const enabled =
-        window.RUNTIME_CONFIG?.AI_ENABLED &&
-        window.RUNTIME_CONFIG?.AI_ENABLE_PLAYPAGE_ENTRY;
-      setAiEnabled(enabled);
-
-      // 加载AI默认消息配置
-      const defaultMsg = window.RUNTIME_CONFIG
-        ?.AI_DEFAULT_MESSAGE_WITH_VIDEO;
-      if (defaultMsg) {
-        setAiDefaultMessageWithVideo(defaultMsg);
-      }
-    }
-  }, []);
 
   // 网页全屏状态 - 控制导航栏的显示隐藏
   const [isWebFullscreen, setIsWebFullscreen] = useState(false);
@@ -10697,19 +10663,6 @@ function PlayPageClient() {
                     >
                       <Cloud className='h-6 w-6 text-gray-700 dark:text-gray-300' />
                     </button>
-                    {/* AI问片按钮 */}
-                    {aiEnabled && detail && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDrawer('aiChat');
-                        }}
-                        className='flex-shrink-0 transition-opacity hover:opacity-80'
-                        title='AI问片'
-                      >
-                        <Sparkles className='h-6 w-6 text-gray-700 dark:text-gray-300' />
-                      </button>
-                    )}
                     {/* 详情按钮 */}
                     {detail && (
                       <button
@@ -10961,31 +10914,6 @@ function PlayPageClient() {
               </div>
             )}
 
-            {/* AI评论区域 */}
-            {videoTitle && enableAIComments && (
-              <div className='-mx-3 mt-6 md:mx-0 md:px-4'>
-                <div className='overflow-hidden rounded-xl border border-blue-200/50 bg-white/50 backdrop-blur-sm dark:border-blue-700/50 dark:bg-gray-800/50'>
-                  {/* 标题 */}
-                  <div className='border-b border-blue-200 px-3 py-4 dark:border-blue-700 md:px-6'>
-                    <h3 className='flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white'>
-                      <svg
-                        className='h-5 w-5 text-blue-600 dark:text-blue-400'
-                        fill='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path d='M13 10V3L4 14h7v7l9-11h-7z' />
-                      </svg>
-                      AI生成评论
-                    </h3>
-                  </div>
-
-                  {/* 评论内容 */}
-                  <div className='p-3 md:p-6'>
-                    <AIComments movieName={videoTitle} />
-                  </div>
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
@@ -11081,27 +11009,6 @@ function PlayPageClient() {
             </div>
           </div>
         ))}
-
-      {/* AI问片面板 */}
-      {aiEnabled && detail && (
-        <AIChatPanel
-          isOpen={showAIChat}
-          onClose={() => setShowAIChat(false)}
-          context={{
-            title: detail.title,
-            year: detail.year,
-            douban_id: videoDoubanId !== 0 ? videoDoubanId : undefined,
-            currentEpisode: currentEpisodeIndex + 1,
-          }}
-          welcomeMessage={
-            aiDefaultMessageWithVideo
-              ? aiDefaultMessageWithVideo.replace('{title}', detail.title || '')
-              : `想了解《${detail.title}》的更多信息吗？我可以帮你查询剧情、演员、评价等。`
-          }
-          useDrawer={isLargeScreen}
-          drawerWidth='w-[400px]'
-        />
-      )}
 
       {/* 纠错弹窗 - 仅小雅源显示 */}
       {detail && detail.source === 'xiaoya' && (
