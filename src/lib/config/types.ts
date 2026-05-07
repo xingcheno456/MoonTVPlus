@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { AdminConfig } from '../admin.types';
 
 export interface ApiSite {

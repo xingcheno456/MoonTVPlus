@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { API_CONFIG, ApiSite, getConfig } from '@/lib/config';
 import { getCachedSearchPage, setCachedSearchPage } from '@/lib/search-cache';
 import { SearchResult } from '@/lib/types';
@@ -130,6 +128,7 @@ async function searchWithCache(
     // 写入缓存（成功）
     setCachedSearchPage(apiSite.key, query, page, 'ok', results, pageCount);
     return { results, pageCount };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     clearTimeout(timeoutId);
     // 识别被 AbortController 中止（超时）

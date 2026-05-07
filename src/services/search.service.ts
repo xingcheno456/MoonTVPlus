@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest } from 'next/server';
 
 import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
@@ -127,7 +125,7 @@ async function searchEmbySources(
           return [];
         }
       })(),
-      new Promise<any[]>((_, reject) =>
+      new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(`${embyConfig.name} timeout`)), timeout),
       ),
     ]).catch((error) => {
@@ -175,12 +173,14 @@ async function searchOpenList(
         }
 
         if (metaInfo && metaInfo.folders) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           return Object.entries(metaInfo.folders)
             .filter(([folderName, info]: [string, any]) => {
               const matchFolder = folderName.toLowerCase().includes(query.toLowerCase());
-              const matchTitle = info.title.toLowerCase().includes(query.toLowerCase());
+              const matchTitle = (info as { title: string }).title.toLowerCase().includes(query.toLowerCase());
               return matchFolder || matchTitle;
             })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .map(([folderName, info]: [string, any]) => ({
               id: folderName,
               source: 'openlist',
@@ -202,7 +202,7 @@ async function searchOpenList(
         return [];
       }
     })(),
-    new Promise<any[]>((_, reject) =>
+    new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('OpenList timeout')), timeout),
     ),
   ]).catch((error) => {
@@ -274,7 +274,7 @@ async function searchSourceScripts(
           return [];
         }
       })(),
-      new Promise<any[]>((_, reject) =>
+      new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(`${script.name} timeout`)), timeout),
       ),
     ]).catch((error) => {
@@ -412,13 +412,15 @@ export async function generateSuggestions(
       new Set(
         results
           .filter(
-            (r: any) =>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (r: any) =>
               config.SiteConfig.DisableYellowFilter ||
               !yellowWords.some((word: string) =>
                 (r.type_name || '').includes(word),
               ),
           )
-          .map((r: any) => r.title)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((r: any) => r.title)
           .filter(Boolean)
           .flatMap((title: string) => title.split(/[ -:：·、-]/))
           .filter(

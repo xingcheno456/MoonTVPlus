@@ -164,6 +164,7 @@ export async function setCachedConfig(config: AdminConfig) {
 }
 
 export async function clearConfigCache() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   cachedConfig = undefined as any;
   configInitPromise = null;
 }

@@ -21,6 +21,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
       });
 
       if (!response.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const errorBody = await parseApiResponse<{ error?: string }>(response).catch(() => ({} as any));
         throw new Error(
           errorBody.error || `请求失败 (${response.status})`,

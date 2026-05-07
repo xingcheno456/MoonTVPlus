@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { AdminConfig } from '../admin.types';
 import { BUILTIN_DANMAKU_API_BASE } from './types';
 
