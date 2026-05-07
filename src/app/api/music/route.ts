@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -11,7 +9,8 @@ import { logger } from '../../../lib/logger';
 
 export const runtime = 'nodejs';
 
-function safeResolveTransformPath(data: any, expr: string): any {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function safeResolveTransformPath(data: any, expr: string): string {
   const trimmed = expr.replace(/^return\s+/, '').trim();
   if (!trimmed.startsWith('data')) {
     throw new Error('Transform must start with "data"');
@@ -50,7 +49,9 @@ const isCloudflare =
 
 // 服务器端内存缓存
 const serverCache = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   methodConfigs: new Map<string, { data: any; timestamp: number }>(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   proxyRequests: new Map<string, { data: any; timestamp: number }>(),
   CACHE_DURATION: 24 * 60 * 60 * 1000, // 24小时缓存
 };
@@ -275,10 +276,10 @@ async function executeMethod(
   platform: string,
   func: string,
   variables: Record<string, string> = {},
-): Promise<any> {
+): Promise<unknown> {
   // 1. 获取方法配置
   const cacheKey = `method-config-${platform}-${func}`;
-  let config: any;
+  let config: unknown | null;
 
   const cached = serverCache.methodConfigs.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < serverCache.CACHE_DURATION) {
@@ -301,15 +302,15 @@ async function executeMethod(
   const params: Record<string, string> = {};
 
   // 先将 variables 中的值转换为可执行的变量
-  const evalContext: Record<string, any> = {};
+  const evalContext: Record<string, number | string> = {};
   for (const [key, value] of Object.entries(variables)) {
     // 尝试将字符串转换为数字（如果可能）
     const numValue = Number(value);
     evalContext[key] = isNaN(numValue) ? value : numValue;
   }
 
-  // 递归处理对象中的模板变量（使用安全求值器，无 new Function/eval）
-  function processTemplateValue(value: any): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function processTemplateValue(value: any): unknown {
     if (typeof value === 'string') {
       const expressionRegex = /\{\{(.+?)\}\}/g;
       return value.replace(expressionRegex, (_match, expression) => {
@@ -401,7 +402,8 @@ async function executeMethod(
       } else if (Array.isArray(obj)) {
         return obj.map((item) => processKuwoImages(item));
       } else if (typeof obj === 'object' && obj !== null) {
-        const result: any = {};
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(obj)) {
           result[key] = processKuwoImages(value);
         }
