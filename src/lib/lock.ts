@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 // 简单的内存锁管理器
 class LockManager {
   private locks: Map<string, { locked: boolean; queue: Array<() => void> }> =
@@ -86,11 +84,16 @@ class LockManager {
 
 // 全局单例
 const globalKey = Symbol.for('__MOONTV_LOCK_MANAGER__');
-let _lockManager: LockManager | undefined = (global as any)[globalKey];
+interface GlobalLockStore {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: symbol]: any;
+}
+
+let _lockManager: LockManager | undefined = (global as unknown as GlobalLockStore)[globalKey];
 
 if (!_lockManager) {
   _lockManager = new LockManager();
-  (global as any)[globalKey] = _lockManager;
+  (global as unknown as GlobalLockStore)[globalKey] = _lockManager;
 }
 
 // TypeScript doesn't recognize that lockManager is always defined after the if block

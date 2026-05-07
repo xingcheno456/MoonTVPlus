@@ -86,11 +86,11 @@ function getDoubanImageProxyConfig(): {
 
   const doubanImageProxyType =
     localStorage.getItem('doubanImageProxyType') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
+    (window as { RUNTIME_CONFIG?: { DOUBAN_IMAGE_PROXY_TYPE?: string; DOUBAN_IMAGE_PROXY?: string } }).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
     'cmliussss-cdn-ali';
   const doubanImageProxy =
     localStorage.getItem('doubanImageProxyUrl') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY ||
+    (window as { RUNTIME_CONFIG?: { DOUBAN_IMAGE_PROXY?: string } }).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY ||
     '';
   const doubanImageProxyBackupType =
     (localStorage.getItem(
@@ -370,6 +370,7 @@ export async function getVideoResolutionFromM3u8(
       });
 
       // 监听片段加载完成，只需首个分片即可计算速度
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       hls.on(Hls.Events.FRAG_LOADED, (event: any, data: any) => {
         if (
           fragmentStartTime > 0 &&
@@ -425,6 +426,7 @@ export async function getVideoResolutionFromM3u8(
       hls.attachMedia(video);
 
       // 监听hls.js错误
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       hls.on(Hls.Events.ERROR, (event: any, data: any) => {
         logger.error('HLS错误:', data);
         if (data.fatal) {

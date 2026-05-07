@@ -1,6 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 
 import { Moon, Sun } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -40,16 +38,19 @@ export function ThemeToggle() {
     return <div className='h-10 w-10' />;
   }
 
+interface DocumentWithViewTransition {
+  startViewTransition?: (callback: () => void) => void;
+}
+
   const toggleTheme = () => {
-    // 检查浏览器是否支持 View Transitions API
     const targetTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
     setThemeColor(targetTheme);
-    if (!(document as any).startViewTransition) {
+    if (!(document as unknown as DocumentWithViewTransition).startViewTransition) {
       setTheme(targetTheme);
       return;
     }
 
-    (document as any).startViewTransition(() => {
+    (document as unknown as DocumentWithViewTransition).startViewTransition!(() => {
       setTheme(targetTheme);
     });
   };
