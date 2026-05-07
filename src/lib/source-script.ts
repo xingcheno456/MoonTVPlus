@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import * as cheerio from 'cheerio/slim';
 import { randomBytes } from 'crypto';
 import { mkdirSync, unlinkSync, writeFileSync } from 'fs';
@@ -16,7 +14,8 @@ const DEFAULT_TIMEOUT_MS = 10000;
 let _registryCache: { data: SourceScriptRegistry; ts: number } | null = null;
 const REGISTRY_CACHE_TTL_MS = 4 * 60 * 60 * 1000;
 
-const _compiledCache = new Map<string, any>();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const _compiledCache = new Map<string, Record<string, any>>();
 const MAX_COMPILED_CACHE_SIZE = 50;
 const _runtimeCache = new Map<string, { value: string; expiresAt: number }>();
 
@@ -48,7 +47,8 @@ export interface SourceScriptTestResult {
   ok: boolean;
   durationMs: number;
   logs: string[];
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result?: any;
   error?: string;
 }
@@ -195,7 +195,7 @@ function assertScriptKey(key: string) {
 function createLogCollector() {
   const logs: string[] = [];
 
-  const push = (level: string, args: any[]) => {
+  const push = (level: string, args: unknown[]) => {
     const rendered = args
       .map((arg) => {
         if (typeof arg === 'string') return arg;
@@ -216,9 +216,9 @@ function createLogCollector() {
   return {
     logs,
     log: {
-      info: (...args: any[]) => push('info', args),
-      warn: (...args: any[]) => push('warn', args),
-      error: (...args: any[]) => push('error', args),
+      info: (...args: unknown[]) => push('info', args),
+      warn: (...args: unknown[]) => push('warn', args),
+      error: (...args: unknown[]) => push('error', args),
     },
   };
 }
@@ -296,8 +296,8 @@ function createUtils() {
 
 const WORKER_DIR = join(process.cwd(), '.data', 'worker-scripts');
 
-function sanitizeSandbox(sandbox: Record<string, any>): Record<string, any> {
-  const clean: Record<string, any> = {};
+function sanitizeSandbox(sandbox: Record<string, unknown>): Record<string, unknown> {
+  const clean: Record<string, unknown> = {};
   for (const key of Object.keys(sandbox)) {
     if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
       continue;
@@ -310,7 +310,7 @@ function sanitizeSandbox(sandbox: Record<string, any>): Record<string, any> {
 function createScriptFactory(code: string) {
   mkdirSync(WORKER_DIR, { recursive: true });
 
-  return (sandbox: Record<string, any>) => {
+  return (sandbox: Record<string, unknown>) => {
     return new Promise((resolve, reject) => {
       const workerFile = join(
         WORKER_DIR,
@@ -354,7 +354,7 @@ ${userCode}
           reject(new Error('Script execution timed out'));
         }, DEFAULT_TIMEOUT_MS / 2);
 
-        worker.on('message', (msg: { ok: boolean; result?: any; error?: string }) => {
+        worker.on('message', (msg: { ok: boolean; result?: unknown; error?: string }) => {
           clearTimeout(timer);
           void worker.terminate();
           try { unlinkSync(workerFile); } catch {}
@@ -432,7 +432,7 @@ async function createScriptContext(
         url: response.url,
         headers: Object.fromEntries(response.headers.entries()),
         text: () => response.text(),
-        json: <T = any>() => response.json() as Promise<T>,
+        json: <T = unknown>() => response.json() as Promise<T>,
         arrayBuffer: () => response.arrayBuffer(),
       };
     } finally {
@@ -464,7 +464,7 @@ async function createScriptContext(
           const text = await response.text();
           return cheerio.load(text);
         },
-        async getJson<T = any>(
+        async getJson<T = unknown>(
           url: string,
           options?: Omit<Parameters<typeof fetcher>[0], 'url' | 'method'>,
         ) {
@@ -480,7 +480,7 @@ async function createScriptContext(
         load: (html: string) => cheerio.load(html),
       },
       json: {
-        parse<T = any>(text: string, fallback?: T) {
+        parse<T = unknown>(text: string, fallback?: T) {
           try {
             return JSON.parse(text) as T;
           } catch {
@@ -516,7 +516,7 @@ async function createScriptContext(
   };
 }
 
-function normalizeScript(script: any) {
+function normalizeScript(script: unknown) {
   if (!script || typeof script !== 'object') {
     throw new Error('脚本必须返回对象');
   }
@@ -566,6 +566,7 @@ async function compileSourceScript(
 export async function executeSavedSourceScript(input: {
   key: string;
   hook: SourceScriptHook;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: Record<string, any>;
   configValues?: Record<string, string>;
 }): Promise<SourceScriptTestResult> {
@@ -740,6 +741,7 @@ export async function toggleSourceScriptEnabled(id: string) {
 export async function testSourceScript(input: {
   code: string;
   hook: SourceScriptHook;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: Record<string, any>;
   name?: string;
   key?: string;
@@ -843,12 +845,13 @@ export function normalizeScriptSearchResults(input: {
   result: unknown;
 }) {
   const list = Array.isArray(input.result?.list) ? input.result.list : [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return list.map((item: any) => {
     const titles = Array.isArray(item.episodes_titles)
       ? item.episodes_titles
       : [];
     const episodes = Array.isArray(item.episodes)
-      ? item.episodes.map((episode: any, index: number) => {
+      ? item.episodes.map((episode: unknown, index: number) => {
           const playUrl =
             typeof episode === 'string'
               ? episode
@@ -889,6 +892,7 @@ export function normalizeScriptSearchResults(input: {
 export function normalizeScriptRecommendResults(input: {
   scriptKey: string;
   scriptName: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result: any;
   sources?: ScriptSourceDescriptor[];
   defaultSourceId?: string;
@@ -899,6 +903,7 @@ export function normalizeScriptRecommendResults(input: {
   );
   const fallbackSourceId = input.defaultSourceId || 'default';
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return list.map((item: any) => {
     const sourceId = String(
       item?.sourceId || item?.source_id || item?.source || fallbackSourceId,
@@ -939,6 +944,7 @@ export function normalizeScriptDetailResult(input: {
   sourceId: string;
   sourceName: string;
   detailId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result: any;
 }) {
   const playbacks = Array.isArray(input.result?.playbacks)
@@ -955,6 +961,7 @@ export function normalizeScriptDetailResult(input: {
   const flattenedEpisodes: string[] = [];
   const flattenedTitles: string[] = [];
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playbacks.forEach((playback: any) => {
     const playbackSourceName = String(playback.sourceName || input.sourceName);
     const titles = Array.isArray(playback.episodes_titles)
@@ -962,6 +969,7 @@ export function normalizeScriptDetailResult(input: {
       : [];
     const episodes = Array.isArray(playback.episodes) ? playback.episodes : [];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     episodes.forEach((episode: any, index: number) => {
       const rawPlayUrl =
         typeof episode === 'string'
@@ -1013,6 +1021,7 @@ export function normalizeScriptDetailResult(input: {
 export async function resolveScriptDetailPlaybacks(input: {
   scriptKey: string;
   sourceId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result: any;
 }) {
   const playbacks = Array.isArray(input.result?.playbacks)
@@ -1038,6 +1047,7 @@ export async function resolveScriptDetailPlaybacks(input: {
   const { ctx } = await createScriptContext(script);
 
   const resolvedPlaybacks = await Promise.all(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     playbacks.map(async (playback: any) => {
       const playbackSourceId = String(playback.sourceId || input.sourceId);
       const episodes = Array.isArray(playback.episodes)
@@ -1045,6 +1055,7 @@ export async function resolveScriptDetailPlaybacks(input: {
         : [];
 
       const resolvedEpisodes = await Promise.all(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         episodes.map(async (episode: any, index: number) => {
           const playUrl =
             typeof episode === 'string'
