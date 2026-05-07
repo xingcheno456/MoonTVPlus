@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { logger } from './logger';
 import { DoubanItem, DoubanResult } from './types';
 
@@ -86,7 +84,8 @@ interface DoubanDetailApiResponse {
   episodes_info?: string;
   cover_url?: string;
   url?: string;
-  [key: string]: any; // 允许其他字段
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
 }
 
 type DoubanProxyType =
