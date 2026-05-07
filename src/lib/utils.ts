@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import bs58 from 'bs58';
 import he from 'he';
 import Hls from 'hls.js';

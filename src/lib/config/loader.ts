@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { AdminConfig } from '../admin.types';
 import { db, STORAGE_TYPE } from '../db';
 import { configSelfCheck } from './self-check';
