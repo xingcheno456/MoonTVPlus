@@ -3,7 +3,6 @@
 export type {
   CacheData,
   Favorite,
-  MusicPlayRecord,
   PlayRecord,
   UserCacheStore,
 } from './db/client/types';
@@ -66,13 +65,6 @@ export {
   getDanmakuFilterConfig,
   saveDanmakuFilterConfig,
 } from './db/client/danmaku';
-
-export {
-  getAllMusicPlayRecords,
-  saveMusicPlayRecord,
-  deleteMusicPlayRecord,
-  clearAllMusicPlayRecords,
-} from './db/client/music';
 
 export {
   getEpisodeFilterConfig,

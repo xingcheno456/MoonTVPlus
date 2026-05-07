@@ -10,7 +10,6 @@ import {
   ServerUserRepository,
   ServerTvboxTokenRepository,
   ServerConfigRepository,
-  ServerMusicRepository,
   ServerNotificationRepository,
   ServerMovieRequestRepository,
 } from './server-repository';
@@ -29,7 +28,6 @@ export function buildServerRepositories(): IRepositories {
     users: new ServerUserRepository(storage),
     tvboxTokens: new ServerTvboxTokenRepository(storage),
     config: new ServerConfigRepository(storage),
-    music: new ServerMusicRepository(storage),
     notifications: new ServerNotificationRepository(storage),
     movieRequests: new ServerMovieRequestRepository(storage),
   };

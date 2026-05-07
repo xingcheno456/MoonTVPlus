@@ -16,7 +16,6 @@ import {
   ClientSearchHistoryRepository,
   ClientSkipConfigRepository,
   ClientDanmakuFilterRepository,
-  ClientMusicRepository,
 } from './client-repository';
 
 function getCurrentUsername(): string | null {
@@ -278,6 +277,5 @@ export function createClientRepositories() {
     searchHistory: new HybridSearchHistoryRepository(),
     skipConfigs: new HybridSkipConfigRepository(),
     danmakuFilters: new HybridDanmakuFilterRepository(),
-    music: new ClientMusicRepository(),
   };
 }

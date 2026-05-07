@@ -1,10 +1,5 @@
 import type { AdminConfig } from '../admin.types';
 import type {
-  MusicV2HistoryRecord,
-  MusicV2PlaylistItem,
-  MusicV2PlaylistRecord,
-} from '../music-v2';
-import type {
   DanmakuFilterConfig,
   Favorite,
   IStorage,
@@ -25,7 +20,6 @@ import type {
   IUserRepository,
   ITvboxTokenRepository,
   IConfigRepository,
-  IMusicRepository,
   INotificationRepository,
   IMovieRequestRepository,
 } from './types';
@@ -384,132 +378,6 @@ export class ServerConfigRepository implements IConfigRepository {
   }
 }
 
-export class ServerMusicRepository implements IMusicRepository {
-  constructor(private storage: IStorage) {}
-
-  async getPlayRecord(userName: string, platform: string, id: string): Promise<any | null> {
-    return this.storage.getMusicPlayRecord(userName, generateStorageKey(platform, id));
-  }
-
-  async savePlayRecord(userName: string, platform: string, id: string, record: any): Promise<void> {
-    await this.storage.setMusicPlayRecord(userName, generateStorageKey(platform, id), record);
-  }
-
-  async batchSavePlayRecords(
-    userName: string,
-    records: Array<{ platform: string; id: string; record: any }>,
-  ): Promise<void> {
-    const batch = records.map(({ platform, id, record }) => ({
-      key: generateStorageKey(platform, id),
-      record,
-    }));
-    await this.storage.batchSetMusicPlayRecords(userName, batch);
-  }
-
-  async getAllPlayRecords(userName: string): Promise<Record<string, any>> {
-    return this.storage.getAllMusicPlayRecords(userName);
-  }
-
-  async deletePlayRecord(userName: string, platform: string, id: string): Promise<void> {
-    await this.storage.deleteMusicPlayRecord(userName, generateStorageKey(platform, id));
-  }
-
-  async clearAllPlayRecords(userName: string): Promise<void> {
-    await this.storage.clearAllMusicPlayRecords(userName);
-  }
-
-  async listV2History(userName: string): Promise<MusicV2HistoryRecord[]> {
-    return this.storage.listMusicV2History?.(userName) ?? [];
-  }
-
-  async upsertV2History(userName: string, record: MusicV2HistoryRecord): Promise<void> {
-    await this.storage.upsertMusicV2History?.(userName, record);
-  }
-
-  async batchUpsertV2History(userName: string, records: MusicV2HistoryRecord[]): Promise<void> {
-    await this.storage.batchUpsertMusicV2History?.(userName, records);
-  }
-
-  async deleteV2History(userName: string, songId: string): Promise<void> {
-    await this.storage.deleteMusicV2History?.(userName, songId);
-  }
-
-  async clearV2History(userName: string): Promise<void> {
-    await this.storage.clearMusicV2History?.(userName);
-  }
-
-  async createV2Playlist(userName: string, playlist: { id: string; name: string; description?: string; cover?: string }): Promise<void> {
-    await this.storage.createMusicV2Playlist?.(userName, playlist);
-  }
-
-  async getV2Playlist(playlistId: string): Promise<MusicV2PlaylistRecord | null> {
-    return this.storage.getMusicV2Playlist?.(playlistId) ?? null;
-  }
-
-  async listV2Playlists(userName: string): Promise<MusicV2PlaylistRecord[]> {
-    return this.storage.listMusicV2Playlists?.(userName) ?? [];
-  }
-
-  async updateV2Playlist(playlistId: string, updates: { name?: string; description?: string; cover?: string; song_count?: number }): Promise<void> {
-    await this.storage.updateMusicV2Playlist?.(playlistId, updates);
-  }
-
-  async deleteV2Playlist(playlistId: string): Promise<void> {
-    await this.storage.deleteMusicV2Playlist?.(playlistId);
-  }
-
-  async addV2PlaylistItem(playlistId: string, item: MusicV2PlaylistItem): Promise<void> {
-    await this.storage.addMusicV2PlaylistItem?.(playlistId, item);
-  }
-
-  async removeV2PlaylistItem(playlistId: string, songId: string): Promise<void> {
-    await this.storage.removeMusicV2PlaylistItem?.(playlistId, songId);
-  }
-
-  async listV2PlaylistItems(playlistId: string): Promise<MusicV2PlaylistItem[]> {
-    return this.storage.listMusicV2PlaylistItems?.(playlistId) ?? [];
-  }
-
-  async hasV2PlaylistItem(playlistId: string, songId: string): Promise<boolean> {
-    return this.storage.hasMusicV2PlaylistItem?.(playlistId, songId) ?? false;
-  }
-
-  async createV1Playlist(userName: string, playlist: { id: string; name: string; description?: string; cover?: string }): Promise<void> {
-    await this.storage.createMusicPlaylist?.(userName, playlist);
-  }
-
-  async getV1Playlist(playlistId: string): Promise<any | null> {
-    return this.storage.getMusicPlaylist?.(playlistId) ?? null;
-  }
-
-  async listV1Playlists(userName: string): Promise<any[]> {
-    return this.storage.getUserMusicPlaylists?.(userName) ?? [];
-  }
-
-  async updateV1Playlist(playlistId: string, updates: { name?: string; description?: string; cover?: string }): Promise<void> {
-    await this.storage.updateMusicPlaylist?.(playlistId, updates);
-  }
-
-  async deleteV1Playlist(playlistId: string): Promise<void> {
-    await this.storage.deleteMusicPlaylist?.(playlistId);
-  }
-
-  async addV1PlaylistSong(playlistId: string, song: { platform: string; id: string; name: string; artist: string; album?: string; pic?: string; duration: number }): Promise<void> {
-    await this.storage.addSongToPlaylist?.(playlistId, song);
-  }
-
-  async removeV1PlaylistSong(playlistId: string, platform: string, songId: string): Promise<void> {
-    await this.storage.removeSongFromPlaylist?.(playlistId, platform, songId);
-  }
-
-  async listV1PlaylistSongs(playlistId: string): Promise<any[]> {
-    return this.storage.getPlaylistSongs?.(playlistId) ?? [];
-  }
-
-  async isSongInV1Playlist(playlistId: string, platform: string, songId: string): Promise<boolean> {
-    return this.storage.isSongInPlaylist?.(playlistId, platform, songId) ?? false;
-  }
-}
 
 export class ServerNotificationRepository implements INotificationRepository {
   constructor(private storage: IStorage) {}

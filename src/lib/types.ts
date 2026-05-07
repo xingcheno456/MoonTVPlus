@@ -1,9 +1,4 @@
 import { AdminConfig } from './admin.types';
-import {
-  MusicV2HistoryRecord,
-  MusicV2PlaylistItem,
-  MusicV2PlaylistRecord,
-} from './music-v2';
 
 // 播放记录数据结构
 export interface PlayRecord {
@@ -127,89 +122,6 @@ export interface IMovieRequestStorage {
   ): Promise<void>;
 }
 
-export interface IMusicStorage {
-  getMusicPlayRecord(userName: string, key: string): Promise<any | null>;
-  setMusicPlayRecord(userName: string, key: string, record: any): Promise<void>;
-  batchSetMusicPlayRecords(
-    userName: string,
-    records: { key: string; record: any }[],
-  ): Promise<void>;
-  getAllMusicPlayRecords(userName: string): Promise<{ [key: string]: any }>;
-  deleteMusicPlayRecord(userName: string, key: string): Promise<void>;
-  clearAllMusicPlayRecords(userName: string): Promise<void>;
-}
-
-export interface IMusicV2Storage {
-  listMusicV2History?(userName: string): Promise<MusicV2HistoryRecord[]>;
-  upsertMusicV2History?(userName: string, record: MusicV2HistoryRecord): Promise<void>;
-  batchUpsertMusicV2History?(userName: string, records: MusicV2HistoryRecord[]): Promise<void>;
-  deleteMusicV2History?(userName: string, songId: string): Promise<void>;
-  clearMusicV2History?(userName: string): Promise<void>;
-  createMusicV2Playlist?(
-    userName: string,
-    playlist: { id: string; name: string; description?: string; cover?: string },
-  ): Promise<void>;
-  getMusicV2Playlist?(playlistId: string): Promise<MusicV2PlaylistRecord | null>;
-  listMusicV2Playlists?(userName: string): Promise<MusicV2PlaylistRecord[]>;
-  updateMusicV2Playlist?(
-    playlistId: string,
-    updates: { name?: string; description?: string; cover?: string; song_count?: number },
-  ): Promise<void>;
-  deleteMusicV2Playlist?(playlistId: string): Promise<void>;
-  addMusicV2PlaylistItem?(playlistId: string, item: MusicV2PlaylistItem): Promise<void>;
-  removeMusicV2PlaylistItem?(playlistId: string, songId: string): Promise<void>;
-  listMusicV2PlaylistItems?(playlistId: string): Promise<MusicV2PlaylistItem[]>;
-  hasMusicV2PlaylistItem?(playlistId: string, songId: string): Promise<boolean>;
-}
-
-export interface IMusicV1PlaylistStorage {
-  createMusicPlaylist?(
-    userName: string,
-    playlist: { id: string; name: string; description?: string; cover?: string },
-  ): Promise<void>;
-  getMusicPlaylist?(playlistId: string): Promise<MusicV1Playlist | null>;
-  getUserMusicPlaylists?(userName: string): Promise<MusicV1Playlist[]>;
-  updateMusicPlaylist?(
-    playlistId: string,
-    updates: { name?: string; description?: string; cover?: string },
-  ): Promise<void>;
-  deleteMusicPlaylist?(playlistId: string): Promise<void>;
-  addSongToPlaylist?(
-    playlistId: string,
-    song: {
-      platform: string;
-      id: string;
-      name: string;
-      artist: string;
-      album?: string;
-      pic?: string;
-      duration: number;
-    },
-  ): Promise<void>;
-  removeSongFromPlaylist?(playlistId: string, platform: string, songId: string): Promise<void>;
-  getPlaylistSongs?(playlistId: string): Promise<MusicV1PlaylistSong[]>;
-  isSongInPlaylist?(playlistId: string, platform: string, songId: string): Promise<boolean>;
-}
-
-export interface MusicV1Playlist {
-  id: string;
-  username: string;
-  name: string;
-  description?: string;
-  cover?: string;
-  song_count: number;
-}
-
-export interface MusicV1PlaylistSong {
-  platform: string;
-  id: string;
-  name: string;
-  artist: string;
-  album?: string;
-  pic?: string;
-  duration: number;
-}
-
 export interface IUserV2Extension {
   createUserV2?(
     userName: string,
@@ -307,10 +219,7 @@ export type IStorage = IPlayRecordStorage &
   IConfigStorage &
   INotificationStorage &
   IMovieRequestStorage &
-  IMusicStorage &
   IV2UserExtension &
-  IMusicV2Storage &
-  IMusicV1PlaylistStorage &
   IUserV2Extension &
   ITvboxTokenStorage;
 

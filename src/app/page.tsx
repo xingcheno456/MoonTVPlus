@@ -5,7 +5,6 @@ import {
   ChevronRight,
   Link as LinkIcon,
   ListVideo,
-  Music,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -70,7 +69,6 @@ function HomeClient() {
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [showHttpWarning, setShowHttpWarning] = useState(true);
   const [sourceSearchEnabled, setSourceSearchEnabled] = useState(true);
-  const [musicEnabled, setMusicEnabled] = useState(false);
   const [showDirectPlayDialog, setShowDirectPlayDialog] = useState(false);
   const [directPlayUrl, setDirectPlayUrl] = useState('');
 
@@ -147,13 +145,6 @@ function HomeClient() {
   }, []);
 
   // 检查音乐功能是否启用
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const enabled = !!(window as any).RUNTIME_CONFIG?.MUSIC_ENABLED;
-      setMusicEnabled(enabled);
-    }
-  }, []);
 
   // 检查公告弹窗状态
   useEffect(() => {
@@ -662,15 +653,6 @@ function HomeClient() {
                 <LinkIcon size={18} />
               </button>
 
-              {musicEnabled && (
-                <Link href='/music'>
-                  <button
-                    className='rounded-lg p-1.5 text-green-500 transition-colors hover:text-green-600'
-                    title='音乐视听'
-                  >
-                    <Music size={18} />
-                  </button>
-                </Link>
               )}
 
               {/* 源站寻片入口 */}

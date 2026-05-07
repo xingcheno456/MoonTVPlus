@@ -12,7 +12,6 @@ import {
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 
-import PlayRecordsPanel from '@/components/PlayRecordsPanel';
 import VideoCard from '@/components/VideoCard';
 import VirtualScrollableRow from '@/components/common/VirtualScrollableRow';
 
@@ -30,7 +29,6 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
   const [playRecords, setPlayRecords] = useState<PlayRecordItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [showPlayRecordsPanel, setShowPlayRecordsPanel] = useState(false);
 
   const updatePlayRecords = (
     allRecords: Record<string, PlayRecord>,
@@ -122,13 +120,6 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
                 onClick={() => setShowConfirmDialog(true)}
               >
                 清空
-              </button>
-              <button
-                className='inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
-                onClick={() => setShowPlayRecordsPanel(true)}
-                aria-label='查看全部播放记录'
-              >
-                <ChevronRight className='h-4 w-4' />
               </button>
             </div>
           )}
@@ -289,14 +280,6 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
           document.body,
         )}
 
-      {showPlayRecordsPanel &&
-        createPortal(
-          <PlayRecordsPanel
-            isOpen={showPlayRecordsPanel}
-            onClose={() => setShowPlayRecordsPanel(false)}
-          />,
-          document.body,
-        )}
     </>
   );
 }

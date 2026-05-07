@@ -2,7 +2,7 @@
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { logger } from '@/lib/logger';
-import type { CacheData, Favorite, MusicPlayRecord, PlayRecord, UserCacheStore } from './types';
+import type { CacheData, Favorite, PlayRecord, UserCacheStore } from './types';
 import type { DanmakuFilterConfig, SkipConfig } from '@/lib/types';
 
 const CACHE_PREFIX = 'moontv_cache_';
@@ -295,32 +295,6 @@ class HybridCacheManager {
 
     const userCache = this.getUserCache(username);
     userCache.danmakuFilterConfig = this.createCacheData(data);
-    this.saveUserCache(username, userCache);
-  }
-
-  /**
-   * 音乐播放记录缓存方法
-   */
-  getCachedMusicPlayRecords(): Record<string, MusicPlayRecord> | null {
-    const username = this.getCurrentUsername();
-    if (!username) return null;
-
-    const userCache = this.getUserCache(username);
-    const cached = userCache.musicPlayRecords;
-
-    if (cached && this.isCacheValid(cached)) {
-      return cached.data;
-    }
-
-    return null;
-  }
-
-  cacheMusicPlayRecords(data: Record<string, MusicPlayRecord>): void {
-    const username = this.getCurrentUsername();
-    if (!username) return;
-
-    const userCache = this.getUserCache(username);
-    userCache.musicPlayRecords = this.createCacheData(data);
     this.saveUserCache(username, userCache);
   }
 

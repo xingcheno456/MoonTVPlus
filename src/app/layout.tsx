@@ -86,8 +86,6 @@ export default async function RootLayout({
   let oidcButtonText = '';
   let enableMovieRequest = true;
   let customAdFilterVersion = 0;
-  let tuneHubEnabled = false;
-  let musicProxyEnabled = true;
   let advancedRecommendationEnabled = false;
   let customCategories = [] as {
     name: string;
@@ -136,9 +134,6 @@ export default async function RootLayout({
 
     // 自定义去广告代码版本号
     customAdFilterVersion = config.SiteConfig?.CustomAdFilterVersion || 0;
-    // 音乐功能配置
-    tuneHubEnabled = config.MusicConfig?.Enabled || false;
-    musicProxyEnabled = config.MusicConfig?.ProxyEnabled ?? true;
     // 高级推荐功能配置：存在已启用视频源脚本时显示
     advancedRecommendationEnabled =
       (await listEnabledSourceScripts()).length > 0;
@@ -209,8 +204,6 @@ export default async function RootLayout({
     ENABLE_MOVIE_REQUEST: enableMovieRequest,
     ADVANCED_RECOMMENDATION_ENABLED: advancedRecommendationEnabled,
     CUSTOM_AD_FILTER_VERSION: customAdFilterVersion,
-    MUSIC_ENABLED: tuneHubEnabled,
-    MUSIC_PROXY_ENABLED: musicProxyEnabled,
     FESTIVE_EFFECT_ENABLED: process.env.FESTIVE_EFFECT_ENABLED === 'true',
   };
 

@@ -13,7 +13,6 @@ import type {
   ISearchHistoryRepository,
   ISkipConfigRepository,
   IDanmakuFilterRepository,
-  IMusicRepository,
 } from './types';
 
 import * as clientDb from '../db.client';
@@ -127,34 +126,3 @@ export class ClientDanmakuFilterRepository implements IDanmakuFilterRepository {
   }
 }
 
-export class ClientMusicRepository implements IMusicRepository {
-  async getPlayRecord(): Promise<any> { return null; }
-  async savePlayRecord(): Promise<void> {}
-  async batchSavePlayRecords(): Promise<void> {}
-  async getAllPlayRecords(): Promise<any> { return {}; }
-  async deletePlayRecord(): Promise<void> {}
-  async clearAllPlayRecords(): Promise<void> {}
-  async listV2History(): Promise<any> { return []; }
-  async upsertV2History(): Promise<void> {}
-  async batchUpsertV2History(): Promise<void> {}
-  async deleteV2History(): Promise<void> {}
-  async clearV2History(): Promise<void> {}
-  async createV2Playlist(): Promise<void> {}
-  async getV2Playlist(): Promise<any> { return null; }
-  async listV2Playlists(): Promise<any> { return []; }
-  async updateV2Playlist(): Promise<void> {}
-  async deleteV2Playlist(): Promise<void> {}
-  async addV2PlaylistItem(): Promise<void> {}
-  async removeV2PlaylistItem(): Promise<void> {}
-  async listV2PlaylistItems(): Promise<any> { return []; }
-  async hasV2PlaylistItem(): Promise<any> { return false; }
-  async createV1Playlist(): Promise<void> {}
-  async getV1Playlist(): Promise<any> { return null; }
-  async listV1Playlists(): Promise<any> { return []; }
-  async updateV1Playlist(): Promise<void> {}
-  async deleteV1Playlist(): Promise<void> {}
-  async addV1PlaylistSong(): Promise<void> {}
-  async removeV1PlaylistSong(): Promise<void> {}
-  async listV1PlaylistSongs(): Promise<any> { return []; }
-  async isSongInV1Playlist(): Promise<any> { return false; }
-}

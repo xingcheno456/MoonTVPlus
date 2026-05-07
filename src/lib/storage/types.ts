@@ -11,12 +11,6 @@ import type {
   NotificationType,
 } from '../types';
 
-import type {
-  MusicV2HistoryRecord,
-  MusicV2PlaylistItem,
-  MusicV2PlaylistRecord,
-} from '../music-v2';
-
 export type StorageType =
   | 'localstorage'
   | 'redis'
@@ -138,50 +132,6 @@ export interface IConfigRepository {
   clearAllData(): Promise<void>;
 }
 
-export interface IMusicRepository {
-  getPlayRecord(userName: string, platform: string, id: string): Promise<any | null>;
-  savePlayRecord(userName: string, platform: string, id: string, record: any): Promise<void>;
-  batchSavePlayRecords(userName: string, records: Array<{ platform: string; id: string; record: any }>): Promise<void>;
-  getAllPlayRecords(userName: string): Promise<Record<string, any>>;
-  deletePlayRecord(userName: string, platform: string, id: string): Promise<void>;
-  clearAllPlayRecords(userName: string): Promise<void>;
-
-  listV2History(userName: string): Promise<MusicV2HistoryRecord[]>;
-  upsertV2History(userName: string, record: MusicV2HistoryRecord): Promise<void>;
-  batchUpsertV2History(userName: string, records: MusicV2HistoryRecord[]): Promise<void>;
-  deleteV2History(userName: string, songId: string): Promise<void>;
-  clearV2History(userName: string): Promise<void>;
-
-  createV2Playlist(userName: string, playlist: { id: string; name: string; description?: string; cover?: string }): Promise<void>;
-  getV2Playlist(playlistId: string): Promise<MusicV2PlaylistRecord | null>;
-  listV2Playlists(userName: string): Promise<MusicV2PlaylistRecord[]>;
-  updateV2Playlist(playlistId: string, updates: { name?: string; description?: string; cover?: string; song_count?: number }): Promise<void>;
-  deleteV2Playlist(playlistId: string): Promise<void>;
-  addV2PlaylistItem(playlistId: string, item: MusicV2PlaylistItem): Promise<void>;
-  removeV2PlaylistItem(playlistId: string, songId: string): Promise<void>;
-  listV2PlaylistItems(playlistId: string): Promise<MusicV2PlaylistItem[]>;
-  hasV2PlaylistItem(playlistId: string, songId: string): Promise<boolean>;
-
-  createV1Playlist(userName: string, playlist: { id: string; name: string; description?: string; cover?: string }): Promise<void>;
-  getV1Playlist(playlistId: string): Promise<any | null>;
-  listV1Playlists(userName: string): Promise<any[]>;
-  updateV1Playlist(playlistId: string, updates: { name?: string; description?: string; cover?: string }): Promise<void>;
-  deleteV1Playlist(playlistId: string): Promise<void>;
-  addV1PlaylistSong(playlistId: string, song: { platform: string; id: string; name: string; artist: string; album?: string; pic?: string; duration: number }): Promise<void>;
-  removeV1PlaylistSong(playlistId: string, platform: string, songId: string): Promise<void>;
-  listV1PlaylistSongs(playlistId: string): Promise<any[]>;
-  isSongInV1Playlist(playlistId: string, platform: string, songId: string): Promise<boolean>;
-}
-
-export interface INotificationRepository {
-  getAll(userName: string): Promise<Notification[]>;
-  add(userName: string, notification: Notification): Promise<void>;
-  markAsRead(userName: string, notificationId: string): Promise<void>;
-  delete(userName: string, notificationId: string): Promise<void>;
-  clearAll(userName: string): Promise<void>;
-  getUnreadCount(userName: string): Promise<number>;
-}
-
 export interface IMovieRequestRepository {
   getAll(): Promise<MovieRequest[]>;
   get(requestId: string): Promise<MovieRequest | null>;
@@ -203,7 +153,6 @@ export interface IRepositories {
   users: IUserRepository;
   tvboxTokens: ITvboxTokenRepository;
   config: IConfigRepository;
-  music: IMusicRepository;
   notifications: INotificationRepository;
   movieRequests: IMovieRequestRepository;
 }

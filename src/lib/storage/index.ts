@@ -8,7 +8,6 @@ export type {
   IUserRepository,
   ITvboxTokenRepository,
   IConfigRepository,
-  IMusicRepository,
   INotificationRepository,
   IMovieRequestRepository,
   IRepositories,

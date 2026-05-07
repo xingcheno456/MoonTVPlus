@@ -30,18 +30,6 @@ export interface Favorite {
   vod_remarks?: string;
 }
 
-export interface MusicPlayRecord {
-  platform: 'netease' | 'qq' | 'kuwo';
-  id: string;
-  name: string;
-  artist: string;
-  album?: string;
-  pic?: string;
-  play_time: number;
-  duration: number;
-  save_time: number;
-}
-
 export interface CacheData<T> {
   data: T;
   timestamp: number;
@@ -54,5 +42,4 @@ export interface UserCacheStore {
   searchHistory?: CacheData<string[]>;
   skipConfigs?: CacheData<Record<string, SkipConfig>>;
   danmakuFilterConfig?: CacheData<DanmakuFilterConfig>;
-  musicPlayRecords?: CacheData<Record<string, MusicPlayRecord>>;
 }

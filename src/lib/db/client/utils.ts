@@ -8,7 +8,6 @@ import type { Favorite, PlayRecord } from './types';
 export const PLAY_RECORDS_KEY = 'moontv_play_records';
 export const FAVORITES_KEY = 'moontv_favorites';
 export const SEARCH_HISTORY_KEY = 'moontv_search_history';
-export const MUSIC_PLAY_RECORDS_KEY = 'moontv_music_play_records';
 
 export const STORAGE_TYPE = (() => {
   const raw =

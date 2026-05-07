@@ -193,22 +193,7 @@ export interface AdminConfig {
       from: string; // 发件人邮箱
     };
   };
-  MusicConfig?: {
-    Enabled?: boolean; // 启用音乐功能
-    BaseUrl?: string; // lxserver 地址
-    Token?: string; // lxserver x-user-token
-    ProxyEnabled?: boolean; // 是否走 stream 代理
-    // 兼容旧代码的遗留字段（待删除）
-    TuneHubEnabled?: boolean;
-    TuneHubBaseUrl?: string;
-    TuneHubApiKey?: string;
-    OpenListCacheEnabled?: boolean;
-    OpenListCacheURL?: string;
-    OpenListCacheUsername?: string;
-    OpenListCachePassword?: string;
-    OpenListCachePath?: string;
-    OpenListCacheProxyEnabled?: boolean;
-  };
+};
   AnimeSubscriptionConfig?: {
     Enabled: boolean; // 是否启用追番功能
     Subscriptions: Array<{

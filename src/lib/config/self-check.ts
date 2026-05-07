@@ -187,16 +187,5 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
     };
   }
 
-  if (!adminConfig.MusicConfig) {
-    adminConfig.MusicConfig = {
-      Enabled: false,
-      BaseUrl: '',
-      Token: '',
-      ProxyEnabled: true,
-    };
-  } else if (adminConfig.MusicConfig.ProxyEnabled === undefined) {
-    adminConfig.MusicConfig.ProxyEnabled = true;
-  }
-
   return adminConfig;
 }
