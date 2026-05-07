@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 
 import {
@@ -143,6 +142,7 @@ function LoginPageClient() {
   // 在客户端挂载后设置配置
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const runtimeConfig = (window as any).RUNTIME_CONFIG;
       const storageType = runtimeConfig?.STORAGE_TYPE;
       const shouldAsk = storageType && storageType !== 'localstorage';
@@ -221,7 +221,9 @@ function LoginPageClient() {
     }
 
     const container = document.getElementById('turnstile-container');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (container && (window as any).turnstile) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const widgetId = (window as any).turnstile.render(
         '#turnstile-container',
         {
@@ -262,6 +264,7 @@ function LoginPageClient() {
       if (res.ok) {
         // 处理记住密码逻辑
         if (rememberPassword) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const credentials: any = { password };
           // 如果需要用户名且有用户名，就保存用户名
           if (shouldAskUsername && username) {
@@ -283,8 +286,10 @@ function LoginPageClient() {
         if (
           siteConfig?.LoginRequireTurnstile &&
           turnstileWidgetId !== null &&
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).turnstile
         ) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).turnstile.reset(turnstileWidgetId);
           setTurnstileToken(null);
         }
@@ -292,6 +297,7 @@ function LoginPageClient() {
         if (res.status === 401) {
           setError('密码错误');
         } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = await parseApiResponse<{ error?: string }>(res).catch(() => ({} as any));
           setError(data.error ?? '服务器错误');
         }
@@ -301,8 +307,10 @@ function LoginPageClient() {
       if (
         siteConfig?.LoginRequireTurnstile &&
         turnstileWidgetId !== null &&
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).turnstile
       ) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).turnstile.reset(turnstileWidgetId);
         setTurnstileToken(null);
       }

@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, Film } from 'lucide-react';
@@ -54,7 +53,9 @@ export default function PrivateLibraryPage() {
 
   // 获取运行时配置
   const runtimeConfig = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (typeof window !== 'undefined' && (window as any).RUNTIME_CONFIG) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (window as any).RUNTIME_CONFIG;
     }
     return {
@@ -530,6 +531,7 @@ export default function PrivateLibraryPage() {
             setHasMore(hasMoreData);
           }
         }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         // 忽略取消请求的错误
         if (err.name === 'AbortError') {

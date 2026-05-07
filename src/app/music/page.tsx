@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -103,6 +102,7 @@ export default function MusicPage() {
   const [showLyrics, setShowLyrics] = useState(false);
   const [musicProxyEnabled, setMusicProxyEnabled] = useState(() => {
     if (typeof window === 'undefined') return true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (window as any).RUNTIME_CONFIG?.MUSIC_PROXY_ENABLED !== false;
   });
   const [lyrics, setLyrics] = useState<LyricLine[]>([]);
@@ -166,6 +166,7 @@ export default function MusicPage() {
   const restoredTimeRef = useRef<number>(0);
   const songStartTimeRef = useRef<number>(0); // 歌曲开始播放的时间戳
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapSong = (song: any): Song => ({
     id: song.songId || song.id,
     name: song.name,
@@ -226,6 +227,7 @@ export default function MusicPage() {
 
   const getMusicProxyEnabled = () => {
     if (typeof window === 'undefined') return true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (window as any).RUNTIME_CONFIG?.MUSIC_PROXY_ENABLED !== false;
   };
 
@@ -554,6 +556,7 @@ export default function MusicPage() {
 
       if (boardsResponse.ok && boardsData.success) {
         setPlaylists(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (boardsData.data?.list || []).map((item: any) => ({
             id: item.id,
             name: item.name,
@@ -653,6 +656,7 @@ export default function MusicPage() {
       if (response.ok) {
         const data = await parseApiResponse<any>(response);
         setUserPlaylistSongs(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (data.data?.songs || []).map((song: any) => ({
             ...song,
             id: song.songId,
@@ -670,6 +674,7 @@ export default function MusicPage() {
   };
 
   // 选择歌单
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSelectUserPlaylist = (playlist: any) => {
     setSelectedUserPlaylist(playlist);
     loadUserPlaylistSongs(playlist.id);
@@ -842,6 +847,7 @@ export default function MusicPage() {
   };
 
   // 从歌单中移除歌曲
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleRemoveSongFromUserPlaylist = async (song: any) => {
     if (!selectedUserPlaylist) return;
 

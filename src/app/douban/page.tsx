@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/exhaustive-deps */
 
 
 import { useSearchParams } from 'next/navigation';
@@ -95,6 +95,7 @@ function DoubanPageClient() {
 
   // 获取自定义分类数据
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const runtimeConfig = (window as any).RUNTIME_CONFIG;
     if (runtimeConfig?.CUSTOM_CATEGORIES?.length > 0) {
       setCustomCategories(runtimeConfig.CUSTOM_CATEGORIES);

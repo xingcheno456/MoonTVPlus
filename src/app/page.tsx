@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 
 import {
@@ -141,6 +140,7 @@ function HomeClient() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const enabled =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).RUNTIME_CONFIG?.ENABLE_SOURCE_SEARCH !== false;
       setSourceSearchEnabled(enabled);
     }
@@ -149,6 +149,7 @@ function HomeClient() {
   // 检查音乐功能是否启用
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const enabled = !!(window as any).RUNTIME_CONFIG?.MUSIC_ENABLED;
       setMusicEnabled(enabled);
     }
@@ -180,6 +181,7 @@ function HomeClient() {
       }
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const setCache = (key: string, data: any) => {
       try {
         localStorage.setItem(

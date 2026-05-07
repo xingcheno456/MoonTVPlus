@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/exhaustive-deps */
 
 import {
   ChevronUp,
@@ -261,7 +261,9 @@ function SearchPageClient() {
       if (aExact && !bExact) return -1;
       if (!aExact && bExact) return 1;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const aNum = Number.parseInt(a.year as any, 10);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const bNum = Number.parseInt(b.year as any, 10);
       const aValid = !Number.isNaN(aNum);
       const bValid = !Number.isNaN(bNum);
@@ -680,6 +682,7 @@ function SearchPageClient() {
 
   // 聚合：应用筛选与排序
   const filteredAggResults = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { source, title, year, yearOrder } = filterAgg as any;
     const filtered = aggregatedResults.filter(([_, group]) => {
       const gTitle = group[0]?.title ?? '';
@@ -1027,6 +1030,7 @@ function SearchPageClient() {
     if (typeof window !== 'undefined') {
       const savedFluidSearch = localStorage.getItem('fluidSearch');
       const defaultFluidSearch =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
       if (savedFluidSearch !== null) {
         setUseFluidSearch(JSON.parse(savedFluidSearch));
@@ -1188,6 +1192,7 @@ function SearchPageClient() {
           currentFluidSearch = JSON.parse(savedFluidSearch);
         } else {
           const defaultFluidSearch =
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
           currentFluidSearch = defaultFluidSearch;
         }
@@ -1654,12 +1659,14 @@ function SearchPageClient() {
                         <SearchResultFilter
                           categories={filterOptions.categoriesAgg}
                           values={filterAgg}
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           onChange={(v) => setFilterAgg(v as any)}
                         />
                       ) : (
                         <SearchResultFilter
                           categories={filterOptions.categoriesAll}
                           values={filterAll}
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           onChange={(v) => setFilterAll(v as any)}
                         />
                       )}

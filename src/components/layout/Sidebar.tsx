@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 
 import {
@@ -66,6 +65,7 @@ declare global {
     RUNTIME_CONFIG?: {
       EnableComments?: boolean;
       RecommendationDataSource?: string;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       [key: string]: any;
     };
   }
@@ -154,6 +154,7 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
   ]);
 
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const runtimeConfig = (window as any).RUNTIME_CONFIG;
 
     const items = [

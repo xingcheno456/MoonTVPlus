@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
@@ -282,9 +281,11 @@ const copyStylesToPiPWindow = (pipWin: Window) => {
       pipWin.document.head.appendChild(style);
     } catch (e) {
       // 跨域样式表使用 link 标签
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((styleSheet as any).href) {
         const link = pipWin.document.createElement('link');
         link.rel = 'stylesheet';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         link.href = (styleSheet as any).href;
         pipWin.document.head.appendChild(link);
       }
@@ -393,6 +394,7 @@ export default function LyricsPiPWindow({
 
       try {
         const pipWin = await (
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           window as any
         ).documentPictureInPicture.requestWindow({
           width: 400,

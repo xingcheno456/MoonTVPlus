@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 
 import {
@@ -100,6 +99,7 @@ function RegisterPageClient() {
   // 在客户端挂载后设置配置
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const runtimeConfig = (window as any).RUNTIME_CONFIG;
 
       // 设置背景图（支持多张随机选择）
@@ -165,7 +165,9 @@ function RegisterPageClient() {
     }
 
     const container = document.getElementById('turnstile-container');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (container && (window as any).turnstile) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const widgetId = (window as any).turnstile.render(
         '#turnstile-container',
         {
@@ -235,18 +237,22 @@ function RegisterPageClient() {
         if (
           siteConfig?.RegistrationRequireTurnstile &&
           turnstileWidgetId !== null &&
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).turnstile
         ) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window as any).turnstile.reset(turnstileWidgetId);
           setTurnstileToken(null);
         }
 
         if (res.status === 400) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = await parseApiResponse<{ error?: string }>(res).catch(() => ({} as any));
           setError(data.error || '注册失败');
         } else if (res.status === 409) {
           setError('用户名已存在');
         } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = await parseApiResponse<{ error?: string }>(res).catch(() => ({} as any));
           setError(data.error ?? '服务器错误');
         }
@@ -256,8 +262,10 @@ function RegisterPageClient() {
       if (
         siteConfig?.RegistrationRequireTurnstile &&
         turnstileWidgetId !== null &&
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).turnstile
       ) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).turnstile.reset(turnstileWidgetId);
         setTurnstileToken(null);
       }

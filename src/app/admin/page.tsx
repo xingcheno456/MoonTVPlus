@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/exhaustive-deps */
 
 
 import {
@@ -279,6 +279,7 @@ const useAlertModal = () => {
 };
 
 // 统一弹窗方法（必须在首次使用前定义）
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const showError = (message: string, showAlert?: (config: any) => void) => {
   if (showAlert) {
     showAlert({ type: 'error', title: '错误', message, showConfirm: true });
@@ -287,6 +288,7 @@ const showError = (message: string, showAlert?: (config: any) => void) => {
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const showSuccess = (message: string, showAlert?: (config: any) => void) => {
   if (showAlert) {
     showAlert({ type: 'success', title: '成功', message, timer: 2000 });
@@ -563,6 +565,7 @@ const UserConfig = ({
 
   // 判断是否有旧版用户数据需要迁移
   const hasOldUserData =
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     config?.UserConfig?.Users?.filter((u: any) => u.role !== 'owner').length ??
     0 > 0;
 
@@ -612,6 +615,7 @@ const UserConfig = ({
         });
 
         if (!res.ok) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = await parseApiResponse<any>(res).catch(() => ({} as any));
           throw new Error(data.error || `操作失败: ${res.status}`);
         }
@@ -711,6 +715,7 @@ const UserConfig = ({
         });
 
         if (!res.ok) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = await parseApiResponse<any>(res).catch(() => ({} as any));
           throw new Error(data.error || `操作失败: ${res.status}`);
         }
@@ -877,6 +882,7 @@ const UserConfig = ({
         });
 
         if (!res.ok) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = await parseApiResponse<any>(res).catch(() => ({} as any));
           throw new Error(data.error || `操作失败: ${res.status}`);
         }
@@ -926,6 +932,7 @@ const UserConfig = ({
         });
 
         if (!res.ok) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = await parseApiResponse<any>(res).catch(() => ({} as any));
           throw new Error(data.error || `操作失败: ${res.status}`);
         }
@@ -969,6 +976,7 @@ const UserConfig = ({
       });
 
       if (!res.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = await parseApiResponse<any>(res).catch(() => ({} as any));
         throw new Error(data.error || `操作失败: ${res.status}`);
       }
@@ -1066,6 +1074,7 @@ const UserConfig = ({
                               timer: 2000,
                             });
                             await refreshConfig();
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           } catch (error: any) {
                             logger.error('迁移用户数据失败:', error);
                             showAlert({
@@ -3921,6 +3930,7 @@ const EmbyConfigComponent = ({
   };
 
   // 开始编辑
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEdit = (source: any) => {
     setFormData({ ...source });
     // 根据现有配置判断认证方式
@@ -4010,6 +4020,7 @@ const EmbyConfigComponent = ({
   };
 
   // 删除源
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDelete = async (source: any) => {
     if (!confirm(`确定要删除 "${source.name}" 吗？`)) {
       return;
@@ -4046,6 +4057,7 @@ const EmbyConfigComponent = ({
   };
 
   // 切换启用状态
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleToggleEnabled = async (source: any) => {
     await withLoading('toggleEmbySource', async () => {
       try {
@@ -4080,6 +4092,7 @@ const EmbyConfigComponent = ({
   };
 
   // 测试连接
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleTest = async (source: any) => {
     await withLoading('testEmbySource', async () => {
       try {
@@ -4953,6 +4966,7 @@ const VideoSourceConfig = ({
   }, [config]);
 
   // 通用 API 请求
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const callSourceApi = async (body: Record<string, any>) => {
     try {
       const resp = await fetch('/api/admin/source', {
@@ -4962,6 +4976,7 @@ const VideoSourceConfig = ({
       });
 
       if (!resp.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = await parseApiResponse<any>(resp).catch(() => ({} as any));
         throw new Error(data.error || `操作失败: ${resp.status}`);
       }
@@ -5021,6 +5036,7 @@ const VideoSourceConfig = ({
         });
 
         if (!response.ok) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = await parseApiResponse<any>(response).catch(() => ({} as any));
           throw new Error(data.error || `操作失败: ${response.status}`);
         }
@@ -5064,6 +5080,7 @@ const VideoSourceConfig = ({
         });
 
         if (!response.ok) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = await parseApiResponse<any>(response).catch(() => ({} as any));
           throw new Error(data.error || `操作失败: ${response.status}`);
         }
@@ -5113,6 +5130,7 @@ const VideoSourceConfig = ({
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -6088,6 +6106,7 @@ const CategoryConfig = ({
   }, [config]);
 
   // 通用 API 请求
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const callCategoryApi = async (body: Record<string, any>) => {
     try {
       const resp = await fetch('/api/admin/category', {
@@ -6097,6 +6116,7 @@ const CategoryConfig = ({
       });
 
       if (!resp.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = await parseApiResponse<any>(resp).catch(() => ({} as any));
         throw new Error(data.error || `操作失败: ${resp.status}`);
       }
@@ -6150,6 +6170,7 @@ const CategoryConfig = ({
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -6722,6 +6743,7 @@ const VideoSourceScriptLab = () => {
           payload,
         }),
       });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = await parseApiResponse<any>(response).catch(() => ({} as any));
       setTestOutput(JSON.stringify(data, null, 2));
       if (!response.ok) {
@@ -7066,6 +7088,7 @@ const ConfigFileComponent = ({
         });
 
         if (!resp.ok) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = await parseApiResponse<any>(resp).catch(() => ({} as any));
           throw new Error(data.error || `拉取失败: ${resp.status}`);
         }
@@ -7126,6 +7149,7 @@ const ConfigFileComponent = ({
         const existingApis = new Set();
 
         // 收集现有配置中的所有api
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Object.values(existingConfig.api_site || {}).forEach((site: any) => {
           if (site.api) {
             existingApis.add(site.api);
@@ -7137,6 +7161,7 @@ const ConfigFileComponent = ({
         let duplicateCount = 0;
 
         Object.entries(parsedConfig.api_site || {}).forEach(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ([key, site]: [string, any]) => {
             if (site.api && existingApis.has(site.api)) {
               duplicateCount++;
@@ -7194,6 +7219,7 @@ const ConfigFileComponent = ({
         });
 
         if (!resp.ok) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = await parseApiResponse<any>(resp).catch(() => ({} as any));
           throw new Error(data.error || `保存失败: ${resp.status}`);
         }
@@ -8374,6 +8400,7 @@ const SiteConfigComponent = ({
         });
 
         if (!resp.ok) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = await parseApiResponse<any>(resp).catch(() => ({} as any));
           throw new Error(data.error || `保存失败: ${resp.status}`);
         }
@@ -9419,6 +9446,7 @@ const RegistrationConfigComponent = ({
         });
 
         if (!resp.ok) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = await parseApiResponse<any>(resp).catch(() => ({} as any));
           throw new Error(data.error || `保存失败: ${resp.status}`);
         }
@@ -9849,6 +9877,7 @@ const RegistrationConfigComponent = ({
                       });
 
                       if (!res.ok) {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const data = await parseApiResponse<any>(res).catch(() => ({} as any));
                         throw new Error(data.error || '获取配置失败');
                       }
@@ -10004,6 +10033,7 @@ const RegistrationConfigComponent = ({
                 readOnly
                 value={
                   typeof window !== 'undefined'
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     ? `${(window as any).RUNTIME_CONFIG?.SITE_BASE || window.location.origin}/api/auth/oidc/callback`
                     : ''
                 }
@@ -10012,6 +10042,7 @@ const RegistrationConfigComponent = ({
               <button
                 type='button'
                 onClick={() => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const uri = `${(window as any).RUNTIME_CONFIG?.SITE_BASE || window.location.origin}/api/auth/oidc/callback`;
                   navigator.clipboard.writeText(uri);
                   showSuccess('已复制到剪贴板', showAlert);
@@ -11149,9 +11180,11 @@ const MovieRequestsComponent = ({
       const data = await parseApiResponse<any>(response);
       const allRequests = data.requests || [];
       setPendingCount(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         allRequests.filter((r: any) => r.status === 'pending').length,
       );
       setFulfilledCount(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         allRequests.filter((r: any) => r.status === 'fulfilled').length,
       );
     } catch (error) {
@@ -11224,6 +11257,7 @@ const MovieRequestsComponent = ({
       });
 
       if (!response.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = await parseApiResponse<any>(response).catch(() => ({} as any));
         throw new Error(data.error || `保存失败: ${response.status}`);
       }

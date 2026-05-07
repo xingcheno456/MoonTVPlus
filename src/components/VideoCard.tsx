@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/exhaustive-deps */
 
 import {
   ExternalLink,
@@ -222,6 +222,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       const storageKey = generateStorageKey(actualSource, actualId);
       const unsubscribe = subscribeToDataUpdates(
         'favoritesUpdated',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (newFavorites: Record<string, any>) => {
           // 检查当前项目是否在新的收藏列表中
           const isNowFavorited = !!newFavorites[storageKey];
