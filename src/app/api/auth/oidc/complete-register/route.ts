@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -116,6 +115,7 @@ export async function POST(request: NextRequest) {
       return apiError('OIDC会话已过期，请重新登录', 400);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let oidcSession: any;
     try {
       oidcSession = JSON.parse(oidcSessionCookie);

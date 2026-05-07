@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest } from 'next/server';
 import { promisify } from 'util';
 import { gunzip } from 'zlib';
@@ -65,6 +63,7 @@ export async function POST(req: NextRequest) {
     const decompressedData = decompressedBuffer.toString();
 
     // 解析JSON数据
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let importData: any;
     try {
       importData = JSON.parse(decompressedData);
@@ -115,6 +114,7 @@ export async function POST(req: NextRequest) {
     const storage = db.storage;
     // 使用前面已声明的 storageType 变量
     const usersV2Map = new Map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (importData.data.usersV2 || []).map((u: any) => [u.username, u]),
     );
 
@@ -163,6 +163,7 @@ export async function POST(req: NextRequest) {
 
           // 为所有有passwordV2的用户创建user:info
           if (user.passwordV2) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const userV2 = usersV2Map.get(username) as any;
 
             // 确定角色：站长为owner，其他用户从usersV2获取或默认为user
@@ -324,7 +325,8 @@ export async function POST(req: NextRequest) {
                           username,
                           source,
                           id,
-                          skipConfig as any,
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        skipConfig as any,
                         );
                       }
                       return Promise.resolve();
@@ -349,6 +351,7 @@ export async function POST(req: NextRequest) {
                   const batch = historyRecords.slice(j, j + DATA_BATCH_SIZE);
                   await db.batchUpsertMusicV2History(
                     username,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     batch.map((record: any) => ({
                       ...record,
                       source: record.source,
@@ -393,6 +396,7 @@ export async function POST(req: NextRequest) {
                         j + DATA_BATCH_SIZE,
                       );
                       await Promise.all(
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         batch.map((song: any, index: number) =>
                           db.addMusicV2PlaylistItem(playlist.id, {
                             playlistId: playlist.id,

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -54,6 +52,7 @@ export async function POST(request: NextRequest) {
       return apiError('Unauthorized', 401);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const body = (await request.json()) as Record<string, any>;
     const action = body.action as string;
 

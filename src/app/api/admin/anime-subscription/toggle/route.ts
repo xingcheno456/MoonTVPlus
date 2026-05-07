@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -34,7 +33,7 @@ export async function PUT(req: NextRequest) {
     await db.saveAdminConfig(config);
 
     return apiSuccess({ enabled });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('切换追番功能状态失败:', error);
     return apiError('切换状态失败', 500);
   }

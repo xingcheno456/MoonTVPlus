@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -28,9 +27,9 @@ export async function GET(req: NextRequest) {
     };
 
     return apiSuccess(animeConfig);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('获取追番订阅配置失败:', error);
-    return apiError(error.message || '获取配置失败', 500);
+    return apiError((error as Error).message || '获取配置失败', 500);
   }
 }
 
@@ -88,8 +87,8 @@ export async function POST(req: NextRequest) {
     await db.saveAdminConfig(config);
 
     return apiSuccess(newSubscription);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('创建追番订阅失败:', error);
-    return apiError(error.message || '创建订阅失败', 500);
+    return apiError((error as Error).message || '创建订阅失败', 500);
   }
 }

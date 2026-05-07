@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
 import { checkSubscription } from '@/lib/anime-subscription';
@@ -39,7 +38,7 @@ export async function POST(
     await db.saveAdminConfig(config);
 
     return apiSuccess({ ...result, });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('检查追番订阅失败:', error);
     return apiError('检查失败', 500);
   }

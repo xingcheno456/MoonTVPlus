@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -121,9 +120,9 @@ export async function POST(req: NextRequest) {
         await db.createUserV2(username, password, 'user', defaultTags);
 
         return apiSuccess({ message: '注册成功' });
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('创建用户失败', err);
-        if (err.message === '用户已存在') {
+        if ((err as Error).message === '用户已存在') {
           return apiError('用户名已存在', 409);
         }
         return apiError('注册失败，请稍后重试', 500);

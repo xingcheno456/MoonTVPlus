@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { promisify } from 'util';
 import { gzip } from 'zlib';
@@ -57,8 +55,10 @@ export async function POST(req: NextRequest) {
         // 管理员配置
         adminConfig: config,
         // 所有用户数据
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         userData: {} as { [username: string]: any },
         // V2用户信息
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         usersV2: [] as any[],
       },
     };

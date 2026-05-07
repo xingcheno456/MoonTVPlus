@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -76,8 +74,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 查找目标用户条目（用户组操作和批量操作不需要）
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let targetEntry: any = null;
     let isTargetAdmin = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let targetUserV2: any = null;
 
     if (

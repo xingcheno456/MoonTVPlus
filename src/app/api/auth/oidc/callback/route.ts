@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { setAuthCookies } from '@/lib/auth';
@@ -57,6 +56,7 @@ async function generateAuthCookie(
   role: 'owner' | 'admin' | 'user',
   deviceInfo: string,
 ): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const authData: any = { role };
 
   if (username && process.env.PASSWORD) {

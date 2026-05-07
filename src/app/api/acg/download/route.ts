@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -85,8 +84,8 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess({ message: '已添加到离线下载队列',
       path: downloadPath, });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('添加离线下载任务失败:', error);
-    return apiError(error.message || '添加离线下载任务失败', 500);
+    return apiError((error as Error).message || '添加离线下载任务失败', 500);
   }
 }

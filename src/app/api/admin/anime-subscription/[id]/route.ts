@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -64,9 +63,9 @@ export async function PUT(
     await db.saveAdminConfig(config);
 
     return apiSuccess(subscription);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('更新追番订阅失败:', error);
-    return apiError(error.message || '更新订阅失败', 500);
+    return apiError((error as Error).message || '更新订阅失败', 500);
   }
 }
 
@@ -95,7 +94,7 @@ export async function DELETE(
     await db.saveAdminConfig(config);
 
     return apiSuccess({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('删除追番订阅失败:', error);
     return apiError('删除订阅失败', 500);
   }
