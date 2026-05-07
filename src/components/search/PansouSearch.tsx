@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
   AlertCircle,
@@ -163,6 +162,7 @@ export default function PansouSearch({
         type: 'success',
         onClose: () => setToast(null),
       });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setToast({
         message: err?.message || '转存失败',
@@ -198,6 +198,7 @@ export default function PansouSearch({
       router.push(
         `/play?source=quark-temp&id=${encodeURIComponent(data.id)}&title=${encodeURIComponent(data.title || keyword)}`,
       );
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setToast({
         message: err?.message || '立即播放失败',

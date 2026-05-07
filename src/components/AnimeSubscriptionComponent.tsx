@@ -10,6 +10,8 @@ import { parseApiResponse } from '@/lib/api-response';
 
 import { AnimeSubscription } from '@/types/anime-subscription';
 
+type AcgSearchSource = 'acgrip' | 'mikan' | 'dmhy';
+
 interface AnimeSubscriptionComponentProps {
   config: AdminConfig | null;
   refreshConfig: () => Promise<void>;
@@ -358,7 +360,7 @@ export default function AnimeSubscriptionComponent({
         throw new Error('检查失败');
       }
 
-      const result = await parseApiResponse<any>(response);
+      const result = await parseApiResponse<{ found: number; downloaded: number }>(response);
       showAlert({
         type: 'success',
         title: '检查完成',
@@ -511,7 +513,7 @@ export default function AnimeSubscriptionComponent({
                 <select
                   value={formData.source}
                   onChange={(e) =>
-                    setFormData({ ...formData, source: e.target.value as any })
+                    setFormData({ ...formData, source: e.target.value as AcgSearchSource })
                   }
                   className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
                 >

@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { AlertCircle, Download, ExternalLink, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -225,6 +224,7 @@ export default function AcgSearch({
         type: 'success',
         onClose: () => setToast(null),
       });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setToast({
         message: err.message || '添加下载任务失败',
