@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
 
     // 如果启用了内置主题，使用内置主题CSS
     if (themeConfig.enableBuiltInTheme) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       css = getThemeCSS(themeConfig.builtInTheme as any);
     } else {
       // 否则使用自定义CSS

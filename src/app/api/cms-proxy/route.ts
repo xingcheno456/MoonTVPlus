@@ -119,10 +119,10 @@ export async function GET(request: NextRequest) {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
         },
       });
-    } catch (fetchError: any) {
+    } catch (fetchError: unknown) {
       clearTimeout(timeoutId);
 
-      if (fetchError.name === 'AbortError') {
+      if ((fetchError as Error).name === 'AbortError') {
         logger.error('CMS API 请求超时:', targetUrl.toString());
         return apiError('请求超时', 504);
       }
@@ -138,27 +138,30 @@ export async function GET(request: NextRequest) {
 /**
  * 处理 CMS API 返回数据，将播放链接替换为代理链接
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function processCmsResponse(
   data: any,
   proxyOrigin: string,
   yellowFilter: boolean,
-): any {
+): unknown {
   if (!data || typeof data !== 'object') {
     return data;
   }
 
-  // 深拷贝数据，避免修改原始对象
-  const processedData = JSON.parse(JSON.stringify(data));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const processedData: any = JSON.parse(JSON.stringify(data));
 
   if (yellowFilter) {
     if (processedData.class && Array.isArray(processedData.class)) {
       processedData.class = processedData.class.filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (item: any) => !matchesYellowContent(item?.type_name),
       );
     }
 
     if (processedData.list && Array.isArray(processedData.list)) {
       processedData.list = processedData.list.filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (item: any) =>
           !matchesYellowContent(
             item?.vod_name,
@@ -185,6 +188,7 @@ function processCmsResponse(
 
   // 处理列表数据
   if (processedData.list && Array.isArray(processedData.list)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     processedData.list = processedData.list.map((item: any, index: number) => {
       // 只处理有播放地址的项目
       if (item.vod_play_url && typeof item.vod_play_url === 'string') {
@@ -422,6 +426,7 @@ async function handleOpenListProxy(request: NextRequest) {
 
       // 构建播放列表
       const playUrls = detailData.episodes
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((ep: any) => {
           const title = ep.title || `第${ep.episode}集`;
           return `${title}$${ep.playUrl}`;
