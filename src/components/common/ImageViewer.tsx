@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import ProxyImage from '@/components/ProxyImage';
+import ProxyImage from '@/components/common/ProxyImage';
 
 interface ImageViewerProps {
   isOpen: boolean;

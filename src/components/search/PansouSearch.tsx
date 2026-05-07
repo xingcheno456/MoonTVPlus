@@ -14,7 +14,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { PansouLink, PansouSearchResult } from '@/lib/pansou.client';
 import { parseApiResponse } from '@/lib/api-response';
 
-import Toast, { ToastProps } from '@/components/Toast';
+import Toast, { ToastProps } from '@/components/common/Toast';
 
 import { logger } from '../lib/logger';
 

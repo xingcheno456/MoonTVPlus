@@ -10,7 +10,7 @@ import {
 import { parseApiResponse } from '@/lib/api-response';
 import { useEnableComments } from '@/hooks/useEnableComments';
 
-import ScrollableRow from '@/components/ScrollableRow';
+import ScrollableRow from '@/components/common/ScrollableRow';
 import VideoCard from '@/components/VideoCard';
 
 import { logger } from '../lib/logger';

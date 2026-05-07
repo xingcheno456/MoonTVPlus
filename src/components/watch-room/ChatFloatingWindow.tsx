@@ -23,7 +23,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 
-import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
+import { useWatchRoomContextSafe } from '@/components/player/WatchRoomProvider';
 
 import { logger } from '../../lib/logger';
 

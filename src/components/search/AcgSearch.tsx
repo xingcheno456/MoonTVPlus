@@ -4,8 +4,8 @@
 import { AlertCircle, Download, ExternalLink, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import CapsuleSwitch from '@/components/CapsuleSwitch';
-import Toast, { ToastProps } from '@/components/Toast';
+import CapsuleSwitch from '@/components/common/CapsuleSwitch';
+import Toast, { ToastProps } from '@/components/common/Toast';
 import { parseApiResponse } from '@/lib/api-response';
 
 interface AcgSearchItem {

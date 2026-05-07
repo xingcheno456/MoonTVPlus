@@ -21,9 +21,9 @@ import { loadAllLocalEpisodeProgressRecords } from '@/lib/episode-progress';
 import { EpisodeFilterConfig, SearchResult } from '@/lib/types';
 import { getVideoResolutionFromM3u8 } from '@/lib/utils';
 
-import DanmakuPanel from '@/components/DanmakuPanel';
-import EpisodeFilterSettings from '@/components/EpisodeFilterSettings';
-import ProxyImage from '@/components/ProxyImage';
+import DanmakuPanel from '@/components/danmaku/DanmakuPanel';
+import EpisodeFilterSettings from '@/components/player/EpisodeFilterSettings';
+import ProxyImage from '@/components/common/ProxyImage';
 
 import { logger } from '../lib/logger';
 

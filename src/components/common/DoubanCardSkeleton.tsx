@@ -1,4 +1,4 @@
-import { ImagePlaceholder } from '@/components/ImagePlaceholder';
+import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 
 const DoubanCardSkeleton = () => {
   return (

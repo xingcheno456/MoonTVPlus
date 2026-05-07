@@ -14,7 +14,7 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { parseApiResponse } from '@/lib/api-response';
 import { useWatchRoom } from '@/hooks/useWatchRoom';
 
-import Toast, { ToastProps } from '@/components/Toast';
+import Toast, { ToastProps } from '@/components/common/Toast';
 
 import { logger } from '../lib/logger';
 

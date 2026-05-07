@@ -39,11 +39,11 @@ import {
 } from '@/lib/utils';
 import { useLongPress } from '@/hooks/useLongPress';
 
-import AIChatPanel from '@/components/AIChatPanel';
+import AIChatPanel from '@/components/player/AIChatPanel';
 import DetailPanel from '@/components/DetailPanel';
-import { ImagePlaceholder } from '@/components/ImagePlaceholder';
-import ImageViewer from '@/components/ImageViewer';
-import MobileActionSheet from '@/components/MobileActionSheet';
+import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
+import ImageViewer from '@/components/common/ImageViewer';
+import MobileActionSheet from '@/components/common/MobileActionSheet';
 
 export interface VideoCardProps {
   id?: string;

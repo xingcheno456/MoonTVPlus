@@ -14,7 +14,7 @@ import {
 
 import PlayRecordsPanel from '@/components/PlayRecordsPanel';
 import VideoCard from '@/components/VideoCard';
-import VirtualScrollableRow from '@/components/VirtualScrollableRow';
+import VirtualScrollableRow from '@/components/common/VirtualScrollableRow';
 
 import { logger } from '../lib/logger';
 

@@ -18,8 +18,8 @@ import { getTMDBImageUrl } from '@/lib/tmdb-image';
 import { processImageUrl } from '@/lib/utils';
 import { parseApiResponse } from '@/lib/api-response';
 
-import ImageViewer from '@/components/ImageViewer';
-import ProxyImage from '@/components/ProxyImage';
+import ImageViewer from '@/components/common/ImageViewer';
+import ProxyImage from '@/components/common/ProxyImage';
 
 import { logger } from '../lib/logger';
 

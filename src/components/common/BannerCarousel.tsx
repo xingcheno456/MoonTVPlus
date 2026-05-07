@@ -19,7 +19,7 @@ import {
 } from '@/lib/tmdb-image';
 import { parseApiResponse } from '@/lib/api-response';
 
-import ProxyImage from '@/components/ProxyImage';
+import ProxyImage from '@/components/common/ProxyImage';
 
 import { logger } from '../lib/logger';
 
