@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -86,8 +84,8 @@ export async function POST(request: NextRequest) {
     });
 
     return apiSuccess(filteredResults);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Pansou 搜索失败:', error);
-    return apiError(error.message || '搜索失败', 500);
+    return apiError((error as Error).message || '搜索失败', 500);
   }
 }
