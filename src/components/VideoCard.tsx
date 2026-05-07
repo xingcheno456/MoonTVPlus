@@ -39,6 +39,8 @@ import {
 import { useLongPress } from '@/hooks/useLongPress';
 
 import DetailPanel from '@/components/DetailPanel';
+import { getVideoCardConfig } from '@/components/VideoCard/VideoCardConfig';
+import { buildPlayUrl } from '@/components/VideoCard/buildPlayUrl';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import ImageViewer from '@/components/common/ImageViewer';
 import MobileActionSheet from '@/components/common/MobileActionSheet';
@@ -299,62 +301,37 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     );
 
     const handleClick = useCallback(() => {
-      // 即将上映的电影：单击显示上映倒计时提示，不跳转
       if (isUpcoming) {
         setShowUpcomingInfo(true);
-        // 2秒后自动隐藏
         setTimeout(() => {
           setShowUpcomingInfo(false);
         }, 2000);
         return;
       }
 
-      if (origin === 'live' && actualSource && actualId) {
-        // 直播内容跳转到直播页面
-        const url = `/live?source=${actualSource.replace('live_', '')}&id=${actualId.replace('live_', '')}`;
+      const url = buildPlayUrl({
+        origin,
+        from,
+        isUpcoming,
+        source: actualSource,
+        id: actualId,
+        title: actualTitle,
+        year: actualYear,
+        isAggregate,
+        query: actualQuery,
+        searchType: actualSearchType,
+        isCurrentlyOnPlayPage:
+          typeof window !== 'undefined' && window.location.pathname === '/play',
+      });
+
+      if (!url) return;
+
+      if (url.includes('_reload=')) {
+        window.location.href = url;
+      } else if (url.startsWith('/live')) {
         router.push(url);
-      } else if (
-        from === 'douban' ||
-        from === 'tmdb' ||
-        (isAggregate && !actualSource && !actualId)
-      ) {
-        // 检测当前是否在 play 页面
-        const isCurrentlyOnPlayPage =
-          typeof window !== 'undefined' && window.location.pathname === '/play';
-
-        let url = `/play?title=${encodeURIComponent(actualTitle.trim())}${
-          actualYear ? `&year=${actualYear}` : ''
-        }${actualSearchType ? `&stype=${actualSearchType}` : ''}${isAggregate ? '&prefer=true' : ''}${actualQuery ? `&stitle=${encodeURIComponent(actualQuery.trim())}` : ''}`;
-
-        if (isCurrentlyOnPlayPage) {
-          // 在 play 页面内，添加 _reload 参数强制刷新
-          url += `&_reload=${Date.now()}`;
-          window.location.href = url;
-        } else {
-          // 不在 play 页面，正常跳转
-          router.push(url);
-        }
-      } else if (actualSource && actualId) {
-        // 检测当前是否在 play 页面
-        const isCurrentlyOnPlayPage =
-          typeof window !== 'undefined' && window.location.pathname === '/play';
-
-        let url = `/play?source=${actualSource}&id=${actualId}&title=${encodeURIComponent(
-          actualTitle,
-        )}${actualYear ? `&year=${actualYear}` : ''}${
-          isAggregate ? '&prefer=true' : ''
-        }${
-          actualQuery ? `&stitle=${encodeURIComponent(actualQuery.trim())}` : ''
-        }${actualSearchType ? `&stype=${actualSearchType}` : ''}`;
-
-        if (isCurrentlyOnPlayPage) {
-          // 在 play 页面内，添加 _reload 参数强制刷新
-          url += `&_reload=${Date.now()}`;
-          window.location.href = url;
-        } else {
-          // 不在 play 页面，正常跳转
-          router.push(url);
-        }
+      } else {
+        router.push(url);
       }
     }, [
       isUpcoming,
@@ -372,32 +349,27 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
     // 新标签页播放处理函数
     const handlePlayInNewTab = useCallback(() => {
-      // 即将上映的电影不跳转
       if (isUpcoming) {
         return;
       }
 
-      if (origin === 'live' && actualSource && actualId) {
-        // 直播内容跳转到直播页面
-        const url = `/live?source=${actualSource.replace('live_', '')}&id=${actualId.replace('live_', '')}`;
-        window.open(url, '_blank');
-      } else if (
-        from === 'douban' ||
-        from === 'tmdb' ||
-        (isAggregate && !actualSource && !actualId)
-      ) {
-        const url = `/play?title=${encodeURIComponent(actualTitle.trim())}${actualYear ? `&year=${actualYear}` : ''}${actualSearchType ? `&stype=${actualSearchType}` : ''}${isAggregate ? '&prefer=true' : ''}${actualQuery ? `&stitle=${encodeURIComponent(actualQuery.trim())}` : ''}`;
-        window.open(url, '_blank');
-      } else if (actualSource && actualId) {
-        const url = `/play?source=${actualSource}&id=${actualId}&title=${encodeURIComponent(
-          actualTitle,
-        )}${actualYear ? `&year=${actualYear}` : ''}${
-          isAggregate ? '&prefer=true' : ''
-        }${
-          actualQuery ? `&stitle=${encodeURIComponent(actualQuery.trim())}` : ''
-        }${actualSearchType ? `&stype=${actualSearchType}` : ''}`;
-        window.open(url, '_blank');
-      }
+      const url = buildPlayUrl({
+        origin,
+        from,
+        isUpcoming,
+        source: actualSource,
+        id: actualId,
+        title: actualTitle,
+        year: actualYear,
+        isAggregate,
+        query: actualQuery,
+        searchType: actualSearchType,
+        isCurrentlyOnPlayPage: false,
+      });
+
+      if (!url) return;
+
+      window.open(url, '_blank');
     }, [
       isUpcoming,
       origin,
@@ -488,71 +460,10 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       return diffDays;
     }, [isUpcoming, releaseDate]);
 
-    const config = useMemo(() => {
-      const configs = {
-        playrecord: {
-          showSourceName: true,
-          showProgress: true,
-          showPlayButton: true,
-          showHeart: true,
-          showCheckCircle: true,
-          showDoubanLink: false,
-          showRating: false,
-          showYear: false,
-        },
-        favorite: {
-          showSourceName: true,
-          showProgress: false,
-          showPlayButton: true,
-          showHeart: true,
-          showCheckCircle: false,
-          showDoubanLink: false,
-          showRating: false,
-          showYear: false,
-        },
-        search: {
-          showSourceName: true,
-          showProgress: false,
-          showPlayButton: true,
-          showHeart: true, // 移动端菜单中需要显示收藏选项
-          showCheckCircle: false,
-          showDoubanLink: true, // 移动端菜单中显示豆瓣链接
-          showRating: !!rate,
-          showYear: true,
-        },
-        douban: {
-          showSourceName: false,
-          showProgress: false,
-          showPlayButton: !isUpcoming, // 即将上映不显示播放按钮
-          showHeart: false,
-          showCheckCircle: false,
-          showDoubanLink: false,
-          showRating: !!rate,
-          showYear: false,
-        },
-        tmdb: {
-          showSourceName: false,
-          showProgress: false,
-          showPlayButton: !isUpcoming, // 即将上映不显示播放按钮
-          showHeart: false,
-          showCheckCircle: false,
-          showDoubanLink: false,
-          showRating: !!rate,
-          showYear: false,
-        },
-        'source-search': {
-          showSourceName: false,
-          showProgress: false,
-          showPlayButton: true,
-          showHeart: true,
-          showCheckCircle: false,
-          showDoubanLink: true,
-          showRating: !!rate,
-          showYear: true,
-        },
-      };
-      return configs[from] || configs.search;
-    }, [from, isAggregate, douban_id, rate, isUpcoming]);
+    const config = useMemo(
+      () => getVideoCardConfig(from, isAggregate, douban_id, rate, isUpcoming),
+      [from, isAggregate, douban_id, rate, isUpcoming],
+    );
 
     // 移动端操作菜单配置
     const mobileActions = useMemo(() => {
