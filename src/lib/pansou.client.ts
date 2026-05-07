@@ -1,5 +1,4 @@
 import { logger } from './logger';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * Pansou 网盘搜索 API 客户端
@@ -129,6 +128,7 @@ export async function searchPansou(
     }
 
     // 构建请求体
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const body: any = {
       kw: keyword,
       res: 'merge', // 只返回按网盘类型分类的结果

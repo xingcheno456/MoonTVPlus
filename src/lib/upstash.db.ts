@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Redis } from '@upstash/redis';
 
@@ -30,6 +29,7 @@ export class UpstashRedisStorage extends BaseRedisStorage {
 // 单例 Upstash Redis 客户端
 function getUpstashRedisClient(): Redis {
   const globalKey = Symbol.for('__MOONTV_UPSTASH_REDIS_CLIENT__');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let client: Redis | undefined = (global as any)[globalKey];
 
   if (!client) {
@@ -56,6 +56,7 @@ function getUpstashRedisClient(): Redis {
 
     logger.info('Upstash Redis client created successfully');
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any)[globalKey] = client;
   }
 

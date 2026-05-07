@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * D1 Storage Implementation
@@ -42,6 +41,7 @@ export class D1Storage extends SQLStorageBase {
 
       if (!result.results) return [];
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return result.results.map((row: any) => row.username as string);
     } catch (err) {
       logger.error('D1Storage.getUsersByTag error:', err);

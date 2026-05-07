@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { createClient, RedisClientType } from 'redis';
 
@@ -18,10 +17,12 @@ import { userInfoCache } from './user-cache';
 const SEARCH_HISTORY_LIMIT = 20;
 
 // 数据类型转换辅助函数
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ensureString(value: any): string {
   return String(value);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ensureStringArray(value: any[]): string[] {
   return value.map((item) => String(item));
 }
@@ -65,6 +66,7 @@ export function createRedisClient(
   config: RedisConnectionConfig,
   globalSymbol: symbol,
 ): RedisClientType {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let client: RedisClientType | undefined = (global as any)[globalSymbol];
 
   if (!client) {
@@ -73,6 +75,7 @@ export function createRedisClient(
     }
 
     // 创建客户端配置
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const clientConfig: any = {
       url: config.url,
       socket: {
@@ -130,6 +133,7 @@ export function createRedisClient(
 
     connectWithRetry();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any)[globalSymbol] = client;
   }
 
@@ -539,6 +543,7 @@ export abstract class BaseRedisStorage implements IStorage {
   async setMusicPlayRecord(
     userName: string,
     key: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     record: any,
   ): Promise<void> {
     await this.withRetry(() =>
@@ -552,6 +557,7 @@ export abstract class BaseRedisStorage implements IStorage {
 
   async batchSetMusicPlayRecords(
     userName: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     records: { key: string; record: any }[],
   ): Promise<void> {
     if (records.length === 0) return;
@@ -566,11 +572,13 @@ export abstract class BaseRedisStorage implements IStorage {
     await this.withRetry(() => this.adapter.hSet(hashKey, data));
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getAllMusicPlayRecords(userName: string): Promise<Record<string, any>> {
     const hashData = await this.withRetry(() =>
       this.adapter.hGetAll(this.musicPlayRecordHashKey(userName)),
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result: Record<string, any> = {};
     for (const [key, value] of Object.entries(hashData)) {
       if (value) {
@@ -1619,6 +1627,7 @@ export abstract class BaseRedisStorage implements IStorage {
       this.adapter.lRange(this.shKey(userName), 0, -1),
     );
     // 确保返回的都是字符串类型
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return ensureStringArray(result as any[]);
   }
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { getConfig } from '@/lib/config';
 import { SearchResult } from '@/lib/types';
@@ -64,6 +63,7 @@ export async function getEmbyDetail(
   } else if (item.Type === 'Series') {
     // 剧集 - 获取所有季和集
     const seasons = await client.getSeasons(item.Id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allEpisodes: any[] = [];
 
     for (const season of seasons) {
@@ -129,7 +129,9 @@ export async function getOpenListDetail(id: string): Promise<SearchResult> {
   const rootPath = openListConfig.RootPath || '/';
 
   // 1. 读取 metainfo 获取元数据
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let metaInfo: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let folderMeta: any = null;
   try {
     const { getCachedMetaInfo, setCachedMetaInfo } =
@@ -174,6 +176,7 @@ export async function getOpenListDetail(id: string): Promise<SearchResult> {
   let videoInfo = getCachedVideoInfo(folderPath);
 
   // 获取所有分页的视频文件
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allFiles: any[] = [];
   let currentPage = 1;
   const pageSize = 100;

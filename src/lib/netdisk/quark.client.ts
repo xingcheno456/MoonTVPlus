@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const QUARK_SHARE_API_BASE = 'https://drive-h.quark.cn/1/clouddrive';
 const QUARK_DRIVE_API_BASE = 'https://drive-pc.quark.cn/1/clouddrive';
@@ -111,6 +110,7 @@ async function parseJson(response: Response) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ensureOk(data: any, fallbackMessage: string) {
   if (data?.code === 0 || data?.code === 200 || data?.status === 200) {
     return;
@@ -202,6 +202,7 @@ async function fetchShareFolderItems(
   ensureOk(data, '获取夸克分享详情失败');
 
   const list = data?.data?.list || [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return list.map((item: any) => ({
     fid: String(item.fid || item.file_id || ''),
     fileName: String(item.file_name || item.name || ''),
@@ -242,6 +243,7 @@ async function fetchAllDriveFolderItems(
   cookie: string,
   pdirFid = '0',
 ): Promise<any[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allItems: any[] = [];
   const pageSize = 200;
 
@@ -257,6 +259,7 @@ async function fetchAllDriveFolderItems(
   return allItems;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getDriveItemName(item: any): string {
   return String(item?.file_name || item?.name || '');
 }
@@ -274,6 +277,7 @@ async function findDirectoryByName(
   const items = await fetchAllDriveFolderItems(cookie, parentFid);
   return (
     items.find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (item: any) =>
         Boolean(item.dir || item.is_dir) &&
         getDriveItemName(item) === folderName,
@@ -332,6 +336,7 @@ export async function ensureQuarkDrivePath(
   for (const segment of segments) {
     const items = await fetchDriveFolderItems(cookie, currentFid);
     const existed = items.find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (item: any) =>
         Boolean(item.dir || item.is_dir) &&
         String(item.file_name || item.name || '') === segment,
@@ -477,6 +482,7 @@ export async function transferQuarkShare(
   const target = await ensureQuarkDrivePath(safeCookie, input.savePath);
   const existedItems = await fetchAllDriveFolderItems(safeCookie, target.fid);
   const existedNames = new Set(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     existedItems.map((item: any) => getDriveItemName(item)),
   );
   const pendingItems = topLevelItems.filter(

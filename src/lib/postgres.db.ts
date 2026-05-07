@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * Vercel Postgres Storage Implementation
@@ -44,6 +43,7 @@ export class PostgresStorage extends SQLStorageBase {
 
       if (!result.results) return [];
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return result.results.map((row: any) => row.username as string);
     } catch (err) {
       logger.error('PostgresStorage.getUsersByTag error:', err);

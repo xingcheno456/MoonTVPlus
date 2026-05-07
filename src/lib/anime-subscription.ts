@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import parseTorrentName from 'parse-torrent-name';
 import { parseStringPromise } from 'xml2js';
 
@@ -99,6 +98,7 @@ export async function searchACG(
   const items = parsed.rss.channel[0].item;
 
   // 统一格式
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return items.map((item: any) => {
     const title = item.title?.[0] || '';
     const link = item.link?.[0] || '';
@@ -147,6 +147,7 @@ export async function addOfflineDownload(
     openlistConfig.Password,
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const token = await (client as any).getToken();
   const openlistUrl = `${openlistConfig.URL.replace(/\/$/, '')}/api/fs/add_offline_download`;
 
@@ -251,6 +252,7 @@ async function sendAnimeUpdateNotifications(
     try {
       const userInfo = await db.getUserInfoV2(username);
       // 使用可选的 email 字段
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const email = (userInfo as any)?.email;
       if (email) {
         emailsToSend.push({ username, email });
@@ -319,14 +321,18 @@ export async function checkSubscription(subscription: AnimeSubscription) {
 
   // 2. 过滤并解析集数
   const newEpisodes = results
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .filter((item: any) => matchesFilter(item.title, subscription.filterText))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map((item: any) => ({
       episode: extractEpisode(item.title),
       ...item,
     }))
     .filter(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (item: any) => item.episode && item.episode > subscription.lastEpisode,
     )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .sort((a: any, b: any) => a.episode! - b.episode!);
 
   // 3. 下载新集数

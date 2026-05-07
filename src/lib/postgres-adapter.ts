@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * Vercel Postgres (Neon/Postgres) 适配器
@@ -19,6 +18,7 @@ import { logger } from './logger';
  * 使用 @vercel/postgres 包装为 D1 兼容接口
  */
 export class PostgresAdapter implements DatabaseAdapter {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private queryParams: { query: string; values: any[] } | null = null;
   readonly placeholderStyle = '$n' as const;
 
@@ -50,11 +50,13 @@ export class PostgresAdapter implements DatabaseAdapter {
  * 将 Vercel Postgres API 转换为 D1 兼容 API
  */
 class PostgresPreparedStatement implements D1PreparedStatement {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private params: any[] = [];
   private paramIndex = 1;
 
   constructor(private query: string) {}
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   bind(...values: any[]): D1PreparedStatement {
     this.params = values;
     return this;
@@ -80,6 +82,7 @@ class PostgresPreparedStatement implements D1PreparedStatement {
   /**
    * 执行查询并返回第一行
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async first<T = any>(colName?: string): Promise<T | null> {
     try {
       const convertedQuery = this.convertQuery(this.query);
@@ -103,6 +106,7 @@ class PostgresPreparedStatement implements D1PreparedStatement {
   /**
    * 执行查询并返回结果
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async run<T = any>(): Promise<D1Result<T>> {
     try {
       const convertedQuery = this.convertQuery(this.query);
@@ -117,6 +121,7 @@ class PostgresPreparedStatement implements D1PreparedStatement {
         },
         results: result.rows,
       };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       logger.error('Postgres run() error:', err);
       return {
@@ -129,6 +134,7 @@ class PostgresPreparedStatement implements D1PreparedStatement {
   /**
    * 执行查询并返回所有行
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async all<T = any>(): Promise<D1Result<T>> {
     try {
       const convertedQuery = this.convertQuery(this.query);
@@ -139,6 +145,7 @@ class PostgresPreparedStatement implements D1PreparedStatement {
         success: true,
         results: result.rows || [],
       };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       logger.error('Postgres all() error:', err);
       return {

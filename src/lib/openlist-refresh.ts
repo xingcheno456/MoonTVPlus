@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import parseTorrentName from 'parse-torrent-name';
 
@@ -225,6 +224,7 @@ async function performScan(
 
     invalidateMetaInfoCache();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const folders: any[] = [];
     let currentPage = 1;
     const pageSize = 100;

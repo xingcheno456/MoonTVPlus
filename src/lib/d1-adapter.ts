@@ -1,5 +1,4 @@
 import { logger } from './logger';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * 统一的数据库适配器接口
@@ -11,21 +10,28 @@ import { logger } from './logger';
 // Cloudflare D1 Database 接口
 export interface D1Database {
   prepare(query: string): D1PreparedStatement;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   batch(statements: any[]): Promise<D1Result[]>;
   exec(query: string): Promise<D1Result>;
 }
 
 // D1 PreparedStatement 接口
 export interface D1PreparedStatement {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   bind(...values: any[]): D1PreparedStatement;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   first<T = any>(colName?: string): Promise<T | null>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   run<T = any>(): Promise<D1Result<T>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   all<T = any>(): Promise<D1Result<T>>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface D1Result<T = any> {
   results?: T[];
   success: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   meta?: any;
   error?: string;
 }
@@ -51,6 +57,7 @@ export class CloudflareD1Adapter implements DatabaseAdapter {
   }
 
   async batch(statements: D1PreparedStatement[]): Promise<D1Result[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.db.batch(statements as any);
   }
 }
@@ -60,9 +67,11 @@ export class CloudflareD1Adapter implements DatabaseAdapter {
  * 包装 better-sqlite3 以兼容 D1 API
  */
 export class SQLiteAdapter implements DatabaseAdapter {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private db: any;
   readonly placeholderStyle = '?' as const;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(db: any) {
     this.db = db;
   }
@@ -79,6 +88,7 @@ export class SQLiteAdapter implements DatabaseAdapter {
         const results: D1Result[] = [];
         const transaction = this.db.transaction(() => {
           for (const stmt of statements) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const result = (stmt as any).runSync();
             results.push(result);
           }
@@ -101,18 +111,23 @@ export class SQLiteAdapter implements DatabaseAdapter {
  * 将 better-sqlite3 API 转换为 D1 兼容 API
  */
 class SQLitePreparedStatement implements D1PreparedStatement {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private stmt: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private params: any[] = [];
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(stmt: any) {
     this.stmt = stmt;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   bind(...values: any[]): D1PreparedStatement {
     this.params = values;
     return this;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async first<T = any>(colName?: string): Promise<T | null> {
     try {
       const result = this.stmt.get(...this.params);
@@ -125,6 +140,7 @@ class SQLitePreparedStatement implements D1PreparedStatement {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async run<T = any>(): Promise<D1Result<T>> {
     try {
       const info = this.stmt.run(...this.params);
@@ -135,6 +151,7 @@ class SQLitePreparedStatement implements D1PreparedStatement {
           last_row_id: info.lastInsertRowid,
         },
       };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       logger.error('SQLite run() error:', err);
       return {
@@ -144,6 +161,7 @@ class SQLitePreparedStatement implements D1PreparedStatement {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async all<T = any>(): Promise<D1Result<T>> {
     try {
       const results = this.stmt.all(...this.params);
@@ -151,6 +169,7 @@ class SQLitePreparedStatement implements D1PreparedStatement {
         success: true,
         results: results || [],
       };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       logger.error('SQLite all() error:', err);
       return {
@@ -172,6 +191,7 @@ class SQLitePreparedStatement implements D1PreparedStatement {
           last_row_id: info.lastInsertRowid,
         },
       };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       return {
         success: false,
