@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest } from 'next/server';
 
 import { apiError } from '@/lib/api-response';
@@ -91,6 +89,7 @@ export async function GET(request: NextRequest) {
               throw new Error(`HTTP ${response.status}`);
             }
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const data = (await response.json()) as any;
 
             // 检查结果是否有效
@@ -102,6 +101,7 @@ export async function GET(request: NextRequest) {
               data.list.length > 0
             ) {
               // 检查是否有标题包含搜索词的结果
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const validResults = data.list.filter((item: any) => {
                 const title = item.vod_name || '';
                 return title

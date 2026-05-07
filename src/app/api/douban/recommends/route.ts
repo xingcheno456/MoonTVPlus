@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
@@ -53,6 +51,7 @@ export async function GET(request: NextRequest) {
     return apiError('缺少必要参数: kind', 400);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const selectedCategories = { 类型: category } as any;
   if (format) {
     selectedCategories['形式'] = format;
