@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { AdminConfig } from './admin.types';
 import { hashPassword, verifyPassword, isLegacyPasswordHash } from './crypto-node';
 import { DatabaseAdapter } from './d1-adapter';
@@ -19,6 +17,31 @@ import {
   SkipConfig,
 } from './types';
 import { userInfoCache } from './user-cache';
+
+interface MusicPlayRecord {
+  platform: string;
+  id: string;
+  name: string;
+  artist: string;
+  album?: string;
+  pic?: string;
+  play_time: number;
+  duration: number;
+  save_time: number;
+}
+
+interface DBPlaylistRecord {
+  id: string;
+  username: string;
+  name: string;
+  description?: string;
+  cover?: string;
+  created_at: number;
+  updated_at: number;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type DbRow = Record<string, any>;
 
 export abstract class SQLStorageBase implements IStorage {
   protected db: DatabaseAdapter;
@@ -315,7 +338,7 @@ export abstract class SQLStorageBase implements IStorage {
 
   // ==================== 音乐播放记录 ====================
 
-  async getMusicPlayRecord(userName: string, key: string): Promise<any | null> {
+  async getMusicPlayRecord(userName: string, key: string): Promise<MusicPlayRecord | null> {
     try {
       const result = await this.db
         .prepare(
@@ -346,7 +369,7 @@ export abstract class SQLStorageBase implements IStorage {
   async setMusicPlayRecord(
     userName: string,
     key: string,
-    record: any,
+    record: MusicPlayRecord,
   ): Promise<void> {
     try {
       await this.db
@@ -386,7 +409,7 @@ export abstract class SQLStorageBase implements IStorage {
 
   async batchSetMusicPlayRecords(
     userName: string,
-    records: { key: string; record: any }[],
+    records: { key: string; record: MusicPlayRecord }[],
   ): Promise<void> {
     if (records.length === 0) return;
 
@@ -435,7 +458,7 @@ export abstract class SQLStorageBase implements IStorage {
 
   async getAllMusicPlayRecords(
     userName: string,
-  ): Promise<{ [key: string]: any }> {
+  ): Promise<{ [key: string]: MusicPlayRecord }> {
     try {
       const results = await this.db
         .prepare(
@@ -444,7 +467,7 @@ export abstract class SQLStorageBase implements IStorage {
         .bind(userName)
         .all();
 
-      const records: { [key: string]: any } = {};
+      const records: { [key: string]: MusicPlayRecord } = {};
       if (results.results) {
         for (const row of results.results) {
           records[row.key as string] = {
@@ -529,7 +552,7 @@ export abstract class SQLStorageBase implements IStorage {
     }
   }
 
-  async getMusicPlaylist(playlistId: string): Promise<any | null> {
+  async getMusicPlaylist(playlistId: string): Promise<DBPlaylistRecord | null> {
     try {
       const result = await this.db
         .prepare('SELECT * FROM music_playlists WHERE id = ?')
@@ -553,7 +576,7 @@ export abstract class SQLStorageBase implements IStorage {
     }
   }
 
-  async getUserMusicPlaylists(userName: string): Promise<any[]> {
+  async getUserMusicPlaylists(userName: string): Promise<DBPlaylistRecord[]> {
     try {
       const results = await this.db
         .prepare(
@@ -589,7 +612,7 @@ export abstract class SQLStorageBase implements IStorage {
   ): Promise<void> {
     try {
       const fields: string[] = [];
-      const values: any[] = [];
+      const values: unknown[] = [];
 
       if (updates.name !== undefined) {
         fields.push('name = ?');
@@ -729,7 +752,7 @@ export abstract class SQLStorageBase implements IStorage {
     }
   }
 
-  async getPlaylistSongs(playlistId: string): Promise<any[]> {
+  async getPlaylistSongs(playlistId: string): Promise<unknown[]> {
     try {
       const results = await this.db
         .prepare(
@@ -770,7 +793,7 @@ export abstract class SQLStorageBase implements IStorage {
 
       if (!results.results) return [];
 
-      return results.results.map((row: any) => ({
+      return results.results.map((row: DbRow) => ({
         songId: row.song_id,
         source: row.source,
         songmid: row.songmid || undefined,
@@ -907,7 +930,7 @@ export abstract class SQLStorageBase implements IStorage {
   async getMusicV2Playlist(
     playlistId: string,
   ): Promise<MusicV2PlaylistRecord | null> {
-    const row: any = await this.db
+    const row: DbRow | null = await this.db
       .prepare('SELECT * FROM music_v2_playlists WHERE id = ?')
       .bind(playlistId)
       .first();
@@ -938,7 +961,7 @@ export abstract class SQLStorageBase implements IStorage {
 
     if (!results.results) return [];
 
-    return results.results.map((row: any) => ({
+    return results.results.map((row: DbRow) => ({
       id: row.id,
       username: row.username,
       name: row.name,
@@ -960,7 +983,7 @@ export abstract class SQLStorageBase implements IStorage {
     },
   ): Promise<void> {
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
     if (updates.name !== undefined) {
       fields.push('name = ?');
@@ -1007,7 +1030,7 @@ export abstract class SQLStorageBase implements IStorage {
       throw new Error('歌单不存在');
     }
 
-    const maxOrder: any = await this.db
+    const maxOrder: DbRow | null = await this.db
       .prepare(
         'SELECT MAX(sort_order) as max_order FROM music_v2_playlist_items WHERE playlist_id = ?',
       )
@@ -1093,7 +1116,7 @@ export abstract class SQLStorageBase implements IStorage {
 
     if (!results.results) return [];
 
-    return results.results.map((row: any) => ({
+    return results.results.map((row: DbRow) => ({
       playlistId: row.playlist_id,
       songId: row.song_id,
       source: row.source,
@@ -1125,7 +1148,7 @@ export abstract class SQLStorageBase implements IStorage {
 
   // ==================== 辅助方法 ====================
 
-  protected rowToPlayRecord(row: any): PlayRecord {
+  protected rowToPlayRecord(row: DbRow): PlayRecord {
     return {
       title: row.title,
       source_name: row.source_name,
@@ -1141,7 +1164,7 @@ export abstract class SQLStorageBase implements IStorage {
     };
   }
 
-  protected rowToFavorite(row: any): Favorite {
+  protected rowToFavorite(row: DbRow): Favorite {
     return {
       source_name: row.source_name,
       total_episodes: row.total_episodes,
@@ -1250,7 +1273,7 @@ export abstract class SQLStorageBase implements IStorage {
     }
   }
 
-  async getUserInfoV2(userName: string): Promise<any> {
+  async getUserInfoV2(userName: string): Promise<Record<string, unknown> | null> {
     try {
       const cached = userInfoCache?.get(userName);
       if (cached) {
@@ -1506,7 +1529,7 @@ export abstract class SQLStorageBase implements IStorage {
   ): Promise<void> {
     try {
       const fields: string[] = [];
-      const values: any[] = [];
+      const values: unknown[] = [];
 
       if (updates.role !== undefined) {
         fields.push('role = ?');
@@ -2093,6 +2116,7 @@ export abstract class SQLStorageBase implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => ({
         id: row.id as string,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         type: row.type as any,
         title: row.title as string,
         message: row.message as string,
@@ -2270,7 +2294,7 @@ export abstract class SQLStorageBase implements IStorage {
   ): Promise<void> {
     try {
       const fields: string[] = [];
-      const values: any[] = [];
+      const values: unknown[] = [];
 
       if (updates.requestedBy !== undefined) {
         fields.push('requested_by = ?');
@@ -2375,7 +2399,7 @@ export abstract class SQLStorageBase implements IStorage {
     }
   }
 
-  protected rowToMovieRequest(row: any): MovieRequest {
+  protected rowToMovieRequest(row: DbRow): MovieRequest {
     return {
       id: row.id,
       tmdbId: row.tmdb_id || undefined,
