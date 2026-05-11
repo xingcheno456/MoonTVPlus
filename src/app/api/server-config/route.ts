@@ -16,28 +16,11 @@ export async function GET(request: NextRequest) {
 
   const storageType = STORAGE_TYPE;
 
-  const isLiteMode = process.env.MOONTV_LITE === 'true';
-
-  const watchRoomConfig = isLiteMode
-    ? {
-        enabled: false,
-        serverType: 'external' as const,
-        externalServerUrl: undefined,
-      }
-    : {
-        enabled: process.env.WATCH_ROOM_ENABLED === 'true',
-        serverType:
-          (process.env.WATCH_ROOM_SERVER_TYPE as 'internal' | 'external') ||
-          'internal',
-        externalServerUrl: process.env.WATCH_ROOM_EXTERNAL_SERVER_URL,
-      };
-
   if (storageType === 'localstorage') {
     return apiSuccess({
       SiteName: process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTVPlus',
       StorageType: 'localstorage',
       Version: CURRENT_VERSION,
-      WatchRoom: watchRoomConfig,
       EnableOfflineDownload:
         process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true',
       DanmakuAutoLoadDefault: true,
@@ -49,7 +32,6 @@ export async function GET(request: NextRequest) {
     SiteName: config.SiteConfig.SiteName,
     StorageType: storageType,
     Version: CURRENT_VERSION,
-    WatchRoom: watchRoomConfig,
     EnableOfflineDownload:
       process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true',
     EnableRegistration: config.SiteConfig.EnableRegistration || false,

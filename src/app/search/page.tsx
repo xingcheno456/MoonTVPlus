@@ -38,7 +38,6 @@ import AcgSearch from '@/components/search/AcgSearch';
 import CapsuleSwitch from '@/components/common/CapsuleSwitch';
 import ImageViewer from '@/components/common/ImageViewer';
 import PageLayout from '@/components/layout/PageLayout';
-import PansouSearch from '@/components/search/PansouSearch';
 import ProxyImage from '@/components/common/ProxyImage';
 import SearchResultFilter, {
   SearchFilterCategory,
@@ -48,6 +47,10 @@ import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
 import VirtualScrollableGrid from '@/components/common/VirtualScrollableGrid';
 
 import { logger } from '../../lib/logger';
+
+function PansouSearch(_props: { keyword: string; triggerSearch: boolean; onResultsChange?: (results: unknown[]) => void }) {
+  return null;
+}
 
 function SearchPageClient() {
   // 搜索历史

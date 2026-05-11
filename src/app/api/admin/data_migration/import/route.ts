@@ -335,35 +335,9 @@ export async function POST(req: NextRequest) {
                 }
               }
             })(),
-
-                            source: song.source || song.platform,
-                            songmid: song.songmid,
-                            name: song.name,
-                            artist: song.artist,
-                            album: song.album,
-                            cover: song.cover || song.pic,
-                            durationSec: song.durationSec || song.duration || 0,
-                            durationText: song.durationText,
-                            hash: song.hash,
-                            copyrightId: song.copyrightId,
-                            albumId: song.albumId,
-                            lrcUrl: song.lrcUrl,
-                            mrcUrl: song.mrcUrl,
-                            trcUrl: song.trcUrl,
-                            sortOrder: song.sortOrder ?? j + index,
-                            addedAt: song.addedAt || Date.now(),
-                            updatedAt: song.updatedAt || Date.now(),
-                          }),
-                        ),
-                      );
-                    }
-                  }
-                }
-              }
-            })(),
           ]);
 
-          return true;
+            return true;
         } catch (error) {
           logger.error(`导入用户 ${username} 失败:`, error);
           return false;

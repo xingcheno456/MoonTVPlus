@@ -4,20 +4,15 @@ import {
   Blend,
   Cat,
   Clover,
-  Container,
   Film,
-  Globe,
   Home,
   Star,
   Tv,
   TvMinimalPlay,
-  Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-
-import { useWatchRoomContextSafe } from './WatchRoomProvider';
 
 interface MobileBottomNavProps {
   /**
@@ -29,7 +24,6 @@ interface MobileBottomNavProps {
 const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const watchRoomContext = useWatchRoomContextSafe();
 
   const [navItems, setNavItems] = useState([
     { icon: Home, label: '首页', href: '/' },
@@ -88,27 +82,11 @@ interface RuntimeConfig {
        },
      ];
 
-    if (runtimeConfig?.PRIVATE_LIBRARY_ENABLED) {
-      items.push({
-        icon: Container,
-        label: '私人影库',
-        href: '/private-library',
-      });
-    }
-
     if (runtimeConfig?.ADVANCED_RECOMMENDATION_ENABLED) {
       items.push({
         icon: Blend,
         label: '高级推荐',
         href: '/advanced-recommendation',
-      });
-    }
-
-    if (watchRoomContext?.isEnabled) {
-      items.push({
-        icon: Users,
-        label: '观影室',
-        href: '/watch-room',
       });
     }
 
@@ -121,17 +99,13 @@ interface RuntimeConfig {
     }
 
     setNavItems(items);
-  }, [watchRoomContext?.isEnabled]);
+  }, []);
 
   const getCurrentFullPath = () => {
     const queryString = searchParams.toString();
     return queryString ? `${pathname}?${queryString}` : pathname;
   };
   const currentActive = activePath ?? getCurrentFullPath();
-
-  if (pathname === '/watch-room/screen') {
-    return null;
-  }
 
   const isActive = (href: string) => {
     const typeMatch = href.match(/type=([^&]+)/)?.[1];

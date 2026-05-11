@@ -41,17 +41,11 @@ export async function POST(request: NextRequest) {
       DanmakuAutoLoadDefault,
       BannerDataSource,
       RecommendationDataSource,
-      PansouApiUrl,
-      PansouUsername,
-      PansouPassword,
-      PansouKeywordBlocklist,
       MagnetProxy,
       MagnetMikanReverseProxy,
       MagnetDmhyReverseProxy,
       MagnetAcgripReverseProxy,
       EnableComments,
-      EnableMovieRequest,
-      MovieRequestCooldown,
       CustomAdFilterCode,
       CustomAdFilterVersion,
       EnableRegistration,
@@ -89,17 +83,11 @@ export async function POST(request: NextRequest) {
       DanmakuAutoLoadDefault?: boolean;
       BannerDataSource?: string;
       RecommendationDataSource?: string;
-      PansouApiUrl?: string;
-      PansouUsername?: string;
-      PansouPassword?: string;
-      PansouKeywordBlocklist?: string;
       MagnetProxy?: string;
       MagnetMikanReverseProxy?: string;
       MagnetDmhyReverseProxy?: string;
       MagnetAcgripReverseProxy?: string;
       EnableComments: boolean;
-      EnableMovieRequest?: boolean;
-      MovieRequestCooldown?: number;
       CustomAdFilterCode?: string;
       CustomAdFilterVersion?: number;
       EnableRegistration?: boolean;
@@ -145,8 +133,6 @@ export async function POST(request: NextRequest) {
         typeof BannerDataSource !== 'string') ||
       (RecommendationDataSource !== undefined &&
         typeof RecommendationDataSource !== 'string') ||
-      (PansouKeywordBlocklist !== undefined &&
-        typeof PansouKeywordBlocklist !== 'string') ||
       (MagnetProxy !== undefined && typeof MagnetProxy !== 'string') ||
       (MagnetMikanReverseProxy !== undefined &&
         typeof MagnetMikanReverseProxy !== 'string') ||
@@ -155,10 +141,6 @@ export async function POST(request: NextRequest) {
       (MagnetAcgripReverseProxy !== undefined &&
         typeof MagnetAcgripReverseProxy !== 'string') ||
       typeof EnableComments !== 'boolean' ||
-      (EnableMovieRequest !== undefined &&
-        typeof EnableMovieRequest !== 'boolean') ||
-      (MovieRequestCooldown !== undefined &&
-        typeof MovieRequestCooldown !== 'number') ||
       (CustomAdFilterCode !== undefined &&
         typeof CustomAdFilterCode !== 'string') ||
       (CustomAdFilterVersion !== undefined &&
@@ -221,17 +203,11 @@ export async function POST(request: NextRequest) {
       DanmakuAutoLoadDefault,
       BannerDataSource,
       RecommendationDataSource,
-      PansouApiUrl,
-      PansouUsername,
-      PansouPassword,
-      PansouKeywordBlocklist,
       MagnetProxy,
       MagnetMikanReverseProxy,
       MagnetDmhyReverseProxy,
       MagnetAcgripReverseProxy,
       EnableComments,
-      EnableMovieRequest,
-      MovieRequestCooldown,
       CustomAdFilterCode,
       CustomAdFilterVersion,
       EnableRegistration,

@@ -90,13 +90,8 @@ export async function GET(request: NextRequest) {
       yellowFilter,
     );
 
-    // 检查是否配置了 OpenList
-    const hasOpenList = !!(
-      config.OpenListConfig?.Enabled &&
-      config.OpenListConfig?.URL &&
-      config.OpenListConfig?.Username &&
-      config.OpenListConfig?.Password
-    );
+    // 私人影库功能已删除
+    const hasOpenList = false;
 
     // 获取所有启用的 Emby 源
     const { embyManager } = await import('@/lib/emby-manager');

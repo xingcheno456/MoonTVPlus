@@ -653,9 +653,7 @@ function HomeClient() {
                 <LinkIcon size={18} />
               </button>
 
-              )}
-
-              {/* 源站寻片入口 */}
+            {/* 源站寻片入口 */}
               {sourceSearchEnabled && (
                 <Link href='/source-search'>
                   <button

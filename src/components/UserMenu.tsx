@@ -2,7 +2,6 @@
 
 
 import {
-  Bell,
   Check,
   ChevronDown,
   ChevronUp,
@@ -44,9 +43,7 @@ import { parseApiResponse } from '@/lib/api-response';
 
 import { DeviceManagementPanel } from './DeviceManagementPanel';
 import { DownloadManagementPanel } from './DownloadManagementPanel';
-import { EmailSettingsPanel } from './EmailSettingsPanel';
 import { FavoritesPanel } from './FavoritesPanel';
-import { NotificationPanel } from './NotificationPanel';
 import { OfflineDownloadPanel } from './OfflineDownloadPanel';
 import { PersonalCenterPanel } from './PersonalCenterPanel';
 import { useVersionCheck } from './VersionCheckProvider';
@@ -69,9 +66,7 @@ export const UserMenu: React.FC = () => {
   const [isVersionPanelOpen, setIsVersionPanelOpen] = useState(false);
   const [isOfflineDownloadPanelOpen, setIsOfflineDownloadPanelOpen] =
     useState(false);
-  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [isFavoritesPanelOpen, setIsFavoritesPanelOpen] = useState(false);
-  const [isEmailSettingsOpen, setIsEmailSettingsOpen] = useState(false);
   const [isDeviceManagementOpen, setIsDeviceManagementOpen] = useState(false);
   const [isEcoAppsOpen, setIsEcoAppsOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
@@ -104,8 +99,7 @@ export const UserMenu: React.FC = () => {
       isChangePasswordOpen ||
       isSubscribeOpen ||
       isOfflineDownloadPanelOpen ||
-      isEmailSettingsOpen ||
-      isDeviceManagementOpen ||
+            isDeviceManagementOpen ||
       isEcoAppsOpen ||
       isReportOpen ||
       isDownloadManagementOpen
@@ -133,8 +127,7 @@ export const UserMenu: React.FC = () => {
     isChangePasswordOpen,
     isSubscribeOpen,
     isOfflineDownloadPanelOpen,
-    isEmailSettingsOpen,
-    isDeviceManagementOpen,
+        isDeviceManagementOpen,
     isEcoAppsOpen,
     isReportOpen,
     isDownloadManagementOpen,
@@ -188,15 +181,6 @@ export const UserMenu: React.FC = () => {
   );
   const [filesystemSavePath, setFilesystemSavePath] = useState<string>('');
 
-  // 邮件通知设置
-  const [userEmail, setUserEmail] = useState('');
-  const [emailNotifications, setEmailNotifications] = useState(false);
-  const [emailSettingsLoading, setEmailSettingsLoading] = useState(false);
-  const [emailSettingsSaving, setEmailSettingsSaving] = useState(false);
-  const [emailSettingsMessage, setEmailSettingsMessage] = useState('');
-  const [emailSettingsMessageType, setEmailSettingsMessageType] = useState<
-    'success' | 'error' | null
-  >(null);
 
   // 设备管理状态
   const [devices, setDevices] = useState<any[]>([]);
@@ -311,25 +295,6 @@ export const UserMenu: React.FC = () => {
     setMounted(true);
   }, []);
 
-  // 加载未读通知数量
-  const loadUnreadCount = async () => {
-    try {
-      const response = await fetch('/api/notifications');
-      if (response.ok) {
-        const data = await parseApiResponse<{ unreadCount?: number }>(response);
-        const count = data.unreadCount || 0;
-        setUnreadCount(count);
-        // 同步到全局，让其他 UserMenu 实例也能获取
-        if (typeof window !== 'undefined') {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (window as any).__unreadNotificationCount = count;
-        }
-      }
-    } catch (error) {
-      logger.error('加载未读通知数量失败:', error);
-    }
-  };
-
   const formatCacheSize = useCallback((size: number) => {
     if (size < 1024) return `${size} B`;
     if (size < 1024 * 1024) return `${(size / 1024).toFixed(2)} KB`;
@@ -346,66 +311,12 @@ export const UserMenu: React.FC = () => {
     }
   }, [formatCacheSize]);
 
-  // 首次加载时检查未读通知数量（使用全局标记避免多个实例重复请求）
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // 检查是否已经有其他实例在加载
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const globalWindow = window as any;
-    if (globalWindow.__loadingNotifications) {
-      // 如果正在加载，等待加载完成后获取结果
-      const checkInterval = setInterval(() => {
-        if (
-          !globalWindow.__loadingNotifications &&
-          globalWindow.__unreadNotificationCount !== undefined
-        ) {
-          setUnreadCount(globalWindow.__unreadNotificationCount);
-          clearInterval(checkInterval);
-        }
-      }, 100);
-      return () => clearInterval(checkInterval);
-    }
-
-    // 检查是否已经加载过
-    if (globalWindow.__unreadNotificationCount !== undefined) {
-      setUnreadCount(globalWindow.__unreadNotificationCount);
-      return;
-    }
-
-    // 标记正在加载
-    globalWindow.__loadingNotifications = true;
-    loadUnreadCount().finally(() => {
-      globalWindow.__loadingNotifications = false;
-    });
-  }, []);
-
   useEffect(() => {
     if (!mounted || !isSettingsOpen || !isDanmakuSectionOpen) return;
     void (async () => {
       await loadDanmakuCacheUsage();
     })();
   }, [loadDanmakuCacheUsage, mounted, isSettingsOpen, isDanmakuSectionOpen]);
-
-  // 监听通知更新事件
-  useEffect(() => {
-    const handleNotificationsUpdated = () => {
-      // 清除缓存，强制重新加载
-      if (typeof window !== 'undefined') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        delete (window as any).__unreadNotificationCount;
-      }
-      loadUnreadCount();
-    };
-
-    window.addEventListener('notificationsUpdated', handleNotificationsUpdated);
-    return () => {
-      window.removeEventListener(
-        'notificationsUpdated',
-        handleNotificationsUpdated,
-      );
-    };
-  }, []);
 
   // 从运行时配置读取订阅是否启用
   useEffect(() => {
@@ -770,61 +681,6 @@ export const UserMenu: React.FC = () => {
       }
     }
   }, []);
-
-  // 加载邮件通知设置
-  const loadEmailSettings = async () => {
-    setEmailSettingsLoading(true);
-    setEmailSettingsMessage('');
-    setEmailSettingsMessageType(null);
-    try {
-      const response = await fetch('/api/user/email-settings');
-      if (response.ok) {
-        const data = await parseApiResponse<{ email?: string; emailNotifications?: boolean }>(response);
-        setUserEmail(data.email || '');
-        setEmailNotifications(data.emailNotifications || false);
-      }
-    } catch (error) {
-      logger.error('加载邮件设置失败:', error);
-    } finally {
-      setEmailSettingsLoading(false);
-    }
-  };
-
-  // 保存邮件通知设置
-  const handleSaveEmailSettings = async () => {
-    setEmailSettingsSaving(true);
-    setEmailSettingsMessage('');
-    setEmailSettingsMessageType(null);
-    try {
-      const response = await fetch('/api/user/email-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: userEmail,
-          emailNotifications,
-        }),
-      });
-
-      if (response.ok) {
-        setEmailSettingsMessage('保存成功！');
-        setEmailSettingsMessageType('success');
-        setTimeout(() => {
-          setEmailSettingsMessage('');
-          setEmailSettingsMessageType(null);
-        }, 3000);
-      } else {
-        const data = await parseApiResponse<{ error?: string }>(response);
-        setEmailSettingsMessage(data.error || '保存失败');
-        setEmailSettingsMessageType('error');
-      }
-    } catch (error) {
-      logger.error('保存邮件设置失败:', error);
-      setEmailSettingsMessage('保存失败，请重试');
-      setEmailSettingsMessageType('error');
-    } finally {
-      setEmailSettingsSaving(false);
-    }
-  };
 
   // 加载设备列表
   const loadDevices = async () => {
@@ -1711,22 +1567,6 @@ export const UserMenu: React.FC = () => {
 
         {/* 菜单项 */}
         <div className='py-1'>
-          {/* 通知按钮 */}
-          <button
-            onClick={() => {
-              setIsOpen(false);
-              setIsNotificationPanelOpen(true);
-            }}
-            className='relative flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
-          >
-            <Bell className='h-4 w-4 text-gray-500 dark:text-gray-400' />
-            <span className='font-medium'>通知中心</span>
-            {unreadCount > 0 && (
-              <span className='ml-auto rounded-full bg-red-500 px-2 py-0.5 text-xs font-medium text-white'>
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            )}
-          </button>
 
           {/* 我的收藏按钮 */}
           <button
@@ -4021,10 +3861,6 @@ export const UserMenu: React.FC = () => {
         {updateStatus === UpdateStatus.HAS_UPDATE && (
           <div className='absolute right-[2px] top-[2px] h-2 w-2 rounded-full bg-yellow-500'></div>
         )}
-        {/* 未读通知红点 */}
-        {unreadCount > 0 && (
-          <div className='absolute right-[2px] top-[2px] h-2 w-2 rounded-full bg-red-500'></div>
-        )}
       </div>
 
       {/* 使用 Portal 将菜单面板渲染到 document.body */}
@@ -4040,11 +3876,6 @@ export const UserMenu: React.FC = () => {
         avatarText={avatarText}
         roleBadgeClassName={roleBadgeClassName}
         showDeviceManagement={storageType !== 'localstorage'}
-        onOpenEmailSettings={() => {
-          setIsProfileCenterOpen(false);
-          setIsEmailSettingsOpen(true);
-          loadEmailSettings();
-        }}
         onOpenDeviceManagement={() => {
           setIsProfileCenterOpen(false);
           setIsDeviceManagementOpen(true);
@@ -4077,20 +3908,6 @@ export const UserMenu: React.FC = () => {
         onClose={() => setIsOfflineDownloadPanelOpen(false)}
       />
 
-      {/* 使用 Portal 将通知面板渲染到 document.body */}
-      {isNotificationPanelOpen &&
-        mounted &&
-        createPortal(
-          <NotificationPanel
-            isOpen={isNotificationPanelOpen}
-            onClose={() => {
-              setIsNotificationPanelOpen(false);
-              // 不需要在这里刷新，NotificationPanel 内部会触发事件
-            }}
-          />,
-          document.body,
-        )}
-
       {/* 使用 Portal 将收藏面板渲染到 document.body */}
       {isFavoritesPanelOpen &&
         mounted &&
@@ -4112,21 +3929,6 @@ export const UserMenu: React.FC = () => {
           />,
           document.body,
         )}
-
-      <EmailSettingsPanel
-        isOpen={isEmailSettingsOpen}
-        mounted={mounted}
-        onClose={() => setIsEmailSettingsOpen(false)}
-        userEmail={userEmail}
-        onUserEmailChange={setUserEmail}
-        emailNotifications={emailNotifications}
-        onEmailNotificationsChange={setEmailNotifications}
-        emailSettingsLoading={emailSettingsLoading}
-        emailSettingsSaving={emailSettingsSaving}
-        onSave={handleSaveEmailSettings}
-        statusMessage={emailSettingsMessage}
-        statusType={emailSettingsMessageType}
-      />
 
       <DeviceManagementPanel
         isOpen={isDeviceManagementOpen}

@@ -163,10 +163,6 @@ export async function getInitConfig(
       DanmakuApiToken: process.env.DANMAKU_API_TOKEN || '87654321',
       DanmakuAutoLoadDefault: true,
 
-      PansouApiUrl: '',
-      PansouUsername: '',
-      PansouPassword: '',
-      PansouKeywordBlocklist: '',
       MagnetProxy: '',
       MagnetMikanReverseProxy: '',
       MagnetDmhyReverseProxy: '',

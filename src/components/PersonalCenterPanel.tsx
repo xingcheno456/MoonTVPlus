@@ -13,7 +13,7 @@ interface PersonalCenterPanelProps {
   avatarText: string;
   roleBadgeClassName: string;
   showDeviceManagement: boolean;
-  onOpenEmailSettings: () => void;
+  onOpenEmailSettings?: () => void;
   onOpenDeviceManagement: () => void;
 }
 
@@ -79,6 +79,7 @@ export function PersonalCenterPanel({
           </div>
 
           <div className='space-y-3'>
+            {onOpenEmailSettings && (
             <button
               onClick={onOpenEmailSettings}
               className='dark:hover:bg-gray-750 flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-left transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800'
@@ -95,6 +96,7 @@ export function PersonalCenterPanel({
                 </div>
               </div>
             </button>
+            )}
 
             {showDeviceManagement && (
               <button

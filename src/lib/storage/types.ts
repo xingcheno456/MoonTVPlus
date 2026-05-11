@@ -132,6 +132,15 @@ export interface IConfigRepository {
   clearAllData(): Promise<void>;
 }
 
+export interface INotificationRepository {
+  getAll(userName: string): Promise<import('../types').Notification[]>;
+  add(userName: string, notification: import('../types').Notification): Promise<void>;
+  markAsRead(userName: string, notificationId: string): Promise<void>;
+  delete(userName: string, notificationId: string): Promise<void>;
+  clearAll(userName: string): Promise<void>;
+  getUnreadCount(userName: string): Promise<number>;
+}
+
 export interface IMovieRequestRepository {
   getAll(): Promise<MovieRequest[]>;
   get(requestId: string): Promise<MovieRequest | null>;

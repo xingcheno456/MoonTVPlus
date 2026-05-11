@@ -54,21 +54,7 @@ export async function getConfig(): Promise<AdminConfig> {
       }
     }
 
-    const needsEmbyMigration =
-      adminConfig.EmbyConfig &&
-      adminConfig.EmbyConfig.ServerURL &&
-      !adminConfig.EmbyConfig.Sources;
-
     adminConfig = configSelfCheck(adminConfig);
-
-    if (!dbReadFailed && needsEmbyMigration) {
-      try {
-        await db.saveAdminConfig(adminConfig);
-        logger.info('[Config] Emby配置迁移已保存到数据库');
-      } catch (error) {
-        logger.error('[Config] 保存迁移后的配置失败:', error);
-      }
-    }
 
     const nonOwnerUsers = adminConfig.UserConfig.Users.filter(
       (u) => u.username !== process.env.USERNAME,

@@ -17,8 +17,6 @@ import { SiteProvider } from '../components/SiteProvider';
 import { ThemeProvider } from '../components/ThemeProvider';
 import { TokenRefreshManager } from '../components/TokenRefreshManager';
 import TopProgressBar from '../components/layout/TopProgressBar';
-import ChatFloatingWindow from '../components/watch-room/ChatFloatingWindow';
-import { WatchRoomProvider } from '../components/player/WatchRoomProvider';
 import { DownloadProvider } from '../contexts/DownloadContext';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -68,10 +66,8 @@ export default async function RootLayout({
   let enableComments = false;
   let danmakuAutoLoadDefault = true;
   let recommendationDataSource = 'Mixed';
-  let openListEnabled = false;
-  let embyEnabled = false;
-  let xiaoyaEnabled = false;
-  let loginBackgroundImage = '';
+  let customAdFilterVersion = 0;
+  let advancedRecommendationEnabled = false;
   let registerBackgroundImage = '';
   let progressThumbType = 'default';
   let progressThumbPresetId = '';
@@ -84,9 +80,7 @@ export default async function RootLayout({
   let enableOIDCLogin = false;
   let enableOIDCRegistration = false;
   let oidcButtonText = '';
-  let enableMovieRequest = true;
-  let customAdFilterVersion = 0;
-  let advancedRecommendationEnabled = false;
+  let loginBackgroundImage = '';
   let customCategories = [] as {
     name: string;
     type: 'movie' | 'tv';
@@ -129,31 +123,12 @@ export default async function RootLayout({
     enableOIDCLogin = config.SiteConfig.EnableOIDCLogin || false;
     enableOIDCRegistration = config.SiteConfig.EnableOIDCRegistration || false;
     oidcButtonText = config.SiteConfig.OIDCButtonText || '';
-    // 求片功能配置
-    enableMovieRequest = config.SiteConfig.EnableMovieRequest ?? true;
 
     // 自定义去广告代码版本号
     customAdFilterVersion = config.SiteConfig?.CustomAdFilterVersion || 0;
     // 高级推荐功能配置：存在已启用视频源脚本时显示
     advancedRecommendationEnabled =
       (await listEnabledSourceScripts()).length > 0;
-    // 检查是否启用了 OpenList 功能
-    openListEnabled = !!(
-      config.OpenListConfig?.Enabled &&
-      config.OpenListConfig?.URL &&
-      config.OpenListConfig?.Username &&
-      config.OpenListConfig?.Password
-    );
-    // 检查是否启用了 Emby 功能（支持多源）
-    embyEnabled = !!(
-      config.EmbyConfig?.Sources &&
-      config.EmbyConfig.Sources.length > 0 &&
-      config.EmbyConfig.Sources.some((s) => s.enabled && s.ServerURL)
-    );
-    // 检查是否启用了小雅功能
-    xiaoyaEnabled = !!(
-      config.XiaoyaConfig?.Enabled && config.XiaoyaConfig?.ServerURL
-    );
   }
 
   // 将运行时配置注入到全局 window 对象，供客户端在运行时读取
@@ -184,11 +159,6 @@ export default async function RootLayout({
       process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true',
     VOICE_CHAT_STRATEGY:
       process.env.NEXT_PUBLIC_VOICE_CHAT_STRATEGY || 'webrtc-fallback',
-    OPENLIST_ENABLED: openListEnabled,
-    EMBY_ENABLED: embyEnabled,
-    XIAOYA_ENABLED: xiaoyaEnabled,
-    PRIVATE_LIBRARY_ENABLED: openListEnabled || embyEnabled || xiaoyaEnabled,
-    LOGIN_BACKGROUND_IMAGE: loginBackgroundImage,
     REGISTER_BACKGROUND_IMAGE: registerBackgroundImage,
     PROGRESS_THUMB_TYPE: progressThumbType,
     PROGRESS_THUMB_PRESET_ID: progressThumbPresetId,
@@ -201,7 +171,6 @@ export default async function RootLayout({
     ENABLE_OIDC_LOGIN: enableOIDCLogin,
     ENABLE_OIDC_REGISTRATION: enableOIDCRegistration,
     OIDC_BUTTON_TEXT: oidcButtonText,
-    ENABLE_MOVIE_REQUEST: enableMovieRequest,
     ADVANCED_RECOMMENDATION_ENABLED: advancedRecommendationEnabled,
     CUSTOM_AD_FILTER_VERSION: customAdFilterVersion,
     FESTIVE_EFFECT_ENABLED: process.env.FESTIVE_EFFECT_ENABLED === 'true',
@@ -249,16 +218,13 @@ export default async function RootLayout({
             siteName={siteName}
             announcement={announcement}
           >
-            <WatchRoomProvider>
-              <DownloadProvider>
-                <StartupCacheCleanup />
-                {children}
-                <GlobalErrorIndicator />
-                <ChatFloatingWindow />
-                <DownloadBubble />
-                <DownloadPanel />
-              </DownloadProvider>
-            </WatchRoomProvider>
+            <DownloadProvider>
+              <StartupCacheCleanup />
+              {children}
+              <GlobalErrorIndicator />
+              <DownloadBubble />
+              <DownloadPanel />
+            </DownloadProvider>
           </SiteProvider>
         </ThemeProvider>
       </body>

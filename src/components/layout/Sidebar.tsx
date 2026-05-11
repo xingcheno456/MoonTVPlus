@@ -5,16 +5,13 @@ import {
   Blend,
   Cat,
   Clover,
-  Container,
   Film,
-  Globe,
   Home,
   Menu,
   Search,
   Star,
   Tv,
   TvMinimalPlay,
-  Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -28,7 +25,6 @@ import {
 } from 'react';
 
 import { useSite } from './SiteProvider';
-import { useWatchRoomContextSafe } from './WatchRoomProvider';
 
 interface SidebarContextType {
   isCollapsed: boolean;
@@ -74,7 +70,6 @@ declare global {
 const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const watchRoomContext = useWatchRoomContextSafe();
 
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     if (
@@ -180,27 +175,11 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
       },
     ];
 
-    if (runtimeConfig?.PRIVATE_LIBRARY_ENABLED) {
-      items.push({
-        icon: Container,
-        label: '私人影库',
-        href: '/private-library',
-      });
-    }
-
     if (runtimeConfig?.ADVANCED_RECOMMENDATION_ENABLED) {
       items.push({
         icon: Blend,
         label: '高级推荐',
         href: '/advanced-recommendation',
-      });
-    }
-
-    if (watchRoomContext?.isEnabled) {
-      items.push({
-        icon: Users,
-        label: '观影室',
-        href: '/watch-room',
       });
     }
 
@@ -213,11 +192,7 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
     }
 
     setMenuItems(items);
-  }, [watchRoomContext?.isEnabled]);
-
-  if (pathname === '/watch-room/screen') {
-    return null;
-  }
+  }, []);
 
   return (
     <SidebarContext.Provider value={contextValue}>

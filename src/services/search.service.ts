@@ -295,16 +295,14 @@ export async function searchAll(
   const config = await getConfig();
   const weightMap = await buildWeightMap();
 
-  const [openlistResults, embyResults, apiResults, scriptResults] =
+  const [embyResults, apiResults, scriptResults] =
     await Promise.all([
-      searchOpenList(query, weightMap, timeout),
       searchEmbySources(query, weightMap, request, timeout),
       searchApiSites(query, username, timeout),
       searchSourceScripts(query, timeout),
     ]);
 
   let allResults = [
-    ...openlistResults,
     ...embyResults,
     ...apiResults,
     ...scriptResults,

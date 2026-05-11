@@ -51,20 +51,8 @@ export async function GET(request: NextRequest) {
     return weightB - weightA;
   });
 
-  // 检查是否配置了 OpenList
-  const hasOpenList = !!(
-    config.OpenListConfig?.Enabled &&
-    config.OpenListConfig?.URL &&
-    config.OpenListConfig?.Username &&
-    config.OpenListConfig?.Password
-  );
-
-  // 检查是否配置了 Emby（支持多源）
-  const hasEmby = !!(
-    config.EmbyConfig?.Sources &&
-    config.EmbyConfig.Sources.length > 0 &&
-    config.EmbyConfig.Sources.some((s) => s.enabled && s.ServerURL)
-  );
+  const hasOpenList = false;
+  const hasEmby = false;
   const enabledScripts = await listEnabledSourceScripts();
 
   // 共享状态

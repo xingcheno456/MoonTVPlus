@@ -5,13 +5,7 @@ import { checkAnimeSubscriptions } from '@/lib/anime-subscription';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getConfig, refineConfig } from '@/lib/config';
 import { db, getStorage } from '@/lib/db';
-import { EmailService } from '@/lib/email.service';
-import {
-  FavoriteUpdate,
-  getBatchFavoriteUpdateEmailTemplate,
-} from '@/lib/email.templates';
 import { fetchVideoDetail } from '@/lib/fetchVideoDetail';
-import { startOpenListRefresh } from '@/lib/openlist-refresh';
 import { SearchResult } from '@/lib/types';
 
 import { logger } from '../../../../lib/logger';
@@ -364,7 +358,7 @@ async function refreshRecordAndFavorites() {
         const totalFavorites = Object.keys(favorites).length;
         let processedFavorites = 0;
         const now = Date.now();
-        const userUpdates: FavoriteUpdate[] = []; // 收集该用户的所有更新
+        const userUpdates: any[] = []; // 收集该用户的所有更新
 
         for (const [key, fav] of Object.entries(favorites)) {
           try {
@@ -451,35 +445,8 @@ async function refreshRecordAndFavorites() {
               const userEmail = storage.getUserEmail
                 ? await storage.getUserEmail(user)
                 : null;
-              const emailNotifications = storage.getEmailNotificationPreference
-                ? await storage.getEmailNotificationPreference(user)
-                : false;
-
-              if (userEmail && emailNotifications) {
-                const config = await getConfig();
-                const emailConfig = config?.EmailConfig;
-
-                if (emailConfig?.enabled) {
-                  const siteUrl =
-                    process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-                  const siteName = config?.SiteConfig?.SiteName || 'MoonTVPlus';
-
-                  await EmailService.send(emailConfig, {
-                    to: userEmail,
-                    subject: `📺 收藏更新汇总 - ${userUpdates.length} 部影片有更新`,
-                    html: getBatchFavoriteUpdateEmailTemplate(
-                      user,
-                      userUpdates,
-                      siteUrl,
-                      siteName,
-                    ),
-                  });
-
-                  logger.info(
-                    `邮件汇总已发送至: ${userEmail} (${userUpdates.length} 个更新)`,
-                  );
-                }
-              }
+              // 邮件通知功能已删除
+              logger.debug(`用户 ${user} 收藏更新 ${userUpdates.length} 项（邮件通知已禁用）`);
             } catch (emailError) {
               logger.error(`发送邮件汇总失败 (${user}):`, emailError);
             }
@@ -510,62 +477,6 @@ async function refreshRecordAndFavorites() {
 }
 
 async function refreshOpenList() {
-  try {
-    const config = await getConfig();
-    const openListConfig = config.OpenListConfig;
-
-    // 检查功能是否启用
-    if (!openListConfig || !openListConfig.Enabled) {
-      logger.info('跳过 OpenList 扫描：功能未启用');
-      return;
-    }
-
-    // 检查是否配置了 OpenList 和定时扫描
-    if (
-      !openListConfig.URL ||
-      !openListConfig.Username ||
-      !openListConfig.Password
-    ) {
-      logger.info('跳过 OpenList 扫描：未配置');
-      return;
-    }
-
-    const scanInterval = openListConfig.ScanInterval || 0;
-    if (scanInterval === 0) {
-      logger.info('跳过 OpenList 扫描：定时扫描已关闭');
-      return;
-    }
-
-    // 检查间隔时间是否满足最低要求（60分钟）
-    if (scanInterval < 60) {
-      logger.info(
-        `跳过 OpenList 扫描：间隔时间 ${scanInterval} 分钟小于最低要求 60 分钟`,
-      );
-      return;
-    }
-
-    // 检查上次扫描时间
-    const lastRefreshTime = openListConfig.LastRefreshTime || 0;
-    const now = Date.now();
-    const timeSinceLastRefresh = now - lastRefreshTime;
-    const intervalMs = scanInterval * 60 * 1000;
-
-    if (timeSinceLastRefresh < intervalMs) {
-      const remainingMinutes = Math.ceil(
-        (intervalMs - timeSinceLastRefresh) / 60000,
-      );
-      logger.info(
-        `跳过 OpenList 扫描：距离上次扫描仅 ${Math.floor(timeSinceLastRefresh / 60000)} 分钟，还需等待 ${remainingMinutes} 分钟`,
-      );
-      return;
-    }
-
-    logger.info(`开始 OpenList 定时扫描（间隔: ${scanInterval} 分钟）`);
-
-    // 直接调用扫描函数（立即扫描模式，不清空 metainfo）
-    const { taskId } = await startOpenListRefresh(false);
-    logger.info('OpenList 定时扫描已启动，任务ID:', taskId);
-  } catch (err) {
-    logger.error('OpenList 定时扫描失败:', err);
-  }
+  // 私人影库功能已删除
+  logger.info('私人影库功能已删除，跳过 OpenList 扫描');
 }

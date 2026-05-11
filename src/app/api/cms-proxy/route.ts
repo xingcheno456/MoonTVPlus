@@ -336,17 +336,8 @@ async function handleOpenListProxy(request: NextRequest) {
   const wd = searchParams.get('wd'); // 搜索关键词
   const ids = searchParams.get('ids'); // 详情ID
 
-  const config = await getConfig();
-  const openListConfig = config.OpenListConfig;
-
-  if (
-    !openListConfig ||
-    !openListConfig.URL ||
-    !openListConfig.Username ||
-    !openListConfig.Password
-  ) {
-    return apiSuccess({ code: 0, msg: 'OpenList 未配置', list: [] }, { status: 200 });
-  }
+  // 私人影库功能已删除
+  return apiSuccess({ code: 0, msg: '私人影库功能已不可用', list: [] }, { status: 200 });
 
   // 读取 metainfo (从数据库或缓存)
   let metaInfo: MetaInfo | null = getCachedMetaInfo();
