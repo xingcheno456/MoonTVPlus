@@ -142,8 +142,7 @@ function LoginPageClient() {
   // 在客户端挂载后设置配置
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const runtimeConfig = (window as any).RUNTIME_CONFIG;
+      const runtimeConfig = window.RUNTIME_CONFIG;
       const storageType = runtimeConfig?.STORAGE_TYPE;
       const shouldAsk = storageType && storageType !== 'localstorage';
       setShouldAskUsername(shouldAsk);
@@ -221,10 +220,8 @@ function LoginPageClient() {
     }
 
     const container = document.getElementById('turnstile-container');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (container && (window as any).turnstile) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const widgetId = (window as any).turnstile.render(
+    if (container && window.turnstile) {
+      const widgetId = window.turnstile.render(
         '#turnstile-container',
         {
           sitekey: siteConfig.TurnstileSiteKey,
@@ -286,11 +283,9 @@ function LoginPageClient() {
         if (
           siteConfig?.LoginRequireTurnstile &&
           turnstileWidgetId !== null &&
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (window as any).turnstile
-        ) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (window as any).turnstile.reset(turnstileWidgetId);
+        window.turnstile
+      ) {
+        window.turnstile.reset(turnstileWidgetId);
           setTurnstileToken(null);
         }
 
@@ -307,11 +302,9 @@ function LoginPageClient() {
       if (
         siteConfig?.LoginRequireTurnstile &&
         turnstileWidgetId !== null &&
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).turnstile
+        window.turnstile
       ) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).turnstile.reset(turnstileWidgetId);
+        window.turnstile.reset(turnstileWidgetId);
         setTurnstileToken(null);
       }
       setError('网络错误，请稍后重试');

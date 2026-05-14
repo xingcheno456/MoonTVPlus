@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     const adminConfig = await getConfig();
 
-    const adminAuth = validateAdminAuth(request);
+    const adminAuth = await validateAdminAuth(request);
     if ('status' in adminAuth) return adminAuth;
     const operatorRole = adminAuth.auth.role as 'owner' | 'admin';
     const operatorUsername = adminAuth.username;

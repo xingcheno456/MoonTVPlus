@@ -67,5 +67,5 @@ class Logger {
 
 const logger = new Logger();
 
-export { Logger,logger };
+export { Logger, logger };
 export type { LogLevel };

@@ -17,7 +17,7 @@ export const runtime = 'nodejs';
  */
 export async function GET(req: NextRequest) {
   try {
-    const adminAuth = validateAdminAuth(req);
+    const adminAuth = await validateAdminAuth(req);
     if ('status' in adminAuth) return adminAuth;
 
     const config = await getConfig();
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    const adminAuth = validateAdminAuth(req);
+    const adminAuth = await validateAdminAuth(req);
     if ('status' in adminAuth) return adminAuth;
 
     const { title, filterText, source, enabled, lastEpisode } =

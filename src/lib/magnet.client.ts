@@ -25,16 +25,27 @@ export async function universalMagnetFetch(
   }
 
   if (proxy) {
-    const { ProxyAgent } = await import('undici');
-    const dispatcher = new ProxyAgent({
-      uri: proxy,
-      requestTls: { rejectUnauthorized: false },
-    });
-    return fetch(url, {
-      ...init,
-      signal: AbortSignal.timeout(30000),
-      dispatcher: dispatcher as RequestInit['dispatcher'],
-    } as RequestInit);
+    // 使用 undici 的 ProxyAgent 进行代理
+    // 注意：undici 的 dispatcher 是 Node.js fetch 的扩展选项
+    try {
+      const { ProxyAgent, setGlobalDispatcher } = await import('undici');
+      const dispatcher = new ProxyAgent({
+        uri: proxy,
+        requestTls: { rejectUnauthorized: false },
+      });
+      setGlobalDispatcher(dispatcher);
+      return fetch(url, {
+        ...init,
+        signal: AbortSignal.timeout(30000),
+      });
+    } catch {
+      // 如果 undici 不可用，回退到无代理模式
+      console.warn('[Magnet] undici not available, fetching without proxy');
+      return fetch(url, {
+        ...init,
+        signal: AbortSignal.timeout(30000),
+      });
+    }
   }
 
   return fetch(url, {

@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const adminAuth = validateAdminAuth(request);
+    const adminAuth = await validateAdminAuth(request);
     if ('status' in adminAuth) return adminAuth;
 
     // 获取分页参数

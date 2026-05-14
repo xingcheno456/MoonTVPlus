@@ -14,7 +14,7 @@ import { useRecommendationDataSource } from '@/hooks/useRecommendationDataSource
 import ScrollableRow from '@/components/common/ScrollableRow';
 import VideoCard from '@/components/VideoCard';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface Recommendation {
   doubanId?: string;

@@ -7886,8 +7886,7 @@ const RegistrationConfigComponent = ({
                 readOnly
                 value={
                   typeof window !== 'undefined'
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    ? `${(window as any).RUNTIME_CONFIG?.SITE_BASE || window.location.origin}/api/auth/oidc/callback`
+                    ? `${window.RUNTIME_CONFIG?.SITE_BASE || window.location.origin}/api/auth/oidc/callback`
                     : ''
                 }
                 className='w-full cursor-default rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-gray-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300'
@@ -7895,8 +7894,7 @@ const RegistrationConfigComponent = ({
               <button
                 type='button'
                 onClick={() => {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const uri = `${(window as any).RUNTIME_CONFIG?.SITE_BASE || window.location.origin}/api/auth/oidc/callback`;
+                  const uri = `${window.RUNTIME_CONFIG?.SITE_BASE || window.location.origin}/api/auth/oidc/callback`;
                   navigator.clipboard.writeText(uri);
                   showSuccess('已复制到剪贴板', showAlert);
                 }}

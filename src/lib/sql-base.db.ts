@@ -436,17 +436,35 @@ export abstract class SQLStorageBase implements IStorage {
     }
   }
 
-  async getUserInfoV2(userName: string): Promise<Record<string, unknown> | null> {
+  async getUserInfoV2(
+    userName: string,
+  ): Promise<
+    | {
+        role: 'owner' | 'admin' | 'user';
+        banned: boolean;
+        tags?: string[];
+        oidcSub?: string;
+        enabledApis?: string[];
+        created_at: number;
+        playrecord_migrated?: boolean;
+        favorite_migrated?: boolean;
+        skip_migrated?: boolean;
+        last_movie_request_time?: number;
+        email?: string;
+        emailNotifications?: boolean;
+      }
+    | null
+  > {
     try {
       const cached = userInfoCache?.get(userName);
       if (cached) {
-        return cached;
+        return cached as typeof cached extends infer T ? T : never;
       }
 
       const user = await this.db
         .prepare('SELECT * FROM users WHERE username = ?')
-        .bind(userName)
-        .first();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .bind(userName) as any;
 
       if (user) {
         const userInfo = {

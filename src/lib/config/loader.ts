@@ -5,8 +5,15 @@ import { getInitConfig } from './refine';
 
 import { logger } from '../logger';
 
-let cachedConfig: AdminConfig;
+let cachedConfig: AdminConfig | null = null;
 let configInitPromise: Promise<AdminConfig> | null = null;
+let cachedConfigTime: number = 0;
+const CONFIG_CACHE_TTL_MS = 5 * 60 * 1000;
+
+function setCache(config: AdminConfig): void {
+  cachedConfig = config;
+  cachedConfigTime = Date.now();
+}
 
 function mergeWithEnvOverrides(adminConfig: AdminConfig): AdminConfig {
   const hasCustomDanmakuEnv = Boolean(
@@ -73,7 +80,15 @@ function mergeWithEnvOverrides(adminConfig: AdminConfig): AdminConfig {
 }
 
 export async function getConfig(): Promise<AdminConfig> {
-  if (cachedConfig) return cachedConfig;
+  if (cachedConfig) {
+    const now = Date.now();
+    if (now - cachedConfigTime < CONFIG_CACHE_TTL_MS) {
+      return cachedConfig;
+    }
+    logger.info('配置缓存已过期，重新加载');
+    cachedConfig = null;
+    cachedConfigTime = 0;
+  }
 
   if (configInitPromise) return configInitPromise;
 
@@ -84,13 +99,13 @@ export async function getConfig(): Promise<AdminConfig> {
       logger.info('localStorage 模式：从环境变量初始化配置');
       const adminConfig = await getInitConfig('');
       try {
-        cachedConfig = mergeWithEnvOverrides(configSelfCheck(adminConfig));
+        setCache(mergeWithEnvOverrides(configSelfCheck(adminConfig)));
       } catch (error) {
         logger.error('配置初始化失败:', error);
-        cachedConfig = adminConfig;
+        setCache(adminConfig);
       }
       configInitPromise = null;
-      return cachedConfig;
+      return cachedConfig!;
     }
 
     let adminConfig: AdminConfig | null = null;
@@ -148,21 +163,20 @@ export async function getConfig(): Promise<AdminConfig> {
     }
 
     adminConfig = mergeWithEnvOverrides(adminConfig);
-    cachedConfig = adminConfig;
+    setCache(adminConfig);
 
     configInitPromise = null;
-    return cachedConfig;
+    return cachedConfig!;
   })();
 
   return configInitPromise;
 }
 
 export async function setCachedConfig(config: AdminConfig) {
-  cachedConfig = config;
+  setCache(config);
 }
 
 export async function clearConfigCache() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  cachedConfig = undefined as any;
+  cachedConfig = null;
   configInitPromise = null;
 }

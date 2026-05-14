@@ -10,7 +10,7 @@ import {
 } from '@/lib/db.client';
 import { DanmakuFilterConfig, DanmakuFilterRule } from '@/lib/types';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface DanmakuFilterSettingsProps {
   isOpen: boolean;

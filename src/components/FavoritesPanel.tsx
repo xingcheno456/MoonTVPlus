@@ -13,7 +13,7 @@ import {
 
 import VideoCard from '@/components/VideoCard';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface FavoriteItem {
   id: string;

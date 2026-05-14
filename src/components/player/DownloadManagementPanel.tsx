@@ -6,8 +6,8 @@ import { createPortal } from 'react-dom';
 
 import { CompletedTask,downloadDB } from '@/lib/download-db';
 
-import { ConfirmDialog } from './ConfirmDialog';
-import { logger } from '../lib/logger';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { logger } from '@/lib/logger';
 
 interface DownloadManagementPanelProps {
   isOpen: boolean;

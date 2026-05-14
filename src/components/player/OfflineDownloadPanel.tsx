@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { parseApiResponse } from '@/lib/api-response';
 import { createPortal } from 'react-dom';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface OfflineDownloadTask {
   id: string;

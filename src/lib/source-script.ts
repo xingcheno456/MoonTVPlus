@@ -60,6 +60,25 @@ export type SourceScriptHook =
   | 'detail'
   | 'resolvePlayUrl';
 
+/**
+ * 编译后的脚本对象类型
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface CompiledScript {
+  meta?: {
+    name?: string;
+    version?: string;
+    author?: string;
+    description?: string;
+  };
+  getSources?: (ctx: unknown, input: unknown) => Promise<unknown>;
+  search?: (ctx: unknown, input: unknown) => Promise<unknown>;
+  recommend?: (ctx: unknown, input: unknown) => Promise<unknown>;
+  detail?: (ctx: unknown, input: unknown) => Promise<unknown>;
+  resolvePlayUrl?: (ctx: unknown, input: unknown) => Promise<unknown>;
+  [key: string]: unknown;
+}
+
 export interface PublicSourceScriptSummary {
   id: string;
   key: string;
@@ -577,7 +596,7 @@ export async function executeSavedSourceScript(input: {
     input.configValues,
   );
 
-  const hook = compiled[input.hook];
+  const hook = (compiled as CompiledScript)[input.hook];
   if (typeof hook !== 'function') {
     throw new Error(`脚本未实现 ${input.hook} hook`);
   }
@@ -591,7 +610,7 @@ export async function executeSavedSourceScript(input: {
     ok: true,
     durationMs: Date.now() - startedAt,
     logs,
-    meta: compiled.meta,
+    meta: (compiled as CompiledScript).meta,
     result,
   };
 }
@@ -763,7 +782,7 @@ export async function testSourceScript(input: {
     };
 
     const factory = createScriptFactory(input.code);
-    const compiled = normalizeScript(await factory({}));
+    const compiled = normalizeScript(await factory({})) as CompiledScript;
     const hook = compiled[input.hook];
     if (typeof hook !== 'function') {
       throw new Error(`脚本未实现 ${input.hook} hook`);
@@ -842,7 +861,8 @@ export function normalizeScriptSearchResults(input: {
   scriptName: string;
   sourceId: string;
   sourceName: string;
-  result: unknown;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  result: any;
 }) {
   const list = Array.isArray(input.result?.list) ? input.result.list : [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -855,10 +875,10 @@ export function normalizeScriptSearchResults(input: {
           const playUrl =
             typeof episode === 'string'
               ? episode
-              : String(episode?.playUrl || episode?.url || '');
+              : String((episode as Record<string, unknown>)?.playUrl || (episode as Record<string, unknown>)?.url || '');
           const needResolve =
             typeof episode === 'object' && episode
-              ? episode.needResolve !== false
+              ? (episode as Record<string, unknown>).needResolve !== false
               : true;
 
           return needResolve
@@ -1037,7 +1057,7 @@ export async function resolveScriptDetailPlaybacks(input: {
 
   // 预检查：编译一次脚本，判断是否实现了 resolvePlayUrl
   const script = await getEnabledSourceScriptByKey(input.scriptKey);
-  const compiled = await getOrCompileScript(script);
+  const compiled = (await getOrCompileScript(script)) as CompiledScript;
 
   if (typeof compiled.resolvePlayUrl !== 'function') {
     return input.result;
@@ -1140,7 +1160,7 @@ export async function resolveSavedScriptPlayUrl(input: {
     input.configValues,
   );
 
-  if (typeof compiled.resolvePlayUrl !== 'function') {
+  if (typeof (compiled as CompiledScript).resolvePlayUrl !== 'function') {
     return {
       url: input.playUrl,
       type: 'auto',

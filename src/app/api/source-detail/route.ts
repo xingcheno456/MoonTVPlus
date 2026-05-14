@@ -21,7 +21,7 @@ export const runtime = 'nodejs';
  * 这个API专门用于play页面快速获取当前源的详情
  */
 export async function GET(request: NextRequest) {
-  const authResult = validateAuth(request);
+  const authResult = await validateAuth(request);
   if ('status' in authResult) return authResult;
   const { username: _username } = authResult;
 

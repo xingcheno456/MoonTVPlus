@@ -15,7 +15,7 @@ export const runtime = 'nodejs';
  */
 export async function PUT(req: NextRequest) {
   try {
-    const adminAuth = validateAdminAuth(req);
+    const adminAuth = await validateAdminAuth(req);
     if ('status' in adminAuth) return adminAuth;
 
     const { enabled } = await req.json();

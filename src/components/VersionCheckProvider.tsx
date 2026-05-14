@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface VersionCheckContextType {
   updateStatus: UpdateStatus | null;

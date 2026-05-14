@@ -29,7 +29,7 @@ import ScrollableRow from '@/components/common/ScrollableRow';
 import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 // 首页模块配置接口
 interface HomeModule {
@@ -138,8 +138,7 @@ function HomeClient() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const enabled =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).RUNTIME_CONFIG?.ENABLE_SOURCE_SEARCH !== false;
+        window.RUNTIME_CONFIG?.ENABLE_SOURCE_SEARCH !== false;
       setSourceSearchEnabled(enabled);
     }
   }, []);

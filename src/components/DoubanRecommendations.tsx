@@ -13,7 +13,7 @@ import { useEnableComments } from '@/hooks/useEnableComments';
 import ScrollableRow from '@/components/common/ScrollableRow';
 import VideoCard from '@/components/VideoCard';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface DoubanRecommendation {
   doubanId: string;

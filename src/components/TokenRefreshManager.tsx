@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { clearAuthCookie,getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { TOKEN_CONFIG } from '@/lib/refresh-token';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 /**
  * Token 自动刷新管理器
@@ -23,7 +23,7 @@ export function TokenRefreshManager() {
   useEffect(() => {
     // localStorage 模式不需要刷新
     const storageType =
-      (window as any).RUNTIME_CONFIG?.STORAGE_TYPE || 'localstorage';
+      window.RUNTIME_CONFIG?.STORAGE_TYPE || 'localstorage';
     if (storageType === 'localstorage') {
       return;
     }

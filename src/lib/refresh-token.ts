@@ -1,19 +1,121 @@
 
+import type { RedisAdapter } from './redis-adapter';
 import { logger } from './logger';
 import { TOKEN_CONFIG } from './token-config';
 
-// Re-export TOKEN_CONFIG for backward compatibility
 export { TOKEN_CONFIG };
 
-// Lazy import to avoid Edge Runtime issues in middleware
-let getStorage: (() => any) | null = null;
+let getStorageFn: (() => ReturnType<typeof import('./db').getStorage>) | null = null;
 
 async function loadStorage() {
-  if (!getStorage) {
+  if (!getStorageFn) {
     const db = await import('./db');
-    getStorage = db.getStorage;
+    getStorageFn = db.getStorage;
   }
-  return getStorage();
+  return getStorageFn();
+}
+
+interface StorageWithAdapter {
+  adapter?: RedisAdapter;
+}
+
+interface TokenStorage {
+  getToken(username: string, tokenId: string): Promise<string | null>;
+  setToken(username: string, tokenId: string, data: string): Promise<void>;
+  deleteToken(username: string, tokenId: string): Promise<void>;
+  getAllTokens(username: string): Promise<Record<string, string>>;
+  deleteAllTokens(username: string): Promise<void>;
+}
+
+let cachedTokenStorage: TokenStorage | null = null;
+
+async function getTokenStorage(): Promise<TokenStorage> {
+  if (cachedTokenStorage) return cachedTokenStorage;
+
+  const storage = await loadStorage();
+  if (!storage) {
+    throw new Error('Storage not initialized');
+  }
+
+  const adapter = (storage as StorageWithAdapter).adapter;
+  if (adapter && typeof adapter.hSet === 'function') {
+    cachedTokenStorage = {
+      getToken: (u, t) => adapter.hGet(`user_tokens:${u}`, t),
+      setToken: async (u, t, d) => {
+        await adapter.hSet(`user_tokens:${u}`, t, d);
+      },
+      deleteToken: async (u, t) => {
+        await adapter.hDel(`user_tokens:${u}`, t);
+      },
+      getAllTokens: (u) => adapter.hGetAll(`user_tokens:${u}`),
+      deleteAllTokens: async (u) => {
+        await adapter.del(`user_tokens:${u}`);
+      },
+    };
+    return cachedTokenStorage;
+  }
+
+  const { db } = await import('./db');
+  cachedTokenStorage = {
+    async getToken(u, t) {
+      return db.getGlobalValue(`user_tokens:${u}:${t}`);
+    },
+    async setToken(u, t, d) {
+      await db.setGlobalValue(`user_tokens:${u}:${t}`, d);
+      const indexKey = `user_tokens_index:${u}`;
+      const indexStr = await db.getGlobalValue(indexKey);
+      let tokenIds: string[] = [];
+      try {
+        tokenIds = indexStr ? JSON.parse(indexStr) : [];
+      } catch { tokenIds = []; }
+      if (!tokenIds.includes(t)) {
+        tokenIds.push(t);
+        await db.setGlobalValue(indexKey, JSON.stringify(tokenIds));
+      }
+    },
+    async deleteToken(u, t) {
+      await db.deleteGlobalValue(`user_tokens:${u}:${t}`);
+      const indexKey = `user_tokens_index:${u}`;
+      const indexStr = await db.getGlobalValue(indexKey);
+      let tokenIds: string[] = [];
+      try {
+        tokenIds = indexStr ? JSON.parse(indexStr) : [];
+      } catch { tokenIds = []; }
+      const filtered = tokenIds.filter((id) => id !== t);
+      if (filtered.length > 0) {
+        await db.setGlobalValue(indexKey, JSON.stringify(filtered));
+      } else {
+        await db.deleteGlobalValue(indexKey);
+      }
+    },
+    async getAllTokens(u) {
+      const indexKey = `user_tokens_index:${u}`;
+      const indexStr = await db.getGlobalValue(indexKey);
+      let tokenIds: string[] = [];
+      try {
+        tokenIds = indexStr ? JSON.parse(indexStr) : [];
+      } catch { tokenIds = []; }
+      const result: Record<string, string> = {};
+      for (const tid of tokenIds) {
+        const data = await db.getGlobalValue(`user_tokens:${u}:${tid}`);
+        if (data) result[tid] = data;
+      }
+      return result;
+    },
+    async deleteAllTokens(u) {
+      const indexKey = `user_tokens_index:${u}`;
+      const indexStr = await db.getGlobalValue(indexKey);
+      let tokenIds: string[] = [];
+      try {
+        tokenIds = indexStr ? JSON.parse(indexStr) : [];
+      } catch { tokenIds = []; }
+      for (const tid of tokenIds) {
+        await db.deleteGlobalValue(`user_tokens:${u}:${tid}`);
+      }
+      await db.deleteGlobalValue(indexKey);
+    },
+  };
+  return cachedTokenStorage;
 }
 
 interface TokenData {
@@ -24,7 +126,6 @@ interface TokenData {
   lastUsed: number;
 }
 
-// 生成随机 Token ID
 export function generateTokenId(): string {
   const array = new Uint8Array(16);
   crypto.getRandomValues(array);
@@ -33,7 +134,6 @@ export function generateTokenId(): string {
   );
 }
 
-// 生成随机 Refresh Token
 export function generateRefreshToken(): string {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
@@ -42,26 +142,14 @@ export function generateRefreshToken(): string {
   );
 }
 
-// 存储 Refresh Token（使用 Redis Hash）
 export async function storeRefreshToken(
   username: string,
   tokenId: string,
   tokenData: TokenData,
 ): Promise<void> {
-  const hashKey = `user_tokens:${username}`;
-  const storage = await loadStorage();
-
-  if (!storage || typeof (storage as any).adapter?.hSet !== 'function') {
-    logger.warn('Redis Hash not supported, skipping token storage');
-    return;
-  }
-
   try {
-    await (storage as any).adapter.hSet(
-      hashKey,
-      tokenId,
-      JSON.stringify(tokenData),
-    );
+    const tokenStorage = await getTokenStorage();
+    await tokenStorage.setToken(username, tokenId, JSON.stringify(tokenData));
     logger.info(`Stored refresh token for ${username}:${tokenId}`);
   } catch (error) {
     logger.error('Failed to store refresh token:', error);
@@ -69,22 +157,14 @@ export async function storeRefreshToken(
   }
 }
 
-// 验证 Refresh Token
 export async function verifyRefreshToken(
   username: string,
   tokenId: string,
   refreshToken: string,
 ): Promise<boolean> {
-  const hashKey = `user_tokens:${username}`;
-  const storage = await loadStorage();
-
-  if (!storage || typeof (storage as any).adapter?.hGet !== 'function') {
-    logger.warn('Redis Hash not supported');
-    return false;
-  }
-
   try {
-    const dataStr = await (storage as any).adapter.hGet(hashKey, tokenId);
+    const tokenStorage = await getTokenStorage();
+    const dataStr = await tokenStorage.getToken(username, tokenId);
 
     if (!dataStr) {
       return false;
@@ -92,25 +172,17 @@ export async function verifyRefreshToken(
 
     const tokenData: TokenData = JSON.parse(dataStr);
 
-    // 检查是否过期
     if (Date.now() > tokenData.expiresAt) {
-      // 过期了，删除
-      await (storage as any).adapter.hDel(hashKey, tokenId);
+      await tokenStorage.deleteToken(username, tokenId);
       return false;
     }
 
-    // 验证 Token
     if (tokenData.token !== refreshToken) {
       return false;
     }
 
-    // 更新最后使用时间
     tokenData.lastUsed = Date.now();
-    await (storage as any).adapter.hSet(
-      hashKey,
-      tokenId,
-      JSON.stringify(tokenData),
-    );
+    await tokenStorage.setToken(username, tokenId, JSON.stringify(tokenData));
 
     return true;
   } catch (error) {
@@ -119,28 +191,19 @@ export async function verifyRefreshToken(
   }
 }
 
-// 撤销单个 Token
 export async function revokeRefreshToken(
   username: string,
   tokenId: string,
 ): Promise<void> {
-  const hashKey = `user_tokens:${username}`;
-  const storage = await loadStorage();
-
-  if (!storage || typeof (storage as any).adapter?.hDel !== 'function') {
-    logger.warn('Redis Hash not supported');
-    return;
-  }
-
   try {
-    await (storage as any).adapter.hDel(hashKey, tokenId);
+    const tokenStorage = await getTokenStorage();
+    await tokenStorage.deleteToken(username, tokenId);
     logger.info(`Revoked refresh token for ${username}:${tokenId}`);
   } catch (error) {
     logger.error('Failed to revoke refresh token:', error);
   }
 }
 
-// 获取用户的所有设备
 export async function getUserDevices(username: string): Promise<
   Array<{
     tokenId: string;
@@ -150,16 +213,9 @@ export async function getUserDevices(username: string): Promise<
     expiresAt: number;
   }>
 > {
-  const hashKey = `user_tokens:${username}`;
-  const storage = await loadStorage();
-
-  if (!storage || typeof (storage as any).adapter?.hGetAll !== 'function') {
-    logger.warn('Redis Hash not supported');
-    return [];
-  }
-
   try {
-    const allTokens = await (storage as any).adapter.hGetAll(hashKey);
+    const tokenStorage = await getTokenStorage();
+    const allTokens = await tokenStorage.getAllTokens(username);
 
     if (!allTokens || typeof allTokens !== 'object') {
       return [];
@@ -172,10 +228,8 @@ export async function getUserDevices(username: string): Promise<
       try {
         const tokenData: TokenData = JSON.parse(dataStr as string);
 
-        // 检查是否过期
         if (now > tokenData.expiresAt) {
-          // 过期了，删除
-          await (storage as any).adapter.hDel(hashKey, tokenId);
+          await tokenStorage.deleteToken(username, tokenId);
           continue;
         }
 
@@ -198,35 +252,20 @@ export async function getUserDevices(username: string): Promise<
   }
 }
 
-// 撤销所有 Token
 export async function revokeAllRefreshTokens(username: string): Promise<void> {
-  const hashKey = `user_tokens:${username}`;
-  const storage = await loadStorage();
-
-  if (!storage || typeof (storage as any).adapter?.del !== 'function') {
-    logger.warn('Redis Hash not supported');
-    return;
-  }
-
   try {
-    await (storage as any).adapter.del(hashKey);
+    const tokenStorage = await getTokenStorage();
+    await tokenStorage.deleteAllTokens(username);
     logger.info(`Revoked all refresh tokens for ${username}`);
   } catch (error) {
     logger.error('Failed to revoke all refresh tokens:', error);
   }
 }
 
-// 清理过期的 Token（定期任务）
 export async function cleanupExpiredTokens(username: string): Promise<number> {
-  const hashKey = `user_tokens:${username}`;
-  const storage = await loadStorage();
-
-  if (!storage || typeof (storage as any).adapter?.hGetAll !== 'function') {
-    return 0;
-  }
-
   try {
-    const allTokens = await (storage as any).adapter.hGetAll(hashKey);
+    const tokenStorage = await getTokenStorage();
+    const allTokens = await tokenStorage.getAllTokens(username);
 
     if (!allTokens || typeof allTokens !== 'object') {
       return 0;
@@ -240,7 +279,7 @@ export async function cleanupExpiredTokens(username: string): Promise<number> {
         const tokenData: TokenData = JSON.parse(dataStr as string);
 
         if (now > tokenData.expiresAt) {
-          await (storage as any).adapter.hDel(hashKey, tokenId);
+          await tokenStorage.deleteToken(username, tokenId);
           cleanedCount++;
         }
       } catch (err) {

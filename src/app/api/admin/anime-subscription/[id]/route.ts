@@ -18,7 +18,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const adminAuth = validateAdminAuth(req);
+    const adminAuth = await validateAdminAuth(req);
     if ('status' in adminAuth) return adminAuth;
 
     const { id } = await params;
@@ -78,7 +78,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const adminAuth = validateAdminAuth(req);
+    const adminAuth = await validateAdminAuth(req);
     if ('status' in adminAuth) return adminAuth;
 
     const { id } = await params;

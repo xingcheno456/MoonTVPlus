@@ -42,13 +42,13 @@ import { UpdateStatus } from '@/lib/version_check';
 import { parseApiResponse } from '@/lib/api-response';
 
 import { DeviceManagementPanel } from './DeviceManagementPanel';
-import { DownloadManagementPanel } from './DownloadManagementPanel';
+import { DownloadManagementPanel } from './player/DownloadManagementPanel';
 import { FavoritesPanel } from './FavoritesPanel';
-import { OfflineDownloadPanel } from './OfflineDownloadPanel';
+import { OfflineDownloadPanel } from './player/OfflineDownloadPanel';
 import { PersonalCenterPanel } from './PersonalCenterPanel';
 import { useVersionCheck } from './VersionCheckProvider';
 import { VersionPanel } from './VersionPanel';
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface AuthInfo {
   username?: string;
@@ -322,8 +322,7 @@ export const UserMenu: React.FC = () => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const enabled =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).RUNTIME_CONFIG?.ENABLE_TVBOX_SUBSCRIBE || false;
+        window.RUNTIME_CONFIG?.ENABLE_TVBOX_SUBSCRIBE || false;
       setSubscribeEnabled(enabled);
     }
   }, []);
@@ -440,8 +439,7 @@ export const UserMenu: React.FC = () => {
       const auth = getAuthInfoFromBrowserCookie();
       setAuthInfo(auth);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const runtimeConfig = (window as any).RUNTIME_CONFIG || {};
+      const runtimeConfig = window.RUNTIME_CONFIG || {};
       const type = runtimeConfig.STORAGE_TYPE || 'localstorage';
       const displayType = runtimeConfig.DISPLAY_STORAGE_TYPE || type;
       setStorageType(type);
@@ -461,8 +459,7 @@ export const UserMenu: React.FC = () => {
 
       const savedDoubanDataSource = localStorage.getItem('doubanDataSource');
       const defaultDoubanProxyType =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
+        window.RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
         'cmliussss-cdn-ali';
       if (savedDoubanDataSource !== null) {
         setDoubanDataSource(savedDoubanDataSource);
@@ -472,8 +469,7 @@ export const UserMenu: React.FC = () => {
 
       const savedDoubanProxyUrl = localStorage.getItem('doubanProxyUrl');
       const defaultDoubanProxy =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY || '';
+        window.RUNTIME_CONFIG?.DOUBAN_PROXY || '';
       if (savedDoubanProxyUrl !== null) {
         setDoubanProxyUrl(savedDoubanProxyUrl);
       } else if (defaultDoubanProxy) {
@@ -494,8 +490,7 @@ export const UserMenu: React.FC = () => {
         'doubanImageProxyType',
       );
       const defaultDoubanImageProxyType =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
+        window.RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
         'cmliussss-cdn-ali';
       if (savedDoubanImageProxyType !== null) {
         setDoubanImageProxyType(savedDoubanImageProxyType);
@@ -507,8 +502,7 @@ export const UserMenu: React.FC = () => {
         'doubanImageProxyUrl',
       );
       const defaultDoubanImageProxyUrl =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
+        window.RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
       if (savedDoubanImageProxyUrl !== null) {
         setDoubanImageProxyUrl(savedDoubanImageProxyUrl);
       } else if (defaultDoubanImageProxyUrl) {
@@ -545,8 +539,7 @@ export const UserMenu: React.FC = () => {
 
       const savedFluidSearch = localStorage.getItem('fluidSearch');
       const defaultFluidSearch =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+        window.RUNTIME_CONFIG?.FLUID_SEARCH !== false;
       if (savedFluidSearch !== null) {
         setFluidSearch(JSON.parse(savedFluidSearch));
       } else if (defaultFluidSearch !== undefined) {
@@ -591,8 +584,7 @@ export const UserMenu: React.FC = () => {
         setDisableAutoLoadDanmaku(savedDisableAutoLoadDanmaku === 'true');
       } else {
         const runtimeDefault =
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (window as any).RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT !== false;
+          window.RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT !== false;
         setDisableAutoLoadDanmaku(!runtimeDefault);
       }
 
@@ -1059,8 +1051,7 @@ export const UserMenu: React.FC = () => {
 
   const handleSelectSavePath = async () => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const dirHandle = await (window as any).showDirectoryPicker();
+      const dirHandle = await window.showDirectoryPicker();
       setFilesystemSavePath(dirHandle.name);
       localStorage.setItem('filesystemSavePath', dirHandle.name);
 
@@ -1363,22 +1354,17 @@ export const UserMenu: React.FC = () => {
 
   const handleResetSettings = () => {
     const defaultDoubanProxyType =
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
+      window.RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
       'cmliussss-cdn-ali';
     const defaultDoubanProxy =
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY || '';
+      window.RUNTIME_CONFIG?.DOUBAN_PROXY || '';
     const defaultDoubanImageProxyType =
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
+      window.RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
       'cmliussss-cdn-ali';
     const defaultDoubanImageProxyUrl =
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
+      window.RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
     const defaultFluidSearch =
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+      window.RUNTIME_CONFIG?.FLUID_SEARCH !== false;
 
     setDefaultAggregateSearch(true);
     setEnableOptimization(true);
@@ -1399,8 +1385,7 @@ export const UserMenu: React.FC = () => {
     setNextEpisodeDanmakuPreload(true);
     const defaultDanmakuAutoLoad =
       (typeof window !== 'undefined' &&
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT !== false) ||
+        window.RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT !== false) ||
       false;
     setDisableAutoLoadDanmaku(!defaultDanmakuAutoLoad);
     setHomeBannerEnabled(true);
@@ -1478,8 +1463,7 @@ export const UserMenu: React.FC = () => {
   const showOfflineDownload =
     (authInfo?.role === 'owner' || authInfo?.role === 'admin') &&
     typeof window !== 'undefined' &&
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).RUNTIME_CONFIG?.ENABLE_OFFLINE_DOWNLOAD === true;
+    window.RUNTIME_CONFIG?.ENABLE_OFFLINE_DOWNLOAD === true;
 
   // 检查是否显示修改密码按钮
   const showChangePassword =

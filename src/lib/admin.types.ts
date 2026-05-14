@@ -1,3 +1,86 @@
+/**
+ * Emby 单源配置（新格式）
+ */
+export interface EmbySourceConfig {
+  key: string;
+  name: string;
+  enabled: boolean;
+  ServerURL: string;
+  ApiKey?: string;
+  Username?: string;
+  Password?: string;
+  UserId?: string;
+  AuthToken?: string;
+  Libraries?: string[];
+  LastSyncTime?: number;
+  ItemCount?: number;
+  isDefault?: boolean;
+  // 高级选项
+  removeEmbyPrefix?: boolean;
+  appendMediaSourceId?: boolean;
+  transcodeMp4?: boolean;
+  proxyPlay?: boolean;
+}
+
+/**
+ * Emby 配置
+ */
+export interface EmbyConfig {
+  Sources?: EmbySourceConfig[];
+  // 旧格式字段（向后兼容）
+  Enabled?: boolean;
+  ServerURL?: string;
+  ApiKey?: string;
+  Username?: string;
+  Password?: string;
+  UserId?: string;
+  AuthToken?: string;
+  Libraries?: string[];
+  LastSyncTime?: number;
+  ItemCount?: number;
+}
+
+/**
+ * OpenList 私人影库配置
+ */
+export interface OpenListConfig {
+  Enabled: boolean;
+  URL: string;
+  Username: string;
+  Password: string;
+  OfflineDownloadPath?: string;
+}
+
+/**
+ * Email SMTP 配置
+ */
+export interface EmailSmtpConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  password: string;
+  from?: string;
+}
+
+/**
+ * Email Resend 配置
+ */
+export interface EmailResendConfig {
+  apiKey: string;
+  from?: string;
+}
+
+/**
+ * Email 配置
+ */
+export interface EmailConfig {
+  enabled?: boolean;
+  provider?: 'smtp' | 'resend';
+  smtp?: EmailSmtpConfig;
+  resend?: EmailResendConfig;
+}
+
 export interface AdminConfig {
   ConfigSubscribtion: {
     URL: string;
@@ -116,7 +199,16 @@ export interface AdminConfig {
       createdBy: string;
     }>;
   };
-};
+
+  // Emby 服务器配置
+  EmbyConfig?: EmbyConfig;
+
+  // OpenList 私人影库配置
+  OpenListConfig?: OpenListConfig;
+
+  // Email 配置
+  EmailConfig?: EmailConfig;
+}
 
 export interface AdminConfigResult {
   Role: 'owner' | 'admin';

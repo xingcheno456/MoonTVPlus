@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as BaseBody & Record<string, unknown>;
     const { action } = body;
 
-    const adminAuth = validateAdminAuth(request);
+    const adminAuth = await validateAdminAuth(request);
     if ('status' in adminAuth) return adminAuth;
     const username = adminAuth.username;
 

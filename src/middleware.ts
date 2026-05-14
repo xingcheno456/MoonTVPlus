@@ -3,15 +3,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { verifyHmacSignature } from '@/lib/crypto';
 import { logger } from '@/lib/logger';
-import { CSP_HEADER_VALUE } from '@/lib/security/csp';
+import { buildCspHeader, generateNonce } from '@/lib/security/csp';
 import { checkRateLimit, getRateLimitConfig } from '@/lib/security/rate-limit';
 import { TOKEN_CONFIG } from '@/lib/token-config';
 
-type StorageType = 'localstorage' | 'redis' | 'upstash' | 'kvrocks' | 'd1' | 'postgres';
-const STORAGE_TYPE: StorageType = (process.env.NEXT_PUBLIC_STORAGE_TYPE as StorageType) || 'localstorage';
+const STORAGE_TYPE = (process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage') as
+  | 'localstorage'
+  | 'redis'
+  | 'upstash'
+  | 'kvrocks'
+  | 'd1'
+  | 'postgres';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const nonce = generateNonce();
+  const cspHeaderValue = buildCspHeader(nonce);
 
   let response: NextResponse;
 
@@ -99,7 +106,7 @@ export async function middleware(request: NextRequest) {
         status: 429,
         headers: {
           'Retry-After': String(Math.ceil((result.resetTime - Date.now()) / 1000)),
-          'Content-Security-Policy': CSP_HEADER_VALUE,
+          'Content-Security-Policy': cspHeaderValue,
         },
       });
     }
@@ -107,7 +114,8 @@ export async function middleware(request: NextRequest) {
     response.headers.set('X-RateLimit-Reset', String(result.resetTime));
   }
 
-  response.headers.set('Content-Security-Policy', CSP_HEADER_VALUE);
+  response.headers.set('Content-Security-Policy', cspHeaderValue);
+  response.headers.set('x-nonce', nonce);
   return response;
 }
 

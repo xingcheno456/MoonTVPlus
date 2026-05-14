@@ -10,7 +10,7 @@ import { logger } from '../../../../../lib/logger';
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  const adminAuth = validateAdminAuth(request);
+  const adminAuth = await validateAdminAuth(request);
   if ('status' in adminAuth) return adminAuth;
 
   const { searchParams } = new URL(request.url);

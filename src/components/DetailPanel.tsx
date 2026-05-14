@@ -21,7 +21,7 @@ import { parseApiResponse } from '@/lib/api-response';
 import ImageViewer from '@/components/common/ImageViewer';
 import ProxyImage from '@/components/common/ProxyImage';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface DetailPanelProps {
   isOpen: boolean;

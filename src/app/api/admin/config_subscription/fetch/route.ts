@@ -10,7 +10,7 @@ export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
-    const adminAuth = validateAdminAuth(request);
+    const adminAuth = await validateAdminAuth(request);
     if ('status' in adminAuth) return adminAuth;
 
     if (adminAuth.auth.role !== 'owner') {

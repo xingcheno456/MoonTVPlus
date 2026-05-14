@@ -66,32 +66,34 @@ export async function validateProxyUrlServerSide(
   try {
     const parsed = new URL(urlStr);
 
-    // 1. 协议检查
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      logger.warn(`[SSRF 防护] 非法协议: ${parsed.protocol}, URL: ${urlStr}`);
       return false;
     }
 
-    // 2. 剥离认证信息防止混淆
     if (parsed.username || parsed.password) {
+      logger.warn(`[SSRF 防护] URL 包含认证信息, 拒绝代理请求: ${urlStr}`);
       return false;
     }
 
     let { hostname } = parsed;
 
-    // 清洗 IPv6 括号边界
     if (hostname.startsWith('[') && hostname.endsWith(']')) {
       hostname = hostname.substring(1, hostname.length - 1);
     }
 
-    // 3. DNS 真实解析 (获取底层物理 IP)
-    // 这一步能彻底打碎各种形式的短格式 IP (127.1)、八/十六进制 IP (0x7f.0.0.1)、或者指向 127.0.0.1 的恶意外部域名 DNS 重绑定。
+    if (isPrivateIP(hostname)) {
+      logger.warn(`[SSRF 防护] hostname 直接是内网 IP: ${hostname}, URL: ${urlStr}`);
+      return false;
+    }
+
     const lookupResult = await dns.promises.lookup(hostname);
 
     if (!lookupResult || !lookupResult.address) {
-      return false; // 解析不出 IP 则拒绝
+      logger.warn(`[SSRF 防护] DNS 解析无结果: ${hostname}, URL: ${urlStr}`);
+      return false;
     }
 
-    // 4. 对物理 IP 进行内网校验
     if (isPrivateIP(lookupResult.address)) {
       logger.warn(
         `[SSRF 防护] 拦截到尝试访问内部网络的请求 URL: ${urlStr} (解析出的底层 IP: ${lookupResult.address})`,
@@ -100,9 +102,9 @@ export async function validateProxyUrlServerSide(
     }
 
     return true;
-  } catch (_error) {
-    // 凡是报错（无论是 URL 解析失败，还是 DNS 解析失败，还是域名不存在），均作为不安全拒绝
-    logger.warn(`[SSRF 防护] URL解析失败或不合法, 拒绝代理请求: ${urlStr}`);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.warn(`[SSRF 防护] URL校验失败, 拒绝代理请求: ${urlStr}, 原因: ${msg}`);
     return false;
   }
 }

@@ -15,7 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { parseApiResponse } from '@/lib/api-response';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface DataMigrationProps {
   onRefreshConfig?: () => Promise<void>;

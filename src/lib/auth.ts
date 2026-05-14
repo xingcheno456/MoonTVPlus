@@ -53,11 +53,32 @@ export function parseAuthInfo(value?: string | null): AuthInfo | null {
     }
   }
 
+  let parsed: unknown;
   try {
-    return JSON.parse(decoded) as AuthInfo;
+    parsed = JSON.parse(decoded);
   } catch (error) {
     return null;
   }
+
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    return null;
+  }
+
+  const obj = parsed as Record<string, unknown>;
+
+  if (obj.username !== undefined && typeof obj.username !== 'string') return null;
+  if (obj.role !== undefined && typeof obj.role !== 'string') return null;
+  if (obj.signature !== undefined && typeof obj.signature !== 'string') return null;
+  if (obj.timestamp !== undefined && typeof obj.timestamp !== 'number') return null;
+  if (obj.tokenId !== undefined && typeof obj.tokenId !== 'string') return null;
+  if (obj.refreshToken !== undefined && typeof obj.refreshToken !== 'string') return null;
+  if (obj.refreshExpires !== undefined && typeof obj.refreshExpires !== 'number') return null;
+
+  if (obj.role !== undefined && !['owner', 'admin', 'user'].includes(obj.role as string)) {
+    return null;
+  }
+
+  return obj as AuthInfo;
 }
 
 export function buildAuthInfoCookieValue(authToken: string): string {

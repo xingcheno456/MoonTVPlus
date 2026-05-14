@@ -176,11 +176,11 @@ function getDoubanProxyConfig(): {
 } {
   const doubanProxyType =
     localStorage.getItem('doubanDataSource') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
+    window.RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
     'cmliussss-cdn-ali';
   const doubanProxy =
     localStorage.getItem('doubanProxyUrl') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY ||
+    window.RUNTIME_CONFIG?.DOUBAN_PROXY ||
     '';
   const doubanProxyBackupType =
     (localStorage.getItem(

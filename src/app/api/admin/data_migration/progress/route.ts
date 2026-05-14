@@ -8,7 +8,7 @@ import { getProgress } from '@/lib/data-migration-progress';
 export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
-  const adminAuth = validateAdminAuth(req);
+  const adminAuth = await validateAdminAuth(req);
   if ('status' in adminAuth) return new Response('Unauthorized', { status: 401 });
 
   if (adminAuth.auth.role !== 'owner') {

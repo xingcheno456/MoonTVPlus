@@ -109,13 +109,21 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   }
 
   const ownerUser = process.env.USERNAME;
-  adminConfig.UserConfig.Users = [
-    {
-      username: ownerUser!,
-      role: 'owner',
-      banned: false,
-    },
-  ];
+  if (ownerUser) {
+    const existingOwner = adminConfig.UserConfig.Users.find(
+      (u) => u.username === ownerUser,
+    );
+    if (!existingOwner) {
+      adminConfig.UserConfig.Users.unshift({
+        username: ownerUser,
+        role: 'owner',
+        banned: false,
+      });
+    } else {
+      existingOwner.role = 'owner';
+      existingOwner.banned = false;
+    }
+  }
 
   const seenSourceKeys = new Set<string>();
   adminConfig.SourceConfig = adminConfig.SourceConfig.filter((source) => {

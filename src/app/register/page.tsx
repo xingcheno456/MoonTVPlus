@@ -99,8 +99,7 @@ function RegisterPageClient() {
   // 在客户端挂载后设置配置
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const runtimeConfig = (window as any).RUNTIME_CONFIG;
+      const runtimeConfig = window.RUNTIME_CONFIG;
 
       // 设置背景图（支持多张随机选择）
       const registerBg = runtimeConfig?.REGISTER_BACKGROUND_IMAGE;
@@ -165,10 +164,8 @@ function RegisterPageClient() {
     }
 
     const container = document.getElementById('turnstile-container');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (container && (window as any).turnstile) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const widgetId = (window as any).turnstile.render(
+    if (container && window.turnstile) {
+      const widgetId = window.turnstile.render(
         '#turnstile-container',
         {
           sitekey: siteConfig.TurnstileSiteKey,
@@ -237,11 +234,9 @@ function RegisterPageClient() {
         if (
           siteConfig?.RegistrationRequireTurnstile &&
           turnstileWidgetId !== null &&
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (window as any).turnstile
+          window.turnstile
         ) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (window as any).turnstile.reset(turnstileWidgetId);
+          window.turnstile.reset(turnstileWidgetId);
           setTurnstileToken(null);
         }
 
@@ -262,11 +257,9 @@ function RegisterPageClient() {
       if (
         siteConfig?.RegistrationRequireTurnstile &&
         turnstileWidgetId !== null &&
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).turnstile
+        window.turnstile
       ) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).turnstile.reset(turnstileWidgetId);
+        window.turnstile.reset(turnstileWidgetId);
         setTurnstileToken(null);
       }
       setError('网络错误，请稍后重试');

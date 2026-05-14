@@ -12,7 +12,7 @@ export const SEARCH_HISTORY_KEY = 'moontv_search_history';
 export const STORAGE_TYPE = (() => {
   const raw =
     (typeof window !== 'undefined' &&
-      (window as any).RUNTIME_CONFIG?.STORAGE_TYPE) ||
+      window.RUNTIME_CONFIG?.STORAGE_TYPE) ||
     (process.env.STORAGE_TYPE as
       | 'localstorage'
       | 'redis'

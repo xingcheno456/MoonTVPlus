@@ -13,7 +13,7 @@ import { M3U8Downloader, M3U8DownloadTask } from '@/lib/m3u8-downloader';
 
 import Toast from '@/components/common/Toast';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface DownloadContextType {
   downloader: M3U8Downloader;

@@ -199,6 +199,7 @@ export class ServerUserRepository implements IUserRepository {
       tags?: string[];
       oidcSub?: string;
       enabledApis?: string[];
+      mustChangePassword?: boolean;
     },
   ): Promise<void> {
     await this.storage.updateUserInfoV2?.(userName, updates);
@@ -289,6 +290,7 @@ export class ServerUserRepository implements IUserRepository {
         }
 
         let password = '';
+        let mustChangePassword = false;
 
         if ('oidcSub' in user && user.oidcSub) {
           password = crypto.randomUUID();
@@ -303,13 +305,19 @@ export class ServerUserRepository implements IUserRepository {
               if (storedPassword) {
                 password = storedPassword;
               } else {
-                password = 'defaultPassword123';
+                password = crypto.randomUUID();
+                mustChangePassword = true;
+                logger.warn(`User ${user.username} has no stored password, generated random password (must change on first login)`);
               }
             } else {
-              password = 'defaultPassword123';
+              password = crypto.randomUUID();
+              mustChangePassword = true;
+              logger.warn(`User ${user.username} cannot read old password, generated random password (must change on first login)`);
             }
           } catch {
-            password = 'defaultPassword123';
+            password = crypto.randomUUID();
+            mustChangePassword = true;
+            logger.error(`User ${user.username} failed to retrieve password, generated random password`);
           }
         }
 
@@ -318,6 +326,10 @@ export class ServerUserRepository implements IUserRepository {
 
         if (user.banned) {
           await this.updateInfoV2(user.username, { banned: true });
+        }
+
+        if (mustChangePassword) {
+          await this.updateInfoV2(user.username, { mustChangePassword: true });
         }
 
         logger.info(`User ${user.username} migrated successfully`);

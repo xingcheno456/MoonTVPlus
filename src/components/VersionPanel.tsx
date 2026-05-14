@@ -17,7 +17,7 @@ import { changelog, ChangelogEntry } from '@/lib/changelog';
 import { CURRENT_VERSION } from '@/lib/version';
 import { compareVersions, UpdateStatus } from '@/lib/version_check';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface VersionPanelProps {
   isOpen: boolean;

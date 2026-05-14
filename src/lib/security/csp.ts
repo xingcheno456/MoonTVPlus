@@ -1,3 +1,7 @@
+import { randomBytes } from 'crypto';
+
+import { logger } from '../logger';
+
 const CSP_DIRECTIVES = {
   'default-src': ["'self'"],
   'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
@@ -11,11 +15,32 @@ const CSP_DIRECTIVES = {
   'base-uri': ["'self'"],
   'form-action': ["'self'"],
   'object-src': ["'none'"],
+  'upgrade-insecure-requests': [],
 };
 
-export function buildCspHeader(): string {
-  return Object.entries(CSP_DIRECTIVES)
-    .map(([key, values]) => `${key} ${values.join(' ')}`)
+export function generateNonce(): string {
+  return randomBytes(16).toString('base64');
+}
+
+export function buildCspHeader(nonce?: string): string {
+  const directives = { ...CSP_DIRECTIVES };
+
+  if (nonce) {
+    directives['script-src'] = [
+      "'self'",
+      `'nonce-${nonce}'`,
+      "'unsafe-eval'",
+      "'strict-dynamic'",
+    ];
+    directives['style-src'] = ["'self'", `'nonce-${nonce}'`, "'unsafe-inline'"];
+
+    logger.debug(`CSP nonce generated: ${nonce.substring(0, 8)}...`);
+  }
+
+  return Object.entries(directives)
+    .map(([key, values]) =>
+      values.length > 0 ? `${key} ${values.join(' ')}` : key,
+    )
     .join('; ');
 }
 

@@ -267,6 +267,7 @@ export class DbManager {
       tags?: string[];
       oidcSub?: string;
       enabledApis?: string[];
+      mustChangePassword?: boolean;
     },
   ): Promise<void> {
     await this._storage.updateUserInfoV2?.(userName, updates);
@@ -355,6 +356,7 @@ export class DbManager {
         }
 
         let password = '';
+        let mustChangePassword = false;
 
         if ('oidcSub' in user && user.oidcSub) {
           password = crypto.randomUUID();
@@ -371,15 +373,19 @@ export class DbManager {
                 password = storedPassword;
                 logger.info(`用户 ${user.username} 使用旧密码迁移`);
               } else {
-                password = 'defaultPassword123';
-                logger.info(`用户 ${user.username} 没有旧密码，使用默认密码`);
+                password = crypto.randomUUID();
+                mustChangePassword = true;
+                logger.warn(`用户 ${user.username} 没有旧密码，已生成随机密码，需首次登录后修改`);
               }
             } else {
-              password = 'defaultPassword123';
+              password = crypto.randomUUID();
+              mustChangePassword = true;
+              logger.warn(`用户 ${user.username} 无法读取旧密码，已生成随机密码，需首次登录后修改`);
             }
           } catch (err) {
-            logger.error(`获取用户 ${user.username} 的密码失败，使用默认密码`, err);
-            password = 'defaultPassword123';
+            logger.error(`获取用户 ${user.username} 的密码失败，已生成随机密码`, err);
+            password = crypto.randomUUID();
+            mustChangePassword = true;
           }
         }
 
@@ -399,6 +405,10 @@ export class DbManager {
 
         if (user.banned) {
           await this.updateUserInfoV2(user.username, { banned: true });
+        }
+
+        if (mustChangePassword) {
+          await this.updateUserInfoV2(user.username, { mustChangePassword: true });
         }
 
         logger.info(`用户 ${user.username} 迁移成功`);

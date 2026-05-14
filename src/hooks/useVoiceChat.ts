@@ -24,7 +24,7 @@ type VoiceStrategy = 'webrtc-fallback' | 'server-only';
 function getVoiceStrategy(): VoiceStrategy {
   if (typeof window === 'undefined') return 'webrtc-fallback';
   const strategy =
-    (window as any).RUNTIME_CONFIG?.VOICE_CHAT_STRATEGY || 'webrtc-fallback';
+    window.RUNTIME_CONFIG?.VOICE_CHAT_STRATEGY || 'webrtc-fallback';
   return strategy as VoiceStrategy;
 }
 

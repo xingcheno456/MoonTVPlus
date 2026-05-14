@@ -141,6 +141,7 @@ export interface IUserV2Extension {
       tags?: string[];
       oidcSub?: string;
       enabledApis?: string[];
+      mustChangePassword?: boolean;
     },
   ): Promise<void>;
   changePasswordV2?(userName: string, newPassword: string): Promise<void>;
@@ -161,6 +162,7 @@ export interface UserV2Info {
   tags?: string[];
   oidcSub?: string;
   enabledApis?: string[];
+  mustChangePassword?: boolean;
   created_at: number;
   playrecord_migrated?: boolean;
   favorite_migrated?: boolean;

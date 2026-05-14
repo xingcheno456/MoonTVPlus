@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     return apiError('不支持本地存储进行管理员配置', 400);
   }
 
-  const adminAuth = validateAdminAuth(request);
+  const adminAuth = await validateAdminAuth(request);
   if ('status' in adminAuth) return adminAuth;
   const username = adminAuth.username;
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     return apiError('不支持本地存储进行管理员配置', 400);
   }
 
-  const adminAuth = validateAdminAuth(request);
+  const adminAuth = await validateAdminAuth(request);
   if ('status' in adminAuth) return adminAuth;
 
   try {

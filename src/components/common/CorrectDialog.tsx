@@ -9,7 +9,7 @@ import { getTMDBImageUrl } from '@/lib/tmdb-image';
 import { processImageUrl } from '@/lib/utils';
 import { parseApiResponse } from '@/lib/api-response';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface TMDBResult {
   id: number;

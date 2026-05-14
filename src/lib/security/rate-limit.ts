@@ -1,3 +1,5 @@
+import { logger } from '../logger';
+
 const ipRequestCounts = new Map<string, { count: number; resetTime: number }>();
 
 const CLEANUP_INTERVAL_MS = 60 * 1000;
@@ -55,6 +57,42 @@ export function checkRateLimit(
   }
 
   return { allowed: true, remaining: config.maxRequests - entry.count, resetTime: entry.resetTime };
+}
+
+const RATE_LIMIT_KEY_PREFIX = 'rate_limit:';
+
+export async function checkRedisRateLimit(
+  redisClient: { incr: (key: string) => Promise<number>; expire: (key: string, seconds: number) => Promise<number> } | null,
+  ip: string,
+  route: string,
+  config: RateLimitConfig,
+): Promise<RateLimitResult> {
+  if (!redisClient) {
+    return checkRateLimit(ip, route, config);
+  }
+
+  const key = `${RATE_LIMIT_KEY_PREFIX}${ip}:${route}`;
+  const windowSeconds = Math.ceil(config.windowMs / 1000);
+
+  try {
+    const count = await redisClient.incr(key);
+
+    if (count === 1) {
+      await redisClient.expire(key, windowSeconds);
+    }
+
+    const remaining = Math.max(0, config.maxRequests - count);
+    const resetTime = Date.now() + windowSeconds * 1000;
+
+    if (count > config.maxRequests) {
+      return { allowed: false, remaining: 0, resetTime };
+    }
+
+    return { allowed: true, remaining, resetTime };
+  } catch (error) {
+    logger.warn('Redis rate limit failed, falling back to in-memory:', error);
+    return checkRateLimit(ip, route, config);
+  }
 }
 
 export function getRateLimitConfig(pathname: string): RateLimitConfig | null {

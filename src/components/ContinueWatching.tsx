@@ -15,7 +15,7 @@ import {
 import VideoCard from '@/components/VideoCard';
 import VirtualScrollableRow from '@/components/common/VirtualScrollableRow';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface ContinueWatchingProps {
   className?: string;

@@ -1033,8 +1033,7 @@ function SearchPageClient() {
     if (typeof window !== 'undefined') {
       const savedFluidSearch = localStorage.getItem('fluidSearch');
       const defaultFluidSearch =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+        window.RUNTIME_CONFIG?.FLUID_SEARCH !== false;
       if (savedFluidSearch !== null) {
         setUseFluidSearch(JSON.parse(savedFluidSearch));
       } else if (defaultFluidSearch !== undefined) {
@@ -1195,8 +1194,7 @@ function SearchPageClient() {
           currentFluidSearch = JSON.parse(savedFluidSearch);
         } else {
           const defaultFluidSearch =
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+            window.RUNTIME_CONFIG?.FLUID_SEARCH !== false;
           currentFluidSearch = defaultFluidSearch;
         }
       }

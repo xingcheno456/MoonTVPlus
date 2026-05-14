@@ -19,7 +19,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const adminAuth = validateAdminAuth(req);
+    const adminAuth = await validateAdminAuth(req);
     if ('status' in adminAuth) return adminAuth;
 
     const { id } = await params;

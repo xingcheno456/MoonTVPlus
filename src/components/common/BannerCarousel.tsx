@@ -21,7 +21,7 @@ import { parseApiResponse } from '@/lib/api-response';
 
 import ProxyImage from '@/components/common/ProxyImage';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface BannerCarouselProps {
   autoPlayInterval?: number; // 自动播放间隔（毫秒）

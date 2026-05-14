@@ -15,11 +15,11 @@ import {
 
 export const runtime = 'nodejs';
 
-function assertAdmin(request: NextRequest) {
+async function assertAdmin(request: NextRequest) {
   if (STORAGE_TYPE === 'localstorage') {
     throw new Error('不支持本地存储进行管理员配置');
   }
-  const result = validateAdminAuth(request);
+  const result = await validateAdminAuth(request);
   if ('status' in result) return null;
   return result.username;
 }

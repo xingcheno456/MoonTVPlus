@@ -5,7 +5,7 @@ import { parseApiResponse } from '@/lib/api-response';
 
 import { useEnableComments } from '@/hooks/useEnableComments';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface DoubanComment {
   id: string;

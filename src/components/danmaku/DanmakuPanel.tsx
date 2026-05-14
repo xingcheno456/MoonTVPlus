@@ -11,7 +11,7 @@ import type {
   DanmakuSelection,
 } from '@/lib/danmaku/types';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface DanmakuPanelProps {
   videoTitle: string;

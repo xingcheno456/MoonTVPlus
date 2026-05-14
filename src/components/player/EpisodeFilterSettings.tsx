@@ -12,7 +12,7 @@ import {
 import { normalizeEpisodeFilterConfig } from '@/lib/episode-filter';
 import { EpisodeFilterConfig, EpisodeFilterRule } from '@/lib/types';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 interface EpisodeFilterSettingsProps {
   isOpen: boolean;

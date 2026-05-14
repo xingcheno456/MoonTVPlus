@@ -15,7 +15,7 @@ import {
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  const authResult = validateAuth(request);
+  const authResult = await validateAuth(request);
   if ('status' in authResult) return authResult;
   const { username } = authResult;
 

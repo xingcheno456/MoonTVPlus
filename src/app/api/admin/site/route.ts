@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const adminAuth = validateAdminAuth(request);
+    const adminAuth = await validateAdminAuth(request);
     if ('status' in adminAuth) return adminAuth;
     const username = adminAuth.username;
 

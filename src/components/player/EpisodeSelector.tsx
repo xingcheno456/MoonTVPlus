@@ -25,7 +25,7 @@ import DanmakuPanel from '@/components/danmaku/DanmakuPanel';
 import EpisodeFilterSettings from '@/components/player/EpisodeFilterSettings';
 import ProxyImage from '@/components/common/ProxyImage';
 
-import { logger } from '../lib/logger';
+import { logger } from '@/lib/logger';
 
 // 定义视频信息类型
 interface VideoInfo {

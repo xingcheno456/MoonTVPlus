@@ -95,8 +95,7 @@ function DoubanPageClient() {
 
   // 获取自定义分类数据
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const runtimeConfig = (window as any).RUNTIME_CONFIG;
+    const runtimeConfig = window.RUNTIME_CONFIG;
     if (runtimeConfig?.CUSTOM_CATEGORIES?.length > 0) {
       setCustomCategories(runtimeConfig.CUSTOM_CATEGORIES);
     }

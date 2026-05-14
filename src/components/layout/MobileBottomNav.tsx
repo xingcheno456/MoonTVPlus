@@ -49,14 +49,8 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
     },
   ]);
 
-interface RuntimeConfig {
-  PRIVATE_LIBRARY_ENABLED?: boolean;
-  ADVANCED_RECOMMENDATION_ENABLED?: boolean;
-  CUSTOM_CATEGORIES?: { name: string; href: string }[];
-}
-
   useEffect(() => {
-    const runtimeConfig: RuntimeConfig | undefined = (window as { RUNTIME_CONFIG?: RuntimeConfig }).RUNTIME_CONFIG;
+    const runtimeConfig = window.RUNTIME_CONFIG;
 
     const items = [
       { icon: Home, label: '首页', href: '/' },

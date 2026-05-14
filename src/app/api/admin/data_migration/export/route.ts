@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       return apiError('不支持本地存储进行数据迁移', 400);
     }
 
-    const adminAuth = validateAdminAuth(req);
+    const adminAuth = await validateAdminAuth(req);
     if ('status' in adminAuth) return adminAuth;
 
     if (adminAuth.auth.role !== 'owner') {

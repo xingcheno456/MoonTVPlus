@@ -149,23 +149,22 @@ describe('validateAuth', () => {
     };
   }
 
-  it('should return error when no auth cookie', () => {
+  it('should return error when no auth cookie', async () => {
     const request = createAuthRequest();
-    const result = validateAuth(request as any);
+    const result = await validateAuth(request as any);
     expect('status' in result).toBe(true);
     if ('status' in result) {
       expect(result.status).toBe(401);
     }
   });
 
-  it('should accept valid auth with username', () => {
+  it('should reject auth without signature', async () => {
     const authValue = JSON.stringify({ username: 'testuser' });
     const request = createAuthRequest(encodeURIComponent(authValue));
-    const result = validateAuth(request as any);
-    if (!('status' in result)) {
-      expect(result.username).toBe('testuser');
-    } else {
-      throw new Error('Should not return error');
+    const result = await validateAuth(request as any);
+    expect('status' in result).toBe(true);
+    if ('status' in result) {
+      expect(result.status).toBe(401);
     }
   });
 });
@@ -185,20 +184,20 @@ describe('validateAdminAuth', () => {
     };
   }
 
-  it('should reject non-admin users with 403', () => {
-    const authValue = JSON.stringify({ username: 'regular', role: 'user' });
+  it('should reject non-admin users with 403', async () => {
+    const authValue = JSON.stringify({ username: 'regular', role: 'user', signature: 'sig', timestamp: Date.now() });
     const request = createAuthRequest(encodeURIComponent(authValue));
-    const result = validateAdminAuth(request as any);
+    const result = await validateAdminAuth(request as any);
     expect('status' in result).toBe(true);
     if ('status' in result) {
       expect(result.status).toBe(403);
     }
   });
 
-  it('should accept admin role', () => {
-    const authValue = JSON.stringify({ username: 'admin', role: 'admin' });
+  it('should accept admin role', async () => {
+    const authValue = JSON.stringify({ username: 'admin', role: 'admin', signature: 'sig', timestamp: Date.now() });
     const request = createAuthRequest(encodeURIComponent(authValue));
-    const result = validateAdminAuth(request as any);
+    const result = await validateAdminAuth(request as any);
     if (!('status' in result)) {
       expect(result.username).toBe('admin');
     } else {
@@ -206,10 +205,10 @@ describe('validateAdminAuth', () => {
     }
   });
 
-  it('should accept owner role', () => {
-    const authValue = JSON.stringify({ username: 'owner', role: 'owner' });
+  it('should accept owner role', async () => {
+    const authValue = JSON.stringify({ username: 'owner', role: 'owner', signature: 'sig', timestamp: Date.now() });
     const request = createAuthRequest(encodeURIComponent(authValue));
-    const result = validateAdminAuth(request as any);
+    const result = await validateAdminAuth(request as any);
     if (!('status' in result)) {
       expect(result.username).toBe('owner');
     } else {
