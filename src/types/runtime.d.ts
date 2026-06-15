@@ -59,9 +59,6 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface MoonTVGlobal {
     [key: symbol]: unknown;
-    [Symbol.for('__MOONTV_USER_INFO_CACHE__')]?: unknown;
-    [Symbol.for('__MOONTV_OWNER_EXISTENCE_CACHE__')]?: unknown;
-    [Symbol.for('__MOONTV_UPSTASH_REDIS_CLIENT__')]?: unknown;
   }
 }
 
