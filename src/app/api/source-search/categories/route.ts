@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { API_CONFIG, getAvailableApiSites, getConfig } from '@/lib/config';
+import { validateUrl } from '@/lib/ssrf-guard';
 import { yellowWords } from '@/lib/yellow';
 
 import { logger } from '../../../../lib/logger';
@@ -43,6 +44,9 @@ export async function GET(request: NextRequest) {
 
     // 请求分类列表
     const classUrl = `${targetSite.api}?ac=list`;
+    if (!validateUrl(classUrl)) {
+      return NextResponse.json({ error: '无效的视频源地址' }, { status: 400 });
+    }
     const classResponse = await fetch(classUrl, {
       headers: API_CONFIG.search.headers,
       signal: AbortSignal.timeout(10000),

@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { API_CONFIG, getAvailableApiSites } from '@/lib/config';
+import { validateUrl } from '@/lib/ssrf-guard';
 import { SearchResult } from '@/lib/types';
 
 import { logger } from '../../../../lib/logger';
@@ -58,6 +59,9 @@ export async function GET(request: NextRequest) {
 
     // 请求搜索结果
     const searchUrl = `${targetSite.api}?ac=videolist&wd=${encodeURIComponent(keyword)}&pg=${page}`;
+    if (!validateUrl(searchUrl)) {
+      return NextResponse.json({ error: '无效的视频源地址' }, { status: 400 });
+    }
     const searchResponse = await fetch(searchUrl, {
       headers: API_CONFIG.search.headers,
       signal: AbortSignal.timeout(10000),
