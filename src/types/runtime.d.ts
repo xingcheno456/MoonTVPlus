@@ -48,6 +48,21 @@ declare global {
     };
     showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>;
   }
+
+  /**
+   * 全局单例缓存接口 — 用于替代 (global as any)[symbol] 模式
+   *
+   * 用途: user-cache.ts 的缓存实例、redis-base.db.ts 的 Redis 客户端、
+   *       upstash.db.ts 的 Upstash 客户端，通过 Symbol.for() 挂载到 global 上
+   *       实现模块级单例，避免热更新重复初始化
+   */
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface MoonTVGlobal {
+    [key: symbol]: unknown;
+    [Symbol.for('__MOONTV_USER_INFO_CACHE__')]?: unknown;
+    [Symbol.for('__MOONTV_OWNER_EXISTENCE_CACHE__')]?: unknown;
+    [Symbol.for('__MOONTV_UPSTASH_REDIS_CLIENT__')]?: unknown;
+  }
 }
 
 export {};
