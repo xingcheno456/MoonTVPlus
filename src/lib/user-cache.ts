@@ -112,13 +112,11 @@ class OwnerExistenceCache {
 
 // 全局单例
 const globalKey = Symbol.for('__MOONTV_USER_INFO_CACHE__');
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _userInfoCache: UserInfoCache | undefined = (global as any)[globalKey];
+let _userInfoCache: UserInfoCache | undefined = (global as MoonTVGlobal)[globalKey] as UserInfoCache | undefined;
 
 if (!_userInfoCache) {
   _userInfoCache = new UserInfoCache();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (global as any)[globalKey] = _userInfoCache;
+  (global as MoonTVGlobal)[globalKey] = _userInfoCache;
 
   // 每分钟清理一次过期缓存
   setInterval(() => {
@@ -129,15 +127,11 @@ if (!_userInfoCache) {
 export const userInfoCache = _userInfoCache as UserInfoCache;
 
 const ownerExistenceGlobalKey = Symbol.for('__MOONTV_OWNER_EXISTENCE_CACHE__');
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _ownerExistenceCache: OwnerExistenceCache | undefined = (global as any)[
-  ownerExistenceGlobalKey
-];
+let _ownerExistenceCache: OwnerExistenceCache | undefined = (global as MoonTVGlobal)[ownerExistenceGlobalKey] as OwnerExistenceCache | undefined;
 
 if (!_ownerExistenceCache) {
   _ownerExistenceCache = new OwnerExistenceCache();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (global as any)[ownerExistenceGlobalKey] = _ownerExistenceCache;
+  (global as MoonTVGlobal)[ownerExistenceGlobalKey] = _ownerExistenceCache;
 
   // 每分钟清理一次过期缓存
   setInterval(() => {

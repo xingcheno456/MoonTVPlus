@@ -142,6 +142,8 @@ export abstract class BaseRedisStorage implements IStorage {
     operation: () => Promise<T>,
     maxRetries?: number,
   ) => Promise<T>;
+  // 保留 client 属性用于向后兼容（数据迁移代码使用）
+  client: Record<string, unknown>;
 
   constructor(
     adapter: RedisAdapter,

@@ -29,8 +29,7 @@ export class UpstashRedisStorage extends BaseRedisStorage {
 // 单例 Upstash Redis 客户端
 function getUpstashRedisClient(): Redis {
   const globalKey = Symbol.for('__MOONTV_UPSTASH_REDIS_CLIENT__');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let client: Redis | undefined = (global as any)[globalKey];
+  let client: Redis | undefined = (global as MoonTVGlobal)[globalKey] as Redis | undefined;
 
   if (!client) {
     const upstashUrl = process.env.UPSTASH_URL;
@@ -56,8 +55,7 @@ function getUpstashRedisClient(): Redis {
 
     logger.info('Upstash Redis client created successfully');
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (global as any)[globalKey] = client;
+(global as MoonTVGlobal)[globalKey] = client;
   }
 
   return client;
