@@ -27,6 +27,8 @@ import ProxyImage from '@/components/common/ProxyImage';
 
 import { logger } from '@/lib/logger';
 
+import { logger } from '../lib/logger';
+
 // 定义视频信息类型
 interface VideoInfo {
   quality: string;

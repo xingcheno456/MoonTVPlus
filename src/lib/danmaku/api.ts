@@ -65,7 +65,10 @@ export async function searchAnime(
     }
 
     const data = (await response.json()) as DanmakuSearchResponse;
-    return data;
+    return {
+      ...data,
+      animes: Array.isArray(data.animes) ? data.animes : [],
+    };
   } catch (error) {
     logger.error('搜索动漫失败:', error);
     return {

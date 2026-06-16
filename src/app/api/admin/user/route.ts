@@ -1,8 +1,18 @@
+<<<<<<< HEAD
 import { NextRequest } from 'next/server';
 
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { validateAdminAuth } from '@/lib/api-validation';
 import { getConfig } from '@/lib/config';
+=======
+
+import { NextRequest } from 'next/server';
+
+import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
+import { apiError, apiSuccess } from '@/lib/api-response';
+import { getAuthInfoFromCookie } from '@/lib/auth';
+import { getConfig, setCachedConfig } from '@/lib/config';
+>>>>>>> main
 import { db, STORAGE_TYPE } from '@/lib/db';
 
 import { logger } from '../../../../lib/logger';
@@ -33,6 +43,15 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+<<<<<<< HEAD
+=======
+    const authInfo = getAuthInfoFromCookie(request);
+    if (!authInfo || !authInfo.username) {
+      return apiError('Unauthorized', 401);
+    }
+    const username = authInfo.username;
+
+>>>>>>> main
     const {
       targetUsername,
       targetPassword,
@@ -47,6 +66,10 @@ export async function POST(request: NextRequest) {
       return apiError('参数格式错误', 400);
     }
 
+<<<<<<< HEAD
+=======
+    // 用户组操作和批量操作不需要targetUsername
+>>>>>>> main
     if (
       !targetUsername &&
       !['userGroup', 'batchUpdateUserGroups'].includes(action)
@@ -71,6 +94,7 @@ export async function POST(request: NextRequest) {
       operatorUsername === targetUsername
     ) {
       return apiError('无法对自己进行此操作', 400);
+<<<<<<< HEAD
     }
 
     // 查找目标用户条目（用户组操作和批量操作不需要）
@@ -80,6 +104,44 @@ export async function POST(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let targetUserV2: any = null;
 
+=======
+    }
+
+    // 获取配置与存储
+    const adminConfig = await getConfig();
+
+    // 判定操作者角色
+    let operatorRole: 'owner' | 'admin';
+    if (username === process.env.USERNAME) {
+      operatorRole = 'owner';
+    } else {
+      // 优先从新版本获取用户信息
+      const operatorInfo = await db.getUserInfoV2(username);
+      if (operatorInfo) {
+        if (operatorInfo.role !== 'admin' || operatorInfo.banned) {
+          return apiError('权限不足', 401);
+        }
+        operatorRole = 'admin';
+      } else {
+        // 回退到配置中查找
+        const userEntry = adminConfig.UserConfig.Users.find(
+          (u) => u.username === username,
+        );
+        if (!userEntry || userEntry.role !== 'admin' || userEntry.banned) {
+          return apiError('权限不足', 401);
+        }
+        operatorRole = 'admin';
+      }
+    }
+
+    // 查找目标用户条目（用户组操作和批量操作不需要）
+    type UserEntry = AdminConfig['UserConfig']['Users'][number] | null | undefined;
+
+    let targetEntry: UserEntry = null;
+    let isTargetAdmin = false;
+    let targetUserV2: Awaited<ReturnType<typeof db.getUserInfoV2>> = null;
+
+>>>>>>> main
     if (
       !['userGroup', 'batchUpdateUserGroups'].includes(action) &&
       targetUsername
@@ -237,7 +299,11 @@ export async function POST(request: NextRequest) {
         }
 
         // 权限检查：站长可删除所有用户（除了自己），管理员可删除普通用户
+<<<<<<< HEAD
         if (operatorUsername === targetUsername) {
+=======
+        if (username === targetUsername) {
+>>>>>>> main
           return apiError('不能删除自己', 400);
         }
 
@@ -390,7 +456,11 @@ export async function POST(request: NextRequest) {
             if (
               userV2 &&
               userV2.role === 'admin' &&
+<<<<<<< HEAD
               targetUsername !== operatorUsername
+=======
+              targetUsername !== username
+>>>>>>> main
             ) {
               return apiError(`管理员无法操作其他管理员 ${targetUsername}`, 400);
             }
@@ -415,6 +485,7 @@ export async function POST(request: NextRequest) {
 
     // 将更新后的配置写入数据库
     await db.saveAdminConfig(adminConfig);
+    await setCachedConfig(adminConfig);
 
     return apiSuccess({ ok: true }, {
         headers: {
