@@ -342,7 +342,7 @@ function createScriptFactory(code: string) {
         const userCode = `"use strict";
 const sandbox = ${sandboxJSON};
 (function() {
-  const __blockedGlobals = ['require', 'process', 'global', 'globalThis', 'Function', 'eval', 'WebAssembly', 'SharedArrayBuffer', 'Atomics'];
+  const __blockedGlobals = ['require', 'process', 'Function', 'eval', 'WebAssembly', 'SharedArrayBuffer', 'Atomics'];
   for (const __g of __blockedGlobals) {
     try { delete globalThis[__g]; } catch {}
   }

@@ -1,6 +1,7 @@
 
 import { Redis } from '@upstash/redis';
 
+import { env } from './env';
 import { logger } from './logger';
 import { UpstashRedisAdapter } from './redis-adapter';
 import { BaseRedisStorage } from './redis-base.db';
@@ -32,8 +33,8 @@ function getUpstashRedisClient(): Redis {
   let client: Redis | undefined = (global as MoonTVGlobal)[globalKey] as Redis | undefined;
 
   if (!client) {
-    const upstashUrl = process.env.UPSTASH_URL;
-    const upstashToken = process.env.UPSTASH_TOKEN;
+    const upstashUrl = env.UPSTASH_URL;
+    const upstashToken = env.UPSTASH_TOKEN;
 
     if (!upstashUrl || !upstashToken) {
       throw new Error(
