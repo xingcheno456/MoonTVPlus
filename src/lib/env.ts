@@ -37,6 +37,9 @@ const envConfig = {
   get MAX_BOOK_HISTORY_PER_USER() {
     return process.env.MAX_BOOK_HISTORY_PER_USER || '100';
   },
+  get ENABLE_TV_MODE() {
+    return process.env.ENABLE_TV_MODE || '';
+  },
 } as const;
 
 type EnvKeys = keyof typeof envConfig;

@@ -5,7 +5,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { TOKEN_CONFIG } from '@/lib/refresh-token';
-import { isTVModeEnabled } from '@/lib/tv-mode';
+
+function isTVModeEnabled(): boolean {
+  return env.ENABLE_TV_MODE === 'true';
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
